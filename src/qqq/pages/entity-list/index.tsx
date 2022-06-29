@@ -12,8 +12,9 @@
 
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
+/*  eslint-disable react/no-unstable-nested-components */
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 // @mui material components
 import Card from "@mui/material/Card";
@@ -30,14 +31,14 @@ import MDButton from "components/MDButton";
 // Material Dashboard 2 PRO React TS examples components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
-import Footer from "examples/Footer";
 import DataTable from "examples/Tables/DataTable";
 
-// import dataTableData from "layouts/ecommerce/orders/order-list/data/dataTableData";
 // Data
-import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import { QController } from "qqq-frontend-core/lib/controllers/QController";
 import Link from "@mui/material/Link";
+import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import IdCell from "./components/IdCell";
+import Footer from "../components/Footer";
 
 const qController = new QController("http://localhost:8000");
 console.log(qController);
@@ -54,8 +55,8 @@ let dataTableData = {
 
 function EntityList({ table }: Props): JSX.Element {
   const [menu, setMenu] = useState(null);
-  const [thing, thing1] = useState(1);
-  console.log(thing);
+  const [tableState, setTableState] = useState("");
+  console.log(tableState);
 
   const newEntity = (event: any) => setMenu(event.currentTarget);
   const openMenu = (event: any) => setMenu(event.currentTarget);
@@ -66,33 +67,39 @@ function EntityList({ table }: Props): JSX.Element {
   (async () => {
     await qController.loadTableMetaData(table.name).then((tableMetaData) => {
       (async () => {
-        await qController.query(table.name).then((results) => {
+        await qController.query(table.name, 250).then((results) => {
           dataTableData = {
             columns: [],
             rows: [],
           };
 
-          Object.keys(tableMetaData.fields).forEach((key) => {
-            dataTableData.columns.push({
-              Header: key,
-              accessor: key,
-            });
+          const fields = new Map(Object.entries(tableMetaData.fields));
+          const sortedEntries = new Map([...fields.entries()].sort());
+          sortedEntries.forEach((value, key) => {
+            if (key === tableMetaData.primaryKeyField) {
+              dataTableData.columns.splice(0, 0, {
+                Header: key,
+                accessor: key,
+                Cell: ({ value }: any) => <IdCell id={value} />,
+              });
+            } else {
+              dataTableData.columns.push({
+                Header: key,
+                accessor: key,
+              });
+            }
           });
 
           results.forEach((record) => {
             const row = new Map();
             const values = new Map(Object.entries(record.values));
             values.forEach((value, key) => {
-              if (key === tableMetaData.primaryKeyField) {
-                row.set(key, `<a href='/${tableMetaData.name}/${value}'>${value}</a>`);
-              } else {
-                row.set(key, value);
-              }
+              row.set(key, value);
             });
             dataTableData.rows.push(Object.fromEntries(row));
           });
 
-          thing1(table.name === "carrier" ? 2 : 3);
+          setTableState(table.name);
         });
       })();
     });

@@ -13,6 +13,8 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
+import { useParams } from "react-router-dom";
+
 // @mui material components
 import Grid from "@mui/material/Grid";
 
@@ -20,10 +22,13 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-import CreateForm from "qqq/pages/components/EntityForm";
+// import CreateForm from "qqq/pages/entity-create/components/CreateForm";
 import BaseLayout from "qqq/pages/components/BaseLayout";
+import ViewContents from "./components/ViewContents";
 
-function EntityCreate(): JSX.Element {
+function EntityView(): JSX.Element {
+  const { id } = useParams();
+
   return (
     <BaseLayout>
       <MDBox mt={4}>
@@ -32,7 +37,7 @@ function EntityCreate(): JSX.Element {
             <MDBox mb={3}>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <CreateForm />
+                  <ViewContents id={id} />
                 </Grid>
               </Grid>
             </MDBox>
@@ -43,4 +48,4 @@ function EntityCreate(): JSX.Element {
   );
 }
 
-export default EntityCreate;
+export default EntityView;

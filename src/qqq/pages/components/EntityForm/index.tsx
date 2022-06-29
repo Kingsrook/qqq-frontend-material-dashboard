@@ -1,0 +1,184 @@
+/**
+ =========================================================
+ * Material Dashboard 2 PRO React TS - v1.0.0
+ =========================================================
+
+ * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
+ * Copyright 2022 Creative Tim (https://www.creative-tim.com)
+
+ Coded by www.creative-tim.com
+
+ =========================================================
+
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ */
+
+/* eslint-disable no-unused-vars */
+/* eslint-disable spaced-comment */
+
+import { useParams } from "react-router-dom";
+
+// @material-ui core components
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+
+// Material Dashboard 2 PRO React TS components
+import MDBox from "components/MDBox";
+import MDTypography from "components/MDTypography";
+
+// Settings page components
+import FormField from "layouts/pages/account/components/FormField";
+
+// qqq imports
+import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import { QController } from "qqq-frontend-core/lib/controllers/QController";
+import React, { useState } from "react";
+import { QTableRecord } from "qqq-frontend-core/lib/model/metaData/QTableRecord";
+import MDButton from "../../../../components/MDButton";
+
+const qController = new QController("http://localhost:8000");
+
+// Declaring props types for EntityForm
+interface Props {
+  id?: string;
+}
+
+function EntityForm({ id }: Props): JSX.Element {
+  const { tableName } = useParams();
+  const [formFields, setFormFields] = useState([] as JSX.Element[]);
+  const defaultValues: { [key: string]: string } = {};
+  const [formValues, setFormValues] = useState(defaultValues);
+  const [loadCounter, setLoadCounter] = useState(0);
+
+  const handleInputChange = (e: { target: { name: any; value: any } }) => {
+    console.log("A");
+    const { name, value } = e.target;
+    console.log(name);
+    console.log(value);
+    formValues[name] = value;
+    setFormValues(formValues);
+  };
+
+  const tableMetaData = new QTableMetaData(tableName);
+  if (loadCounter === 0) {
+    setLoadCounter(1);
+
+    (async () => {
+      await qController.loadTableMetaData(tableName).then((tableMetaData) => {
+        const formFields = [] as JSX.Element[];
+
+        // make a call to query (just get all for now, and iterate and filter like a caveman)
+        if (id !== null) {
+          (async () => {
+            await qController.query(tableName, 250).then((results) => {
+              let foundRecord: QTableRecord;
+              results.forEach((record) => {
+                const values = new Map(Object.entries(record.values));
+                values.forEach((value, key) => {
+                  if (key === tableMetaData.primaryKeyField && value.toString() === id) {
+                    foundRecord = record;
+                  }
+                });
+              });
+
+              if (id != null) {
+                const values = new Map(Object.entries(foundRecord.values));
+                values.forEach((value, key) => {
+                  formValues[key] = value;
+                  console.log(`key:${key},value:${value}`);
+                });
+              }
+
+              const fields = new Map(Object.entries(tableMetaData.fields));
+              const sortedEntries = new Map([...fields.entries()].sort());
+              sortedEntries.forEach((fieldMetaData) => {
+                if (fieldMetaData.name !== tableMetaData.primaryKeyField) {
+                  if (formValues[fieldMetaData.name] == null) {
+                    formValues[fieldMetaData.name] = "";
+                  }
+
+                  formFields.push(
+                    <Grid item xs={12} sm={4} key={fieldMetaData.name}>
+                      <FormField
+                        key={fieldMetaData.name}
+                        name={fieldMetaData.name}
+                        id={fieldMetaData.name}
+                        label={fieldMetaData.label}
+                        value={formValues[fieldMetaData.name]}
+                        onChange={handleInputChange}
+                      />
+                    </Grid>
+                  );
+                }
+              });
+
+              setLoadCounter(2);
+              setFormValues(formValues);
+            });
+          })();
+        } else {
+          const fields = new Map(Object.entries(tableMetaData.fields));
+          const sortedEntries = new Map([...fields.entries()].sort());
+          sortedEntries.forEach((fieldMetaData) => {
+            if (fieldMetaData.name !== tableMetaData.primaryKeyField) {
+              formFields.push(
+                <Grid item xs={12} sm={4} key={fieldMetaData.name}>
+                  <FormField
+                    key={fieldMetaData.name}
+                    name={fieldMetaData.name}
+                    id={fieldMetaData.name}
+                    label={fieldMetaData.label}
+                    value={formValues[fieldMetaData.name]}
+                    onChange={handleInputChange}
+                  />
+                </Grid>
+              );
+            }
+          });
+        }
+
+        setFormFields(formFields);
+      });
+    })();
+  }
+
+  const handleSubmit = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+
+    (async () => {
+      await qController.create(tableName, formValues).then((recordList) => {
+        const values = new Map(Object.entries(recordList[0].values));
+        window.location.href = `/${tableName}/view/${values.get("id")}`;
+      });
+    })();
+  };
+
+  const pageTitle = id != null ? `Edit ${tableMetaData.label}` : `Create ${tableMetaData.label}`;
+
+  return (
+    <Card id="basic-info" sx={{ overflow: "visible" }}>
+      <MDBox p={3}>
+        <MDTypography variant="h5">{pageTitle}</MDTypography>
+      </MDBox>
+      <MDBox component="form" pb={3} px={3} onSubmit={handleSubmit}>
+        <Grid key="fieldsGrid" container spacing={3}>
+          {formFields}
+        </Grid>
+        <Grid key="buttonGrid" container spacing={3}>
+          <MDBox ml="auto">
+            <MDButton type="submit" variant="gradient" color="dark" size="small">
+              save {tableMetaData.label}
+            </MDButton>
+          </MDBox>
+        </Grid>
+      </MDBox>
+    </Card>
+  );
+}
+
+// Declaring default props for DefaultCell
+EntityForm.defaultProps = {
+  id: null,
+};
+
+export default EntityForm;

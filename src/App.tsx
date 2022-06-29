@@ -13,7 +13,14 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import { useState, useEffect, useMemo, JSXElementConstructor, Key, ReactElement } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+} from "react";
 
 // react-router components
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
@@ -53,6 +60,8 @@ import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "co
 import brandWhite from "assets/images/logo-ct.png";
 import brandDark from "assets/images/logo-ct-dark.png";
 import EntityCreate from "./qqq/pages/entity-create";
+import EntityView from "./qqq/pages/entity-view";
+import EntityEdit from "./qqq/pages/entity-edit";
 
 export default function App() {
   const [controller, dispatch] = useMaterialUIController();
@@ -156,6 +165,8 @@ export default function App() {
   );
 
   const entityCreateElement = <EntityCreate />;
+  const entityViewElement = <EntityView />;
+  const entityEditElement = <EntityEdit />;
 
   return direction === "rtl" ? (
     <CacheProvider value={rtlCache}>
@@ -177,9 +188,10 @@ export default function App() {
         )}
         {layout === "vr" && <Configurator />}
         <Routes>
-          {getRoutes(routes)}
           <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
           <Route path="/:tableName/create" element={entityCreateElement} key="entity-create" />;
+          <Route path="/:tableName/view/:id" element={entityViewElement} key="entity-view" />;
+          {getRoutes(routes)}
         </Routes>
       </ThemeProvider>
     </CacheProvider>
@@ -202,9 +214,11 @@ export default function App() {
       )}
       {layout === "vr" && <Configurator />}
       <Routes>
-        {getRoutes(routes)}
         <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
         <Route path="/:tableName/create" element={entityCreateElement} key="entity-create" />;
+        <Route path="/:tableName/view/:id" element={entityViewElement} key="entity-view" />;
+        <Route path="/:tableName/edit/:id" element={entityEditElement} key="entity-edit" />;
+        {getRoutes(routes)}
       </Routes>
     </ThemeProvider>
   );

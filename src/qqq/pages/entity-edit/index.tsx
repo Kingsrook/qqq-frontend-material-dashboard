@@ -20,10 +20,13 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-import CreateForm from "qqq/pages/components/EntityForm";
 import BaseLayout from "qqq/pages/components/BaseLayout";
+import { useParams } from "react-router-dom";
+import EntityForm from "qqq/pages/components/EntityForm";
 
-function EntityCreate(): JSX.Element {
+function EntityEdit(): JSX.Element {
+  const { id } = useParams();
+
   return (
     <BaseLayout>
       <MDBox mt={4}>
@@ -32,7 +35,7 @@ function EntityCreate(): JSX.Element {
             <MDBox mb={3}>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <CreateForm />
+                  <EntityForm id={id} />
                 </Grid>
               </Grid>
             </MDBox>
@@ -43,4 +46,4 @@ function EntityCreate(): JSX.Element {
   );
 }
 
-export default EntityCreate;
+export default EntityEdit;
