@@ -74,7 +74,7 @@ import Icon from "@mui/material/Icon";
 // Images
 import profilePicture from "assets/images/team-3.jpg";
 
-import { QController } from "qqq-frontend-core/lib/controllers/QController";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 // import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
 // import thing from "qqq-frontend-core/lib/qqq-frontend-core.js";
 // import QController from "qqq-frontend-core/lib/qqq-frontend-core.js";

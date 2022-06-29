@@ -30,9 +30,8 @@ import MDTypography from "components/MDTypography";
 // Settings page components
 
 // qqq imports
-import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { QController } from "qqq-frontend-core/lib/controllers/QController";
-import { QTableRecord } from "qqq-frontend-core/lib/model/metaData/QTableRecord";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
 import React, { useState } from "react";
 
 import Link from "@mui/material/Link";
@@ -43,8 +42,8 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 
+import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import MDButton from "../../../../../components/MDButton";
-import { setLayout } from "../../../../../context";
 
 const qController = new QController("http://localhost:8000");
 console.log(qController);

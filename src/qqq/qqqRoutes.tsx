@@ -75,7 +75,7 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "assets/images/team-3.jpg";
 
 // QQQ
-import { QController } from "qqq-frontend-core/lib/controllers/QController";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 
 import EntityList from "./pages/entity-list";
 

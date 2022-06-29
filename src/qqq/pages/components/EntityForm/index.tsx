@@ -30,10 +30,10 @@ import MDTypography from "components/MDTypography";
 import FormField from "layouts/pages/account/components/FormField";
 
 // qqq imports
-import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { QController } from "qqq-frontend-core/lib/controllers/QController";
+import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import React, { useState } from "react";
-import { QTableRecord } from "qqq-frontend-core/lib/model/metaData/QTableRecord";
+import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
 import MDButton from "../../../../components/MDButton";
 
 const qController = new QController("http://localhost:8000");

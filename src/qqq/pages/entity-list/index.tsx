@@ -34,9 +34,9 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import DataTable from "examples/Tables/DataTable";
 
 // Data
-import { QController } from "qqq-frontend-core/lib/controllers/QController";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import Link from "@mui/material/Link";
-import { QTableMetaData } from "qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import IdCell from "./components/IdCell";
 import Footer from "../components/Footer";
 
