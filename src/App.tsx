@@ -191,6 +191,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
           <Route path="/:tableName/create" element={entityCreateElement} key="entity-create" />;
           <Route path="/:tableName/view/:id" element={entityViewElement} key="entity-view" />;
+          <Route path="/:tableName/edit/:id" element={entityEditElement} key="entity-edit" />;
           {getRoutes(routes)}
         </Routes>
       </ThemeProvider>

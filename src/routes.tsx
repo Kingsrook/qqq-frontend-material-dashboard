@@ -546,7 +546,7 @@ const routes = [
   },
 ];
 
-const qController = new QController("http://localhost:8000");
+const qController = new QController("");
 console.log(qController);
 
 (async () => {

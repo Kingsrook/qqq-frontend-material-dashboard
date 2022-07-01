@@ -45,7 +45,7 @@ import Button from "@mui/material/Button";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import MDButton from "../../../../../components/MDButton";
 
-const qController = new QController("http://localhost:8000");
+const qController = new QController("");
 console.log(qController);
 
 // Declaring props types for ViewForm

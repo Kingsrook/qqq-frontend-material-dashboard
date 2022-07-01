@@ -1,27 +1,44 @@
 {
   "compilerOptions": {
-    "typeRoots": ["node_modules/@types", "src/types"],
-    "target": "ES6",
-    "lib": ["DOM", "ES6", "DOM.Iterable", "ScriptHost", "ES2016.Array.Include"],
+    "typeRoots": [
+      "node_modules/@types",
+      "src/types"
+    ],
+    "lib": [
+      "DOM",
+      "ES6",
+      "DOM.Iterable",
+      "ScriptHost",
+      "ES2016.Array.Include"
+    ],
     "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "baseUrl": "src",
+    "declaration": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
+    "outDir": "lib",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
     "strictNullChecks": false,
-    "downlevelIteration": true,
-    "baseUrl": "src",
-    "allowAsProps": true
+    "target": "ES6"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib",
+    "**/*.test.ts"
+  ]
 }

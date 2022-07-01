@@ -386,7 +386,7 @@ const qqqRoutes = [
   { type: "title", title: "Tables", key: "title-docs" },
 ];
 
-const qController = new QController("http://localhost:8000");
+const qController = new QController("");
 console.log(qController);
 
 (async () => {

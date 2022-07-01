@@ -36,7 +36,7 @@ import React, { useState } from "react";
 import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
 import MDButton from "../../../../components/MDButton";
 
-const qController = new QController("http://localhost:8000");
+const qController = new QController("");
 
 // Declaring props types for EntityForm
 interface Props {

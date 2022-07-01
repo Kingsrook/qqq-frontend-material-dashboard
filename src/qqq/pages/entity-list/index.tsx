@@ -40,7 +40,7 @@ import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import IdCell from "./components/IdCell";
 import Footer from "../components/Footer";
 
-const qController = new QController("http://localhost:8000");
+const qController = new QController("");
 console.log(qController);
 
 // Declaring props types for DefaultCell
