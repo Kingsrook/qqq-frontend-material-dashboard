@@ -30,7 +30,7 @@ import MDTypography from "components/MDTypography";
 // Settings page components
 
 // qqq imports
-import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import React, { useState } from "react";
 
@@ -45,7 +45,7 @@ import Button from "@mui/material/Button";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import MDButton from "../../../../../components/MDButton";
 
-const qController = new QControllerV3("");
+const qController = new QController("");
 console.log(qController);
 
 // Declaring props types for ViewForm

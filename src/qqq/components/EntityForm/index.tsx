@@ -31,13 +31,13 @@ import FormField from "layouts/pages/account/components/FormField";
 
 // qqq imports
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import React, { useState } from "react";
 import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
 import MDButton from "../../../components/MDButton";
 
-const qController = new QControllerV3("");
+const qController = new QController("");
 
 // Declaring props types for EntityForm
 interface Props {

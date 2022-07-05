@@ -34,13 +34,13 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import DataTable from "examples/Tables/DataTable";
 
 // Data
-import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import Link from "@mui/material/Link";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import IdCell from "./components/IdCell";
 import Footer from "../../components/Footer";
 
-const qController = new QControllerV3("");
+const qController = new QController("");
 console.log(qController);
 
 // Declaring props types for DefaultCell

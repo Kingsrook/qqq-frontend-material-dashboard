@@ -75,7 +75,7 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "assets/images/team-3.jpg";
 
 // QQQ
-import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 
 import EntityList from "./pages/entity-list";
 
@@ -386,7 +386,7 @@ const qqqRoutes = [
   { type: "title", title: "Tables", key: "title-docs" },
 ];
 
-const qController = new QControllerV3("");
+const qController = new QController("");
 console.log(qController);
 
 (async () => {
