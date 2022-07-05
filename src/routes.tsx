@@ -554,8 +554,8 @@ console.log(qController);
     console.log(`metaData: ${metaData}`);
 
     const tableList = [] as any[];
-    metaData.forEach((value, key) => {
-      const table = metaData.get(key);
+    metaData.tables.forEach((value, key) => {
+      const table = metaData.tables.get(key);
       console.log(`TABLE: ${table}`);
       tableList.push({
         name: table.label,

@@ -391,13 +391,12 @@ console.log(qController);
 
 (async () => {
   const metaData = await qController.loadMetaData();
-  console.log(`metaData: ${metaData}`);
 
   // get the keys sorted
-  const keys = [...metaData.keys()].sort();
+  const keys = [...metaData.tables.keys()].sort();
   const tableList = [] as any[];
   keys.forEach((key) => {
-    const table = metaData.get(key);
+    const table = metaData.tables.get(key);
     tableList.push({
       name: table.label,
       key: table.name,

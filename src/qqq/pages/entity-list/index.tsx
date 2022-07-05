@@ -34,18 +34,20 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import DataTable from "examples/Tables/DataTable";
 
 // Data
+import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import Link from "@mui/material/Link";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import { useParams } from "react-router-dom";
 import IdCell from "./components/IdCell";
 import Footer from "../../components/Footer";
+import EntityForm from "../../components/EntityForm";
 
 const qController = new QController("");
-console.log(qController);
 
 // Declaring props types for DefaultCell
 interface Props {
-  table: QTableMetaData;
+  table?: QTableMetaData;
 }
 
 let dataTableData = {
@@ -54,62 +56,97 @@ let dataTableData = {
 };
 
 function EntityList({ table }: Props): JSX.Element {
-  const [menu, setMenu] = useState(null);
+  const tableNameParam = useParams().tableName;
+  const tableName = table === null ? tableNameParam : table.name;
+  const [filtersMenu, setFiltersMenu] = useState(null);
+  const [actionsMenu, setActionsMenu] = useState(null);
   const [tableState, setTableState] = useState("");
+  const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
   console.log(tableState);
 
-  const newEntity = (event: any) => setMenu(event.currentTarget);
-  const openMenu = (event: any) => setMenu(event.currentTarget);
-  const closeMenu = () => setMenu(null);
+  const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
+  const closeActionsMenu = () => setActionsMenu(null);
+  const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
+  const closeFiltersMenu = () => setFiltersMenu(null);
 
-  const createPath = `/${table.name}/create`;
+  const createPath = `/${tableName}/create`;
 
-  (async () => {
-    const tableMetaData = await qController.loadTableMetaData(table.name);
-    const results = await qController.query(table.name, 250);
-    dataTableData = {
-      columns: [],
-      rows: [],
-    };
+  if (tableState === "") {
+    (async () => {
+      const tableMetaData = await qController.loadTableMetaData(tableName);
+      const metaData = await qController.loadMetaData();
+      const results = await qController.query(tableName, 250);
+      dataTableData = {
+        columns: [],
+        rows: [],
+      };
 
-    const sortedKeys = [...tableMetaData.fields.keys()].sort();
-    sortedKeys.forEach((key) => {
-      const field = tableMetaData.fields.get(key);
-      if (key === tableMetaData.primaryKeyField) {
-        dataTableData.columns.splice(0, 0, {
-          Header: field.label,
-          accessor: key,
-          Cell: ({ value }: any) => <IdCell id={value} />,
-        });
-      } else {
-        dataTableData.columns.push({
-          Header: field.label,
-          accessor: key,
-        });
-      }
-    });
+      const sortedKeys = [...tableMetaData.fields.keys()].sort();
+      sortedKeys.forEach((key) => {
+        const field = tableMetaData.fields.get(key);
+        if (key === tableMetaData.primaryKeyField) {
+          dataTableData.columns.splice(0, 0, {
+            Header: field.label,
+            accessor: key,
+            Cell: ({ value }: any) => <IdCell id={value} />,
+          });
+        } else {
+          dataTableData.columns.push({
+            Header: field.label,
+            accessor: key,
+          });
+        }
+      });
 
-    results.forEach((record) => {
-      dataTableData.rows.push(Object.fromEntries(record.values.entries()));
-    });
+      results.forEach((record) => {
+        dataTableData.rows.push(Object.fromEntries(record.values.entries()));
+      });
 
-    setTableState(table.name);
-  })();
+      const matchingProcesses: QProcessMetaData[] = [];
+      const processKeys = [...metaData.processes.keys()];
+      processKeys.forEach((key) => {
+        const process = metaData.processes.get(key);
+        if (process.tableName === tableName) {
+          matchingProcesses.push(process);
+        }
+      });
+      setTableProcesses(matchingProcesses);
 
-  const renderMenu = (
+      setTableState(tableName);
+    })();
+  }
+
+  const renderActionsMenu = (
     <Menu
-      anchorEl={menu}
+      anchorEl={actionsMenu}
       anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       transformOrigin={{ vertical: "top", horizontal: "left" }}
-      open={Boolean(menu)}
-      onClose={closeMenu}
+      open={Boolean(actionsMenu)}
+      onClose={closeActionsMenu}
       keepMounted
     >
-      <MenuItem onClick={closeMenu}>Status: Paid</MenuItem>
-      <MenuItem onClick={closeMenu}>Status: Refunded</MenuItem>
-      <MenuItem onClick={closeMenu}>Status: Canceled</MenuItem>
+      {tableProcesses.map((process) => (
+        <MenuItem key={process.name}>
+          <Link href={`/processes/${process.name}`}>{process.label}</Link>
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+
+  const renderFiltersMenu = (
+    <Menu
+      anchorEl={filtersMenu}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+      open={Boolean(filtersMenu)}
+      onClose={closeFiltersMenu}
+      keepMounted
+    >
+      <MenuItem onClick={closeFiltersMenu}>Status: Paid</MenuItem>
+      <MenuItem onClick={closeFiltersMenu}>Status: Refunded</MenuItem>
+      <MenuItem onClick={closeFiltersMenu}>Status: Canceled</MenuItem>
       <Divider sx={{ margin: "0.5rem 0" }} />
-      <MenuItem onClick={closeMenu}>
+      <MenuItem onClick={closeFiltersMenu}>
         <MDTypography variant="button" color="error" fontWeight="regular">
           Remove Filter
         </MDTypography>
@@ -122,15 +159,32 @@ function EntityList({ table }: Props): JSX.Element {
       <DashboardNavbar />
       <MDBox my={3}>
         <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <MDButton variant="gradient" color="info" onClick={newEntity}>
-            <Link href={createPath}>new {table.label}</Link>
+          <MDButton variant="gradient" color="info">
+            <Link href={createPath}>new {tableName}</Link>
           </MDButton>
           <MDBox display="flex">
-            <MDButton variant={menu ? "contained" : "outlined"} color="dark" onClick={openMenu}>
-              filters&nbsp;
-              <Icon>keyboard_arrow_down</Icon>
-            </MDButton>
-            {renderMenu}
+            {tableProcesses.length > 0 && (
+              <MDButton
+                variant={actionsMenu ? "contained" : "outlined"}
+                color="dark"
+                onClick={openActionsMenu}
+              >
+                actions&nbsp;
+                <Icon>keyboard_arrow_down</Icon>
+              </MDButton>
+            )}
+            {renderActionsMenu}
+            <MDBox ml={1}>
+              <MDButton
+                variant={filtersMenu ? "contained" : "outlined"}
+                color="dark"
+                onClick={openFiltersMenu}
+              >
+                filters&nbsp;
+                <Icon>keyboard_arrow_down</Icon>
+              </MDButton>
+              {renderFiltersMenu}
+            </MDBox>
             <MDBox ml={1}>
               <MDButton variant="outlined" color="dark">
                 <Icon>description</Icon>
@@ -147,5 +201,10 @@ function EntityList({ table }: Props): JSX.Element {
     </DashboardLayout>
   );
 }
+
+// Declaring default props for DefaultCell
+EntityList.defaultProps = {
+  table: null,
+};
 
 export default EntityList;
