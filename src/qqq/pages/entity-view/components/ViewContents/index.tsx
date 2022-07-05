@@ -30,8 +30,8 @@ import MDTypography from "components/MDTypography";
 // Settings page components
 
 // qqq imports
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
+import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
+import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import React, { useState } from "react";
 
 import Link from "@mui/material/Link";
@@ -45,7 +45,7 @@ import Button from "@mui/material/Button";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import MDButton from "../../../../../components/MDButton";
 
-const qController = new QController("");
+const qController = new QControllerV3("");
 console.log(qController);
 
 // Declaring props types for ViewForm
@@ -58,6 +58,8 @@ function ViewContents({ id }: Props): JSX.Element {
   const [nameValues, setNameValues] = useState([] as JSX.Element[]);
   const [loadCounter, setLoadCounter] = useState(0);
   const [open, setOpen] = useState(false);
+  const [tableMetaData, setTableMetaData] = useState(null);
+  const [record, setRecord] = useState(null);
 
   const handleConfirmDelete = (event: { preventDefault: () => void }) => {
     event.preventDefault();
@@ -69,59 +71,57 @@ function ViewContents({ id }: Props): JSX.Element {
     })();
   };
 
-  const tableMetaData = new QTableMetaData(tableName);
   if (loadCounter === 0) {
     setLoadCounter(1);
+
     (async () => {
-      await qController.loadTableMetaData(tableName).then((tableMetaData) => {
-        const formFields = [] as JSX.Element[];
-        const fields = new Map(Object.entries(tableMetaData.fields));
+      const tableMetaData = await qController.loadTableMetaData(tableName);
+      console.log("@dk: table meta data");
+      console.log(tableMetaData);
+      setTableMetaData(tableMetaData);
 
-        // make a call to query (just get all for now, and iterate and filter like a caveman)
-        (async () => {
-          await qController.query(tableName, 250).then((results) => {
-            let foundRecord: QTableRecord;
-            results.forEach((record) => {
-              const values = new Map(Object.entries(record.values));
-              values.forEach((value, key) => {
-                if (key === tableMetaData.primaryKeyField && value.toString() === id) {
-                  foundRecord = record;
-                }
-              });
-            });
-
-            nameValues.push(
-              <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>
-                <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-                  {tableMetaData.primaryKeyField}: &nbsp;
-                </MDTypography>
-                <MDTypography variant="button" fontWeight="regular" color="text">
-                  &nbsp;{id}
-                </MDTypography>
-              </MDBox>
-            );
-
-            const values = new Map(Object.entries(foundRecord.values));
-            const sortedEntries = new Map([...values.entries()].sort());
-            sortedEntries.forEach((value, key) => {
-              if (key !== tableMetaData.primaryKeyField) {
-                nameValues.push(
-                  <MDBox key={key} display="flex" py={1} pr={2}>
-                    <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-                      {key}: &nbsp;
-                    </MDTypography>
-                    <MDTypography variant="button" fontWeight="regular" color="text">
-                      &nbsp;{value}
-                    </MDTypography>
-                  </MDBox>
-                );
-              }
-            });
-
-            setLoadCounter(2);
-          });
-        })();
+      // make a call to query (just get all for now, and iterate and filter like a caveman)
+      const records = await qController.query(tableName, 250);
+      let foundRecord: QRecord;
+      records.forEach((innerRecord) => {
+        const fieldKeys = [...innerRecord.values.keys()];
+        fieldKeys.forEach((key) => {
+          const value = innerRecord.values.get(key);
+          if (key === tableMetaData.primaryKeyField && `${value}` === `${id}`) {
+            foundRecord = innerRecord;
+            setRecord(innerRecord);
+          }
+        });
       });
+
+      nameValues.push(
+        <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>
+          <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+            {tableMetaData.primaryKeyField}: &nbsp;
+          </MDTypography>
+          <MDTypography variant="button" fontWeight="regular" color="text">
+            &nbsp;{id}
+          </MDTypography>
+        </MDBox>
+      );
+
+      const sortedKeys = [...foundRecord.values.keys()].sort();
+      sortedKeys.forEach((key) => {
+        if (key !== tableMetaData.primaryKeyField) {
+          nameValues.push(
+            <MDBox key={key} display="flex" py={1} pr={2}>
+              <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+                {tableMetaData.fields.get(key).label}: &nbsp;
+              </MDTypography>
+              <MDTypography variant="button" fontWeight="regular" color="text">
+                &nbsp;{foundRecord.values.get(key)}
+              </MDTypography>
+            </MDBox>
+          );
+        }
+      });
+
+      setLoadCounter(2);
     })();
   }
 
@@ -139,7 +139,7 @@ function ViewContents({ id }: Props): JSX.Element {
     <Card id="basic-info" sx={{ overflow: "visible" }}>
       <MDBox p={3}>
         <MDTypography variant="h5">
-          Viewing {tableMetaData.label} ({id})
+          Viewing {tableMetaData?.label} ({id})
         </MDTypography>
       </MDBox>
       <MDBox p={3}>{nameValues}</MDBox>
@@ -153,7 +153,7 @@ function ViewContents({ id }: Props): JSX.Element {
               size="small"
               onClick={handleConfirmDelete}
             >
-              delete {tableMetaData.label}
+              delete {tableMetaData?.label}
             </MDButton>
             <Dialog
               open={open}
@@ -175,7 +175,7 @@ function ViewContents({ id }: Props): JSX.Element {
               </DialogActions>
             </Dialog>
             <MDButton type="submit" variant="gradient" color="dark" size="small">
-              <Link href={editPath}>edit {tableMetaData.label}</Link>
+              <Link href={editPath}>edit {tableMetaData?.label}</Link>
             </MDButton>
           </MDBox>
         </Grid>

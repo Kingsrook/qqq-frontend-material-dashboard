@@ -75,7 +75,7 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "assets/images/team-3.jpg";
 
 // QQQ
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
 
 import EntityList from "./pages/entity-list";
 
@@ -386,36 +386,34 @@ const qqqRoutes = [
   { type: "title", title: "Tables", key: "title-docs" },
 ];
 
-const qController = new QController("");
+const qController = new QControllerV3("");
 console.log(qController);
 
 (async () => {
-  await qController.loadMetaData().then((metaData) => {
-    console.log(`metaData: ${metaData}`);
+  const metaData = await qController.loadMetaData();
+  console.log(`metaData: ${metaData}`);
 
-    // get the keys sorted
-    const keys = new Map([...metaData.entries()].sort());
-
-    const tableList = [] as any[];
-    keys.forEach((value, key) => {
-      const table = metaData.get(key);
-      tableList.push({
-        name: table.label,
-        key: table.name,
-        route: `/${table.name}/list`,
-        component: <EntityList table={table} />,
-      });
+  // get the keys sorted
+  const keys = [...metaData.keys()].sort();
+  const tableList = [] as any[];
+  keys.forEach((key) => {
+    const table = metaData.get(key);
+    tableList.push({
+      name: table.label,
+      key: table.name,
+      route: `/${table.name}/list`,
+      component: <EntityList table={table} />,
     });
-
-    const tables = {
-      type: "collapse",
-      name: "Tables",
-      key: "tables",
-      icon: <Icon fontSize="medium">dashboard</Icon>,
-      collapse: tableList,
-    };
-    qqqRoutes.push(tables);
   });
+
+  const tables = {
+    type: "collapse",
+    name: "Tables",
+    key: "tables",
+    icon: <Icon fontSize="medium">dashboard</Icon>,
+    collapse: tableList,
+  };
+  qqqRoutes.push(tables);
 })();
 
 export default qqqRoutes;

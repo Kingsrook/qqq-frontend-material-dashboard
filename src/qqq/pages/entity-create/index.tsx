@@ -20,8 +20,8 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-import CreateForm from "qqq/pages/components/EntityForm";
-import BaseLayout from "qqq/pages/components/BaseLayout";
+import CreateForm from "qqq/components/EntityForm";
+import BaseLayout from "qqq/components/BaseLayout";
 
 function EntityCreate(): JSX.Element {
   return (

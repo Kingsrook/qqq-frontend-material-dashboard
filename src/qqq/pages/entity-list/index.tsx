@@ -34,13 +34,13 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import DataTable from "examples/Tables/DataTable";
 
 // Data
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QControllerV3 } from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV2";
 import Link from "@mui/material/Link";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import IdCell from "./components/IdCell";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 
-const qController = new QController("");
+const qController = new QControllerV3("");
 console.log(qController);
 
 // Declaring props types for DefaultCell
@@ -65,44 +65,35 @@ function EntityList({ table }: Props): JSX.Element {
   const createPath = `/${table.name}/create`;
 
   (async () => {
-    await qController.loadTableMetaData(table.name).then((tableMetaData) => {
-      (async () => {
-        await qController.query(table.name, 250).then((results) => {
-          dataTableData = {
-            columns: [],
-            rows: [],
-          };
+    const tableMetaData = await qController.loadTableMetaData(table.name);
+    const results = await qController.query(table.name, 250);
+    dataTableData = {
+      columns: [],
+      rows: [],
+    };
 
-          const fields = new Map(Object.entries(tableMetaData.fields));
-          const sortedEntries = new Map([...fields.entries()].sort());
-          sortedEntries.forEach((value, key) => {
-            if (key === tableMetaData.primaryKeyField) {
-              dataTableData.columns.splice(0, 0, {
-                Header: key,
-                accessor: key,
-                Cell: ({ value }: any) => <IdCell id={value} />,
-              });
-            } else {
-              dataTableData.columns.push({
-                Header: key,
-                accessor: key,
-              });
-            }
-          });
-
-          results.forEach((record) => {
-            const row = new Map();
-            const values = new Map(Object.entries(record.values));
-            values.forEach((value, key) => {
-              row.set(key, value);
-            });
-            dataTableData.rows.push(Object.fromEntries(row));
-          });
-
-          setTableState(table.name);
+    const sortedKeys = [...tableMetaData.fields.keys()].sort();
+    sortedKeys.forEach((key) => {
+      const field = tableMetaData.fields.get(key);
+      if (key === tableMetaData.primaryKeyField) {
+        dataTableData.columns.splice(0, 0, {
+          Header: field.label,
+          accessor: key,
+          Cell: ({ value }: any) => <IdCell id={value} />,
         });
-      })();
+      } else {
+        dataTableData.columns.push({
+          Header: field.label,
+          accessor: key,
+        });
+      }
     });
+
+    results.forEach((record) => {
+      dataTableData.rows.push(Object.fromEntries(record.values.entries()));
+    });
+
+    setTableState(table.name);
   })();
 
   const renderMenu = (

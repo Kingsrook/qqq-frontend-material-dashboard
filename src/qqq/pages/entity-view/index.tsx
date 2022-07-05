@@ -23,7 +23,7 @@ import MDBox from "components/MDBox";
 
 // Settings page components
 // import CreateForm from "qqq/pages/entity-create/components/CreateForm";
-import BaseLayout from "qqq/pages/components/BaseLayout";
+import BaseLayout from "qqq/components/BaseLayout";
 import ViewContents from "./components/ViewContents";
 
 function EntityView(): JSX.Element {

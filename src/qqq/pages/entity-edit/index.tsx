@@ -20,9 +20,9 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-import BaseLayout from "qqq/pages/components/BaseLayout";
+import BaseLayout from "qqq/components/BaseLayout";
 import { useParams } from "react-router-dom";
-import EntityForm from "qqq/pages/components/EntityForm";
+import EntityForm from "qqq/components/EntityForm";
 
 function EntityEdit(): JSX.Element {
   const { id } = useParams();
