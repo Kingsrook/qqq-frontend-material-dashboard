@@ -62,18 +62,7 @@ function ViewContents({ id }: Props): JSX.Element {
       const tableMetaData = await qController.loadTableMetaData(tableName);
       setTableMetaData(tableMetaData);
 
-      // TODO: make a call to query (just get all for now, and iterate and filter like a caveman) - FIX!
-      const records = await qController.query(tableName, 250);
-      let foundRecord: QRecord;
-      records.forEach((innerRecord) => {
-        const fieldKeys = [...innerRecord.values.keys()];
-        fieldKeys.forEach((key) => {
-          const value = innerRecord.values.get(key);
-          if (key === tableMetaData.primaryKeyField && `${value}` === `${id}`) {
-            foundRecord = innerRecord;
-          }
-        });
-      });
+      const foundRecord = await qController.get(tableName, id);
 
       nameValues.push(
         <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>

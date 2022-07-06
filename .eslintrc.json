@@ -23,6 +23,8 @@
     "no-console": "off",
     "react/prop-types": "off",
     "no-shadow": "off",
+    "no-unused-vars": "off",
+    "spaced-comment": "off",
     "react/jsx-props-no-spreading": "off",
     "react/react-in-jsx-scope": "off",
     "import/extensions": [

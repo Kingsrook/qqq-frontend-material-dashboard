@@ -60,17 +60,7 @@ function EntityForm({ id }: Props): JSX.Element {
       setTableMetaData(tableMetaData);
 
       if (id !== null) {
-        const records = await qController.query(tableName, 250);
-        let foundRecord: QRecord;
-        records.forEach((innerRecord) => {
-          const fieldKeys = [...innerRecord.values.keys()];
-          fieldKeys.forEach((key) => {
-            const value = innerRecord.values.get(key);
-            if (key === tableMetaData.primaryKeyField && `${value}` === `${id}`) {
-              foundRecord = innerRecord;
-            }
-          });
-        });
+        const foundRecord = await qController.get(tableName, id);
 
         tableMetaData.fields.forEach((fieldMetaData, key) => {
           formValues[key] = foundRecord.values.get(key);

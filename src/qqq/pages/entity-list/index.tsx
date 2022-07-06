@@ -71,7 +71,7 @@ function EntityList({ table }: Props): JSX.Element {
   if (tableState === "") {
     (async () => {
       const tableMetaData = await qController.loadTableMetaData(tableName);
-      // const metaData = await qController.loadMetaData();
+      const metaData = await qController.loadMetaData();
       const results = await qController.query(tableName, 250);
       dataTableData = {
         columns: [],
@@ -170,7 +170,7 @@ function EntityList({ table }: Props): JSX.Element {
                 <Icon>keyboard_arrow_down</Icon>
               </MDButton>
             )}
-            {/* renderActionsMenu */}
+            {renderActionsMenu}
             <MDBox ml={1}>
               <MDButton
                 variant={filtersMenu ? "contained" : "outlined"}
