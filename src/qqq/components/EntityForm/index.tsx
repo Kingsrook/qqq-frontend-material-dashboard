@@ -13,10 +13,14 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-/* eslint-disable no-unused-vars */
-/* eslint-disable spaced-comment */
-
+// react imports
 import { useParams } from "react-router-dom";
+import React, { useReducer, useState } from "react";
+
+// qqq imports
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
@@ -25,19 +29,8 @@ import Grid from "@mui/material/Grid";
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-
-// Settings page components
 import FormField from "layouts/pages/account/components/FormField";
-
-// qqq imports
-import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import React, { useState } from "react";
-import { QTableRecord } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableRecord";
 import MDButton from "../../../components/MDButton";
-
-const qController = new QController("");
 
 // Declaring props types for EntityForm
 interface Props {
@@ -45,32 +38,27 @@ interface Props {
 }
 
 function EntityForm({ id }: Props): JSX.Element {
+  const qController = new QController("");
   const { tableName } = useParams();
+
+  const [asyncLoadInited, setAsyncLoadInited] = useState(false);
+  const [formValues, setFormValues] = useState({} as { [key: string]: string });
   const [formFields, setFormFields] = useState([] as JSX.Element[]);
-  const defaultValues: { [key: string]: string } = {};
-  const [formValues, setFormValues] = useState(defaultValues);
-  const [loadCounter, setLoadCounter] = useState(0);
   const [tableMetaData, setTableMetaData] = useState(null);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const handleInputChange = (e: { target: { name: any; value: any } }) => {
-    console.log("A");
     const { name, value } = e.target;
-    console.log(name);
-    console.log(value);
     formValues[name] = value;
     setFormValues(formValues);
   };
 
-  if (loadCounter === 0) {
-    setLoadCounter(1);
-
+  if (!asyncLoadInited) {
+    setAsyncLoadInited(true);
     (async () => {
-      // await qController.loadTableMetaData(tableName).then((tableMetaData) => {
       const tableMetaData = await qController.loadTableMetaData(tableName);
       setTableMetaData(tableMetaData);
-      const formFields = [] as JSX.Element[];
 
-      // make a call to query (just get all for now, and iterate and filter like a caveman)
       if (id !== null) {
         const records = await qController.query(tableName, 250);
         let foundRecord: QRecord;
@@ -84,55 +72,56 @@ function EntityForm({ id }: Props): JSX.Element {
           });
         });
 
-        const sortedKeys = [...tableMetaData.fields.keys()].sort();
-        sortedKeys.forEach((key) => {
+        tableMetaData.fields.forEach((fieldMetaData, key) => {
           formValues[key] = foundRecord.values.get(key);
-
-          const fieldMetaData = tableMetaData.fields.get(key);
-          if (fieldMetaData.name !== tableMetaData.primaryKeyField) {
-            if (formValues[fieldMetaData.name] == null) {
-              formValues[fieldMetaData.name] = "";
-            }
-
-            formFields.push(
-              <Grid item xs={12} sm={4} key={fieldMetaData.name}>
-                <FormField
-                  key={fieldMetaData.name}
-                  name={fieldMetaData.name}
-                  id={fieldMetaData.name}
-                  label={fieldMetaData.label}
-                  value={formValues[fieldMetaData.name]}
-                  onChange={handleInputChange}
-                />
-              </Grid>
-            );
-          }
         });
 
-        setLoadCounter(2);
         setFormValues(formValues);
-      } else {
-        const sortedKeys = [...tableMetaData.fields.keys()].sort();
-        sortedKeys.forEach((key) => {
-          const fieldMetaData = tableMetaData.fields.get(key);
-          if (fieldMetaData.name !== tableMetaData.primaryKeyField) {
-            formFields.push(
-              <Grid item xs={12} sm={4} key={fieldMetaData.name}>
-                <FormField
-                  key={fieldMetaData.name}
-                  name={fieldMetaData.name}
-                  id={fieldMetaData.name}
-                  label={fieldMetaData.label}
-                  value={formValues[fieldMetaData.name]}
-                  onChange={handleInputChange}
-                />
-              </Grid>
-            );
-          }
-        });
       }
 
+      const sortedKeys = [...tableMetaData.fields.keys()].sort();
+      sortedKeys.forEach((key) => {
+        const fieldMetaData = tableMetaData.fields.get(key);
+        if (fieldMetaData.name !== tableMetaData.primaryKeyField) {
+          let fieldType: string;
+          switch (fieldMetaData.type.toString()) {
+            case QFieldType.DECIMAL:
+            case QFieldType.INTEGER:
+              fieldType = "number";
+              break;
+            case QFieldType.DATE_TIME:
+              fieldType = "datetime-local";
+              break;
+            case QFieldType.PASSWORD:
+            case QFieldType.TIME:
+            case QFieldType.DATE:
+              fieldType = fieldMetaData.type.toString();
+              break;
+            case QFieldType.TEXT:
+            case QFieldType.HTML:
+            case QFieldType.STRING:
+            default:
+              fieldType = "text";
+          }
+
+          formFields.push(
+            <Grid item xs={12} sm={4} key={fieldMetaData.name}>
+              <FormField
+                id={fieldMetaData.name}
+                key={fieldMetaData.name}
+                name={fieldMetaData.name}
+                label={fieldMetaData.label}
+                type={fieldType}
+                defaultValue={formValues[fieldMetaData.name]}
+                onChange={handleInputChange}
+              />
+            </Grid>
+          );
+        }
+      });
+
       setFormFields(formFields);
+      forceUpdate();
     })();
   }
 
@@ -140,13 +129,20 @@ function EntityForm({ id }: Props): JSX.Element {
     event.preventDefault();
 
     (async () => {
-      await qController.create(tableName, formValues).then((record) => {
-        window.location.href = `/${tableName}/view/${record.values.get("id")}`; // todo - primaryKeyField
-      });
+      if (id !== null) {
+        await qController.update(tableName, id, formValues).then((record) => {
+          window.location.href = `/${tableName}/view/${record.values.get("id")}`; // todo - primaryKeyField
+        });
+      } else {
+        await qController.create(tableName, formValues).then((record) => {
+          window.location.href = `/${tableName}/view/${record.values.get("id")}`; // todo - primaryKeyField
+        });
+      }
     })();
   };
 
-  const pageTitle = id != null ? `Edit ${tableMetaData?.label}` : `Create ${tableMetaData?.label}`;
+  const pageTitle =
+    id != null ? `Edit ${tableMetaData?.label} (${id})` : `Create New ${tableMetaData?.label}`;
 
   return (
     <Card id="basic-info" sx={{ overflow: "visible" }}>
@@ -157,6 +153,8 @@ function EntityForm({ id }: Props): JSX.Element {
         <Grid key="fieldsGrid" container spacing={3}>
           {formFields}
         </Grid>
+      </MDBox>
+      <MDBox p={3}>
         <Grid key="buttonGrid" container spacing={3}>
           <MDBox ml="auto">
             <MDButton type="submit" variant="gradient" color="dark" size="small">

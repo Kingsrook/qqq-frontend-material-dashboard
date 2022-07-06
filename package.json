@@ -2,6 +2,7 @@
   "name": "qqq-frontend-material-dashboard",
   "version": "1.0.0",
   "description": "React + TypeScript version of Material Dashboard 2 PRO by Creative Tim",
+  "proxy": "http://localhost:8000",
   "dependencies": {
     "@asseinfo/react-kanban": "2.2.0",
     "@emotion/cache": "11.7.1",

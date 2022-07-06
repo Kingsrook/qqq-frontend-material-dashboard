@@ -36,10 +36,6 @@ import theme from "assets/theme";
 // Material Dashboard 2 PRO React TS Dark Mode themes
 import themeDark from "assets/theme-dark";
 
-// RTL plugins
-import rtlPlugin from "stylis-plugin-rtl";
-import createCache from "@emotion/cache";
-
 // Material Dashboard 2 PRO React TS routes
 import routes from "qqq/qqqRoutes";
 
@@ -170,11 +166,11 @@ export default function App() {
       {layout === "vr" && <Configurator />}
       <Routes>
         <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
-        <Route path="/:tableName/list" element={entityListElement} key="entity-list" />;
+        <Route path="/:tableName" element={entityListElement} key="entity-list" />;
         <Route path="/:tableName/create" element={entityCreateElement} key="entity-create" />;
-        <Route path="/:tableName/view/:id" element={entityViewElement} key="entity-view" />;
-        <Route path="/:tableName/edit/:id" element={entityEditElement} key="entity-edit" />;
         <Route path="/processes/:processName" element={processRunElement} key="process-run" />;
+        <Route path="/:tableName/:id" element={entityViewElement} key="entity-view" />;
+        <Route path="/:tableName/:id/edit" element={entityEditElement} key="entity-edit" />;
         {getRoutes(routes)}
       </Routes>
     </ThemeProvider>

@@ -30,7 +30,7 @@ interface Props {
 function IdCell({ id, checked }: Props): JSX.Element {
   const pathParts = window.location.pathname.split("/");
   const tableName = pathParts[1];
-  const href = `/${tableName}/view/${id}/`;
+  const href = `/${tableName}/${id}`;
   const link = <Link href={href}>{id}</Link>;
 
   return (

@@ -13,15 +13,18 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-/* eslint-disable no-unused-vars */
-/* eslint-disable spaced-comment */
-/* eslint-disable react/no-array-index-key */
-
 import { useParams } from "react-router-dom";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
@@ -32,21 +35,11 @@ import MDTypography from "components/MDTypography";
 // qqq imports
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import React, { useState } from "react";
+import React, { useReducer, useState } from "react";
 
-import Link from "@mui/material/Link";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
-
-import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import MDButton from "../../../../../components/MDButton";
 
 const qController = new QController("");
-console.log(qController);
 
 // Declaring props types for ViewForm
 interface Props {
@@ -55,32 +48,21 @@ interface Props {
 
 function ViewContents({ id }: Props): JSX.Element {
   const { tableName } = useParams();
+
+  const [asyncLoadInited, setAsyncLoadInited] = useState(false);
   const [nameValues, setNameValues] = useState([] as JSX.Element[]);
-  const [loadCounter, setLoadCounter] = useState(0);
   const [open, setOpen] = useState(false);
   const [tableMetaData, setTableMetaData] = useState(null);
-  const [record, setRecord] = useState(null);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const handleConfirmDelete = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-
-    (async () => {
-      await qController.delete(tableName, id).then((results) => {
-        window.location.href = `/${tableName}/list/`;
-      });
-    })();
-  };
-
-  if (loadCounter === 0) {
-    setLoadCounter(1);
+  if (!asyncLoadInited) {
+    setAsyncLoadInited(true);
 
     (async () => {
       const tableMetaData = await qController.loadTableMetaData(tableName);
-      console.log("@dk: table meta data");
-      console.log(tableMetaData);
       setTableMetaData(tableMetaData);
 
-      // make a call to query (just get all for now, and iterate and filter like a caveman)
+      // TODO: make a call to query (just get all for now, and iterate and filter like a caveman) - FIX!
       const records = await qController.query(tableName, 250);
       let foundRecord: QRecord;
       records.forEach((innerRecord) => {
@@ -89,7 +71,6 @@ function ViewContents({ id }: Props): JSX.Element {
           const value = innerRecord.values.get(key);
           if (key === tableMetaData.primaryKeyField && `${value}` === `${id}`) {
             foundRecord = innerRecord;
-            setRecord(innerRecord);
           }
         });
       });
@@ -121,17 +102,31 @@ function ViewContents({ id }: Props): JSX.Element {
         }
       });
 
-      setLoadCounter(2);
+      setNameValues(nameValues);
+      forceUpdate();
     })();
   }
 
-  const handleConfirmDeleteOpen = () => {
-    // setOpen(true);
+  const handleClickConfirmOpen = () => {
+    setOpen(true);
   };
 
-  const handleConfirmDeleteClose = () => {
-    // setOpen(false);
+  const handleClickConfirmClose = () => {
+    setOpen(false);
   };
+
+  /*
+  const handleDelete = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    /*
+    (async () => {
+      await qController.delete(tableName, id).then(() => {
+        window.location.href = `/${tableName}/list/`;
+      });
+    })();
+
+  };
+     */
 
   const editPath = `/${tableName}/edit/${id}`;
 
@@ -145,19 +140,19 @@ function ViewContents({ id }: Props): JSX.Element {
       <MDBox p={3}>{nameValues}</MDBox>
       <MDBox component="form" pb={3} px={3}>
         <Grid key="tres" container spacing={3}>
-          <MDBox ml="auto" mr={5}>
+          <MDBox ml="auto" mr={3}>
             <MDButton
               type="submit"
               variant="gradient"
               color="primary"
               size="small"
-              onClick={handleConfirmDelete}
+              onClick={handleClickConfirmOpen}
             >
               delete {tableMetaData?.label}
             </MDButton>
             <Dialog
               open={open}
-              onClose={handleConfirmDeleteClose}
+              onClose={handleClickConfirmClose}
               aria-labelledby="alert-dialog-title"
               aria-describedby="alert-dialog-description"
             >
@@ -168,12 +163,14 @@ function ViewContents({ id }: Props): JSX.Element {
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleConfirmDeleteClose}>No</Button>
-                <Button onClick={handleConfirmDelete} autoFocus>
+                <Button onClick={handleClickConfirmClose}>No</Button>
+                <Button onClick={handleClickConfirmClose} autoFocus>
                   Yes
                 </Button>
               </DialogActions>
             </Dialog>
+          </MDBox>
+          <MDBox>
             <MDButton type="submit" variant="gradient" color="dark" size="small">
               <Link href={editPath}>edit {tableMetaData?.label}</Link>
             </MDButton>

@@ -39,9 +39,8 @@ import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QContr
 import Link from "@mui/material/Link";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import { useParams } from "react-router-dom";
-import IdCell from "./components/IdCell";
 import Footer from "../../components/Footer";
-import EntityForm from "../../components/EntityForm";
+import IdCell from "../../components/EntityForm/components/IdCell";
 
 const qController = new QController("");
 
@@ -69,12 +68,10 @@ function EntityList({ table }: Props): JSX.Element {
   const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
   const closeFiltersMenu = () => setFiltersMenu(null);
 
-  const createPath = `/${tableName}/create`;
-
   if (tableState === "") {
     (async () => {
       const tableMetaData = await qController.loadTableMetaData(tableName);
-      const metaData = await qController.loadMetaData();
+      // const metaData = await qController.loadMetaData();
       const results = await qController.query(tableName, 250);
       dataTableData = {
         columns: [],
@@ -160,7 +157,7 @@ function EntityList({ table }: Props): JSX.Element {
       <MDBox my={3}>
         <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
           <MDButton variant="gradient" color="info">
-            <Link href={createPath}>new {tableName}</Link>
+            <Link href={`/${tableName}/create`}>new {tableName}</Link>
           </MDButton>
           <MDBox display="flex">
             {tableProcesses.length > 0 && (
@@ -173,7 +170,7 @@ function EntityList({ table }: Props): JSX.Element {
                 <Icon>keyboard_arrow_down</Icon>
               </MDButton>
             )}
-            {renderActionsMenu}
+            {/* renderActionsMenu */}
             <MDBox ml={1}>
               <MDButton
                 variant={filtersMenu ? "contained" : "outlined"}
