@@ -19,8 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// misc imports
 import * as Yup from "yup";
 
+// qqq imports
 import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 
@@ -55,9 +57,12 @@ class DynamicFormUtils {
           fieldType = "text";
       }
 
+      let label = field.label ? field.label : field.name;
+      label += field.isRequired ? " *" : "";
+
       dynamicFormFields[field.name] = {
         name: field.name,
-        label: field.label ? field.label : field.name,
+        label: label,
         isRequired: field.isRequired,
         type: fieldType,
         // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",

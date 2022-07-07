@@ -70,7 +70,6 @@ function QDynamicForm(props: Props): JSX.Element {
               return (
                 <Grid item xs={12} sm={6} key={fieldName}>
                   <FormField
-                    required={field.isRequired}
                     type={field.type}
                     label={field.label}
                     name={fieldName}

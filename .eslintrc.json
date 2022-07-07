@@ -25,6 +25,7 @@
     "no-shadow": "off",
     "no-unused-vars": "off",
     "spaced-comment": "off",
+    "object-shorthand": "off",
     "react/jsx-props-no-spreading": "off",
     "react/react-in-jsx-scope": "off",
     "import/extensions": [

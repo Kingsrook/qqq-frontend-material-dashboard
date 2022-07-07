@@ -91,18 +91,15 @@ function ProcessRun(): JSX.Element {
       setActiveStep(activeStep);
       setFormId(activeStep.name);
 
-      const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
-        activeStep.formFields
-      );
-
-      const formFields: any = {};
       const initialValues: any = {};
-      const validations: any = {};
-
       activeStep.formFields.forEach((field) => {
         // todo - not working - also, needs real value.
         initialValues[field.name] = "Hi";
       });
+
+      const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
+        activeStep.formFields
+      );
 
       setFormFields(dynamicFormFields);
       setInitialValues(initialValues);
