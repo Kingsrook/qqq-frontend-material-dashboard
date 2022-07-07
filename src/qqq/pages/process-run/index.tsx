@@ -45,6 +45,7 @@ import * as Yup from "yup";
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import { QFrontendStepMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import { useParams } from "react-router-dom";
+import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
 import QDynamicForm from "../../components/QDynamicForm";
 
 function getDynamicStepContent(stepIndex: number, stepParam: any, formData: any): JSX.Element {
@@ -57,7 +58,7 @@ function getDynamicStepContent(stepIndex: number, stepParam: any, formData: any)
     return <div>Loading...</div>;
   }
 
-  return <QDynamicForm formData={formData} step={step} />;
+  return <QDynamicForm formData={formData} formLabel={step.name} />;
 }
 
 const qController = new QController("");
@@ -90,31 +91,23 @@ function ProcessRun(): JSX.Element {
       setActiveStep(activeStep);
       setFormId(activeStep.name);
 
+      const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
+        activeStep.formFields
+      );
+
       const formFields: any = {};
       const initialValues: any = {};
       const validations: any = {};
 
       activeStep.formFields.forEach((field) => {
-        formFields[field.name] = {
-          name: field.name,
-          label: field.label,
-          type: "text", // todo better
-          // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
-        };
-
         // todo - not working - also, needs real value.
         initialValues[field.name] = "Hi";
-
-        // todo - all this based on type and other metadata.
-        //  see src/layouts/pages/users/new-user/schemas/validations.ts
-        validations[field.name] = Yup.string().required(`${field.label} is required.`);
-        // validations[field.name] = Yup.string().optional();
       });
 
-      setFormFields(formFields);
+      setFormFields(dynamicFormFields);
       setInitialValues(initialValues);
-      setValidations(Yup.object().shape(validations));
-      console.log(`in updateActiveStep: formFields ${JSON.stringify(formFields)}`);
+      setValidations(Yup.object().shape(formValidations));
+      console.log(`in updateActiveStep: formFields ${JSON.stringify(dynamicFormFields)}`);
       console.log(`in updateActiveStep: initialValues ${JSON.stringify(initialValues)}`);
     }
   };

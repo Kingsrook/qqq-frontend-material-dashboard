@@ -13,7 +13,9 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
+// react components
 import { useParams } from "react-router-dom";
+import React, { useReducer, useState } from "react";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
@@ -26,17 +28,12 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 
+// qqq imports
+import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-
-// Settings page components
-
-// qqq imports
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QRecord } from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import React, { useReducer, useState } from "react";
-
 import MDButton from "../../../../../components/MDButton";
 
 const qController = new QController("");
@@ -104,20 +101,16 @@ function ViewContents({ id }: Props): JSX.Element {
     setOpen(false);
   };
 
-  /*
   const handleDelete = (event: { preventDefault: () => void }) => {
     event.preventDefault();
-    /*
     (async () => {
       await qController.delete(tableName, id).then(() => {
-        window.location.href = `/${tableName}/list/`;
+        window.location.href = `/${tableName}`;
       });
     })();
-
   };
-     */
 
-  const editPath = `/${tableName}/edit/${id}`;
+  const editPath = `/${tableName}/${id}/edit`;
 
   return (
     <Card id="basic-info" sx={{ overflow: "visible" }}>
@@ -131,7 +124,6 @@ function ViewContents({ id }: Props): JSX.Element {
         <Grid key="tres" container spacing={3}>
           <MDBox ml="auto" mr={3}>
             <MDButton
-              type="submit"
               variant="gradient"
               color="primary"
               size="small"
@@ -153,14 +145,14 @@ function ViewContents({ id }: Props): JSX.Element {
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleClickConfirmClose}>No</Button>
-                <Button onClick={handleClickConfirmClose} autoFocus>
+                <Button onClick={handleDelete} autoFocus>
                   Yes
                 </Button>
               </DialogActions>
             </Dialog>
           </MDBox>
           <MDBox>
-            <MDButton type="submit" variant="gradient" color="dark" size="small">
+            <MDButton variant="gradient" color="dark" size="small">
               <Link href={editPath}>edit {tableMetaData?.label}</Link>
             </MDButton>
           </MDBox>

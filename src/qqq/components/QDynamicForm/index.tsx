@@ -25,29 +25,30 @@ import FormField from "layouts/pages/users/new-user/components/FormField";
 import { QFrontendStepMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 
 interface Props {
+  formLabel?: string;
   formData: any;
-  step?: QFrontendStepMetaData | undefined;
+  primaryKeyId?: string;
 }
 
 function QDynamicForm(props: Props): JSX.Element {
-  const { formData, step } = props;
+  const { formData, formLabel, primaryKeyId } = props;
   const { formFields, values, errors, touched } = formData;
 
   /*
-    const {
-      firstName: firstNameV,
-      lastName: lastNameV,
-      company: companyV,
-      email: emailV,
-      password: passwordV,
-      repeatPassword: repeatPasswordV,
-    } = values;
-    */
+        const {
+          firstName: firstNameV,
+          lastName: lastNameV,
+          company: companyV,
+          email: emailV,
+          password: passwordV,
+          repeatPassword: repeatPasswordV,
+        } = values;
+        */
 
   return (
     <MDBox>
       <MDBox lineHeight={0}>
-        <MDTypography variant="h5">{step?.label}</MDTypography>
+        <MDTypography variant="h5">{formLabel}</MDTypography>
         {/* TODO - help text
         <MDTypography variant="button" color="text">
           Mandatory information
@@ -60,12 +61,16 @@ function QDynamicForm(props: Props): JSX.Element {
             Object.keys(formFields).length > 0 &&
             Object.keys(formFields).map((fieldName: any) => {
               const field = formFields[fieldName];
+              if (primaryKeyId && fieldName === primaryKeyId) {
+                return null;
+              }
               if (values[fieldName] === undefined) {
                 values[fieldName] = "";
               }
               return (
                 <Grid item xs={12} sm={6} key={fieldName}>
                   <FormField
+                    required={field.isRequired}
                     type={field.type}
                     label={field.label}
                     name={fieldName}
@@ -156,7 +161,8 @@ function QDynamicForm(props: Props): JSX.Element {
 }
 
 QDynamicForm.defaultProps = {
-  step: undefined,
+  formLabel: undefined,
+  primaryKeyId: undefined,
 };
 
 export default QDynamicForm;
