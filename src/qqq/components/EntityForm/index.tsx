@@ -100,7 +100,7 @@ function EntityForm({ id }: Props): JSX.Element {
     })();
   };
 
-  const pageTitle =
+  const formTitle =
     id != null ? `Edit ${tableMetaData?.label} (${id})` : `Create New ${tableMetaData?.label}`;
   const formId =
     id != null ? `edit-${tableMetaData?.label}-form` : `create-${tableMetaData?.label}-form`;
@@ -108,7 +108,7 @@ function EntityForm({ id }: Props): JSX.Element {
   return (
     <Card id="edit-form-container" sx={{ overflow: "visible" }}>
       <MDBox p={3}>
-        <MDTypography variant="h5">{pageTitle}</MDTypography>
+        <MDTypography variant="h5">{formTitle}</MDTypography>
       </MDBox>
       <MDBox pb={3} px={3}>
         <Grid key="fields-grid" container spacing={3}>
@@ -120,24 +120,22 @@ function EntityForm({ id }: Props): JSX.Element {
             {({ values, errors, touched, isSubmitting }) => (
               <Form id={formId} autoComplete="off">
                 <MDBox p={3} width="100%">
-                  <MDBox>
-                    {/***************************************************************************
-                     ** step content - e.g., the appropriate form or other screen for the step **
-                     ***************************************************************************/}
-                    {getDynamicStepContent({
-                      values,
-                      touched,
-                      formFields,
-                      errors,
-                    })}
-                    <Grid key="buttonGrid" container spacing={3}>
-                      <MDBox mt={5} ml="auto">
-                        <MDButton type="submit" variant="gradient" color="dark" size="small">
-                          save {tableMetaData?.label}
-                        </MDButton>
-                      </MDBox>
-                    </Grid>
-                  </MDBox>
+                  {/***************************************************************************
+                   ** step content - e.g., the appropriate form or other screen for the step **
+                   ***************************************************************************/}
+                  {getDynamicStepContent({
+                    values,
+                    touched,
+                    formFields,
+                    errors,
+                  })}
+                  <Grid key="buttonGrid" container spacing={3}>
+                    <MDBox mt={5} ml="auto">
+                      <MDButton type="submit" variant="gradient" color="dark" size="small">
+                        save {tableMetaData?.label}
+                      </MDButton>
+                    </MDBox>
+                  </Grid>
                 </MDBox>
               </Form>
             )}

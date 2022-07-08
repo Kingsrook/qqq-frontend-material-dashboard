@@ -14,7 +14,7 @@
  */
 /*  eslint-disable react/no-unstable-nested-components */
 
-import React, { useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 
 // @mui material components
 import Card from "@mui/material/Card";
@@ -23,82 +23,108 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-
-// Material Dashboard 2 PRO React TS examples components
-import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
-import DataTable from "examples/Tables/DataTable";
-
-// QQQ
-import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { useParams } from "react-router-dom";
-import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
+import { makeStyles } from "@mui/material";
+import { DataGrid, GridColDef, GridRowParams, GridRowsProp } from "@mui/x-data-grid";
 
 // Material Dashboard 2 PRO React TS components
+import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
+import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
-import Footer from "../../components/Footer";
-import IdCell from "../../components/EntityForm/components/IdCell";
 
-const qController = new QController("");
+// QQQ
+import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import { useParams } from "react-router-dom";
+import QClient from "qqq/utils/QClient";
+import Footer from "../../components/Footer";
 
 // Declaring props types for DefaultCell
 interface Props {
   table?: QTableMetaData;
 }
 
-let dataTableData = {
-  columns: [] as any[],
-  rows: [] as any[],
-};
-
 function EntityList({ table }: Props): JSX.Element {
   const tableNameParam = useParams().tableName;
   const tableName = table === null ? tableNameParam : table.name;
+
+  const [tableState, setTableState] = useState("");
   const [filtersMenu, setFiltersMenu] = useState(null);
   const [actionsMenu, setActionsMenu] = useState(null);
-  const [tableState, setTableState] = useState("");
   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
-  console.log(tableState);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [columns, setColumns] = useState([] as GridColDef[]);
+  const [rows, setRows] = useState([] as GridRowsProp[]);
+  const [loading, setLoading] = useState(true);
+
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
   const closeActionsMenu = () => setActionsMenu(null);
   const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
   const closeFiltersMenu = () => setFiltersMenu(null);
 
-  if (tableState === "") {
+  console.log("DERPSSS");
+  console.log(`hoc${tableState}`);
+
+  const updateTable = () => {
     (async () => {
-      const tableMetaData = await qController.loadTableMetaData(tableName);
-      const metaData = await qController.loadMetaData();
-      const results = await qController.query(tableName, 250);
-      dataTableData = {
-        columns: [],
-        rows: [],
-      };
+      const tableMetaData = await QClient.loadTableMetaData(tableName);
+      const count = await QClient.count(tableName);
+      setTotalRecords(count);
+
+      const columns = [] as GridColDef[];
+      const results = await QClient.query(tableName, rowsPerPage, pageNumber * rowsPerPage);
+
+      const rows = [] as any[];
+      results.forEach((record) => {
+        rows.push(Object.fromEntries(record.values.entries()));
+      });
 
       const sortedKeys = [...tableMetaData.fields.keys()].sort();
       sortedKeys.forEach((key) => {
         const field = tableMetaData.fields.get(key);
+
+        const column = {
+          field: field.name,
+          headerName: field.label,
+          width: 200,
+        };
+
         if (key === tableMetaData.primaryKeyField) {
-          dataTableData.columns.splice(0, 0, {
-            Header: field.label,
-            accessor: key,
-            Cell: ({ value }: any) => <IdCell id={value} />,
-          });
+          columns.splice(0, 0, column);
         } else {
-          dataTableData.columns.push({
-            Header: field.label,
-            accessor: key,
-          });
+          columns.push(column);
         }
       });
 
-      results.forEach((record) => {
-        dataTableData.rows.push(Object.fromEntries(record.values.entries()));
-      });
+      setColumns(columns);
+      setRows(rows);
+      setLoading(false);
+      forceUpdate();
+    })();
+  };
+
+  const handlePageChange = (page: number) => {
+    setPageNumber(page);
+  };
+
+  const handleRowsPerPageChange = (size: number) => {
+    setRowsPerPage(size);
+  };
+
+  const handleRowClick = (params: GridRowParams) => {
+    document.location.href = `/${tableName}/${params.id}`;
+  };
+
+  if (tableName !== tableState) {
+    (async () => {
+      console.log("DDDDDDDDDDDDOOOOOOOOOOO ITTTTTTTTTTTT");
+      setTableState(tableName);
+      const metaData = await QClient.loadMetaData();
 
       const matchingProcesses: QProcessMetaData[] = [];
       const processKeys = [...metaData.processes.keys()];
@@ -110,7 +136,8 @@ function EntityList({ table }: Props): JSX.Element {
       });
       setTableProcesses(matchingProcesses);
 
-      setTableState(tableName);
+      // reset rows to trigger rerender
+      setRows([]);
     })();
   }
 
@@ -152,6 +179,10 @@ function EntityList({ table }: Props): JSX.Element {
     </Menu>
   );
 
+  useEffect(() => {
+    updateTable();
+  }, [pageNumber, rowsPerPage, tableState]);
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -192,7 +223,26 @@ function EntityList({ table }: Props): JSX.Element {
           </MDBox>
         </MDBox>
         <Card>
-          <DataTable table={dataTableData} entriesPerPage={false} canSearch />
+          <MDBox height="100%">
+            <DataGrid
+              page={pageNumber}
+              checkboxSelection
+              disableSelectionOnClick
+              autoHeight
+              rows={rows}
+              columns={columns}
+              rowBuffer={10}
+              rowCount={totalRecords}
+              pageSize={rowsPerPage}
+              rowsPerPageOptions={[10, 25, 50]}
+              onPageSizeChange={handleRowsPerPageChange}
+              onPageChange={handlePageChange}
+              onRowClick={handleRowClick}
+              paginationMode="server"
+              density="compact"
+              loading={loading}
+            />
+          </MDBox>
         </Card>
       </MDBox>
       <Footer />
@@ -200,7 +250,6 @@ function EntityList({ table }: Props): JSX.Element {
   );
 }
 
-// Declaring default props for DefaultCell
 EntityList.defaultProps = {
   table: null,
 };
