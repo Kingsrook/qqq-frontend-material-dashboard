@@ -53,7 +53,7 @@ function EntityList({ table }: Props): JSX.Element {
   const [filtersMenu, setFiltersMenu] = useState(null);
   const [actionsMenu, setActionsMenu] = useState(null);
   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pageNumber, setPageNumber] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [columns, setColumns] = useState([] as GridColDef[]);
@@ -66,9 +66,6 @@ function EntityList({ table }: Props): JSX.Element {
   const closeActionsMenu = () => setActionsMenu(null);
   const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
   const closeFiltersMenu = () => setFiltersMenu(null);
-
-  console.log("DERPSSS");
-  console.log(`hoc${tableState}`);
 
   const updateTable = () => {
     (async () => {
@@ -122,7 +119,6 @@ function EntityList({ table }: Props): JSX.Element {
 
   if (tableName !== tableState) {
     (async () => {
-      console.log("DDDDDDDDDDDDOOOOOOOOOOO ITTTTTTTTTTTT");
       setTableState(tableName);
       const metaData = await QClient.loadMetaData();
 
