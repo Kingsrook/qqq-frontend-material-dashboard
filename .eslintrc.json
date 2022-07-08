@@ -24,6 +24,7 @@
     "react/prop-types": "off",
     "no-shadow": "off",
     "no-unused-vars": "off",
+    "no-plusplus": "off",
     "spaced-comment": "off",
     "object-shorthand": "off",
     "react/jsx-props-no-spreading": "off",

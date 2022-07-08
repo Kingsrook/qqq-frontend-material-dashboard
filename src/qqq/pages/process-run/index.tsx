@@ -13,7 +13,7 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 
 // formik components
 import { Formik, Form } from "formik";
@@ -34,56 +34,106 @@ import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
 
-// ProcessRun page components
-import UserInfo from "layouts/pages/users/new-user/components/UserInfo";
-import Address from "layouts/pages/users/new-user/components/Address";
-import Socials from "layouts/pages/users/new-user/components/Socials";
-import Profile from "layouts/pages/users/new-user/components/Profile";
-
 // ProcessRun layout schemas for form and form fields
 import * as Yup from "yup";
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import { QFrontendStepMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import { useParams } from "react-router-dom";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
+import { QJobStarted } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
+import { QJobComplete } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
+import { QJobError } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import { QJobRunning } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
 import QDynamicForm from "../../components/QDynamicForm";
+import MDTypography from "../../../components/MDTypography";
 
-function getDynamicStepContent(stepIndex: number, stepParam: any, formData: any): JSX.Element {
+function getDynamicStepContent(
+  stepIndex: number,
+  step: any,
+  formData: any,
+  processError: string
+): JSX.Element {
   const { formFields, values, errors, touched } = formData;
-  const { step } = stepParam;
   // console.log(`in getDynamicStepContent: step label ${step?.label}`);
 
   if (!Object.keys(formFields).length) {
-    console.log("in getDynamicStepContent.  No fields yet, so returning 'loading'");
+    // console.log("in getDynamicStepContent.  No fields yet, so returning 'loading'");
     return <div>Loading...</div>;
   }
 
-  return <QDynamicForm formData={formData} formLabel={step.name} />;
+  if (processError) {
+    return (
+      <>
+        <MDTypography color="error" variant="h3">
+          Error
+        </MDTypography>
+        <div>{processError}</div>
+      </>
+    );
+  }
+
+  return <QDynamicForm formData={formData} formLabel={step.label} />;
+}
+
+function trace(name: string, isComponent: boolean = false) {
+  if (isComponent) {
+    console.log(`COMPONENT: ${name}`);
+  } else {
+    console.log(`  function: ${name}`);
+  }
 }
 
 const qController = new QController("");
-console.log(qController);
 
 function ProcessRun(): JSX.Element {
   const { processName } = useParams();
+  const [processUUID, setProcessUUID] = useState(null as string);
+  const [jobUUID, setJobUUID] = useState(null as string);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(null as QFrontendStepMetaData);
+  const [newStep, setNewStep] = useState(null);
   const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
-  const [loadCounter, setLoadCounter] = useState(0);
+  const [needInitialLoad, setNeedInitialLoad] = useState(true);
   const [processMetaData, setProcessMetaData] = useState(null);
+  const [processValues, setProcessValues] = useState({} as any);
+  const [lastProcessResponse, setLastProcessResponse] = useState(
+    null as QJobStarted | QJobComplete | QJobError | QJobRunning
+  );
   const [formId, setFormId] = useState("");
   const [formFields, setFormFields] = useState({});
   const [initialValues, setInitialValues] = useState({});
   const [validations, setValidations] = useState({});
-  // const currentValidation = validations[activeStepIndex];
-  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
-  const isLastStep = activeStepIndex === steps.length - 1;
+  const [needToCheckJobStatus, setNeedToCheckJobStatus] = useState(false);
+  const [processError, setProcessError] = useState(null as string);
+  const onLastStep = activeStepIndex === steps.length - 2;
+  const noMoreSteps = activeStepIndex === steps.length - 1;
 
-  console.log("In the function");
+  trace("ProcessRun", true);
 
-  const updateActiveStep = (newIndex: number, steps: QFrontendStepMetaData[]) => {
-    console.log(`Steps are: ${steps}`);
-    console.log(`Setting step to ${newIndex}`);
+  useEffect(() => {
+    trace("updateActiveStep");
+
+    if (!processMetaData) {
+      console.log("No process meta data yet, so returning early");
+      return;
+    }
+
+    // console.log(`Steps are: ${steps}`);
+    // console.log(`Setting step to ${newStep}`);
+    let newIndex = null;
+    if (typeof newStep === "number") {
+      newIndex = newStep as number;
+    } else if (typeof newStep === "string") {
+      for (let i = 0; i < steps.length; i++) {
+        if (steps[i].name === newStep) {
+          newIndex = i;
+          break;
+        }
+      }
+    }
+    if (newIndex === null) {
+      setProcessError(`Unknown process step ${newStep}.`);
+    }
     setActiveStepIndex(newIndex);
 
     if (steps) {
@@ -93,8 +143,7 @@ function ProcessRun(): JSX.Element {
 
       const initialValues: any = {};
       activeStep.formFields.forEach((field) => {
-        // todo - not working - also, needs real value.
-        initialValues[field.name] = "Hi";
+        initialValues[field.name] = processValues[field.name];
       });
 
       const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
@@ -104,54 +153,94 @@ function ProcessRun(): JSX.Element {
       setFormFields(dynamicFormFields);
       setInitialValues(initialValues);
       setValidations(Yup.object().shape(formValidations));
-      console.log(`in updateActiveStep: formFields ${JSON.stringify(dynamicFormFields)}`);
-      console.log(`in updateActiveStep: initialValues ${JSON.stringify(initialValues)}`);
+      // console.log(`in updateActiveStep: formFields ${JSON.stringify(dynamicFormFields)}`);
+      // console.log(`in updateActiveStep: initialValues ${JSON.stringify(initialValues)}`);
     }
-  };
+  }, [newStep]);
 
-  const doInitialLoad = async () => {
-    console.log("Starting doInitialLoad");
-    const processMetaData = await qController.loadProcessMetaData(processName);
-    console.log(processMetaData);
-    setProcessMetaData(processMetaData);
-    setSteps(processMetaData.frontendSteps);
-    updateActiveStep(0, processMetaData.frontendSteps);
-    console.log("Done with doInitialLoad");
-  };
+  useEffect(() => {
+    if (lastProcessResponse) {
+      trace("handleProcessResponse");
+      setLastProcessResponse(null);
+      if (lastProcessResponse instanceof QJobComplete) {
+        const qJobComplete = lastProcessResponse as QJobComplete;
+        console.log("Setting new step.");
+        setNewStep(qJobComplete.nextStep);
+        setProcessValues(qJobComplete.values);
+        // console.log(`Updated process values: ${JSON.stringify(qJobComplete.values)}`);
+      } else if (lastProcessResponse instanceof QJobStarted) {
+        const qJobStarted = lastProcessResponse as QJobStarted;
+        setJobUUID(qJobStarted.jobUUID);
+        setNeedToCheckJobStatus(true);
+      } else if (lastProcessResponse instanceof QJobRunning) {
+        const qJobRunning = lastProcessResponse as QJobRunning;
+        setNeedToCheckJobStatus(true);
+      } else if (lastProcessResponse instanceof QJobError) {
+        const qJobError = lastProcessResponse as QJobError;
+        console.log(`Got an error from the backend... ${qJobError.error}`);
+        setProcessError(qJobError.error);
+      }
+    }
+  }, [lastProcessResponse]);
 
-  if (loadCounter === 0) {
-    setLoadCounter(1);
-    doInitialLoad();
+  useEffect(() => {
+    if (needToCheckJobStatus) {
+      trace("checkJobStatus");
+      setNeedToCheckJobStatus(false);
+      (async () => {
+        const processResponse = await qController.processJobStatus(
+          processName,
+          processUUID,
+          jobUUID
+        );
+        setLastProcessResponse(processResponse);
+      })();
+    }
+  }, [needToCheckJobStatus]);
+
+  if (needInitialLoad) {
+    trace("initialLoad");
+    setNeedInitialLoad(false);
+    (async () => {
+      const processMetaData = await qController.loadProcessMetaData(processName);
+      // console.log(processMetaData);
+      setProcessMetaData(processMetaData);
+      setSteps(processMetaData.frontendSteps);
+
+      const processResponse = await qController.processInit(processName);
+      setProcessUUID(processResponse.processUUID);
+      setLastProcessResponse(processResponse);
+      // console.log(processResponse);
+    })();
   }
 
-  const sleep = (ms: any) =>
-    new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  const handleBack = () => updateActiveStep(activeStepIndex - 1, processMetaData.frontendSteps);
+  const handleBack = () => {
+    trace("handleBack");
+    setNewStep(activeStepIndex - 1);
+  };
 
-  const submitForm = async (values: any, actions: any) => {
-    await sleep(1000);
-
+  const handleSubmit = async (values: any, actions: any) => {
+    trace("handleSubmit");
     // eslint-disable-next-line no-alert
-    alert(JSON.stringify(values, null, 2));
+    // alert(JSON.stringify(values, null, 2));
+
+    let queryString = "";
+    Object.keys(values).forEach((key) => {
+      queryString += `${key}=${encodeURIComponent(values[key])}&`;
+    });
+    // eslint-disable-next-line no-alert
+    // alert(queryString);
 
     actions.setSubmitting(false);
     actions.resetForm();
 
-    updateActiveStep(0, processMetaData.frontendSteps);
-  };
-
-  const handleSubmit = (values: any, actions: any) => {
-    submitForm(values, actions);
-
-    // if (isLastStep) {
-    //   submitForm(values, actions);
-    // } else {
-    //   updateActiveStep(activeStepIndex + 1, processMetaData.frontendSteps);
-    //   actions.setTouched({});
-    //   actions.setSubmitting(false);
-    // }
+    const processResponse = await qController.processStep(
+      processName,
+      processUUID,
+      activeStep.name,
+      queryString
+    );
+    setLastProcessResponse(processResponse);
   };
 
   return (
@@ -161,6 +250,7 @@ function ProcessRun(): JSX.Element {
         <Grid container justifyContent="center" alignItems="center" sx={{ height: "100%", mt: 8 }}>
           <Grid item xs={12} lg={8}>
             <Formik
+              enableReinitialize
               initialValues={initialValues}
               validationSchema={validations}
               onSubmit={handleSubmit}
@@ -184,33 +274,38 @@ function ProcessRun(): JSX.Element {
                          ***************************************************************************/}
                         {getDynamicStepContent(
                           activeStepIndex,
-                          { step: activeStep },
+                          activeStep,
                           {
                             values,
                             touched,
                             formFields,
                             errors,
-                          }
+                          },
+                          processError
                         )}
                         {/********************************
                          ** back &| next/submit buttons **
                          ********************************/}
                         <MDBox mt={2} width="100%" display="flex" justifyContent="space-between">
-                          {activeStepIndex === 0 ? (
+                          {true || activeStepIndex === 0 ? (
                             <MDBox />
                           ) : (
                             <MDButton variant="gradient" color="light" onClick={handleBack}>
                               back
                             </MDButton>
                           )}
-                          <MDButton
-                            disabled={isSubmitting}
-                            type="submit"
-                            variant="gradient"
-                            color="dark"
-                          >
-                            {isLastStep ? "submit" : "next"}
-                          </MDButton>
+                          {noMoreSteps || processError ? (
+                            <MDBox />
+                          ) : (
+                            <MDButton
+                              disabled={isSubmitting}
+                              type="submit"
+                              variant="gradient"
+                              color="dark"
+                            >
+                              {onLastStep ? "submit" : "next"}
+                            </MDButton>
+                          )}
                         </MDBox>
                       </MDBox>
                     </MDBox>
