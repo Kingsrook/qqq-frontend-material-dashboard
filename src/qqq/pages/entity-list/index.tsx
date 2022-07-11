@@ -24,7 +24,15 @@ import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import { makeStyles } from "@mui/material";
-import { DataGrid, GridColDef, GridRowParams, GridRowsProp } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridCallbackDetails,
+  GridColDef,
+  GridRowId,
+  GridRowParams,
+  GridRowsProp,
+  GridSelectionModel,
+} from "@mui/x-data-grid";
 
 // Material Dashboard 2 PRO React TS components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
@@ -39,6 +47,7 @@ import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import { useParams } from "react-router-dom";
 import QClient from "qqq/utils/QClient";
 import Footer from "../../components/Footer";
+import QProcessUtils from "../../utils/QProcessUtils";
 
 // Declaring props types for DefaultCell
 interface Props {
@@ -56,6 +65,7 @@ function EntityList({ table }: Props): JSX.Element {
   const [pageNumber, setPageNumber] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedIds, setSelectedIds] = useState([] as string[]);
   const [columns, setColumns] = useState([] as GridColDef[]);
   const [rows, setRows] = useState([] as GridRowsProp[]);
   const [loading, setLoading] = useState(true);
@@ -117,24 +127,31 @@ function EntityList({ table }: Props): JSX.Element {
     document.location.href = `/${tableName}/${params.id}`;
   };
 
+  const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) => {
+    const newSelectedIds: string[] = [];
+    selectionModel.forEach((value: GridRowId) => {
+      newSelectedIds.push(value as string);
+    });
+    setSelectedIds(newSelectedIds);
+  };
+
   if (tableName !== tableState) {
     (async () => {
       setTableState(tableName);
       const metaData = await QClient.loadMetaData();
 
-      const matchingProcesses: QProcessMetaData[] = [];
-      const processKeys = [...metaData.processes.keys()];
-      processKeys.forEach((key) => {
-        const process = metaData.processes.get(key);
-        if (process.tableName === tableName) {
-          matchingProcesses.push(process);
-        }
-      });
-      setTableProcesses(matchingProcesses);
+      setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 
       // reset rows to trigger rerender
       setRows([]);
     })();
+  }
+
+  function getRecordsQueryString() {
+    if (selectedIds.length > 0) {
+      return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
+    }
+    return "";
   }
 
   const renderActionsMenu = (
@@ -148,7 +165,7 @@ function EntityList({ table }: Props): JSX.Element {
     >
       {tableProcesses.map((process) => (
         <MenuItem key={process.name}>
-          <Link href={`/processes/${process.name}`}>{process.label}</Link>
+          <Link href={`/processes/${process.name}${getRecordsQueryString()}`}>{process.label}</Link>
         </MenuItem>
       ))}
     </Menu>
@@ -237,6 +254,7 @@ function EntityList({ table }: Props): JSX.Element {
               paginationMode="server"
               density="compact"
               loading={loading}
+              onSelectionModelChange={selectionChanged}
             />
           </MDBox>
         </Card>

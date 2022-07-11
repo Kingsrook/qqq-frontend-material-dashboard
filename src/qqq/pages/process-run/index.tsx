@@ -37,13 +37,15 @@ import Footer from "examples/Footer";
 // ProcessRun layout schemas for form and form fields
 import * as Yup from "yup";
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import { QFrontendStepMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
 import { QJobStarted } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import { QJobComplete } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import { QJobError } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import { QJobRunning } from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
+import { DataGrid, GridColDef, GridRowParams, GridRowsProp } from "@mui/x-data-grid";
 import QDynamicForm from "../../components/QDynamicForm";
 import MDTypography from "../../../components/MDTypography";
 
@@ -51,15 +53,12 @@ function getDynamicStepContent(
   stepIndex: number,
   step: any,
   formData: any,
-  processError: string
+  processError: string,
+  processValues: any,
+  recordConfig: any
 ): JSX.Element {
   const { formFields, values, errors, touched } = formData;
   // console.log(`in getDynamicStepContent: step label ${step?.label}`);
-
-  if (!Object.keys(formFields).length) {
-    // console.log("in getDynamicStepContent.  No fields yet, so returning 'loading'");
-    return <div>Loading...</div>;
-  }
 
   if (processError) {
     return (
@@ -72,7 +71,51 @@ function getDynamicStepContent(
     );
   }
 
-  return <QDynamicForm formData={formData} formLabel={step.label} />;
+  if (!Object.keys(formFields).length) {
+    // console.log("in getDynamicStepContent.  No fields yet, so returning 'loading'");
+    return <div>Loading...</div>;
+  }
+
+  console.log(`in getDynamicStepContent. the step looks like: ${JSON.stringify(step)}`);
+
+  return (
+    <>
+      {step.formFields && <QDynamicForm formData={formData} formLabel={step.label} />}
+      {step.viewFields && (
+        <div>
+          {step.viewFields.map((field: QFieldMetaData) => (
+            <div key={field.name}>
+              <b>{field.label}:</b> {processValues[field.name]}
+            </div>
+          ))}
+        </div>
+      )}
+      {step.recordListFields && (
+        <div>
+          <b>Records:</b> <br />
+          <MDBox height="100%">
+            <DataGrid
+              page={recordConfig.pageNo}
+              disableSelectionOnClick
+              autoHeight
+              rows={recordConfig.rows}
+              columns={recordConfig.columns}
+              rowBuffer={10}
+              rowCount={recordConfig.totalRecords}
+              pageSize={recordConfig.rowsPerPage}
+              rowsPerPageOptions={[10, 25, 50]}
+              onPageSizeChange={recordConfig.handleRowsPerPageChange}
+              onPageChange={recordConfig.handlePageChange}
+              onRowClick={recordConfig.handleRowClick}
+              paginationMode="server"
+              density="compact"
+              loading={recordConfig.loading}
+            />
+          </MDBox>
+        </div>
+      )}
+    </>
+  );
 }
 
 function trace(name: string, isComponent: boolean = false) {
@@ -104,12 +147,17 @@ function ProcessRun(): JSX.Element {
   const [initialValues, setInitialValues] = useState({});
   const [validations, setValidations] = useState({});
   const [needToCheckJobStatus, setNeedToCheckJobStatus] = useState(false);
+  const [needRecords, setNeedRecords] = useState(false);
   const [processError, setProcessError] = useState(null as string);
+  const [recordConfig, setRecordConfig] = useState({} as any);
   const onLastStep = activeStepIndex === steps.length - 2;
   const noMoreSteps = activeStepIndex === steps.length - 1;
 
   trace("ProcessRun", true);
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // handle moving to another step in the process - e.g., after the backend told us what screen to show next. //
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     trace("updateActiveStep");
 
@@ -141,23 +189,79 @@ function ProcessRun(): JSX.Element {
       setActiveStep(activeStep);
       setFormId(activeStep.name);
 
-      const initialValues: any = {};
-      activeStep.formFields.forEach((field) => {
-        initialValues[field.name] = processValues[field.name];
-      });
+      ///////////////////////////////////////////////////
+      // if this step has form fields, set up the form //
+      ///////////////////////////////////////////////////
+      if (activeStep.formFields) {
+        const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
+          activeStep.formFields
+        );
 
-      const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(
-        activeStep.formFields
-      );
+        const initialValues: any = {};
+        activeStep.formFields.forEach((field) => {
+          initialValues[field.name] = processValues[field.name];
+        });
 
-      setFormFields(dynamicFormFields);
-      setInitialValues(initialValues);
-      setValidations(Yup.object().shape(formValidations));
+        setFormFields(dynamicFormFields);
+        setInitialValues(initialValues);
+        setValidations(Yup.object().shape(formValidations));
+      }
+
+      if (activeStep.recordListFields) {
+        const newRecordConfig = {} as any;
+        newRecordConfig.pageNo = 1;
+        newRecordConfig.rowsPerPage = 20;
+        newRecordConfig.columns = [] as GridColDef[];
+        newRecordConfig.rows = [];
+        newRecordConfig.totalRecords = 0;
+        newRecordConfig.handleRowsPerPageChange = null;
+        newRecordConfig.handlePageChange = null;
+        newRecordConfig.handleRowClick = null;
+        newRecordConfig.loading = true;
+
+        activeStep.recordListFields.forEach((field) => {
+          newRecordConfig.columns.push({ field: field.name, headerName: field.label });
+        });
+
+        setRecordConfig(newRecordConfig);
+        setNeedRecords(true);
+      }
+
       // console.log(`in updateActiveStep: formFields ${JSON.stringify(dynamicFormFields)}`);
       // console.log(`in updateActiveStep: initialValues ${JSON.stringify(initialValues)}`);
     }
   }, [newStep]);
 
+  useEffect(() => {
+    if (needRecords) {
+      setNeedRecords(false);
+      (async () => {
+        const records = await qController.processRecords(
+          processName,
+          processUUID,
+          recordConfig.rowsPerPage * (recordConfig.pageNo - 1),
+          recordConfig.rowsPerPage
+        );
+        recordConfig.loading = false;
+        recordConfig.rows = [];
+        let rowId = 0;
+        records.forEach((record) => {
+          const row = Object.fromEntries(record.values.entries());
+          if (!row.id) {
+            row.id = ++rowId;
+          }
+          recordConfig.rows.push(row);
+        });
+        // todo count?
+        recordConfig.totalRecords = records.length;
+        setRecordConfig(recordConfig);
+      })();
+    }
+  }, [needRecords]);
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // handle a response from the server - e.g., after starting a backend job, or getting its status/result //
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (lastProcessResponse) {
       trace("handleProcessResponse");
@@ -183,53 +287,82 @@ function ProcessRun(): JSX.Element {
     }
   }, [lastProcessResponse]);
 
+  /////////////////////////////////////////////////////////////////////////
+  // while a backend async job is running, periodically check its status //
+  /////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (needToCheckJobStatus) {
       trace("checkJobStatus");
       setNeedToCheckJobStatus(false);
       (async () => {
-        const processResponse = await qController.processJobStatus(
-          processName,
-          processUUID,
-          jobUUID
-        );
-        setLastProcessResponse(processResponse);
+        setTimeout(async () => {
+          const processResponse = await qController.processJobStatus(
+            processName,
+            processUUID,
+            jobUUID
+          );
+          setLastProcessResponse(processResponse);
+        }, 1500);
       })();
     }
   }, [needToCheckJobStatus]);
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  // do the initial load of data for the process - that is, meta data, plus the init step //
+  //////////////////////////////////////////////////////////////////////////////////////////
   if (needInitialLoad) {
     trace("initialLoad");
     setNeedInitialLoad(false);
     (async () => {
+      const { search } = useLocation();
+      const urlSearchParams = new URLSearchParams(search);
+      let queryStringForInit = null;
+      if (urlSearchParams.get("recordIds")) {
+        queryStringForInit = `recordsParam=recordIds&recordIds=${urlSearchParams.get("recordIds")}`;
+      } else if (urlSearchParams.get("filterJSON")) {
+        queryStringForInit = `recordsParam=filterJSON&filterJSON=${urlSearchParams.get(
+          "filterJSON"
+        )}`;
+      }
+      // todo once saved filters exist
+      //else if(urlSearchParams.get("filterId")) {
+      //   queryStringForInit = `recordsParam=filterId&filterId=${urlSearchParams.get("filterId")}`
+      // }
+
+      console.log(`@dk: Query String for init: ${queryStringForInit}`);
+
       const processMetaData = await qController.loadProcessMetaData(processName);
       // console.log(processMetaData);
       setProcessMetaData(processMetaData);
       setSteps(processMetaData.frontendSteps);
 
-      const processResponse = await qController.processInit(processName);
+      const processResponse = await qController.processInit(processName, queryStringForInit);
       setProcessUUID(processResponse.processUUID);
       setLastProcessResponse(processResponse);
       // console.log(processResponse);
     })();
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  // handle the back button - todo - not really done at all                                           //
+  // e.g., qqq needs to say when back is or isn't allowed, and we need to hit the backend upon backs. //
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
   const handleBack = () => {
     trace("handleBack");
     setNewStep(activeStepIndex - 1);
   };
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  // handle user submitting the form - which in qqq means moving forward from any screen. //
+  //////////////////////////////////////////////////////////////////////////////////////////
   const handleSubmit = async (values: any, actions: any) => {
     trace("handleSubmit");
-    // eslint-disable-next-line no-alert
-    // alert(JSON.stringify(values, null, 2));
 
+    // todo - post?
     let queryString = "";
     Object.keys(values).forEach((key) => {
       queryString += `${key}=${encodeURIComponent(values[key])}&`;
     });
-    // eslint-disable-next-line no-alert
-    // alert(queryString);
 
     actions.setSubmitting(false);
     actions.resetForm();
@@ -281,7 +414,9 @@ function ProcessRun(): JSX.Element {
                             formFields,
                             errors,
                           },
-                          processError
+                          processError,
+                          processValues,
+                          recordConfig
                         )}
                         {/********************************
                          ** back &| next/submit buttons **

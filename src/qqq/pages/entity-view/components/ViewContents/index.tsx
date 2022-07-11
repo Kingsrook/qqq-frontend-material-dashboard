@@ -30,11 +30,16 @@ import Button from "@mui/material/Button";
 
 // qqq imports
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Icon from "@mui/material/Icon";
 import MDButton from "../../../../../components/MDButton";
+import QProcessUtils from "../../../../utils/QProcessUtils";
 
 const qController = new QController("");
 
@@ -50,7 +55,12 @@ function ViewContents({ id }: Props): JSX.Element {
   const [nameValues, setNameValues] = useState([] as JSX.Element[]);
   const [open, setOpen] = useState(false);
   const [tableMetaData, setTableMetaData] = useState(null);
+  const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
+  const [actionsMenu, setActionsMenu] = useState(null);
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
+  const closeActionsMenu = () => setActionsMenu(null);
 
   if (!asyncLoadInited) {
     setAsyncLoadInited(true);
@@ -58,6 +68,9 @@ function ViewContents({ id }: Props): JSX.Element {
     (async () => {
       const tableMetaData = await qController.loadTableMetaData(tableName);
       setTableMetaData(tableMetaData);
+
+      const metaData = await qController.loadMetaData();
+      setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 
       const foundRecord = await qController.get(tableName, id);
 
@@ -112,12 +125,42 @@ function ViewContents({ id }: Props): JSX.Element {
 
   const editPath = `/${tableName}/${id}/edit`;
 
+  const renderActionsMenu = (
+    <Menu
+      anchorEl={actionsMenu}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+      open={Boolean(actionsMenu)}
+      onClose={closeActionsMenu}
+      keepMounted
+    >
+      {tableProcesses.map((process) => (
+        <MenuItem key={process.name}>
+          <Link href={`/processes/${process.name}?recordIds=${id}`}>{process.label}</Link>
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+
   return (
     <Card id="basic-info" sx={{ overflow: "visible" }}>
       <MDBox p={3}>
-        <MDTypography variant="h5">
-          Viewing {tableMetaData?.label} ({id})
-        </MDTypography>
+        <MDBox display="flex" justifyContent="space-between">
+          <MDTypography variant="h5">
+            Viewing {tableMetaData?.label} ({id})
+          </MDTypography>
+          {tableProcesses.length > 0 && (
+            <MDButton
+              variant={actionsMenu ? "contained" : "outlined"}
+              color="dark"
+              onClick={openActionsMenu}
+            >
+              actions&nbsp;
+              <Icon>keyboard_arrow_down</Icon>
+            </MDButton>
+          )}
+          {renderActionsMenu}
+        </MDBox>
       </MDBox>
       <MDBox p={3}>{nameValues}</MDBox>
       <MDBox component="form" pb={3} px={3}>
