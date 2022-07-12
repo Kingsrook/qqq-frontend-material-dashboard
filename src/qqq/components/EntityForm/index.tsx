@@ -15,8 +15,10 @@ import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 // @material-ui core components
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
+import { Alert } from "@mui/material";
 
 // Material Dashboard 2 PRO React TS components
+import MDAlert from "components/MDAlert";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "../../../components/MDButton";
@@ -33,6 +35,7 @@ function EntityForm({ id }: Props): JSX.Element {
   const [validations, setValidations] = useState({});
   const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
   const [formFields, setFormFields] = useState({});
+  const [alertContent, setAlertContent] = useState("");
 
   const [asyncLoadInited, setAsyncLoadInited] = useState(false);
   const [formValues, setFormValues] = useState({} as { [key: string]: string });
@@ -85,17 +88,27 @@ function EntityForm({ id }: Props): JSX.Element {
     actions.setSubmitting(true);
     await (async () => {
       if (id !== null) {
-        await qController.update(tableName, id, values).then((record) => {
-          window.location.href = `/${tableName}/${record.values.get(
-            tableMetaData.primaryKeyField
-          )}`;
-        });
+        await qController
+          .update(tableName, id, values)
+          .then((record) => {
+            window.location.href = `/${tableName}/${record.values.get(
+              tableMetaData.primaryKeyField
+            )}`;
+          })
+          .catch((error) => {
+            setAlertContent(error.response.data.error);
+          });
       } else {
-        await qController.create(tableName, values).then((record) => {
-          window.location.href = `/${tableName}/${record.values.get(
-            tableMetaData.primaryKeyField
-          )}`;
-        });
+        await qController
+          .create(tableName, values)
+          .then((record) => {
+            window.location.href = `/${tableName}/${record.values.get(
+              tableMetaData.primaryKeyField
+            )}`;
+          })
+          .catch((error) => {
+            setAlertContent(error.response.data.error);
+          });
       }
     })();
   };
@@ -106,43 +119,56 @@ function EntityForm({ id }: Props): JSX.Element {
     id != null ? `edit-${tableMetaData?.label}-form` : `create-${tableMetaData?.label}-form`;
 
   return (
-    <Card id="edit-form-container" sx={{ overflow: "visible" }}>
-      <MDBox p={3}>
-        <MDTypography variant="h5">{formTitle}</MDTypography>
-      </MDBox>
-      <MDBox pb={3} px={3}>
-        <Grid key="fields-grid" container spacing={3}>
-          <Formik
-            initialValues={initialValues}
-            validationSchema={validations}
-            onSubmit={handleSubmit}
-          >
-            {({ values, errors, touched, isSubmitting }) => (
-              <Form id={formId} autoComplete="off">
-                <MDBox p={3} width="100%">
-                  {/***************************************************************************
-                   ** step content - e.g., the appropriate form or other screen for the step **
-                   ***************************************************************************/}
-                  {getDynamicStepContent({
-                    values,
-                    touched,
-                    formFields,
-                    errors,
-                  })}
-                  <Grid key="buttonGrid" container spacing={3}>
-                    <MDBox mt={5} ml="auto">
-                      <MDButton type="submit" variant="gradient" color="dark" size="small">
-                        save {tableMetaData?.label}
-                      </MDButton>
-                    </MDBox>
-                  </Grid>
-                </MDBox>
-              </Form>
-            )}
-          </Formik>
+    <MDBox mb={3}>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          {alertContent ? (
+            <MDBox mb={3}>
+              <Alert severity="error">{alertContent}</Alert>
+            </MDBox>
+          ) : (
+            ""
+          )}
+          <Card id="edit-form-container" sx={{ overflow: "visible" }}>
+            <MDBox p={3}>
+              <MDTypography variant="h5">{formTitle}</MDTypography>
+            </MDBox>
+            <MDBox pb={3} px={3}>
+              <Grid key="fields-grid" container spacing={3}>
+                <Formik
+                  initialValues={initialValues}
+                  validationSchema={validations}
+                  onSubmit={handleSubmit}
+                >
+                  {({ values, errors, touched, isSubmitting }) => (
+                    <Form id={formId} autoComplete="off">
+                      <MDBox p={3} width="100%">
+                        {/***************************************************************************
+                         ** step content - e.g., the appropriate form or other screen for the step **
+                         ***************************************************************************/}
+                        {getDynamicStepContent({
+                          values,
+                          touched,
+                          formFields,
+                          errors,
+                        })}
+                        <Grid key="buttonGrid" container spacing={3}>
+                          <MDBox mt={5} ml="auto">
+                            <MDButton type="submit" variant="gradient" color="dark" size="small">
+                              save {tableMetaData?.label}
+                            </MDButton>
+                          </MDBox>
+                        </Grid>
+                      </MDBox>
+                    </Form>
+                  )}
+                </Formik>
+              </Grid>
+            </MDBox>
+          </Card>
         </Grid>
-      </MDBox>
-    </Card>
+      </Grid>
+    </MDBox>
   );
 }
 

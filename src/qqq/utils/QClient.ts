@@ -21,6 +21,7 @@
 
 import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import { QQueryFilter } from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 
 /*******************************************************************************
  ** client wrapper of qqq backend
@@ -45,8 +46,12 @@ class QClient {
     return this.getInstance().loadMetaData();
   }
 
-  public static query(tableName: string, limit: number, skip: number) {
-    return this.getInstance().query(tableName, limit, skip);
+  public static query(tableName: string, filter: QQueryFilter, limit: number, skip: number) {
+    return this.getInstance()
+      .query(tableName, filter, limit, skip)
+      .catch((error) => {
+        throw error;
+      });
   }
 
   public static count(tableName: string) {

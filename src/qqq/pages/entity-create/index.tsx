@@ -20,7 +20,7 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-import CreateForm from "qqq/components/EntityForm";
+import EntityForm from "qqq/components/EntityForm";
 import BaseLayout from "qqq/components/BaseLayout";
 
 function EntityCreate(): JSX.Element {
@@ -29,13 +29,7 @@ function EntityCreate(): JSX.Element {
       <MDBox mt={4}>
         <Grid container spacing={3}>
           <Grid item xs={12} lg={12}>
-            <MDBox mb={3}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <CreateForm />
-                </Grid>
-              </Grid>
-            </MDBox>
+            <EntityForm />
           </Grid>
         </Grid>
       </MDBox>

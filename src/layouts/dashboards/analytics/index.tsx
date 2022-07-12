@@ -42,9 +42,11 @@ import reportsLineChartData from "layouts/dashboards/analytics/data/reportsLineC
 import booking1 from "assets/images/products/product-1-min.jpg";
 import booking2 from "assets/images/products/product-2-min.jpg";
 import booking3 from "assets/images/products/product-3-min.jpg";
+import { useReducer } from "react";
 
 function Analytics(): JSX.Element {
   const { sales, tasks } = reportsLineChartData;
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   // Action buttons for the BookingCard
   const actionButtons = (

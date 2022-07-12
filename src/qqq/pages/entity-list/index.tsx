@@ -15,6 +15,7 @@
 /*  eslint-disable react/no-unstable-nested-components */
 
 import React, { useEffect, useReducer, useState } from "react";
+import { useParams } from "react-router-dom";
 
 // @mui material components
 import Card from "@mui/material/Card";
@@ -23,31 +24,42 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-import { makeStyles } from "@mui/material";
+import { makeStyles, Alert } from "@mui/material";
 import {
   DataGrid,
   GridCallbackDetails,
   GridColDef,
+  GridColumnVisibilityModel,
+  GridFilterModel,
   GridRowId,
   GridRowParams,
   GridRowsProp,
   GridSelectionModel,
+  GridSortItem,
+  GridSortModel,
+  GridToolbar,
 } from "@mui/x-data-grid";
 
 // Material Dashboard 2 PRO React TS components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 
 // QQQ
 import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { useParams } from "react-router-dom";
+import { QQueryFilter } from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import { QFilterOrderBy } from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
+import { QFilterCriteria } from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import { QCriteriaOperator } from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
+
+const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY = "qqq.columnVisibility";
+const COLUMN_SORT_LOCAL_STORAGE_KEY = "qqq.columnSort";
 
 // Declaring props types for DefaultCell
 interface Props {
@@ -69,6 +81,10 @@ function EntityList({ table }: Props): JSX.Element {
   const [columns, setColumns] = useState([] as GridColDef[]);
   const [rows, setRows] = useState([] as GridRowsProp[]);
   const [loading, setLoading] = useState(true);
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+  const [sortModel, setSortModel] = useState([] as GridSortItem[]);
+  const [filterModel, setFilterModel] = useState(null as GridFilterModel);
+  const [alertContent, setAlertContent] = useState("");
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -77,14 +93,89 @@ function EntityList({ table }: Props): JSX.Element {
   const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
   const closeFiltersMenu = () => setFiltersMenu(null);
 
+  const translateCriteriaOperator = (operator: string) => {
+    switch (operator) {
+      case "contains":
+        return QCriteriaOperator.CONTAINS;
+      case "starts with":
+        return QCriteriaOperator.STARTS_WITH;
+      case "ends with":
+        return QCriteriaOperator.STARTS_WITH;
+      case "is":
+      case "equals":
+      case "=":
+        return QCriteriaOperator.EQUALS;
+      case "is not":
+      case "!=":
+        return QCriteriaOperator.NOT_EQUALS;
+      case "is after":
+      case ">":
+        return QCriteriaOperator.GREATER_THAN;
+      case "is on or after":
+      case ">=":
+        return QCriteriaOperator.GREATER_THAN_OR_EQUALS;
+      case "is before":
+      case "<":
+        return QCriteriaOperator.LESS_THAN;
+      case "is on or before":
+      case "<=":
+        return QCriteriaOperator.LESS_THAN_OR_EQUALS;
+      case "is empty":
+        return QCriteriaOperator.IS_BLANK;
+      case "is not empty":
+        return QCriteriaOperator.IS_NOT_BLANK;
+      // case "is any of":
+      // TODO: handle this case
+      default:
+        return QCriteriaOperator.EQUALS;
+    }
+  };
+
+  const buildQFilter = () => {
+    const qFilter = new QQueryFilter();
+    sortModel.forEach((gridSortItem) => {
+      qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
+    });
+    if (filterModel) {
+      filterModel.items.forEach((item) => {
+        qFilter.addCriteria(
+          new QFilterCriteria(item.columnField, translateCriteriaOperator(item.operatorValue), [
+            item.value,
+          ])
+        );
+      });
+    }
+
+    return qFilter;
+  };
+
   const updateTable = () => {
     (async () => {
       const tableMetaData = await QClient.loadTableMetaData(tableName);
       const count = await QClient.count(tableName);
       setTotalRecords(count);
 
+      if (sortModel.length === 0) {
+        sortModel.push({ field: tableMetaData.primaryKeyField, sort: "desc" });
+        setSortModel(sortModel);
+      }
+
+      const qFilter = buildQFilter();
       const columns = [] as GridColDef[];
-      const results = await QClient.query(tableName, rowsPerPage, pageNumber * rowsPerPage);
+
+      const results = await QClient.query(
+        tableName,
+        qFilter,
+        rowsPerPage,
+        pageNumber * rowsPerPage
+      ).catch((error) => {
+        if (error.message) {
+          setAlertContent(error.message);
+        } else {
+          setAlertContent(error.response.data.error);
+        }
+        throw error;
+      });
 
       const rows = [] as any[];
       results.forEach((record) => {
@@ -95,19 +186,46 @@ function EntityList({ table }: Props): JSX.Element {
       sortedKeys.forEach((key) => {
         const field = tableMetaData.fields.get(key);
 
+        let columnType = "string";
+        switch (field.type) {
+          case QFieldType.DECIMAL:
+          case QFieldType.INTEGER:
+            columnType = "number";
+            break;
+          case QFieldType.DATE:
+            columnType = "date";
+            break;
+          case QFieldType.DATE_TIME:
+            columnType = "dateTime";
+            break;
+          case QFieldType.BOOLEAN:
+            columnType = "boolean";
+            break;
+          default:
+          // noop
+        }
+
         const column = {
           field: field.name,
+          type: columnType,
           headerName: field.label,
           width: 200,
         };
 
         if (key === tableMetaData.primaryKeyField) {
+          column.width = 75;
           columns.splice(0, 0, column);
         } else {
           columns.push(column);
         }
       });
 
+      const columnVisibilityModel = localStorage.getItem(COLUMN_VISIBILITY_LOCAL_STORAGE_KEY);
+      if (columnVisibilityModel) {
+        setColumnVisibilityModel(
+          JSON.parse(localStorage.getItem(COLUMN_VISIBILITY_LOCAL_STORAGE_KEY))
+        );
+      }
       setColumns(columns);
       setRows(rows);
       setLoading(false);
@@ -127,12 +245,29 @@ function EntityList({ table }: Props): JSX.Element {
     document.location.href = `/${tableName}/${params.id}`;
   };
 
+  const handleFilterChange = (filterModel: GridFilterModel) => {
+    setFilterModel(filterModel);
+  };
+
   const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) => {
     const newSelectedIds: string[] = [];
     selectionModel.forEach((value: GridRowId) => {
       newSelectedIds.push(value as string);
     });
     setSelectedIds(newSelectedIds);
+  };
+
+  const handleColumnVisibilityChange = (columnVisibilityModel: GridColumnVisibilityModel) => {
+    setColumnVisibilityModel(columnVisibilityModel);
+    localStorage.setItem(
+      COLUMN_VISIBILITY_LOCAL_STORAGE_KEY,
+      JSON.stringify(columnVisibilityModel)
+    );
+  };
+
+  const handleSortChange = (gridSort: GridSortModel) => {
+    setSortModel(gridSort);
+    localStorage.setItem(COLUMN_SORT_LOCAL_STORAGE_KEY, JSON.stringify(gridSort));
   };
 
   if (tableName !== tableState) {
@@ -171,39 +306,28 @@ function EntityList({ table }: Props): JSX.Element {
     </Menu>
   );
 
-  const renderFiltersMenu = (
-    <Menu
-      anchorEl={filtersMenu}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      transformOrigin={{ vertical: "top", horizontal: "left" }}
-      open={Boolean(filtersMenu)}
-      onClose={closeFiltersMenu}
-      keepMounted
-    >
-      <MenuItem onClick={closeFiltersMenu}>Status: Paid</MenuItem>
-      <MenuItem onClick={closeFiltersMenu}>Status: Refunded</MenuItem>
-      <MenuItem onClick={closeFiltersMenu}>Status: Canceled</MenuItem>
-      <Divider sx={{ margin: "0.5rem 0" }} />
-      <MenuItem onClick={closeFiltersMenu}>
-        <MDTypography variant="button" color="error" fontWeight="regular">
-          Remove Filter
-        </MDTypography>
-      </MenuItem>
-    </Menu>
-  );
-
   useEffect(() => {
     updateTable();
-  }, [pageNumber, rowsPerPage, tableState]);
+  }, [pageNumber, rowsPerPage, tableState, sortModel, filterModel]);
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox my={3}>
+        {alertContent ? (
+          <MDBox mb={3}>
+            <Alert severity="error">{alertContent}</Alert>
+          </MDBox>
+        ) : (
+          ""
+        )}
         <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <MDButton variant="gradient" color="info">
-            <Link href={`/${tableName}/create`}>new {tableName}</Link>
-          </MDButton>
+          <Link href={`/${tableName}/create`}>
+            <MDButton variant="gradient" color="info">
+              new {tableName}
+            </MDButton>
+          </Link>
+
           <MDBox display="flex">
             {tableProcesses.length > 0 && (
               <MDButton
@@ -216,28 +340,15 @@ function EntityList({ table }: Props): JSX.Element {
               </MDButton>
             )}
             {renderActionsMenu}
-            <MDBox ml={1}>
-              <MDButton
-                variant={filtersMenu ? "contained" : "outlined"}
-                color="dark"
-                onClick={openFiltersMenu}
-              >
-                filters&nbsp;
-                <Icon>keyboard_arrow_down</Icon>
-              </MDButton>
-              {renderFiltersMenu}
-            </MDBox>
-            <MDBox ml={1}>
-              <MDButton variant="outlined" color="dark">
-                <Icon>description</Icon>
-                &nbsp;export csv
-              </MDButton>
-            </MDBox>
           </MDBox>
         </MDBox>
         <Card>
           <MDBox height="100%">
             <DataGrid
+              components={{ Toolbar: GridToolbar }}
+              paginationMode="server"
+              sortingMode="server"
+              filterMode="server"
               page={pageNumber}
               checkboxSelection
               disableSelectionOnClick
@@ -251,10 +362,18 @@ function EntityList({ table }: Props): JSX.Element {
               onPageSizeChange={handleRowsPerPageChange}
               onPageChange={handlePageChange}
               onRowClick={handleRowClick}
-              paginationMode="server"
               density="compact"
               loading={loading}
+              onFilterModelChange={handleFilterChange}
+              columnVisibilityModel={columnVisibilityModel}
+              onColumnVisibilityModelChange={handleColumnVisibilityChange}
               onSelectionModelChange={selectionChanged}
+              onSortModelChange={handleSortChange}
+              sortingOrder={["asc", "desc"]}
+              sortModel={sortModel}
+              getRowClassName={(params) =>
+                params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"
+              }
             />
           </MDBox>
         </Card>
