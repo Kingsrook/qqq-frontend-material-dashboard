@@ -30,11 +30,14 @@ interface Props {
   primaryKeyId?: string;
 }
 
-function QDynamicForm(props: Props): JSX.Element {
-  const { formData, formLabel, primaryKeyId } = props;
-  const { formFields, values, errors, touched } = formData;
+function QDynamicForm(props: Props): JSX.Element
+{
+   const { formData, formLabel, primaryKeyId } = props;
+   const {
+      formFields, values, errors, touched,
+   } = formData;
 
-  /*
+   /*
         const {
           firstName: firstNameV,
           lastName: lastNameV,
@@ -45,42 +48,45 @@ function QDynamicForm(props: Props): JSX.Element {
         } = values;
         */
 
-  return (
-    <MDBox>
-      <MDBox lineHeight={0}>
-        <MDTypography variant="h5">{formLabel}</MDTypography>
-        {/* TODO - help text
+   return (
+      <MDBox>
+         <MDBox lineHeight={0}>
+            <MDTypography variant="h5">{formLabel}</MDTypography>
+            {/* TODO - help text
         <MDTypography variant="button" color="text">
           Mandatory information
         </MDTypography>
         */}
-      </MDBox>
-      <MDBox mt={1.625}>
-        <Grid container spacing={3}>
-          {formFields &&
-            Object.keys(formFields).length > 0 &&
-            Object.keys(formFields).map((fieldName: any) => {
-              const field = formFields[fieldName];
-              if (primaryKeyId && fieldName === primaryKeyId) {
-                return null;
-              }
-              if (values[fieldName] === undefined) {
-                values[fieldName] = "";
-              }
-              return (
-                <Grid item xs={12} sm={6} key={fieldName}>
-                  <FormField
-                    type={field.type}
-                    label={field.label}
-                    name={fieldName}
-                    value={values[fieldName]}
-                    error={errors[fieldName] && touched[fieldName]}
-                  />
-                </Grid>
-              );
+         </MDBox>
+         <MDBox mt={1.625}>
+            <Grid container spacing={3}>
+               {formFields
+            && Object.keys(formFields).length > 0
+            && Object.keys(formFields).map((fieldName: any) =>
+            {
+               const field = formFields[fieldName];
+               if (primaryKeyId && fieldName === primaryKeyId)
+               {
+                  return null;
+               }
+               if (values[fieldName] === undefined)
+               {
+                  values[fieldName] = "";
+               }
+               return (
+                  <Grid item xs={12} sm={6} key={fieldName}>
+                     <FormField
+                        type={field.type}
+                        label={field.label}
+                        name={fieldName}
+                        value={values[fieldName]}
+                        error={errors[fieldName] && touched[fieldName]}
+                     />
+                  </Grid>
+               );
             })}
-        </Grid>
-        {/*
+            </Grid>
+            {/*
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <FormField
@@ -154,14 +160,14 @@ function QDynamicForm(props: Props): JSX.Element {
           </Grid>
         </Grid>
         */}
+         </MDBox>
       </MDBox>
-    </MDBox>
-  );
+   );
 }
 
 QDynamicForm.defaultProps = {
-  formLabel: undefined,
-  primaryKeyId: undefined,
+   formLabel: undefined,
+   primaryKeyId: undefined,
 };
 
 export default QDynamicForm;

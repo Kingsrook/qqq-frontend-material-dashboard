@@ -23,18 +23,19 @@ import MDBox from "components/MDBox";
 import EntityForm from "qqq/components/EntityForm";
 import BaseLayout from "qqq/components/BaseLayout";
 
-function EntityCreate(): JSX.Element {
-  return (
-    <BaseLayout>
-      <MDBox mt={4}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={12}>
-            <EntityForm />
-          </Grid>
-        </Grid>
-      </MDBox>
-    </BaseLayout>
-  );
+function EntityCreate(): JSX.Element
+{
+   return (
+      <BaseLayout>
+         <MDBox mt={4}>
+            <Grid container spacing={3}>
+               <Grid item xs={12} lg={12}>
+                  <EntityForm />
+               </Grid>
+            </Grid>
+         </MDBox>
+      </BaseLayout>
+   );
 }
 
 export default EntityCreate;

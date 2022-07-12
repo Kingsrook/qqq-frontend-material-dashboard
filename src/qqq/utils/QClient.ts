@@ -27,36 +27,44 @@ import { QQueryFilter } from "@kingsrook/qqq-frontend-core/lib/model/query/QQuer
  ** client wrapper of qqq backend
  **
  *******************************************************************************/
-class QClient {
-  private static qController: QController;
+class QClient
+{
+   private static qController: QController;
 
-  private static getInstance() {
-    if (this.qController == null) {
-      this.qController = new QController("");
-    }
+   private static getInstance()
+   {
+      if (this.qController == null)
+      {
+         this.qController = new QController("");
+      }
 
-    return this.qController;
-  }
+      return this.qController;
+   }
 
-  public static loadTableMetaData(tableName: string) {
-    return this.getInstance().loadTableMetaData(tableName);
-  }
+   public static loadTableMetaData(tableName: string)
+   {
+      return this.getInstance().loadTableMetaData(tableName);
+   }
 
-  public static loadMetaData() {
-    return this.getInstance().loadMetaData();
-  }
+   public static loadMetaData()
+   {
+      return this.getInstance().loadMetaData();
+   }
 
-  public static query(tableName: string, filter: QQueryFilter, limit: number, skip: number) {
-    return this.getInstance()
-      .query(tableName, filter, limit, skip)
-      .catch((error) => {
-        throw error;
-      });
-  }
+   public static query(tableName: string, filter: QQueryFilter, limit: number, skip: number)
+   {
+      return this.getInstance()
+         .query(tableName, filter, limit, skip)
+         .catch((error) =>
+         {
+            throw error;
+         });
+   }
 
-  public static count(tableName: string) {
-    return this.getInstance().count(tableName);
-  }
+   public static count(tableName: string)
+   {
+      return this.getInstance().count(tableName);
+   }
 }
 
 export default QClient;

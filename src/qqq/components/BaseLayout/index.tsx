@@ -30,41 +30,44 @@ interface Props {
   children: ReactNode;
 }
 
-function BaseLayout({ stickyNavbar, children }: Props): JSX.Element {
-  const [tabsOrientation, setTabsOrientation] = useState<"horizontal" | "vertical">("horizontal");
+function BaseLayout({ stickyNavbar, children }: Props): JSX.Element
+{
+   const [tabsOrientation, setTabsOrientation] = useState<"horizontal" | "vertical">("horizontal");
 
-  useEffect(() => {
-    // A function that sets the orientation state of the tabs.
-    function handleTabsOrientation() {
-      return window.innerWidth < breakpoints.values.sm
-        ? setTabsOrientation("vertical")
-        : setTabsOrientation("horizontal");
-    }
+   useEffect(() =>
+   {
+      // A function that sets the orientation state of the tabs.
+      function handleTabsOrientation()
+      {
+         return window.innerWidth < breakpoints.values.sm
+            ? setTabsOrientation("vertical")
+            : setTabsOrientation("horizontal");
+      }
 
-    /**
+      /**
          The event listener that's calling the handleTabsOrientation function when resizing the window.
          */
-    window.addEventListener("resize", handleTabsOrientation);
+      window.addEventListener("resize", handleTabsOrientation);
 
-    // Call the handleTabsOrientation function to set the state with the initial value.
-    handleTabsOrientation();
+      // Call the handleTabsOrientation function to set the state with the initial value.
+      handleTabsOrientation();
 
-    // Remove event listener on cleanup
-    return () => window.removeEventListener("resize", handleTabsOrientation);
-  }, [tabsOrientation]);
+      // Remove event listener on cleanup
+      return () => window.removeEventListener("resize", handleTabsOrientation);
+   }, [tabsOrientation]);
 
-  return (
-    <DashboardLayout>
-      <DashboardNavbar absolute={!stickyNavbar} isMini />
-      <MDBox mt={stickyNavbar ? 3 : 10}>{children}</MDBox>
-      <Footer />
-    </DashboardLayout>
-  );
+   return (
+      <DashboardLayout>
+         <DashboardNavbar absolute={!stickyNavbar} isMini />
+         <MDBox mt={stickyNavbar ? 3 : 10}>{children}</MDBox>
+         <Footer />
+      </DashboardLayout>
+   );
 }
 
 // Declaring default props for BaseLayout
 BaseLayout.defaultProps = {
-  stickyNavbar: false,
+   stickyNavbar: false,
 };
 
 export default BaseLayout;

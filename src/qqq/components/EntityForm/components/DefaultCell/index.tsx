@@ -22,22 +22,24 @@ interface Props {
   suffix?: string | boolean;
 }
 
-function DefaultCell({ value, suffix }: Props): JSX.Element {
-  return (
-    <MDTypography variant="caption" fontWeight="medium" color="text">
-      {value}
-      {suffix && (
-        <MDTypography variant="caption" fontWeight="medium" color="secondary">
-          &nbsp;&nbsp;{suffix}
-        </MDTypography>
-      )}
-    </MDTypography>
-  );
+function DefaultCell({ value, suffix }: Props): JSX.Element
+{
+   return (
+      <MDTypography variant="caption" fontWeight="medium" color="text">
+         {value}
+         {suffix && (
+            <MDTypography variant="caption" fontWeight="medium" color="secondary">
+          &nbsp;&nbsp;
+               {suffix}
+            </MDTypography>
+         )}
+      </MDTypography>
+   );
 }
 
 // Declaring default props for DefaultCell
 DefaultCell.defaultProps = {
-  suffix: "",
+   suffix: "",
 };
 
 export default DefaultCell;

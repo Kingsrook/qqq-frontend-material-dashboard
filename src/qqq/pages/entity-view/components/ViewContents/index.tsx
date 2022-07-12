@@ -48,161 +48,186 @@ interface Props {
   id: string;
 }
 
-function ViewContents({ id }: Props): JSX.Element {
-  const { tableName } = useParams();
+function ViewContents({ id }: Props): JSX.Element
+{
+   const { tableName } = useParams();
 
-  const [asyncLoadInited, setAsyncLoadInited] = useState(false);
-  const [nameValues, setNameValues] = useState([] as JSX.Element[]);
-  const [open, setOpen] = useState(false);
-  const [tableMetaData, setTableMetaData] = useState(null);
-  const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
-  const [actionsMenu, setActionsMenu] = useState(null);
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const [asyncLoadInited, setAsyncLoadInited] = useState(false);
+   const [nameValues, setNameValues] = useState([] as JSX.Element[]);
+   const [open, setOpen] = useState(false);
+   const [tableMetaData, setTableMetaData] = useState(null);
+   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
+   const [actionsMenu, setActionsMenu] = useState(null);
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
-  const closeActionsMenu = () => setActionsMenu(null);
+   const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
+   const closeActionsMenu = () => setActionsMenu(null);
 
-  if (!asyncLoadInited) {
-    setAsyncLoadInited(true);
+   if (!asyncLoadInited)
+   {
+      setAsyncLoadInited(true);
 
-    (async () => {
-      const tableMetaData = await qController.loadTableMetaData(tableName);
-      setTableMetaData(tableMetaData);
+      (async () =>
+      {
+         const tableMetaData = await qController.loadTableMetaData(tableName);
+         setTableMetaData(tableMetaData);
 
-      const metaData = await qController.loadMetaData();
-      setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
+         const metaData = await qController.loadMetaData();
+         setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 
-      const foundRecord = await qController.get(tableName, id);
+         const foundRecord = await qController.get(tableName, id);
 
-      nameValues.push(
-        <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>
-          <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-            {tableMetaData.primaryKeyField}: &nbsp;
-          </MDTypography>
-          <MDTypography variant="button" fontWeight="regular" color="text">
-            &nbsp;{id}
-          </MDTypography>
-        </MDBox>
-      );
+         nameValues.push(
+            <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>
+               <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+                  {tableMetaData.primaryKeyField}
+                  : &nbsp;
+               </MDTypography>
+               <MDTypography variant="button" fontWeight="regular" color="text">
+            &nbsp;
+                  {id}
+               </MDTypography>
+            </MDBox>,
+         );
 
-      const sortedKeys = [...foundRecord.values.keys()].sort();
-      sortedKeys.forEach((key) => {
-        if (key !== tableMetaData.primaryKeyField) {
-          nameValues.push(
-            <MDBox key={key} display="flex" py={1} pr={2}>
-              <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-                {tableMetaData.fields.get(key).label}: &nbsp;
-              </MDTypography>
-              <MDTypography variant="button" fontWeight="regular" color="text">
-                &nbsp;{foundRecord.values.get(key)}
-              </MDTypography>
+         const sortedKeys = [...foundRecord.values.keys()].sort();
+         sortedKeys.forEach((key) =>
+         {
+            if (key !== tableMetaData.primaryKeyField)
+            {
+               nameValues.push(
+                  <MDBox key={key} display="flex" py={1} pr={2}>
+                     <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+                        {tableMetaData.fields.get(key).label}
+                        : &nbsp;
+                     </MDTypography>
+                     <MDTypography variant="button" fontWeight="regular" color="text">
+                &nbsp;
+                        {foundRecord.values.get(key)}
+                     </MDTypography>
+                  </MDBox>,
+               );
+            }
+         });
+
+         setNameValues(nameValues);
+         forceUpdate();
+      })();
+   }
+
+   const handleClickConfirmOpen = () =>
+   {
+      setOpen(true);
+   };
+
+   const handleClickConfirmClose = () =>
+   {
+      setOpen(false);
+   };
+
+   const handleDelete = (event: { preventDefault: () => void }) =>
+   {
+      event.preventDefault();
+      (async () =>
+      {
+         await qController.delete(tableName, id).then(() =>
+         {
+            window.location.href = `/${tableName}`;
+         });
+      })();
+   };
+
+   const editPath = `/${tableName}/${id}/edit`;
+
+   const renderActionsMenu = (
+      <Menu
+         anchorEl={actionsMenu}
+         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+         transformOrigin={{ vertical: "top", horizontal: "left" }}
+         open={Boolean(actionsMenu)}
+         onClose={closeActionsMenu}
+         keepMounted
+      >
+         {tableProcesses.map((process) => (
+            <MenuItem key={process.name}>
+               <Link href={`/processes/${process.name}?recordIds=${id}`}>{process.label}</Link>
+            </MenuItem>
+         ))}
+      </Menu>
+   );
+
+   return (
+      <Card id="basic-info" sx={{ overflow: "visible" }}>
+         <MDBox p={3}>
+            <MDBox display="flex" justifyContent="space-between">
+               <MDTypography variant="h5">
+                  Viewing
+                  {" "}
+                  {tableMetaData?.label}
+                  {" "}
+                  (
+                  {id}
+                  )
+               </MDTypography>
+               {tableProcesses.length > 0 && (
+                  <MDButton
+                     variant={actionsMenu ? "contained" : "outlined"}
+                     color="dark"
+                     onClick={openActionsMenu}
+                  >
+                     actions&nbsp;
+                     <Icon>keyboard_arrow_down</Icon>
+                  </MDButton>
+               )}
+               {renderActionsMenu}
             </MDBox>
-          );
-        }
-      });
-
-      setNameValues(nameValues);
-      forceUpdate();
-    })();
-  }
-
-  const handleClickConfirmOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClickConfirmClose = () => {
-    setOpen(false);
-  };
-
-  const handleDelete = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-    (async () => {
-      await qController.delete(tableName, id).then(() => {
-        window.location.href = `/${tableName}`;
-      });
-    })();
-  };
-
-  const editPath = `/${tableName}/${id}/edit`;
-
-  const renderActionsMenu = (
-    <Menu
-      anchorEl={actionsMenu}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      transformOrigin={{ vertical: "top", horizontal: "left" }}
-      open={Boolean(actionsMenu)}
-      onClose={closeActionsMenu}
-      keepMounted
-    >
-      {tableProcesses.map((process) => (
-        <MenuItem key={process.name}>
-          <Link href={`/processes/${process.name}?recordIds=${id}`}>{process.label}</Link>
-        </MenuItem>
-      ))}
-    </Menu>
-  );
-
-  return (
-    <Card id="basic-info" sx={{ overflow: "visible" }}>
-      <MDBox p={3}>
-        <MDBox display="flex" justifyContent="space-between">
-          <MDTypography variant="h5">
-            Viewing {tableMetaData?.label} ({id})
-          </MDTypography>
-          {tableProcesses.length > 0 && (
-            <MDButton
-              variant={actionsMenu ? "contained" : "outlined"}
-              color="dark"
-              onClick={openActionsMenu}
-            >
-              actions&nbsp;
-              <Icon>keyboard_arrow_down</Icon>
-            </MDButton>
-          )}
-          {renderActionsMenu}
-        </MDBox>
-      </MDBox>
-      <MDBox p={3}>{nameValues}</MDBox>
-      <MDBox component="form" pb={3} px={3}>
-        <Grid key="tres" container spacing={3}>
-          <MDBox ml="auto" mr={3}>
-            <MDButton
-              variant="gradient"
-              color="primary"
-              size="small"
-              onClick={handleClickConfirmOpen}
-            >
-              delete {tableMetaData?.label}
-            </MDButton>
-            <Dialog
-              open={open}
-              onClose={handleClickConfirmClose}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  Are you sure you want to delete this record?
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClickConfirmClose}>No</Button>
-                <Button onClick={handleDelete} autoFocus>
-                  Yes
-                </Button>
-              </DialogActions>
-            </Dialog>
-          </MDBox>
-          <MDBox>
-            <MDButton variant="gradient" color="dark" size="small">
-              <Link href={editPath}>edit {tableMetaData?.label}</Link>
-            </MDButton>
-          </MDBox>
-        </Grid>
-      </MDBox>
-    </Card>
-  );
+         </MDBox>
+         <MDBox p={3}>{nameValues}</MDBox>
+         <MDBox component="form" pb={3} px={3}>
+            <Grid key="tres" container spacing={3}>
+               <MDBox ml="auto" mr={3}>
+                  <MDButton
+                     variant="gradient"
+                     color="primary"
+                     size="small"
+                     onClick={handleClickConfirmOpen}
+                  >
+                     delete
+                     {" "}
+                     {tableMetaData?.label}
+                  </MDButton>
+                  <Dialog
+                     open={open}
+                     onClose={handleClickConfirmClose}
+                     aria-labelledby="alert-dialog-title"
+                     aria-describedby="alert-dialog-description"
+                  >
+                     <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
+                     <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                           Are you sure you want to delete this record?
+                        </DialogContentText>
+                     </DialogContent>
+                     <DialogActions>
+                        <Button onClick={handleClickConfirmClose}>No</Button>
+                        <Button onClick={handleDelete} autoFocus>
+                           Yes
+                        </Button>
+                     </DialogActions>
+                  </Dialog>
+               </MDBox>
+               <MDBox>
+                  <MDButton variant="gradient" color="dark" size="small">
+                     <Link href={editPath}>
+                        edit
+                        {tableMetaData?.label}
+                     </Link>
+                  </MDButton>
+               </MDBox>
+            </Grid>
+         </MDBox>
+      </Card>
+   );
 }
 
 export default ViewContents;

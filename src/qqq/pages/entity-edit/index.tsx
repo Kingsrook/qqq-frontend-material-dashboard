@@ -24,26 +24,27 @@ import BaseLayout from "qqq/components/BaseLayout";
 import { useParams } from "react-router-dom";
 import EntityForm from "qqq/components/EntityForm";
 
-function EntityEdit(): JSX.Element {
-  const { id } = useParams();
+function EntityEdit(): JSX.Element
+{
+   const { id } = useParams();
 
-  return (
-    <BaseLayout>
-      <MDBox mt={4}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={12}>
-            <MDBox mb={3}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <EntityForm id={id} />
-                </Grid>
-              </Grid>
-            </MDBox>
-          </Grid>
-        </Grid>
-      </MDBox>
-    </BaseLayout>
-  );
+   return (
+      <BaseLayout>
+         <MDBox mt={4}>
+            <Grid container spacing={3}>
+               <Grid item xs={12} lg={12}>
+                  <MDBox mb={3}>
+                     <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                           <EntityForm id={id} />
+                        </Grid>
+                     </Grid>
+                  </MDBox>
+               </Grid>
+            </Grid>
+         </MDBox>
+      </BaseLayout>
+   );
 }
 
 export default EntityEdit;

@@ -21,12 +21,12 @@ import App from "App";
 import { MaterialUIControllerProvider } from "context";
 
 ReactDOM.render(
-  <BrowserRouter>
-    <MaterialUIControllerProvider>
-      <App />
-    </MaterialUIControllerProvider>
-  </BrowserRouter>,
-  document.getElementById("root")
+   <BrowserRouter>
+      <MaterialUIControllerProvider>
+         <App />
+      </MaterialUIControllerProvider>
+   </BrowserRouter>,
+   document.getElementById("root"),
 );
 
 export * from "components/MDButton";

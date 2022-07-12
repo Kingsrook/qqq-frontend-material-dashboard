@@ -30,51 +30,56 @@ import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFie
  ** Meta-data to represent a single field in a table.
  **
  *******************************************************************************/
-class DynamicFormUtils {
-  public static getFormData(qqqFormFields: QFieldMetaData[]) {
-    const dynamicFormFields: any = {};
-    const formValidations: any = {};
+class DynamicFormUtils
+{
+   public static getFormData(qqqFormFields: QFieldMetaData[])
+   {
+      const dynamicFormFields: any = {};
+      const formValidations: any = {};
 
-    qqqFormFields.forEach((field) => {
-      let fieldType: string;
-      switch (field.type.toString()) {
-        case QFieldType.DECIMAL:
-        case QFieldType.INTEGER:
-          fieldType = "number";
-          break;
-        case QFieldType.DATE_TIME:
-          fieldType = "datetime-local";
-          break;
-        case QFieldType.PASSWORD:
-        case QFieldType.TIME:
-        case QFieldType.DATE:
-          fieldType = field.type.toString();
-          break;
-        case QFieldType.TEXT:
-        case QFieldType.HTML:
-        case QFieldType.STRING:
-        default:
-          fieldType = "text";
-      }
+      qqqFormFields.forEach((field) =>
+      {
+         let fieldType: string;
+         switch (field.type.toString())
+         {
+         case QFieldType.DECIMAL:
+         case QFieldType.INTEGER:
+            fieldType = "number";
+            break;
+         case QFieldType.DATE_TIME:
+            fieldType = "datetime-local";
+            break;
+         case QFieldType.PASSWORD:
+         case QFieldType.TIME:
+         case QFieldType.DATE:
+            fieldType = field.type.toString();
+            break;
+         case QFieldType.TEXT:
+         case QFieldType.HTML:
+         case QFieldType.STRING:
+         default:
+            fieldType = "text";
+         }
 
-      let label = field.label ? field.label : field.name;
-      label += field.isRequired ? " *" : "";
+         let label = field.label ? field.label : field.name;
+         label += field.isRequired ? " *" : "";
 
-      dynamicFormFields[field.name] = {
-        name: field.name,
-        label: label,
-        isRequired: field.isRequired,
-        type: fieldType,
-        // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
-      };
+         dynamicFormFields[field.name] = {
+            name: field.name,
+            label: label,
+            isRequired: field.isRequired,
+            type: fieldType,
+            // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
+         };
 
-      if (field.isRequired) {
-        formValidations[field.name] = Yup.string().required(`${field.label} is required.`);
-      }
-    });
+         if (field.isRequired)
+         {
+            formValidations[field.name] = Yup.string().required(`${field.label} is required.`);
+         }
+      });
 
-    return { dynamicFormFields, formValidations };
-  }
+      return { dynamicFormFields, formValidations };
+   }
 }
 
 export default DynamicFormUtils;

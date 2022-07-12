@@ -27,27 +27,28 @@ interface Props {
   checked?: boolean;
 }
 
-function IdCell({ id, checked }: Props): JSX.Element {
-  const pathParts = window.location.pathname.split("/");
-  const tableName = pathParts[1];
-  const href = `/${tableName}/${id}`;
-  const link = <Link href={href}>{id}</Link>;
+function IdCell({ id, checked }: Props): JSX.Element
+{
+   const pathParts = window.location.pathname.split("/");
+   const tableName = pathParts[1];
+   const href = `/${tableName}/${id}`;
+   const link = <Link href={href}>{id}</Link>;
 
-  return (
-    <MDBox display="flex" alignItems="center">
-      <Checkbox defaultChecked={checked} />
-      <MDBox ml={1}>
-        <MDTypography variant="caption" fontWeight="medium" color="text">
-          {link}
-        </MDTypography>
+   return (
+      <MDBox display="flex" alignItems="center">
+         <Checkbox defaultChecked={checked} />
+         <MDBox ml={1}>
+            <MDTypography variant="caption" fontWeight="medium" color="text">
+               {link}
+            </MDTypography>
+         </MDBox>
       </MDBox>
-    </MDBox>
-  );
+   );
 }
 
 // Declaring default props for IdCell
 IdCell.defaultProps = {
-  checked: false,
+   checked: false,
 };
 
 export default IdCell;

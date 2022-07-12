@@ -56,83 +56,85 @@ import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QContr
 import EntityList from "./pages/entity-list";
 
 const qqqRoutes = [
-  {
-    type: "collapse",
-    name: "Brooklyn Alice",
-    key: "brooklyn-alice",
-    icon: <MDAvatar src={profilePicture} alt="Brooklyn Alice" size="sm" />,
-    collapse: [
-      {
-        name: "My Profile",
-        key: "my-profile",
-        route: "/pages/profile/profile-overview",
-        component: <ProfileOverview />,
-      },
-      {
-        name: "Settings",
-        key: "profile-settings",
-        route: "/pages/account/settings",
-        component: <Settings />,
-      },
-      {
-        name: "Logout",
-        key: "logout",
-        route: "/authentication/sign-in/basic",
-        component: <SignInBasic />,
-      },
-    ],
-  },
-  { type: "divider", key: "divider-0" },
-  {
-    type: "collapse",
-    name: "Dashboards",
-    key: "dashboards",
-    icon: <Icon fontSize="medium">dashboard</Icon>,
-    collapse: [
-      {
-        name: "Analytics",
-        key: "analytics",
-        route: "/dashboards/analytics",
-        component: <Analytics />,
-      },
-      {
-        name: "Sales",
-        key: "sales",
-        route: "/dashboards/sales",
-        component: <Sales />,
-      },
-    ],
-  },
-  { type: "divider", key: "divider-1" },
-  { type: "title", title: "Tables", key: "title-docs" },
+   {
+      type: "collapse",
+      name: "Brooklyn Alice",
+      key: "brooklyn-alice",
+      icon: <MDAvatar src={profilePicture} alt="Brooklyn Alice" size="sm" />,
+      collapse: [
+         {
+            name: "My Profile",
+            key: "my-profile",
+            route: "/pages/profile/profile-overview",
+            component: <ProfileOverview />,
+         },
+         {
+            name: "Settings",
+            key: "profile-settings",
+            route: "/pages/account/settings",
+            component: <Settings />,
+         },
+         {
+            name: "Logout",
+            key: "logout",
+            route: "/authentication/sign-in/basic",
+            component: <SignInBasic />,
+         },
+      ],
+   },
+   { type: "divider", key: "divider-0" },
+   {
+      type: "collapse",
+      name: "Dashboards",
+      key: "dashboards",
+      icon: <Icon fontSize="medium">dashboard</Icon>,
+      collapse: [
+         {
+            name: "Analytics",
+            key: "analytics",
+            route: "/dashboards/analytics",
+            component: <Analytics />,
+         },
+         {
+            name: "Sales",
+            key: "sales",
+            route: "/dashboards/sales",
+            component: <Sales />,
+         },
+      ],
+   },
+   { type: "divider", key: "divider-1" },
+   { type: "title", title: "Tables", key: "title-docs" },
 ];
 
 const qController = new QController("");
 
-(async () => {
-  const metaData = await qController.loadMetaData();
+(async () =>
+{
+   const metaData = await qController.loadMetaData();
 
-  // get the keys sorted
-  const keys = [...metaData.tables.keys()].sort();
-  const tableList = [] as any[];
-  keys.forEach((key) => {
-    const table = metaData.tables.get(key);
-    tableList.push({
-      name: `${table.label}`,
-      key: table.name,
-      route: `/${table.name}`,
-      component: <EntityList table={table} />,
-    });
-  });
+   // get the keys sorted
+   const keys = [...metaData.tables.keys()].sort();
+   const tableList = [] as any[];
+   keys.forEach((key) =>
+   {
+      const table = metaData.tables.get(key);
+      tableList.push({
+         name: `${table.label}`,
+         key: table.name,
+         route: `/${table.name}`,
+         component: <EntityList table={table} />,
+      });
+   });
 
-  const tables = {
-    type: "collapse",
-    name: "Tables",
-    key: "tables",
-    icon: <Icon fontSize="medium">dashboard</Icon>,
-    collapse: tableList,
-  };
-  qqqRoutes.push(tables);
+   const tables = {
+      type: "collapse",
+      name: "Tables",
+      key: "tables",
+      icon: <Icon fontSize="medium">dashboard</Icon>,
+      collapse: tableList,
+   };
+   qqqRoutes.push(tables);
 })();
 
 export default qqqRoutes;

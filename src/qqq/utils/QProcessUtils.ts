@@ -26,18 +26,22 @@ import { QInstance } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInst
  ** Utility class for working with QQQ Processes
  **
  *******************************************************************************/
-class QProcessUtils {
-  public static getProcessesForTable(metaData: QInstance, tableName: string): QProcessMetaData[] {
-    const matchingProcesses: QProcessMetaData[] = [];
-    const processKeys = [...metaData.processes.keys()];
-    processKeys.forEach((key) => {
-      const process = metaData.processes.get(key);
-      if (process.tableName === tableName) {
-        matchingProcesses.push(process);
-      }
-    });
-    return matchingProcesses;
-  }
+class QProcessUtils
+{
+   public static getProcessesForTable(metaData: QInstance, tableName: string): QProcessMetaData[]
+   {
+      const matchingProcesses: QProcessMetaData[] = [];
+      const processKeys = [...metaData.processes.keys()];
+      processKeys.forEach((key) =>
+      {
+         const process = metaData.processes.get(key);
+         if (process.tableName === tableName)
+         {
+            matchingProcesses.push(process);
+         }
+      });
+      return matchingProcesses;
+   }
 }
 
 export default QProcessUtils;
