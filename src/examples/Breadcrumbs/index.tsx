@@ -90,7 +90,7 @@ function Breadcrumbs({ icon, title, route, light }: Props): JSX.Element {
         color={light ? "white" : "dark"}
         noWrap
       >
-        {title.replace("-", " ")}
+        {title.replace("-", " ").replace("_", " ")}
       </MDTypography>
     </MDBox>
   );

@@ -1,17 +1,3 @@
-/**
- =========================================================
- * Material Dashboard 2 PRO React TS - v1.0.0
- =========================================================
-
- * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
- * Copyright 2022 Creative Tim (https://www.creative-tim.com)
-
- Coded by www.creative-tim.com
-
- =========================================================
-
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- */
 
 import React, {
    useState,
@@ -48,6 +34,7 @@ import themeDark from "assets/theme-dark";
 import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "context";
 
 // Images
+import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import brandWhite from "assets/images/logo-ct.png";
 import brandDark from "assets/images/logo-ct-dark.png";
 import EntityCreate from "./qqq/pages/entity-create";
@@ -230,11 +217,11 @@ export default function App()
 
    const getRoutes = (allRoutes: any[]): any => allRoutes.map(
       (route: {
-        collapse: any;
-        route: string;
-        component: ReactElement<any, string | JSXElementConstructor<any>>;
-        key: Key;
-      }) =>
+      collapse: any;
+      route: string;
+      component: ReactElement<any, string | JSXElementConstructor<any>>;
+      key: Key;
+    }) =>
       {
          if (route.collapse)
          {
@@ -287,8 +274,8 @@ export default function App()
             <>
                <Sidenav
                   color={sidenavColor}
-                  brand={(transparentSidenav && !darkMode) || whiteSidenav ? brandDark : brandWhite}
-                  brandName="Material Dashboard PRO"
+                  brand={nfLogo}
+                  brandName="Nutrifresh One"
                   routes={routes}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}

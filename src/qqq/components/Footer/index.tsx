@@ -73,13 +73,7 @@ function Footer({ company, links }: Props): JSX.Element
             &copy;
             {" "}
             {new Date().getFullYear()}
-            , made with
-            <MDBox fontSize={size.md} color="text" mb={-0.5} mx={0.25}>
-               <Icon color="inherit" fontSize="inherit">
-                  favorite
-               </Icon>
-            </MDBox>
-            by
+            ,
             <Link href={href} target="_blank">
                <MDTypography variant="button" fontWeight="medium">
             &nbsp;
@@ -87,7 +81,6 @@ function Footer({ company, links }: Props): JSX.Element
 &nbsp;
                </MDTypography>
             </Link>
-            for a better web.
          </MDBox>
          <MDBox
             component="ul"
@@ -114,8 +107,8 @@ function Footer({ company, links }: Props): JSX.Element
 
 // Declaring default props for Footer
 Footer.defaultProps = {
-   company: { href: "https://www.kingsrook.com/", name: "Kingsrook" },
-   links: [{ href: "https://www.kingsrook.com/", name: "Kingsrook" }],
+   company: { href: "https://www.nutrifreshservices.com/", name: "Nutrifresh Services" },
+   links: [],
 };
 
 export default Footer;

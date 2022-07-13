@@ -1,5 +1,5 @@
 // react components
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import React, { useReducer, useState } from "react";
 
 // misc components
@@ -18,13 +18,13 @@ import Grid from "@mui/material/Grid";
 import { Alert } from "@mui/material";
 
 // Material Dashboard 2 PRO React TS components
-import MDAlert from "components/MDAlert";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "../../../components/MDButton";
 
 // Declaring props types for EntityForm
-interface Props {
+interface Props
+{
   id?: string;
 }
 
@@ -36,6 +36,7 @@ function EntityForm({ id }: Props): JSX.Element
    const [validations, setValidations] = useState({});
    const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
    const [formFields, setFormFields] = useState({});
+
    const [alertContent, setAlertContent] = useState("");
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
@@ -46,7 +47,10 @@ function EntityForm({ id }: Props): JSX.Element
    function getDynamicStepContent(formData: any): JSX.Element
    {
       const {
-         formFields, values, errors, touched,
+         formFields,
+         values,
+         errors,
+         touched,
       } = formData;
 
       if (!Object.keys(formFields).length)
@@ -85,10 +89,14 @@ function EntityForm({ id }: Props): JSX.Element
             setFormValues(formValues);
          }
 
-         const { dynamicFormFields, formValidations } = DynamicFormUtils.getFormData(fieldArray);
+         const {
+            dynamicFormFields,
+            formValidations,
+         } = DynamicFormUtils.getFormData(fieldArray);
          setInitialValues(initialValues);
          setFormFields(dynamicFormFields);
-         setValidations(Yup.object().shape(formValidations));
+         setValidations(Yup.object()
+            .shape(formValidations));
 
          forceUpdate();
       })();
@@ -107,7 +115,7 @@ function EntityForm({ id }: Props): JSX.Element
                {
                   window.location.href = `/${tableName}/${record.values.get(
                      tableMetaData.primaryKeyField,
-                  )}`;
+                  )}?updateSuccess=true`;
                })
                .catch((error) =>
                {
@@ -122,7 +130,7 @@ function EntityForm({ id }: Props): JSX.Element
                {
                   window.location.href = `/${tableName}/${record.values.get(
                      tableMetaData.primaryKeyField,
-                  )}`;
+                  )}?createSuccess=true`;
                })
                .catch((error) =>
                {
@@ -158,7 +166,10 @@ function EntityForm({ id }: Props): JSX.Element
                            onSubmit={handleSubmit}
                         >
                            {({
-                              values, errors, touched, isSubmitting,
+                              values,
+                              errors,
+                              touched,
+                              isSubmitting,
                            }) => (
                               <Form id={formId} autoComplete="off">
                                  <MDBox p={3} width="100%">

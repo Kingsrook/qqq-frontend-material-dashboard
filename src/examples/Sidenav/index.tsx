@@ -13,7 +13,7 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode, useReducer } from 'react';
 
 // react-router-dom components
 import { useLocation, NavLink } from "react-router-dom";
@@ -77,6 +77,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
   const items = pathname.split("/").slice(1);
   const itemParentName = items[1];
   const itemName = items[items.length - 1];
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   let textColor:
     | "primary"
@@ -112,10 +113,13 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
       setWhiteSidenav(dispatch, window.innerWidth < 1200 ? false : whiteSidenav);
     }
 
-    /** 
+    /**
      The event listener that's calling the handleMiniSidenav function when resizing the window.
     */
     window.addEventListener("resize", handleMiniSidenav);
+    window.onload = () => {
+      forceUpdate();
+    };
 
     // Call the handleMiniSidenav function to set the state with the initial value.
     handleMiniSidenav();

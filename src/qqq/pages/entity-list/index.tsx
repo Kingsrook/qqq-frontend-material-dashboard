@@ -2,29 +2,25 @@
  =========================================================
  * Material Dashboard 2 PRO React TS - v1.0.0
  =========================================================
-
  * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
  * Copyright 2022 Creative Tim (https://www.creative-tim.com)
-
  Coded by www.creative-tim.com
-
  =========================================================
-
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  */
 /*  eslint-disable react/no-unstable-nested-components */
 
 import React, { useEffect, useReducer, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 // @mui material components
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-import { makeStyles, Alert } from "@mui/material";
+import { Alert } from "@mui/material";
 import {
    DataGrid,
    GridCallbackDetails,
@@ -37,7 +33,11 @@ import {
    GridSelectionModel,
    GridSortItem,
    GridSortModel,
-   GridToolbar, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExport, GridToolbarFilterButton,
+   GridToolbarColumnsButton,
+   GridToolbarContainer,
+   GridToolbarDensitySelector,
+   GridToolbarExport,
+   GridToolbarFilterButton,
 } from "@mui/x-data-grid";
 
 // Material Dashboard 2 PRO React TS components
@@ -55,16 +55,18 @@ import { QFilterCriteria } from "@kingsrook/qqq-frontend-core/lib/model/query/QF
 import { QCriteriaOperator } from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
+import MDAlert from "components/MDAlert";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
 import "./styles.css";
 
-const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY = "qqq.columnVisibility";
-const COLUMN_SORT_LOCAL_STORAGE_KEY = "qqq.columnSort";
+const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
+const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 
 // Declaring props types for DefaultCell
-interface Props {
+interface Props
+{
   table?: QTableMetaData;
 }
 
@@ -73,6 +75,7 @@ function EntityList({ table }: Props): JSX.Element
    const tableNameParam = useParams().tableName;
    const tableName = table === null ? tableNameParam : table.name;
 
+   const [buttonText, setButtonText] = useState("");
    const [tableState, setTableState] = useState("");
    const [filtersMenu, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
@@ -89,7 +92,9 @@ function EntityList({ table }: Props): JSX.Element
    const [sortModel, setSortModel] = useState([] as GridSortItem[]);
    const [filterModel, setFilterModel] = useState(null as GridFilterModel);
    const [alertContent, setAlertContent] = useState("");
+   const [tableLabel, setTableLabel] = useState("");
 
+   const [searchParams, setSearchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -97,38 +102,41 @@ function EntityList({ table }: Props): JSX.Element
    const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
    const closeFiltersMenu = () => setFiltersMenu(null);
 
+   let columnVisibilityLocalStorageKey = "";
+   let columnSortLocalStorageKey = "";
+
    const translateCriteriaOperator = (operator: string) =>
    {
       switch (operator)
       {
       case "contains":
          return QCriteriaOperator.CONTAINS;
-      case "starts with":
+      case "startsWith":
          return QCriteriaOperator.STARTS_WITH;
-      case "ends with":
-         return QCriteriaOperator.STARTS_WITH;
+      case "endsWith":
+         return QCriteriaOperator.ENDS_WITH;
       case "is":
       case "equals":
       case "=":
          return QCriteriaOperator.EQUALS;
-      case "is not":
+      case "isNot":
       case "!=":
          return QCriteriaOperator.NOT_EQUALS;
-      case "is after":
+      case "after":
       case ">":
          return QCriteriaOperator.GREATER_THAN;
-      case "is on or after":
+      case "onOrAfter":
       case ">=":
          return QCriteriaOperator.GREATER_THAN_OR_EQUALS;
-      case "is before":
+      case "before":
       case "<":
          return QCriteriaOperator.LESS_THAN;
-      case "is on or before":
+      case "onOrBefore":
       case "<=":
          return QCriteriaOperator.LESS_THAN_OR_EQUALS;
-      case "is empty":
+      case "isEmpty":
          return QCriteriaOperator.IS_BLANK;
-      case "is not empty":
+      case "isNotEmpty":
          return QCriteriaOperator.IS_NOT_BLANK;
       // case "is any of":
       // TODO: handle this case
@@ -140,19 +148,24 @@ function EntityList({ table }: Props): JSX.Element
    const buildQFilter = () =>
    {
       const qFilter = new QQueryFilter();
-      sortModel.forEach((gridSortItem) =>
+      if (sortModel)
       {
-         qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
-      });
+         sortModel.forEach((gridSortItem) =>
+         {
+            qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
+         });
+      }
       if (filterModel)
       {
          filterModel.items.forEach((item) =>
          {
-            qFilter.addCriteria(
-               new QFilterCriteria(item.columnField, translateCriteriaOperator(item.operatorValue), [
-                  item.value,
-               ]),
-            );
+            const operator = translateCriteriaOperator(item.operatorValue);
+            let criteria = new QFilterCriteria(item.columnField, operator, [item.value]);
+            if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
+            {
+               criteria = new QFilterCriteria(item.columnField, translateCriteriaOperator(item.operatorValue), null);
+            }
+            qFilter.addCriteria(criteria);
          });
       }
 
@@ -168,10 +181,17 @@ function EntityList({ table }: Props): JSX.Element
          const tableMetaData = await QClient.loadTableMetaData(tableName);
          const count = await QClient.count(tableName, qFilter);
          setTotalRecords(count);
+         setButtonText(`new ${tableMetaData.label}`);
+         columnSortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`;
+         columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`;
+         setTableLabel(tableMetaData.label);
 
          if (sortModel.length === 0)
          {
-            sortModel.push({ field: tableMetaData.primaryKeyField, sort: "desc" });
+            sortModel.push({
+               field: tableMetaData.primaryKeyField,
+               sort: "desc",
+            });
             setSortModel(sortModel);
          }
 
@@ -182,18 +202,19 @@ function EntityList({ table }: Props): JSX.Element
             qFilter,
             rowsPerPage,
             pageNumber * rowsPerPage,
-         ).catch((error) =>
-         {
-            if (error.message)
+         )
+            .catch((error) =>
             {
-               setAlertContent(error.message);
-            }
-            else
-            {
-               setAlertContent(error.response.data.error);
-            }
-            throw error;
-         });
+               if (error.message)
+               {
+                  setAlertContent(error.message);
+               }
+               else
+               {
+                  setAlertContent(error.response.data.error);
+               }
+               throw error;
+            });
 
          const rows = [] as any[];
          results.forEach((record) =>
@@ -244,11 +265,11 @@ function EntityList({ table }: Props): JSX.Element
             }
          });
 
-         const columnVisibilityModel = localStorage.getItem(COLUMN_VISIBILITY_LOCAL_STORAGE_KEY);
+         const columnVisibilityModel = localStorage.getItem(columnVisibilityLocalStorageKey);
          if (columnVisibilityModel)
          {
             setColumnVisibilityModel(
-               JSON.parse(localStorage.getItem(COLUMN_VISIBILITY_LOCAL_STORAGE_KEY)),
+               JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey)),
             );
          }
          setColumns(columns);
@@ -301,7 +322,7 @@ function EntityList({ table }: Props): JSX.Element
    {
       setColumnVisibilityModel(columnVisibilityModel);
       localStorage.setItem(
-         COLUMN_VISIBILITY_LOCAL_STORAGE_KEY,
+         columnVisibilityLocalStorageKey,
          JSON.stringify(columnVisibilityModel),
       );
    };
@@ -309,7 +330,7 @@ function EntityList({ table }: Props): JSX.Element
    const handleSortChange = (gridSort: GridSortModel) =>
    {
       setSortModel(gridSort);
-      localStorage.setItem(COLUMN_SORT_LOCAL_STORAGE_KEY, JSON.stringify(gridSort));
+      localStorage.setItem(columnSortLocalStorageKey, JSON.stringify(gridSort));
    };
 
    if (tableName !== tableState)
@@ -317,6 +338,10 @@ function EntityList({ table }: Props): JSX.Element
       (async () =>
       {
          setTableState(tableName);
+         setSortModel([] as GridSortItem[]);
+         setColumnVisibilityModel([] as GridColumnVisibilityModel[]);
+         setFilterModel(null);
+         setFiltersMenu(null);
          const metaData = await QClient.loadMetaData();
 
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
@@ -341,7 +366,11 @@ function EntityList({ table }: Props): JSX.Element
                         The
                         <strong>{` ${selectedIds.length.toLocaleString()} `}</strong>
                         records on this page are selected.
-                        <button type="button" onClick={() => setSelectFullFilterState("filter")} className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root">
+                        <button
+                           type="button"
+                           onClick={() => setSelectFullFilterState("filter")}
+                           className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root"
+                        >
                            Select all
                            {` ${totalRecords.toLocaleString()} `}
                            records matching this query
@@ -355,7 +384,11 @@ function EntityList({ table }: Props): JSX.Element
                         All
                         <strong>{` ${totalRecords.toLocaleString()} `}</strong>
                         records matching this query are selected.
-                        <button type="button" onClick={() => setSelectFullFilterState("checked")} className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root">
+                        <button
+                           type="button"
+                           onClick={() => setSelectFullFilterState("checked")}
+                           className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root"
+                        >
                            Select the
                            {` ${selectedIds.length.toLocaleString()} `}
                            records on this page
@@ -386,8 +419,14 @@ function EntityList({ table }: Props): JSX.Element
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
-         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-         transformOrigin={{ vertical: "top", horizontal: "left" }}
+         anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "left",
+         }}
+         transformOrigin={{
+            vertical: "top",
+            horizontal: "left",
+         }}
          open={Boolean(actionsMenu)}
          onClose={closeActionsMenu}
          keepMounted
@@ -402,6 +441,7 @@ function EntityList({ table }: Props): JSX.Element
 
    useEffect(() =>
    {
+      console.log("UPDATING");
       updateTable();
    }, [pageNumber, rowsPerPage, tableState, sortModel, filterModel]);
 
@@ -416,14 +456,25 @@ function EntityList({ table }: Props): JSX.Element
             ) : (
                ""
             )}
+            {
+               (tableLabel && searchParams.get("deleteSuccess")) ? (
+                  <MDAlert color="success" dismissible>
+                     {`${tableLabel} successfully deleted`}
+                  </MDAlert>
+               ) : ("")
+            }
             <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-               <Link href={`/${tableName}/create`}>
-                  <MDButton variant="gradient" color="info">
-                     new
-                     {" "}
-                     {tableName}
-                  </MDButton>
-               </Link>
+               {buttonText ? (
+                  <Link href={`/${tableName}/create`}>
+                     <MDButton variant="gradient" color="info">
+                        {
+                           buttonText
+                        }
+                     </MDButton>
+                  </Link>
+               ) : (
+                  ""
+               )}
 
                <MDBox display="flex">
                   {tableProcesses.length > 0 && (

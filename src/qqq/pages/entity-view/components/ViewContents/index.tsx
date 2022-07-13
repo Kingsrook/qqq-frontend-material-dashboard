@@ -2,19 +2,16 @@
  =========================================================
  * Material Dashboard 2 PRO React TS - v1.0.0
  =========================================================
-
  * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
  * Copyright 2022 Creative Tim (https://www.creative-tim.com)
-
  Coded by www.creative-tim.com
-
  =========================================================
-
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  */
 
 // react components
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import React, { useReducer, useState } from "react";
 
 // @material-ui core components
@@ -38,13 +35,15 @@ import MDTypography from "components/MDTypography";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Icon from "@mui/material/Icon";
+import MDAlert from "components/MDAlert";
 import MDButton from "../../../../../components/MDButton";
 import QProcessUtils from "../../../../utils/QProcessUtils";
 
 const qController = new QController("");
 
 // Declaring props types for ViewForm
-interface Props {
+interface Props
+{
   id: string;
 }
 
@@ -58,6 +57,7 @@ function ViewContents({ id }: Props): JSX.Element
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
+   const [searchParams, setSearchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -130,10 +130,11 @@ function ViewContents({ id }: Props): JSX.Element
       event.preventDefault();
       (async () =>
       {
-         await qController.delete(tableName, id).then(() =>
-         {
-            window.location.href = `/${tableName}`;
-         });
+         await qController.delete(tableName, id)
+            .then(() =>
+            {
+               window.location.href = `/${tableName}?deleteSuccess=true`;
+            });
       })();
    };
 
@@ -142,8 +143,14 @@ function ViewContents({ id }: Props): JSX.Element
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
-         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-         transformOrigin={{ vertical: "top", horizontal: "left" }}
+         anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "left",
+         }}
+         transformOrigin={{
+            vertical: "top",
+            horizontal: "left",
+         }}
          open={Boolean(actionsMenu)}
          onClose={closeActionsMenu}
          keepMounted
@@ -157,76 +164,90 @@ function ViewContents({ id }: Props): JSX.Element
    );
 
    return (
-      <Card id="basic-info" sx={{ overflow: "visible" }}>
-         <MDBox p={3}>
-            <MDBox display="flex" justifyContent="space-between">
-               <MDTypography variant="h5">
-                  Viewing
-                  {" "}
+
+      <MDBox pb={3}>
+         {
+            (searchParams.get("createSuccess") || searchParams.get("updateSuccess")) ? (
+               <MDAlert color="success" dismissible>
                   {tableMetaData?.label}
                   {" "}
-                  (
-                  {id}
-                  )
-               </MDTypography>
-               {tableProcesses.length > 0 && (
-                  <MDButton
-                     variant={actionsMenu ? "contained" : "outlined"}
-                     color="dark"
-                     onClick={openActionsMenu}
-                  >
-                     actions&nbsp;
-                     <Icon>keyboard_arrow_down</Icon>
-                  </MDButton>
-               )}
-               {renderActionsMenu}
-            </MDBox>
-         </MDBox>
-         <MDBox p={3}>{nameValues}</MDBox>
-         <MDBox component="form" pb={3} px={3}>
-            <Grid key="tres" container spacing={3}>
-               <MDBox ml="auto" mr={3}>
-                  <MDButton
-                     variant="gradient"
-                     color="primary"
-                     size="small"
-                     onClick={handleClickConfirmOpen}
-                  >
-                     delete
+                  successfully
+                  {" "}
+                  {searchParams.get("createSuccess") ? "created" : "updated"}
+
+               </MDAlert>
+            ) : ("")
+         }
+         <Card id="basic-info" sx={{ overflow: "visible" }}>
+            <MDBox p={3}>
+               <MDBox display="flex" justifyContent="space-between">
+                  <MDTypography variant="h5">
+                     Viewing
                      {" "}
                      {tableMetaData?.label}
-                  </MDButton>
-                  <Dialog
-                     open={open}
-                     onClose={handleClickConfirmClose}
-                     aria-labelledby="alert-dialog-title"
-                     aria-describedby="alert-dialog-description"
-                  >
-                     <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
-                     <DialogContent>
-                        <DialogContentText id="alert-dialog-description">
-                           Are you sure you want to delete this record?
-                        </DialogContentText>
-                     </DialogContent>
-                     <DialogActions>
-                        <Button onClick={handleClickConfirmClose}>No</Button>
-                        <Button onClick={handleDelete} autoFocus>
-                           Yes
-                        </Button>
-                     </DialogActions>
-                  </Dialog>
+                     {" "}
+                     (
+                     {id}
+                     )
+                  </MDTypography>
+                  {tableProcesses.length > 0 && (
+                     <MDButton
+                        variant={actionsMenu ? "contained" : "outlined"}
+                        color="dark"
+                        onClick={openActionsMenu}
+                     >
+                        actions&nbsp;
+                        <Icon>keyboard_arrow_down</Icon>
+                     </MDButton>
+                  )}
+                  {renderActionsMenu}
                </MDBox>
-               <MDBox>
-                  <MDButton variant="gradient" color="dark" size="small">
-                     <Link href={editPath}>
-                        edit
+            </MDBox>
+            <MDBox p={3}>{nameValues}</MDBox>
+            <MDBox component="form" pb={3} px={3}>
+               <Grid key="tres" container spacing={3}>
+                  <MDBox ml="auto" mr={3}>
+                     <MDButton
+                        variant="gradient"
+                        color="primary"
+                        size="small"
+                        onClick={handleClickConfirmOpen}
+                     >
+                        delete
+                        {" "}
                         {tableMetaData?.label}
-                     </Link>
-                  </MDButton>
-               </MDBox>
-            </Grid>
-         </MDBox>
-      </Card>
+                     </MDButton>
+                     <Dialog
+                        open={open}
+                        onClose={handleClickConfirmClose}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                     >
+                        <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
+                        <DialogContent>
+                           <DialogContentText id="alert-dialog-description">
+                              Are you sure you want to delete this record?
+                           </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                           <Button onClick={handleClickConfirmClose}>No</Button>
+                           <Button onClick={handleDelete} autoFocus>
+                              Yes
+                           </Button>
+                        </DialogActions>
+                     </Dialog>
+                  </MDBox>
+                  <MDBox>
+                     <MDButton variant="gradient" color="dark" size="small">
+                        <Link href={editPath}>
+                           {`edit ${tableMetaData?.label}`}
+                        </Link>
+                     </MDButton>
+                  </MDBox>
+               </Grid>
+            </MDBox>
+         </Card>
+      </MDBox>
    );
 }
 
