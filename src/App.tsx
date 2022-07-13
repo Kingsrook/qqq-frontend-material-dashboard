@@ -36,19 +36,23 @@ import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "co
 import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import brandWhite from "assets/images/logo-ct.png";
 import brandDark from "assets/images/logo-ct-dark.png";
+import { Md5 } from "ts-md5/dist/md5";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
 import EntityEdit from "./qqq/pages/entity-edit";
 import ProcessRun from "./qqq/pages/process-run";
 import MDAvatar from "./components/MDAvatar";
-import profilePicture from "./assets/images/team-3.jpg";
 import ProfileOverview from "./layouts/pages/profile/profile-overview";
 import Settings from "./layouts/pages/account/settings";
 import SignInBasic from "./layouts/authentication/sign-in/basic";
 import Analytics from "./layouts/dashboards/analytics";
 import Sales from "./layouts/dashboards/sales";
 import QClient from "./qqq/utils/QClient";
+
+const gravatarBase = "http://www.gravatar.com/avatar/";
+const hash = Md5.hashStr("tim@nutrifreshservices.com");
+const profilePicture = `${gravatarBase}${hash}`;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -58,8 +62,8 @@ function getStaticRoutes()
    return [
       {
          type: "collapse",
-         name: "Brooklyn Alice",
-         key: "brooklyn-alice",
+         name: "Tim Chamberlain",
+         key: "tim-chamberlain",
          icon: <MDAvatar src={profilePicture} alt="Brooklyn Alice" size="sm" />,
          collapse: [
             {
