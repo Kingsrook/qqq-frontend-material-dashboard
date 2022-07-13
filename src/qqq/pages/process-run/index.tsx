@@ -13,7 +13,7 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 
 // formik components
 import { Formik, Form } from "formik";
@@ -77,9 +77,9 @@ function getDynamicStepContent(
       );
    }
 
-   if (!Object.keys(formFields).length)
+   if (step === null)
    {
-      // console.log("in getDynamicStepContent.  No fields yet, so returning 'loading'");
+      console.log("in getDynamicStepContent.  No step yet, so returning 'loading'");
       return <div>Loading...</div>;
    }
 
@@ -104,7 +104,7 @@ function getDynamicStepContent(
          )}
          {step.recordListFields && (
             <div>
-               <b>Records:</b>
+               <b>Records</b>
                {" "}
                <br />
                <MDBox height="100%">
@@ -164,7 +164,8 @@ function ProcessRun(): JSX.Element
    const [formId, setFormId] = useState("");
    const [formFields, setFormFields] = useState({});
    const [initialValues, setInitialValues] = useState({});
-   const [validations, setValidations] = useState({});
+   const [validationScheme, setValidationScheme] = useState(null);
+   const [validationFunction, setValidationFunction] = useState(null);
    const [needToCheckJobStatus, setNeedToCheckJobStatus] = useState(false);
    const [needRecords, setNeedRecords] = useState(false);
    const [processError, setProcessError] = useState(null as string);
@@ -173,6 +174,21 @@ function ProcessRun(): JSX.Element
    const noMoreSteps = activeStepIndex === steps.length - 1;
 
    trace("ProcessRun", true);
+
+   function buildNewRecordConfig()
+   {
+      const newRecordConfig = {} as any;
+      newRecordConfig.pageNo = 1;
+      newRecordConfig.rowsPerPage = 20;
+      newRecordConfig.columns = [] as GridColDef[];
+      newRecordConfig.rows = [];
+      newRecordConfig.totalRecords = 0;
+      newRecordConfig.handleRowsPerPageChange = null;
+      newRecordConfig.handlePageChange = null;
+      newRecordConfig.handleRowClick = null;
+      newRecordConfig.loading = true;
+      return (newRecordConfig);
+   }
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle moving to another step in the process - e.g., after the backend told us what screen to show next. //
@@ -234,36 +250,36 @@ function ProcessRun(): JSX.Element
 
             setFormFields(dynamicFormFields);
             setInitialValues(initialValues);
-            setValidations(Yup.object().shape(formValidations));
+            setValidationScheme(Yup.object().shape(formValidations));
+            setValidationFunction(null);
+         }
+         else
+         {
+            /////////////////////////////////////////////////////////////////////////
+            // if there are no form fields, set a null validationScheme (Yup), and //
+            // instead use a validation function that always says true.            //
+            /////////////////////////////////////////////////////////////////////////
+            setValidationScheme(null);
+            setValidationFunction(() => true);
          }
 
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         // if there are fields to load, build a record config, and set the needRecords state flag //
+         ////////////////////////////////////////////////////////////////////////////////////////////
          if (activeStep.recordListFields)
          {
-            const newRecordConfig = {} as any;
-            newRecordConfig.pageNo = 1;
-            newRecordConfig.rowsPerPage = 20;
-            newRecordConfig.columns = [] as GridColDef[];
-            newRecordConfig.rows = [];
-            newRecordConfig.totalRecords = 0;
-            newRecordConfig.handleRowsPerPageChange = null;
-            newRecordConfig.handlePageChange = null;
-            newRecordConfig.handleRowClick = null;
-            newRecordConfig.loading = true;
-
+            const newRecordConfig = buildNewRecordConfig();
             activeStep.recordListFields.forEach((field) =>
             {
-               newRecordConfig.columns.push({ field: field.name, headerName: field.label });
+               newRecordConfig.columns.push({ field: field.name, headerName: field.label, width: 200 });
             });
-
             setRecordConfig(newRecordConfig);
             setNeedRecords(true);
          }
-
-      // console.log(`in updateActiveStep: formFields ${JSON.stringify(dynamicFormFields)}`);
-      // console.log(`in updateActiveStep: initialValues ${JSON.stringify(initialValues)}`);
       }
    }, [newStep]);
 
+   // when we need to load records, do so, async
    useEffect(() =>
    {
       if (needRecords)
@@ -277,8 +293,14 @@ function ProcessRun(): JSX.Element
                recordConfig.rowsPerPage * (recordConfig.pageNo - 1),
                recordConfig.rowsPerPage,
             );
-            recordConfig.loading = false;
-            recordConfig.rows = [];
+
+            /////////////////////////////////////////////////////////////////////////////////////////
+            // re-construct the recordConfig object, so the setState call triggers a new rendering //
+            /////////////////////////////////////////////////////////////////////////////////////////
+            const newRecordConfig = buildNewRecordConfig();
+            newRecordConfig.loading = false;
+            newRecordConfig.columns = recordConfig.columns;
+            newRecordConfig.rows = [];
             let rowId = 0;
             records.forEach((record) =>
             {
@@ -287,11 +309,11 @@ function ProcessRun(): JSX.Element
                {
                   row.id = ++rowId;
                }
-               recordConfig.rows.push(row);
+               newRecordConfig.rows.push(row);
             });
             // todo count?
-            recordConfig.totalRecords = records.length;
-            setRecordConfig(recordConfig);
+            newRecordConfig.totalRecords = records.length;
+            setRecordConfig(newRecordConfig);
          })();
       }
    }, [needRecords]);
@@ -450,7 +472,8 @@ function ProcessRun(): JSX.Element
                   <Formik
                      enableReinitialize
                      initialValues={initialValues}
-                     validationSchema={validations}
+                     validationSchema={validationScheme}
+                     validation={validationFunction}
                      onSubmit={handleSubmit}
                   >
                      {({
