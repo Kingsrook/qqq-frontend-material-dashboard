@@ -339,7 +339,7 @@ function EntityList({ table }: Props): JSX.Element
       {
          setTableState(tableName);
          setSortModel([] as GridSortItem[]);
-         setColumnVisibilityModel([] as GridColumnVisibilityModel[]);
+         setColumnVisibilityModel({});
          setFilterModel(null);
          setFiltersMenu(null);
          const metaData = await QClient.loadMetaData();
