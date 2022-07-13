@@ -35,7 +35,7 @@ class QProcessUtils
       processKeys.forEach((key) =>
       {
          const process = metaData.processes.get(key);
-         if (process.tableName === tableName)
+         if (!process.isHidden && process.tableName === tableName)
          {
             matchingProcesses.push(process);
          }
