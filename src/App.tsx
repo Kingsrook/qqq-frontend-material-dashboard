@@ -1,17 +1,17 @@
 /**
-=========================================================
-* Material Dashboard 2 PRO React TS - v1.0.0
-=========================================================
+ =========================================================
+ * Material Dashboard 2 PRO React TS - v1.0.0
+ =========================================================
 
-* Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
-* Copyright 2022 Creative Tim (https://www.creative-tim.com)
+ * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
+ * Copyright 2022 Creative Tim (https://www.creative-tim.com)
 
-Coded by www.creative-tim.com
+ Coded by www.creative-tim.com
 
  =========================================================
 
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ */
 
 import React, {
    useState,
@@ -19,7 +19,6 @@ import React, {
    JSXElementConstructor,
    Key,
    ReactElement,
-   useReducer,
 } from "react";
 
 // react-router components
@@ -45,9 +44,6 @@ import theme from "assets/theme";
 // Material Dashboard 2 PRO React TS Dark Mode themes
 import themeDark from "assets/theme-dark";
 
-// Material Dashboard 2 PRO React TS routes
-import routes from "qqq/qqqRoutes";
-
 // Material Dashboard 2 PRO React TS contexts
 import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "context";
 
@@ -59,6 +55,72 @@ import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
 import EntityEdit from "./qqq/pages/entity-edit";
 import ProcessRun from "./qqq/pages/process-run";
+import MDAvatar from "./components/MDAvatar";
+import profilePicture from "./assets/images/team-3.jpg";
+import ProfileOverview from "./layouts/pages/profile/profile-overview";
+import Settings from "./layouts/pages/account/settings";
+import SignInBasic from "./layouts/authentication/sign-in/basic";
+import Analytics from "./layouts/dashboards/analytics";
+import Sales from "./layouts/dashboards/sales";
+import QClient from "./qqq/utils/QClient";
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// define the parts of the nav that are static - before the qqq tables etc get dynamic added //
+///////////////////////////////////////////////////////////////////////////////////////////////
+function getStaticRoutes()
+{
+   return [
+      {
+         type: "collapse",
+         name: "Brooklyn Alice",
+         key: "brooklyn-alice",
+         icon: <MDAvatar src={profilePicture} alt="Brooklyn Alice" size="sm" />,
+         collapse: [
+            {
+               name: "My Profile",
+               key: "my-profile",
+               route: "/pages/profile/profile-overview",
+               component: <ProfileOverview />,
+            },
+            {
+               name: "Settings",
+               key: "profile-settings",
+               route: "/pages/account/settings",
+               component: <Settings />,
+            },
+            {
+               name: "Logout",
+               key: "logout",
+               route: "/authentication/sign-in/basic",
+               component: <SignInBasic />,
+            },
+         ],
+      },
+      { type: "divider", key: "divider-0" },
+      {
+         type: "collapse",
+         name: "Dashboards",
+         key: "dashboards",
+         icon: <Icon fontSize="medium">dashboard</Icon>,
+         collapse: [
+            {
+               name: "Analytics",
+               key: "analytics",
+               route: "/dashboards/analytics",
+               component: <Analytics />,
+            },
+            {
+               name: "Sales",
+               key: "sales",
+               route: "/dashboards/sales",
+               component: <Sales />,
+            },
+         ],
+      },
+      { type: "divider", key: "divider-1" },
+      { type: "title", title: "Tables", key: "title-docs" },
+   ];
+}
 
 export default function App()
 {
@@ -75,6 +137,60 @@ export default function App()
    } = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const { pathname } = useLocation();
+
+   const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
+   const [routes, setRoutes] = useState(getStaticRoutes());
+
+   ////////////////////////////////////////////
+   // load qqq meta data to make more routes //
+   ////////////////////////////////////////////
+   useEffect(() =>
+   {
+      if (!needToLoadRoutes)
+      {
+         return;
+      }
+      setNeedToLoadRoutes(false);
+
+      (async () =>
+      {
+         const metaData = await QClient.loadMetaData();
+
+         // get the keys sorted
+         const keys = [...metaData.tables.keys()].sort((a, b): number =>
+         {
+            const labelA = metaData.tables.get(a).label;
+            const labelB = metaData.tables.get(b).label;
+            return (labelA.localeCompare(labelB));
+         });
+         const tableList = [] as any[];
+         keys.forEach((key) =>
+         {
+            const table = metaData.tables.get(key);
+            if (!table.isHidden)
+            {
+               tableList.push({
+                  name: `${table.label}`,
+                  key: table.name,
+                  route: `/${table.name}`,
+                  component: <EntityList table={table} />,
+               });
+            }
+         });
+
+         const tables = {
+            type: "collapse",
+            name: "Tables",
+            key: "tables",
+            icon: <Icon fontSize="medium">dashboard</Icon>,
+            collapse: tableList,
+         };
+
+         const newDynamicRoutes = getStaticRoutes();
+         newDynamicRoutes.push(tables);
+         setRoutes(newDynamicRoutes);
+      })();
+   }, [needToLoadRoutes]);
 
    // Open sidenav when mouse enter on mini sidenav
    const handleOnMouseEnter = () =>
