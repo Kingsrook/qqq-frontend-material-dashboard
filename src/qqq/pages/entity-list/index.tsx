@@ -58,6 +58,8 @@ import QClient from "qqq/utils/QClient";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
+import "./styles.css";
+
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY = "qqq.columnSort";
 
@@ -326,7 +328,6 @@ function EntityList({ table }: Props): JSX.Element
 
    function CustomToolbar()
    {
-      const selectionToolStyle = { marginLeft: "40px", fontSize: "14px" };
       return (
          <GridToolbarContainer>
             <GridToolbarColumnsButton />
@@ -336,7 +337,7 @@ function EntityList({ table }: Props): JSX.Element
             <div>
                {
                   selectFullFilterState === "checked" && (
-                     <div style={selectionToolStyle}>
+                     <div className="selectionTool">
                         The
                         <strong>{` ${selectedIds.length.toLocaleString()} `}</strong>
                         records on this page are selected.
@@ -350,7 +351,7 @@ function EntityList({ table }: Props): JSX.Element
                }
                {
                   selectFullFilterState === "filter" && (
-                     <div style={selectionToolStyle}>
+                     <div className="selectionTool">
                         All
                         <strong>{` ${totalRecords.toLocaleString()} `}</strong>
                         records matching this query are selected.
