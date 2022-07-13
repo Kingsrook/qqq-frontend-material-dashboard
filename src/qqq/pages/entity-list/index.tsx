@@ -37,7 +37,7 @@ import {
    GridSelectionModel,
    GridSortItem,
    GridSortModel,
-   GridToolbar,
+   GridToolbar, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExport, GridToolbarFilterButton,
 } from "@mui/x-data-grid";
 
 // Material Dashboard 2 PRO React TS components
@@ -79,6 +79,7 @@ function EntityList({ table }: Props): JSX.Element
    const [totalRecords, setTotalRecords] = useState(0);
    const [rowsPerPage, setRowsPerPage] = useState(10);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
+   const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
    const [columns, setColumns] = useState([] as GridColDef[]);
    const [rows, setRows] = useState([] as GridRowsProp[]);
    const [loading, setLoading] = useState(true);
@@ -160,8 +161,10 @@ function EntityList({ table }: Props): JSX.Element
    {
       (async () =>
       {
+         const qFilter = buildQFilter();
+
          const tableMetaData = await QClient.loadTableMetaData(tableName);
-         const count = await QClient.count(tableName);
+         const count = await QClient.count(tableName, qFilter);
          setTotalRecords(count);
 
          if (sortModel.length === 0)
@@ -170,7 +173,6 @@ function EntityList({ table }: Props): JSX.Element
             setSortModel(sortModel);
          }
 
-         const qFilter = buildQFilter();
          const columns = [] as GridColDef[];
 
          const results = await QClient.query(
@@ -282,6 +284,15 @@ function EntityList({ table }: Props): JSX.Element
          newSelectedIds.push(value as string);
       });
       setSelectedIds(newSelectedIds);
+
+      if (newSelectedIds.length === rowsPerPage)
+      {
+         setSelectFullFilterState("checked");
+      }
+      else
+      {
+         setSelectFullFilterState("n/a");
+      }
    };
 
    const handleColumnVisibilityChange = (columnVisibilityModel: GridColumnVisibilityModel) =>
@@ -313,12 +324,61 @@ function EntityList({ table }: Props): JSX.Element
       })();
    }
 
+   function CustomToolbar()
+   {
+      const selectionToolStyle = { marginLeft: "40px", fontSize: "14px" };
+      return (
+         <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarFilterButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarExport />
+            <div>
+               {
+                  selectFullFilterState === "checked" && (
+                     <div style={selectionToolStyle}>
+                        The
+                        <strong>{` ${selectedIds.length.toLocaleString()} `}</strong>
+                        records on this page are selected.
+                        <button type="button" onClick={() => setSelectFullFilterState("filter")} className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root">
+                           Select all
+                           {` ${totalRecords.toLocaleString()} `}
+                           records matching this query
+                        </button>
+                     </div>
+                  )
+               }
+               {
+                  selectFullFilterState === "filter" && (
+                     <div style={selectionToolStyle}>
+                        All
+                        <strong>{` ${totalRecords.toLocaleString()} `}</strong>
+                        records matching this query are selected.
+                        <button type="button" onClick={() => setSelectFullFilterState("checked")} className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root">
+                           Select the
+                           {` ${selectedIds.length.toLocaleString()} `}
+                           records on this page
+                        </button>
+                     </div>
+                  )
+               }
+            </div>
+         </GridToolbarContainer>
+      );
+   }
+
    function getRecordsQueryString()
    {
+      if (selectFullFilterState === "filter")
+      {
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
+      }
+
       if (selectedIds.length > 0)
       {
          return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
       }
+
       return "";
    }
 
@@ -381,7 +441,7 @@ function EntityList({ table }: Props): JSX.Element
             <Card>
                <MDBox height="100%">
                   <DataGrid
-                     components={{ Toolbar: GridToolbar }}
+                     components={{ Toolbar: CustomToolbar }}
                      paginationMode="server"
                      sortingMode="server"
                      filterMode="server"

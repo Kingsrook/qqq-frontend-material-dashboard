@@ -61,9 +61,9 @@ class QClient
          });
    }
 
-   public static count(tableName: string)
+   public static count(tableName: string, filter: QQueryFilter)
    {
-      return this.getInstance().count(tableName);
+      return this.getInstance().count(tableName, filter);
    }
 }
 
