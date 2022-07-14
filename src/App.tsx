@@ -12,6 +12,7 @@ import {
 } from "react-router-dom";
 
 // @mui material components
+import { LicenseInfo } from "@mui/x-license-pro";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
@@ -111,6 +112,8 @@ function getStaticRoutes()
       { type: "title", title: "Tables", key: "title-docs" },
    ];
 }
+
+LicenseInfo.setLicenseKey("4ef48a0226ec7b5fb49d99f14c6b3170Tz00NzI0NyxFPTE2ODkyODU1NzUxMDYsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI=");
 
 export default function App()
 {

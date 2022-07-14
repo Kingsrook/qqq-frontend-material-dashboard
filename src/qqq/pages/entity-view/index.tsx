@@ -13,7 +13,7 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-import { useParams } from "react-router-dom";
+import {useParams} from "react-router-dom";
 
 // @mui material components
 import Grid from "@mui/material/Grid";
@@ -22,13 +22,12 @@ import Grid from "@mui/material/Grid";
 import MDBox from "components/MDBox";
 
 // Settings page components
-// import CreateForm from "qqq/pages/entity-create/components/CreateForm";
 import BaseLayout from "qqq/components/BaseLayout";
 import ViewContents from "./components/ViewContents";
 
 function EntityView(): JSX.Element
 {
-   const { id } = useParams();
+   const {id} = useParams();
 
    return (
       <BaseLayout>

@@ -11,8 +11,8 @@
  */
 /*  eslint-disable react/no-unstable-nested-components */
 
-import React, { useEffect, useReducer, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import React, {useEffect, useReducer, useState} from "react";
+import {useParams, useSearchParams} from "react-router-dom";
 
 // @mui material components
 import Card from "@mui/material/Card";
@@ -20,11 +20,12 @@ import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Link from "@mui/material/Link";
-import { Alert } from "@mui/material";
+import {Alert} from "@mui/material";
 import {
-   DataGrid,
+   DataGridPro,
    GridCallbackDetails,
    GridColDef,
+   GridColumnOrderChangeParams,
    GridColumnVisibilityModel,
    GridFilterModel,
    GridRowId,
@@ -38,24 +39,24 @@ import {
    GridToolbarDensitySelector,
    GridToolbarExport,
    GridToolbarFilterButton,
-} from "@mui/x-data-grid";
+} from "@mui/x-data-grid-pro";
 
 // Material Dashboard 2 PRO React TS components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
+import MDAlert from "components/MDAlert";
 
 // QQQ
-import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import { QTableMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import { QQueryFilter } from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import { QFilterOrderBy } from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
-import { QFilterCriteria } from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import { QCriteriaOperator } from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
-import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
-import MDAlert from "components/MDAlert";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
@@ -67,17 +68,35 @@ const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 // Declaring props types for DefaultCell
 interface Props
 {
-  table?: QTableMetaData;
+   table?: QTableMetaData;
 }
 
-function EntityList({ table }: Props): JSX.Element
+function EntityList({table}: Props): JSX.Element
 {
    const tableNameParam = useParams().tableName;
    const tableName = table === null ? tableNameParam : table.name;
+   const [searchParams] = useSearchParams();
+
+   ////////////////////////////////////////////
+   // look for defaults in the local storage //
+   ////////////////////////////////////////////
+   const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   let defaultSort = [] as GridSortItem[];
+   let defaultVisibility = {};
+
+   if (localStorage.getItem(sortLocalStorageKey))
+   {
+      defaultSort = JSON.parse(localStorage.getItem(sortLocalStorageKey));
+   }
+   if (localStorage.getItem(columnVisibilityLocalStorageKey))
+   {
+      defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
+   }
 
    const [buttonText, setButtonText] = useState("");
    const [tableState, setTableState] = useState("");
-   const [filtersMenu, setFiltersMenu] = useState(null);
+   const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
@@ -88,69 +107,63 @@ function EntityList({ table }: Props): JSX.Element
    const [columns, setColumns] = useState([] as GridColDef[]);
    const [rows, setRows] = useState([] as GridRowsProp[]);
    const [loading, setLoading] = useState(true);
-   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
-   const [sortModel, setSortModel] = useState([] as GridSortItem[]);
    const [filterModel, setFilterModel] = useState(null as GridFilterModel);
    const [alertContent, setAlertContent] = useState("");
    const [tableLabel, setTableLabel] = useState("");
+   const [columnSortModel, setColumnSortModel] = useState(defaultSort);
+   const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
 
-   const [searchParams, setSearchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
-   const openFiltersMenu = (event: any) => setFiltersMenu(event.currentTarget);
-   const closeFiltersMenu = () => setFiltersMenu(null);
-
-   let columnVisibilityLocalStorageKey = "";
-   let columnSortLocalStorageKey = "";
 
    const translateCriteriaOperator = (operator: string) =>
    {
       switch (operator)
       {
-      case "contains":
-         return QCriteriaOperator.CONTAINS;
-      case "startsWith":
-         return QCriteriaOperator.STARTS_WITH;
-      case "endsWith":
-         return QCriteriaOperator.ENDS_WITH;
-      case "is":
-      case "equals":
-      case "=":
-         return QCriteriaOperator.EQUALS;
-      case "isNot":
-      case "!=":
-         return QCriteriaOperator.NOT_EQUALS;
-      case "after":
-      case ">":
-         return QCriteriaOperator.GREATER_THAN;
-      case "onOrAfter":
-      case ">=":
-         return QCriteriaOperator.GREATER_THAN_OR_EQUALS;
-      case "before":
-      case "<":
-         return QCriteriaOperator.LESS_THAN;
-      case "onOrBefore":
-      case "<=":
-         return QCriteriaOperator.LESS_THAN_OR_EQUALS;
-      case "isEmpty":
-         return QCriteriaOperator.IS_BLANK;
-      case "isNotEmpty":
-         return QCriteriaOperator.IS_NOT_BLANK;
-      // case "is any of":
-      // TODO: handle this case
-      default:
-         return QCriteriaOperator.EQUALS;
+         case "contains":
+            return QCriteriaOperator.CONTAINS;
+         case "startsWith":
+            return QCriteriaOperator.STARTS_WITH;
+         case "endsWith":
+            return QCriteriaOperator.ENDS_WITH;
+         case "is":
+         case "equals":
+         case "=":
+            return QCriteriaOperator.EQUALS;
+         case "isNot":
+         case "!=":
+            return QCriteriaOperator.NOT_EQUALS;
+         case "after":
+         case ">":
+            return QCriteriaOperator.GREATER_THAN;
+         case "onOrAfter":
+         case ">=":
+            return QCriteriaOperator.GREATER_THAN_OR_EQUALS;
+         case "before":
+         case "<":
+            return QCriteriaOperator.LESS_THAN;
+         case "onOrBefore":
+         case "<=":
+            return QCriteriaOperator.LESS_THAN_OR_EQUALS;
+         case "isEmpty":
+            return QCriteriaOperator.IS_BLANK;
+         case "isNotEmpty":
+            return QCriteriaOperator.IS_NOT_BLANK;
+         // case "is any of":
+         // TODO: handle this case
+         default:
+            return QCriteriaOperator.EQUALS;
       }
    };
 
    const buildQFilter = () =>
    {
       const qFilter = new QQueryFilter();
-      if (sortModel)
+      if (columnSortModel)
       {
-         sortModel.forEach((gridSortItem) =>
+         columnSortModel.forEach((gridSortItem) =>
          {
             qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
          });
@@ -176,24 +189,22 @@ function EntityList({ table }: Props): JSX.Element
    {
       (async () =>
       {
-         const qFilter = buildQFilter();
-
          const tableMetaData = await QClient.loadTableMetaData(tableName);
-         const count = await QClient.count(tableName, qFilter);
-         setTotalRecords(count);
-         setButtonText(`new ${tableMetaData.label}`);
-         columnSortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`;
-         columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`;
-         setTableLabel(tableMetaData.label);
-
-         if (sortModel.length === 0)
+         if (columnSortModel.length === 0)
          {
-            sortModel.push({
+            columnSortModel.push({
                field: tableMetaData.primaryKeyField,
                sort: "desc",
             });
-            setSortModel(sortModel);
+            setColumnSortModel(columnSortModel);
          }
+
+         const qFilter = buildQFilter();
+
+         const count = await QClient.count(tableName, qFilter);
+         setTotalRecords(count);
+         setButtonText(`new ${tableMetaData.label}`);
+         setTableLabel(tableMetaData.label);
 
          const columns = [] as GridColDef[];
 
@@ -230,21 +241,21 @@ function EntityList({ table }: Props): JSX.Element
             let columnType = "string";
             switch (field.type)
             {
-            case QFieldType.DECIMAL:
-            case QFieldType.INTEGER:
-               columnType = "number";
-               break;
-            case QFieldType.DATE:
-               columnType = "date";
-               break;
-            case QFieldType.DATE_TIME:
-               columnType = "dateTime";
-               break;
-            case QFieldType.BOOLEAN:
-               columnType = "boolean";
-               break;
-            default:
-          // noop
+               case QFieldType.DECIMAL:
+               case QFieldType.INTEGER:
+                  columnType = "number";
+                  break;
+               case QFieldType.DATE:
+                  columnType = "date";
+                  break;
+               case QFieldType.DATE_TIME:
+                  columnType = "dateTime";
+                  break;
+               case QFieldType.BOOLEAN:
+                  columnType = "boolean";
+                  break;
+               default:
+               // noop
             }
 
             const column = {
@@ -265,13 +276,6 @@ function EntityList({ table }: Props): JSX.Element
             }
          });
 
-         const columnVisibilityModel = localStorage.getItem(columnVisibilityLocalStorageKey);
-         if (columnVisibilityModel)
-         {
-            setColumnVisibilityModel(
-               JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey)),
-            );
-         }
          setColumns(columns);
          setRows(rows);
          setLoading(false);
@@ -321,16 +325,29 @@ function EntityList({ table }: Props): JSX.Element
    const handleColumnVisibilityChange = (columnVisibilityModel: GridColumnVisibilityModel) =>
    {
       setColumnVisibilityModel(columnVisibilityModel);
-      localStorage.setItem(
-         columnVisibilityLocalStorageKey,
-         JSON.stringify(columnVisibilityModel),
-      );
+      if (columnVisibilityLocalStorageKey)
+      {
+         localStorage.setItem(
+            columnVisibilityLocalStorageKey,
+            JSON.stringify(columnVisibilityModel),
+         );
+      }
+   };
+
+   const handleColumnOrderChange = (columnOrderChangeParams: GridColumnOrderChangeParams) =>
+   {
+      // TODO: make local storaged
+      console.log(JSON.stringify(columns));
+      console.log(columnOrderChangeParams);
    };
 
    const handleSortChange = (gridSort: GridSortModel) =>
    {
-      setSortModel(gridSort);
-      localStorage.setItem(columnSortLocalStorageKey, JSON.stringify(gridSort));
+      if (gridSort && gridSort.length > 0)
+      {
+         setColumnSortModel(gridSort);
+         localStorage.setItem(sortLocalStorageKey, JSON.stringify(gridSort));
+      }
    };
 
    if (tableName !== tableState)
@@ -338,8 +355,6 @@ function EntityList({ table }: Props): JSX.Element
       (async () =>
       {
          setTableState(tableName);
-         setSortModel([] as GridSortItem[]);
-         setColumnVisibilityModel({});
          setFilterModel(null);
          setFiltersMenu(null);
          const metaData = await QClient.loadMetaData();
@@ -441,9 +456,8 @@ function EntityList({ table }: Props): JSX.Element
 
    useEffect(() =>
    {
-      console.log("UPDATING");
       updateTable();
-   }, [pageNumber, rowsPerPage, tableState, sortModel, filterModel]);
+   }, [pageNumber, rowsPerPage, tableState, columnSortModel, filterModel]);
 
    return (
       <DashboardLayout>
@@ -492,8 +506,8 @@ function EntityList({ table }: Props): JSX.Element
             </MDBox>
             <Card>
                <MDBox height="100%">
-                  <DataGrid
-                     components={{ Toolbar: CustomToolbar }}
+                  <DataGridPro
+                     components={{Toolbar: CustomToolbar}}
                      paginationMode="server"
                      sortingMode="server"
                      filterMode="server"
@@ -515,10 +529,11 @@ function EntityList({ table }: Props): JSX.Element
                      onFilterModelChange={handleFilterChange}
                      columnVisibilityModel={columnVisibilityModel}
                      onColumnVisibilityModelChange={handleColumnVisibilityChange}
+                     onColumnOrderChange={handleColumnOrderChange}
                      onSelectionModelChange={selectionChanged}
                      onSortModelChange={handleSortChange}
                      sortingOrder={["asc", "desc"]}
-                     sortModel={sortModel}
+                     sortModel={columnSortModel}
                      getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                   />
                </MDBox>
