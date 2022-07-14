@@ -22,7 +22,7 @@ import MDTypography from "components/MDTypography";
 
 // NewUser page components
 import FormField from "layouts/pages/users/new-user/components/FormField";
-import { QFrontendStepMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
+import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 
 interface Props {
   formLabel?: string;
@@ -32,7 +32,7 @@ interface Props {
 
 function QDynamicForm(props: Props): JSX.Element
 {
-   const { formData, formLabel, primaryKeyId } = props;
+   const {formData, formLabel, primaryKeyId} = props;
    const {
       formFields, values, errors, touched,
    } = formData;

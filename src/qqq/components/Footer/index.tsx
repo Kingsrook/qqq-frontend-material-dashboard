@@ -37,10 +37,10 @@ interface Props {
   [key: string]: any;
 }
 
-function Footer({ company, links }: Props): JSX.Element
+function Footer({company, links}: Props): JSX.Element
 {
-   const { href, name } = company;
-   const { size } = typography;
+   const {href, name} = company;
+   const {size} = typography;
 
    const renderLinks = () => links.map((link) => (
       <MDBox key={link.name} component="li" px={2} lineHeight={1}>
@@ -56,7 +56,7 @@ function Footer({ company, links }: Props): JSX.Element
       <MDBox
          width="100%"
          display="flex"
-         flexDirection={{ xs: "column", lg: "row" }}
+         flexDirection={{xs: "column", lg: "row"}}
          justifyContent="space-between"
          alignItems="center"
          px={1.5}
@@ -84,7 +84,7 @@ function Footer({ company, links }: Props): JSX.Element
          </MDBox>
          <MDBox
             component="ul"
-            sx={({ breakpoints }) => ({
+            sx={({breakpoints}) => ({
                display: "flex",
                flexWrap: "wrap",
                alignItems: "center",
@@ -107,7 +107,7 @@ function Footer({ company, links }: Props): JSX.Element
 
 // Declaring default props for Footer
 Footer.defaultProps = {
-   company: { href: "https://www.nutrifreshservices.com/", name: "Nutrifresh Services" },
+   company: {href: "https://www.nutrifreshservices.com/", name: "Nutrifresh Services"},
    links: [],
 };
 

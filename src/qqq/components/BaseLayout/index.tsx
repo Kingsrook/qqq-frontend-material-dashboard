@@ -13,15 +13,16 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-import { useState, useEffect, ReactNode } from "react";
+import {useState, useEffect, ReactNode} from "react";
 
 // Material Dashboard 2 PRO React TS Base Styles
 import breakpoints from "assets/theme/base/breakpoints";
 
 // Material Dashboard 2 PRO React TS examples components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
+import Navbar from "qqq/components/Navbar";
 import Footer from "qqq/components/Footer";
+import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "../../../components/MDBox";
 
 // Declaring props types for BaseLayout
@@ -30,7 +31,7 @@ interface Props {
   children: ReactNode;
 }
 
-function BaseLayout({ stickyNavbar, children }: Props): JSX.Element
+function BaseLayout({stickyNavbar, children}: Props): JSX.Element
 {
    const [tabsOrientation, setTabsOrientation] = useState<"horizontal" | "vertical">("horizontal");
 

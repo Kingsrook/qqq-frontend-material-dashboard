@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QQueryFilter } from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 
 /*******************************************************************************
  ** client wrapper of qqq backend

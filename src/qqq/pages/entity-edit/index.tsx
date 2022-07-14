@@ -21,12 +21,12 @@ import MDBox from "components/MDBox";
 
 // Settings page components
 import BaseLayout from "qqq/components/BaseLayout";
-import { useParams } from "react-router-dom";
+import {useParams} from "react-router-dom";
 import EntityForm from "qqq/components/EntityForm";
 
 function EntityEdit(): JSX.Element
 {
-   const { id } = useParams();
+   const {id} = useParams();
 
    return (
       <BaseLayout>

@@ -27,7 +27,7 @@ interface Props {
   checked?: boolean;
 }
 
-function IdCell({ id, checked }: Props): JSX.Element
+function IdCell({id, checked}: Props): JSX.Element
 {
    const pathParts = window.location.pathname.split("/");
    const tableName = pathParts[1];

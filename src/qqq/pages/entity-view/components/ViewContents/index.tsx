@@ -11,8 +11,8 @@
  */
 
 // react components
-import { useParams, useSearchParams } from "react-router-dom";
-import React, { useReducer, useState } from "react";
+import {useParams, useSearchParams} from "react-router-dom";
+import React, {useReducer, useState} from "react";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
@@ -26,8 +26,8 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 
 // qqq imports
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import { QProcessMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
@@ -47,9 +47,9 @@ interface Props
   id: string;
 }
 
-function ViewContents({ id }: Props): JSX.Element
+function ViewContents({id}: Props): JSX.Element
 {
-   const { tableName } = useParams();
+   const {tableName} = useParams();
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [nameValues, setNameValues] = useState([] as JSX.Element[]);
@@ -178,7 +178,7 @@ function ViewContents({ id }: Props): JSX.Element
                </MDAlert>
             ) : ("")
          }
-         <Card id="basic-info" sx={{ overflow: "visible" }}>
+         <Card id="basic-info" sx={{overflow: "visible"}}>
             <MDBox p={3}>
                <MDBox display="flex" justifyContent="space-between">
                   <MDTypography variant="h5">

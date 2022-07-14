@@ -14,11 +14,11 @@ Coded by www.creative-tim.com
 */
 
 import ReactDOM from "react-dom";
-import { BrowserRouter } from "react-router-dom";
+import {BrowserRouter} from "react-router-dom";
 import App from "App";
 
 // Material Dashboard 2 PRO React TS Context Provider
-import { MaterialUIControllerProvider } from "context";
+import {MaterialUIControllerProvider} from "context";
 import "./qqq/styles/qqq-override-styles.css";
 
 ReactDOM.render(

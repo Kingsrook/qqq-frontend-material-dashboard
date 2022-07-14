@@ -1,21 +1,21 @@
 // react components
-import { useParams, useSearchParams } from "react-router-dom";
-import React, { useReducer, useState } from "react";
+import {useParams, useSearchParams} from "react-router-dom";
+import React, {useReducer, useState} from "react";
 
 // misc components
 import * as Yup from "yup";
-import { Form, Formik } from "formik";
+import {Form, Formik} from "formik";
 
 // qqq components
-import { QController } from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
 import QDynamicForm from "qqq/components/QDynamicForm";
-import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import { Alert } from "@mui/material";
+import {Alert} from "@mui/material";
 
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
@@ -28,10 +28,10 @@ interface Props
   id?: string;
 }
 
-function EntityForm({ id }: Props): JSX.Element
+function EntityForm({id}: Props): JSX.Element
 {
    const qController = new QController("");
-   const { tableName } = useParams();
+   const {tableName} = useParams();
 
    const [validations, setValidations] = useState({});
    const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
@@ -154,7 +154,7 @@ function EntityForm({ id }: Props): JSX.Element
                ) : (
                   ""
                )}
-               <Card id="edit-form-container" sx={{ overflow: "visible" }}>
+               <Card id="edit-form-container" sx={{overflow: "visible"}}>
                   <MDBox p={3}>
                      <MDTypography variant="h5">{formTitle}</MDTypography>
                   </MDBox>

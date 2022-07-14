@@ -34,14 +34,14 @@ interface Props {
     | "dark";
 }
 
-function CustomerCell({ image, name, color }: Props): JSX.Element
+function CustomerCell({image, name, color}: Props): JSX.Element
 {
    return (
       <MDBox display="flex" alignItems="center">
          <MDBox mr={1}>
             <MDAvatar bgColor={color} src={image} alt={name} size="xs" />
          </MDBox>
-         <MDTypography variant="caption" fontWeight="medium" color="text" sx={{ lineHeight: 0 }}>
+         <MDTypography variant="caption" fontWeight="medium" color="text" sx={{lineHeight: 0}}>
             {name}
          </MDTypography>
       </MDBox>

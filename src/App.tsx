@@ -12,8 +12,8 @@ import {
 } from "react-router-dom";
 
 // @mui material components
-import { LicenseInfo } from "@mui/x-license-pro";
-import { ThemeProvider } from "@mui/material/styles";
+import {LicenseInfo} from "@mui/x-license-pro";
+import {ThemeProvider} from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 
@@ -31,13 +31,13 @@ import theme from "assets/theme";
 import themeDark from "assets/theme-dark";
 
 // Material Dashboard 2 PRO React TS contexts
-import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "context";
+import {useMaterialUIController, setMiniSidenav, setOpenConfigurator} from "context";
 
 // Images
 import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import brandWhite from "assets/images/logo-ct.png";
 import brandDark from "assets/images/logo-ct-dark.png";
-import { Md5 } from "ts-md5/dist/md5";
+import {Md5} from "ts-md5/dist/md5";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
@@ -87,7 +87,7 @@ function getStaticRoutes()
             },
          ],
       },
-      { type: "divider", key: "divider-0" },
+      {type: "divider", key: "divider-0"},
       {
          type: "collapse",
          name: "Dashboards",
@@ -108,8 +108,8 @@ function getStaticRoutes()
             },
          ],
       },
-      { type: "divider", key: "divider-1" },
-      { type: "title", title: "Tables", key: "title-docs" },
+      {type: "divider", key: "divider-1"},
+      {type: "title", title: "Tables", key: "title-docs"},
    ];
 }
 
@@ -129,7 +129,7 @@ export default function App()
       darkMode,
    } = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
-   const { pathname } = useLocation();
+   const {pathname} = useLocation();
 
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
    const [routes, setRoutes] = useState(getStaticRoutes());
@@ -223,11 +223,11 @@ export default function App()
 
    const getRoutes = (allRoutes: any[]): any => allRoutes.map(
       (route: {
-      collapse: any;
-      route: string;
-      component: ReactElement<any, string | JSXElementConstructor<any>>;
-      key: Key;
-    }) =>
+         collapse: any;
+         route: string;
+         component: ReactElement<any, string | JSXElementConstructor<any>>;
+         key: Key;
+      }) =>
       {
          if (route.collapse)
          {
@@ -258,7 +258,7 @@ export default function App()
          bottom="2rem"
          zIndex={99}
          color="dark"
-         sx={{ cursor: "pointer" }}
+         sx={{cursor: "pointer"}}
          onClick={handleConfiguratorOpen}
       >
          <Icon fontSize="small" color="inherit">

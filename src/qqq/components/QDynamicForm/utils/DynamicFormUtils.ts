@@ -23,8 +23,8 @@
 import * as Yup from "yup";
 
 // qqq imports
-import { QFieldMetaData } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import { QFieldType } from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 
 /*******************************************************************************
  ** Meta-data to represent a single field in a table.
@@ -42,23 +42,23 @@ class DynamicFormUtils
          let fieldType: string;
          switch (field.type.toString())
          {
-         case QFieldType.DECIMAL:
-         case QFieldType.INTEGER:
-            fieldType = "number";
-            break;
-         case QFieldType.DATE_TIME:
-            fieldType = "datetime-local";
-            break;
-         case QFieldType.PASSWORD:
-         case QFieldType.TIME:
-         case QFieldType.DATE:
-            fieldType = field.type.toString();
-            break;
-         case QFieldType.TEXT:
-         case QFieldType.HTML:
-         case QFieldType.STRING:
-         default:
-            fieldType = "text";
+            case QFieldType.DECIMAL:
+            case QFieldType.INTEGER:
+               fieldType = "number";
+               break;
+            case QFieldType.DATE_TIME:
+               fieldType = "datetime-local";
+               break;
+            case QFieldType.PASSWORD:
+            case QFieldType.TIME:
+            case QFieldType.DATE:
+               fieldType = field.type.toString();
+               break;
+            case QFieldType.TEXT:
+            case QFieldType.HTML:
+            case QFieldType.STRING:
+            default:
+               fieldType = "text";
          }
 
          let label = field.label ? field.label : field.name;
@@ -78,7 +78,7 @@ class DynamicFormUtils
          }
       });
 
-      return { dynamicFormFields, formValidations };
+      return {dynamicFormFields, formValidations};
    }
 }
 

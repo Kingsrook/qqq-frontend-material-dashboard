@@ -22,7 +22,7 @@ interface Props {
   suffix?: string | boolean;
 }
 
-function DefaultCell({ value, suffix }: Props): JSX.Element
+function DefaultCell({value, suffix}: Props): JSX.Element
 {
    return (
       <MDTypography variant="caption" fontWeight="medium" color="text">
