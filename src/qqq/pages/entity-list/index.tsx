@@ -14,6 +14,8 @@
 import React, {useEffect, useReducer, useState} from "react";
 import {useParams, useSearchParams} from "react-router-dom";
 
+import {useAuth0} from "@auth0/auth0-react";
+
 // @mui material components
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
@@ -57,6 +59,7 @@ import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFil
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
+import Navbar from "qqq/components/Navbar";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
@@ -461,7 +464,7 @@ function EntityList({table}: Props): JSX.Element
 
    return (
       <DashboardLayout>
-         <DashboardNavbar />
+         <Navbar />
          <MDBox my={3}>
             {alertContent ? (
                <MDBox mb={3}>
