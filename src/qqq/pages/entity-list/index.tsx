@@ -20,7 +20,7 @@ import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Link from "@mui/material/Link";
-import {Alert} from "@mui/material";
+import {Alert, tableFooterClasses} from "@mui/material";
 import {
    DataGridPro,
    GridCallbackDetails,
@@ -38,7 +38,9 @@ import {
    GridToolbarContainer,
    GridToolbarDensitySelector,
    GridToolbarExport,
+   GridToolbarExportContainer,
    GridToolbarFilterButton,
+   GridExportMenuItemProps,
 } from "@mui/x-data-grid-pro";
 
 // Material Dashboard 2 PRO React TS components
@@ -96,6 +98,7 @@ function EntityList({table}: Props): JSX.Element
 
    const [buttonText, setButtonText] = useState("");
    const [tableState, setTableState] = useState("");
+   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
@@ -189,11 +192,12 @@ function EntityList({table}: Props): JSX.Element
    {
       (async () =>
       {
-         const tableMetaData = await QClient.loadTableMetaData(tableName);
+         const newTableMetaData = await QClient.loadTableMetaData(tableName);
+         setTableMetaData(newTableMetaData);
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
-               field: tableMetaData.primaryKeyField,
+               field: newTableMetaData.primaryKeyField,
                sort: "desc",
             });
             setColumnSortModel(columnSortModel);
@@ -203,8 +207,8 @@ function EntityList({table}: Props): JSX.Element
 
          const count = await QClient.count(tableName, qFilter);
          setTotalRecords(count);
-         setButtonText(`new ${tableMetaData.label}`);
-         setTableLabel(tableMetaData.label);
+         setButtonText(`new ${newTableMetaData.label}`);
+         setTableLabel(newTableMetaData.label);
 
          const columns = [] as GridColDef[];
 
@@ -233,10 +237,10 @@ function EntityList({table}: Props): JSX.Element
             rows.push(Object.fromEntries(record.values.entries()));
          });
 
-         const sortedKeys = [...tableMetaData.fields.keys()].sort();
+         const sortedKeys = [...newTableMetaData.fields.keys()].sort();
          sortedKeys.forEach((key) =>
          {
-            const field = tableMetaData.fields.get(key);
+            const field = newTableMetaData.fields.get(key);
 
             let columnType = "string";
             switch (field.type)
@@ -265,7 +269,7 @@ function EntityList({table}: Props): JSX.Element
                width: 200,
             };
 
-            if (key === tableMetaData.primaryKeyField)
+            if (key === newTableMetaData.primaryKeyField)
             {
                column.width = 75;
                columns.splice(0, 0, column);
@@ -366,6 +370,67 @@ function EntityList({table}: Props): JSX.Element
       })();
    }
 
+   interface QExportMenuItemProps extends GridExportMenuItemProps<{}>
+   {
+      format: string;
+   }
+
+   function ExportMenuItem(props: QExportMenuItemProps)
+   {
+      const {format, hideMenu} = props;
+
+      return (
+         <MenuItem
+            disabled={totalRecords === 0}
+            onClick={() =>
+            {
+               ///////////////////////////////////////////////////////////////////////////////
+               // build the list of visible fields.  note, not doing them in-order (in case //
+               // the user did drag & drop), because column order model isn't right yet     //
+               // so just doing them to match columns (which were pKey, then sorted)        //
+               ///////////////////////////////////////////////////////////////////////////////
+               const visibleFields: string[] = [];
+               columns.forEach((gridColumn) =>
+               {
+                  const fieldName = gridColumn.field;
+                  // @ts-ignore
+                  if (columnVisibilityModel[fieldName] !== false)
+                  {
+                     visibleFields.push(fieldName);
+                  }
+               });
+
+               const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
+
+               //////////////////////////////////////
+               // construct the url for the export //
+               //////////////////////////////////////
+               const d = new Date();
+               const dateString = `${d.getFullYear()}-${zp(d.getMonth())}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+               const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${JSON.stringify(buildQFilter())}&fields=${visibleFields.join(",")}`;
+
+               ////////////////////////////////////
+               // create an 'a' tag and click it //
+               ////////////////////////////////////
+               const a = document.createElement("a");
+               a.href = url;
+               a.download = filename;
+               a.target = "_blank";
+               a.click();
+
+               ///////////////////////////////////////////
+               // Hide the export menu after the export //
+               ///////////////////////////////////////////
+               hideMenu?.();
+            }}
+         >
+            Export
+            {` ${format.toUpperCase()}`}
+         </MenuItem>
+      );
+   }
+
    function CustomToolbar()
    {
       return (
@@ -373,7 +438,10 @@ function EntityList({table}: Props): JSX.Element
             <GridToolbarColumnsButton />
             <GridToolbarFilterButton />
             <GridToolbarDensitySelector />
-            <GridToolbarExport />
+            <GridToolbarExportContainer>
+               <ExportMenuItem format="csv" />
+               <ExportMenuItem format="xlsx" />
+            </GridToolbarExportContainer>
             <div>
                {
                   selectFullFilterState === "checked" && (

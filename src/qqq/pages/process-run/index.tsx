@@ -46,8 +46,8 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
 import {
-   DataGrid, GridColDef, GridRowParams, GridRowsProp,
-} from "@mui/x-data-grid";
+   DataGridPro, GridColDef, GridRowParams, GridRowsProp,
+} from "@mui/x-data-grid-pro";
 import QDynamicForm from "../../components/QDynamicForm";
 import MDTypography from "../../../components/MDTypography";
 
@@ -108,7 +108,7 @@ function getDynamicStepContent(
                {" "}
                <br />
                <MDBox height="100%">
-                  <DataGrid
+                  <DataGridPro
                      page={recordConfig.pageNo}
                      disableSelectionOnClick
                      autoHeight
