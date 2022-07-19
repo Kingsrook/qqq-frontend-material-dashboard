@@ -400,6 +400,9 @@ function EntityList({table}: Props): JSX.Element
                   }
                });
 
+               ///////////////////////
+               // zero-pad function //
+               ///////////////////////
                const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
 
                //////////////////////////////////////
@@ -408,16 +411,29 @@ function EntityList({table}: Props): JSX.Element
                const d = new Date();
                const dateString = `${d.getFullYear()}-${zp(d.getMonth())}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${JSON.stringify(buildQFilter())}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter()))}&fields=${visibleFields.join(",")}`;
 
-               ////////////////////////////////////
-               // create an 'a' tag and click it //
-               ////////////////////////////////////
-               const a = document.createElement("a");
-               a.href = url;
-               a.download = filename;
-               a.target = "_blank";
-               a.click();
+               //////////////////////////////////////////////////////////////////////////////////////
+               // open a window (tab) with a little page that says the file is being generated.    //
+               // then have that page load the url for the export.                                 //
+               // If there's an error, it'll appear in that window.  else, the file will download. //
+               //////////////////////////////////////////////////////////////////////////////////////
+               const exportWindow = window.open("", "_blank");
+               exportWindow.document.write(`<html lang="en">
+                  <head>
+                     <style>
+                        * { font-family: "Roboto","Helvetica","Arial",sans-serif; }
+                     </style>
+                     <title>${filename}</title>
+                     <script>
+                        setTimeout(() => 
+                        {
+                           window.location.href="${url}";
+                        }, 1);
+                     </script>
+                  </head>
+                  <body>Generating file <u>${filename}</u> with ${totalRecords.toLocaleString()} records...</body>
+               </html>`);
 
                ///////////////////////////////////////////
                // Hide the export menu after the export //
