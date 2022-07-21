@@ -508,6 +508,7 @@ function EntityList({table}: Props): JSX.Element
                <MDBox height="100%">
                   <DataGridPro
                      components={{Toolbar: CustomToolbar}}
+                     pagination
                      paginationMode="server"
                      sortingMode="server"
                      filterMode="server"
