@@ -62,6 +62,8 @@
       "no-shadow": "off",
       "no-unused-vars": "off",
       "no-plusplus": "off",
+      "no-underscore-dangle": "off",
+      "no-else-return": "off",
       "spaced-comment": "off",
       "object-curly-spacing": [
          "error",

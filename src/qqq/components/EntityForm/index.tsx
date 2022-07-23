@@ -74,7 +74,10 @@ function EntityForm({id}: Props): JSX.Element
          sortedKeys.forEach((key) =>
          {
             const fieldMetaData = tableMetaData.fields.get(key);
-            fieldArray.push(fieldMetaData);
+            if (fieldMetaData.isEditable)
+            {
+               fieldArray.push(fieldMetaData);
+            }
          });
 
          if (id !== null)
