@@ -1,0 +1,183 @@
+{
+  "process": {
+    "name": "person.bulkEdit",
+    "label": "Person Bulk Edit",
+    "tableName": "person",
+    "isHidden": true,
+    "frontendSteps": [
+      {
+        "name": "edit",
+        "label": "Edit Values",
+        "stepType": "frontend",
+        "components": [
+          {
+            "type": "HELP_TEXT",
+            "values": {
+              "text": "Flip the switches next to the fields that you want to edit.\nThe values you supply here will be updated in all of the records you are bulk editing.\nYou can clear out the value in a field by flipping the switch on for that field and leaving the input field blank.\nFields whose switches are off will not be updated."
+            }
+          },
+          {
+            "type": "BULK_EDIT_FORM"
+          }
+        ],
+        "formFields": [
+          {
+            "name": "firstName",
+            "label": "First Name",
+            "backendName": "first_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "lastName",
+            "label": "Last Name",
+            "backendName": "last_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "birthDate",
+            "label": "Birth Date",
+            "backendName": "birth_date",
+            "type": "DATE",
+            "isRequired": false,
+            "isEditable": true
+          },
+          {
+            "name": "email",
+            "label": "Email",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true
+          }
+        ]
+      },
+      {
+        "name": "review",
+        "label": "Review",
+        "stepType": "frontend",
+        "components": [
+          {
+            "type": "HELP_TEXT",
+            "values": {
+              "text": "The records below will be updated if you click Submit."
+            }
+          }
+        ],
+        "viewFields": [
+          {
+            "name": "valuesBeingUpdated",
+            "label": "Values Being Updated",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true
+          }
+        ],
+        "recordListFields": [
+          {
+            "name": "firstName",
+            "label": "First Name",
+            "backendName": "first_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "lastName",
+            "label": "Last Name",
+            "backendName": "last_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "birthDate",
+            "label": "Birth Date",
+            "backendName": "birth_date",
+            "type": "DATE",
+            "isRequired": false,
+            "isEditable": true
+          },
+          {
+            "name": "email",
+            "label": "Email",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true
+          }
+        ]
+      },
+      {
+        "name": "results",
+        "label": "Results",
+        "stepType": "frontend",
+        "components": [
+          {
+            "type": "HELP_TEXT",
+            "values": {
+              "text": "The records below have been updated."
+            }
+          }
+        ],
+        "recordListFields": [
+          {
+            "name": "id",
+            "label": "Id",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": false
+          },
+          {
+            "name": "createDate",
+            "label": "Create Date",
+            "backendName": "create_date",
+            "type": "DATE_TIME",
+            "isRequired": false,
+            "isEditable": false
+          },
+          {
+            "name": "modifyDate",
+            "label": "Modify Date",
+            "backendName": "modify_date",
+            "type": "DATE_TIME",
+            "isRequired": false,
+            "isEditable": false
+          },
+          {
+            "name": "firstName",
+            "label": "First Name",
+            "backendName": "first_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "lastName",
+            "label": "Last Name",
+            "backendName": "last_name",
+            "type": "STRING",
+            "isRequired": true,
+            "isEditable": true
+          },
+          {
+            "name": "birthDate",
+            "label": "Birth Date",
+            "backendName": "birth_date",
+            "type": "DATE",
+            "isRequired": false,
+            "isEditable": true
+          },
+          {
+            "name": "email",
+            "label": "Email",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true
+          }
+        ]
+      }
+    ]
+  }
+}
