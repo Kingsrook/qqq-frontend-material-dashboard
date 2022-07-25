@@ -14,8 +14,6 @@
 import React, {useEffect, useReducer, useState} from "react";
 import {useParams, useSearchParams} from "react-router-dom";
 
-import {useAuth0} from "@auth0/auth0-react";
-
 // @mui material components
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
