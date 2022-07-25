@@ -1,16 +1,22 @@
-/**
- =========================================================
- * Material Dashboard 2 PRO React TS - v1.0.0
- =========================================================
-
- * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
- * Copyright 2022 Creative Tim (https://www.creative-tim.com)
-
- Coded by www.creative-tim.com
-
- =========================================================
-
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 // @mui material components
@@ -21,32 +27,38 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 
 // NewUser page components
-import FormField from "layouts/pages/users/new-user/components/FormField";
-import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
+import {useFormikContext} from "formik";
+import React from "react";
+import QDynamicFormField from "qqq/components/QDynamicFormField";
 
 interface Props {
   formLabel?: string;
   formData: any;
   primaryKeyId?: string;
+  bulkEditMode?: boolean;
+  bulkEditSwitchChangeHandler?: any
 }
 
 function QDynamicForm(props: Props): JSX.Element
 {
-   const {formData, formLabel, primaryKeyId} = props;
+   const {
+      formData, formLabel, primaryKeyId, bulkEditMode, bulkEditSwitchChangeHandler,
+   } = props;
    const {
       formFields, values, errors, touched,
    } = formData;
 
-   /*
-        const {
-          firstName: firstNameV,
-          lastName: lastNameV,
-          company: companyV,
-          email: emailV,
-          password: passwordV,
-          repeatPassword: repeatPasswordV,
-        } = values;
-        */
+   const formikProps = useFormikContext();
+
+   const fileChanged = (event: React.FormEvent<HTMLInputElement>, field: any) =>
+   {
+      formikProps.setFieldValue(field.name, event.currentTarget.files[0]);
+   };
+
+   const bulkEditSwitchChanged = (name: string, value: boolean) =>
+   {
+      bulkEditSwitchChangeHandler(name, value);
+   };
 
    return (
       <MDBox>
@@ -73,93 +85,46 @@ function QDynamicForm(props: Props): JSX.Element
                {
                   values[fieldName] = "";
                }
+
+               if (field.type === "file")
+               {
+                  return (
+                     <Grid item xs={12} sm={6} key={fieldName}>
+                        <MDBox mb={1.5}>
+                           <input
+                              id={fieldName}
+                              name={fieldName}
+                              type="file"
+                              onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
+                           />
+                           <MDBox mt={0.75}>
+                              <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+                                 {errors[fieldName] && <span>You must select a file to proceed</span>}
+                              </MDTypography>
+                           </MDBox>
+                        </MDBox>
+                     </Grid>
+                  );
+               }
+
+               // todo? inputProps={{ autoComplete: "" }}
+               // todo? placeholder={password.placeholder}
+               // todo? success={!errors[fieldName] && touched[fieldName]}
                return (
                   <Grid item xs={12} sm={6} key={fieldName}>
-                     <FormField
+                     <QDynamicFormField
                         type={field.type}
                         label={field.label}
                         name={fieldName}
                         value={values[fieldName]}
                         error={errors[fieldName] && touched[fieldName]}
+                        bulkEditMode={bulkEditMode}
+                        bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                      />
                   </Grid>
                );
             })}
             </Grid>
-            {/*
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={firstName.type}
-              label={firstName.label}
-              name={firstName.name}
-              value={firstNameV}
-              placeholder={firstName.placeholder}
-              error={errors.firstName && touched.firstName}
-              success={firstNameV.length > 0 && !errors.firstName}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={lastName.type}
-              label={lastName.label}
-              name={lastName.name}
-              value={lastNameV}
-              placeholder={lastName.placeholder}
-              error={errors.lastName && touched.lastName}
-              success={lastNameV.length > 0 && !errors.lastName}
-            />
-          </Grid>
-        </Grid>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={company.type}
-              label={company.label}
-              name={company.name}
-              value={companyV}
-              placeholder={company.placeholder}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={email.type}
-              label={email.label}
-              name={email.name}
-              value={emailV}
-              placeholder={email.placeholder}
-              error={errors.email && touched.email}
-              success={emailV.length > 0 && !errors.email}
-            />
-          </Grid>
-        </Grid>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={password.type}
-              label={password.label}
-              name={password.name}
-              value={passwordV}
-              placeholder={password.placeholder}
-              error={errors.password && touched.password}
-              success={passwordV.length > 0 && !errors.password}
-              inputProps={{ autoComplete: "" }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormField
-              type={repeatPassword.type}
-              label={repeatPassword.label}
-              name={repeatPassword.name}
-              value={repeatPasswordV}
-              placeholder={repeatPassword.placeholder}
-              error={errors.repeatPassword && touched.repeatPassword}
-              success={repeatPasswordV.length > 0 && !errors.repeatPassword}
-              inputProps={{ autoComplete: "" }}
-            />
-          </Grid>
-        </Grid>
-        */}
          </MDBox>
       </MDBox>
    );
@@ -168,6 +133,9 @@ function QDynamicForm(props: Props): JSX.Element
 QDynamicForm.defaultProps = {
    formLabel: undefined,
    primaryKeyId: undefined,
+   bulkEditMode: false,
+   bulkEditSwitchChangeHandler: () =>
+   {},
 };
 
 export default QDynamicForm;

@@ -39,7 +39,6 @@ import {
    GridToolbarColumnsButton,
    GridToolbarContainer,
    GridToolbarDensitySelector,
-   GridToolbarExport,
    GridToolbarExportContainer,
    GridToolbarFilterButton,
    GridExportMenuItemProps,
@@ -62,6 +61,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
 import Navbar from "qqq/components/Navbar";
+import Button from "@mui/material/Button";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
@@ -450,10 +450,82 @@ function EntityList({table}: Props): JSX.Element
       );
    }
 
+   function getNoOfSelectedRecords()
+   {
+      if (selectFullFilterState === "filter")
+      {
+         return (totalRecords);
+      }
+
+      return (selectedIds.length);
+   }
+
+   function getRecordsQueryString()
+   {
+      if (selectFullFilterState === "filter")
+      {
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
+      }
+
+      if (selectedIds.length > 0)
+      {
+         return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
+      }
+
+      return "";
+   }
+
+   const bulkLoadClicked = () =>
+   {
+      document.location.href = `/processes/${tableName}.bulkInsert${getRecordsQueryString()}`;
+   };
+
+   const bulkEditClicked = () =>
+   {
+      if (getNoOfSelectedRecords() === 0)
+      {
+         setAlertContent("No records were selected to Bulk Edit.");
+         return;
+      }
+      document.location.href = `/processes/${tableName}.bulkEdit${getRecordsQueryString()}`;
+   };
+
+   const bulkDeleteClicked = () =>
+   {
+      if (getNoOfSelectedRecords() === 0)
+      {
+         setAlertContent("No records were selected to Bulk Delete.");
+         return;
+      }
+      document.location.href = `/processes/${tableName}.bulkDelete${getRecordsQueryString()}`;
+   };
+
    function CustomToolbar()
    {
+      const [bulkActionsMenuAnchor, setBulkActionsMenuAnchor] = useState(null as HTMLElement);
+      const bulkActionsMenuOpen = Boolean(bulkActionsMenuAnchor);
+
+      const openBulkActionsMenu = (event: React.MouseEvent<HTMLElement>) =>
+      {
+         setBulkActionsMenuAnchor(event.currentTarget);
+      };
+
+      const closeBulkActionsMenu = () =>
+      {
+         setBulkActionsMenuAnchor(null);
+      };
+
       return (
          <GridToolbarContainer>
+            <div>
+               <Button
+                  id="refresh-button"
+                  onClick={updateTable}
+               >
+                  <Icon>refresh</Icon>
+                  Refresh
+               </Button>
+            </div>
             <GridToolbarColumnsButton />
             <GridToolbarFilterButton />
             <GridToolbarDensitySelector />
@@ -461,6 +533,29 @@ function EntityList({table}: Props): JSX.Element
                <ExportMenuItem format="csv" />
                <ExportMenuItem format="xlsx" />
             </GridToolbarExportContainer>
+            <div>
+               <Button
+                  id="bulk-actions-button"
+                  onClick={openBulkActionsMenu}
+                  aria-controls={bulkActionsMenuOpen ? "basic-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={bulkActionsMenuOpen ? "true" : undefined}
+               >
+                  <Icon>fact_check</Icon>
+                  Bulk Actions
+               </Button>
+               <Menu
+                  id="bulk-actions-menu"
+                  open={bulkActionsMenuOpen}
+                  anchorEl={bulkActionsMenuAnchor}
+                  onClose={closeBulkActionsMenu}
+                  MenuListProps={{"aria-labelledby": "bulk-actions-button"}}
+               >
+                  <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
+                  <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
+                  <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
+               </Menu>
+            </div>
             <div>
                {
                   selectFullFilterState === "checked" && (
@@ -501,21 +596,6 @@ function EntityList({table}: Props): JSX.Element
             </div>
          </GridToolbarContainer>
       );
-   }
-
-   function getRecordsQueryString()
-   {
-      if (selectFullFilterState === "filter")
-      {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
-      }
-
-      if (selectedIds.length > 0)
-      {
-         return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
-      }
-
-      return "";
    }
 
    const renderActionsMenu = (

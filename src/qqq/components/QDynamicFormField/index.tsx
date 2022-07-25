@@ -1,0 +1,107 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+// formik components
+import {ErrorMessage, Field} from "formik";
+
+// Material Dashboard 2 PRO React TS components
+import MDBox from "components/MDBox";
+import MDTypography from "components/MDTypography";
+import MDInput from "components/MDInput";
+import QDynamicForm from "qqq/components/QDynamicForm";
+import React, {useState} from "react";
+import Grid from "@mui/material/Grid";
+import Switch from "@mui/material/Switch";
+
+// Declaring props types for FormField
+interface Props
+{
+   label: string;
+   name: string;
+   [key: string]: any;
+   bulkEditMode?: boolean;
+   bulkEditSwitchChangeHandler?: any
+}
+
+function QDynamicFormField({
+   label, name, bulkEditMode, bulkEditSwitchChangeHandler, ...rest
+}: Props): JSX.Element
+{
+   const [switchChecked, setSwitchChecked] = useState(false);
+   const [isDisabled, setIsDisabled] = useState(bulkEditMode);
+
+   const field = () => (
+      <>
+         <Field {...rest} name={name} as={MDInput} variant="standard" label={label} fullWidth disabled={isDisabled} />
+         <MDBox mt={0.75}>
+            <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+               {!isDisabled && <ErrorMessage name={name} />}
+            </MDTypography>
+         </MDBox>
+      </>
+   );
+
+   const bulkEditSwitchChanged = () =>
+   {
+      const newSwitchValue = !switchChecked;
+      setSwitchChecked(newSwitchValue);
+      setIsDisabled(!newSwitchValue);
+      bulkEditSwitchChangeHandler(name, newSwitchValue);
+   };
+
+   if (bulkEditMode)
+   {
+      return (
+         <MDBox mb={1.5}>
+            <Grid container>
+               <Grid item xs={1} alignItems="baseline" pt={1}>
+                  <Switch
+                     id={`bulkEditSwitch-${name}`}
+                     checked={switchChecked}
+                     onClick={bulkEditSwitchChanged}
+                  />
+               </Grid>
+               <Grid item xs={11}>
+                  <label htmlFor={`bulkEditSwitch-${name}`}>
+                     {field()}
+                  </label>
+               </Grid>
+            </Grid>
+         </MDBox>
+      );
+   }
+   else
+   {
+      return (
+         <MDBox mb={1.5}>
+            {field()}
+         </MDBox>
+      );
+   }
+}
+
+QDynamicFormField.defaultProps = {
+   bulkEditMode: false,
+   bulkEditSwitchChangeHandler: () =>
+   {},
+};
+
+export default QDynamicFormField;
