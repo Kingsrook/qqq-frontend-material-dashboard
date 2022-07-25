@@ -63,6 +63,9 @@ class DynamicFormUtils
          case QFieldType.DATE:
             fieldType = field.type.toString();
             break;
+         case QFieldType.BLOB:
+            fieldType = "file";
+            break;
          case QFieldType.TEXT:
          case QFieldType.HTML:
          case QFieldType.STRING:

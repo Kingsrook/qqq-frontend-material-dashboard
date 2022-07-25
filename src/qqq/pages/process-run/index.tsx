@@ -234,7 +234,7 @@ function ProcessRun(): JSX.Element
                      }
                   </div>
                )))}
-            {(step.formFields || doesStepHaveComponent(step, QComponentType.FILE_UPLOAD)) && (
+            {(step.formFields) && (
                <QDynamicForm
                   formData={formData}
                   bulkEditMode={doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM)}
@@ -391,18 +391,6 @@ function ProcessRun(): JSX.Element
             setValidationFunction(null);
 
             logFormValidations("Post-disable thingie", formValidations);
-         }
-         else if (doesStepHaveComponent(activeStep, QComponentType.FILE_UPLOAD))
-         {
-            //////////////////////////////////////////////////////////////////////////
-            // if this step has an upload component, then set up the form for that. //
-            //////////////////////////////////////////////////////////////////////////
-            const {dynamicFormFields, formValidations} = DynamicFormUtils.getFormDataForUploadForm("fileUpload", "File");
-            setFormFields(dynamicFormFields);
-            setInitialValues(initialValues);
-
-            setValidationScheme(Yup.object().shape(formValidations));
-            setValidationFunction(null);
          }
          else
          {
