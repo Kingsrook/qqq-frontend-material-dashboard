@@ -93,27 +93,6 @@ class DynamicFormUtils
       }
       return (null);
    }
-
-   public static getFormDataForUploadForm(fieldName: string, fieldLabel: string, isRequired: boolean = true)
-   {
-      const dynamicFormFields: any = {};
-      const formValidations: any = {};
-
-      dynamicFormFields[fieldName] = {
-         name: fieldName,
-         label: fieldLabel,
-         isRequired: isRequired,
-         type: "file",
-         // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
-      };
-
-      if (isRequired)
-      {
-         formValidations[fieldName] = Yup.string().required(`${fieldLabel} is required.`);
-      }
-
-      return {dynamicFormFields, formValidations};
-   }
 }
 
 export default DynamicFormUtils;

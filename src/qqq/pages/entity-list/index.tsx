@@ -475,7 +475,7 @@ function EntityList({table}: Props): JSX.Element
 
    const bulkLoadClicked = () =>
    {
-      document.location.href = `/processes/${tableName}.bulkInsert${getRecordsQueryString()}`;
+      document.location.href = `/processes/${tableName}.bulkInsert`;
    };
 
    const bulkEditClicked = () =>
@@ -630,7 +630,15 @@ function EntityList({table}: Props): JSX.Element
          <MDBox my={3}>
             {alertContent ? (
                <MDBox mb={3}>
-                  <Alert severity="error">{alertContent}</Alert>
+                  <Alert
+                     severity="error"
+                     onClose={() =>
+                     {
+                        setAlertContent(null);
+                     }}
+                  >
+                     {alertContent}
+                  </Alert>
                </MDBox>
             ) : (
                ""
