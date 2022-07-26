@@ -674,7 +674,7 @@ function ProcessRun(): JSX.Element
    return (
       <DashboardLayout>
          <DashboardNavbar />
-         <MDBox py={3} mb={20} height="65vh">
+         <MDBox py={3} mb={20}>
             <Grid
                container
                justifyContent="center"
