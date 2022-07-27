@@ -134,6 +134,8 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       },
    });
 
+   const breadcrumbTitle = route[route.length - 1].replace(/([A-Z])/g, " $1").trim();
+
    return (
       <AppBar
          position={absolute ? "absolute" : navbarType}
@@ -144,7 +146,7 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       >
          <Toolbar sx={navbarContainer}>
             <MDBox color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
-               <Breadcrumbs icon="home" title={route[route.length - 1]} route={route} light={light} />
+               <Breadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
                <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
                   <Icon fontSize="medium" sx={iconsStyle}>
                      {miniSidenav ? "menu_open" : "menu"}

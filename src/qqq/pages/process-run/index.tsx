@@ -32,7 +32,6 @@ import MDButton from "components/MDButton";
 // Material Dashboard 2 PRO React TS examples components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
-import Footer from "examples/Footer";
 
 // ProcessRun layout schemas for form and form fields
 import * as Yup from "yup";
@@ -52,6 +51,7 @@ import QClient from "qqq/utils/QClient";
 import {CircularProgress} from "@mui/material";
 import QDynamicForm from "../../components/QDynamicForm";
 import MDTypography from "../../../components/MDTypography";
+import Footer from "examples/Footer";
 
 function logFormValidations(prefix: string, formValidations: any)
 {

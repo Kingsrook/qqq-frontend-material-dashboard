@@ -87,7 +87,7 @@ function getStaticRoutes()
 }
 
 const SESSION_ID_COOKIE_NAME = "sessionId";
-LicenseInfo.setLicenseKey(process.env.MATERIAL_UI_LICENSE_KEY);
+LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
