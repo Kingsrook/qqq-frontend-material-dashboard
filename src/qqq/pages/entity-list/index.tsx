@@ -20,7 +20,7 @@ import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Link from "@mui/material/Link";
-import {Alert, tableFooterClasses} from "@mui/material";
+import {Alert, TablePagination} from "@mui/material";
 import {
    DataGridPro,
    GridCallbackDetails,
@@ -498,6 +498,25 @@ function EntityList({table}: Props): JSX.Element
       document.location.href = `/processes/${tableName}.bulkDelete${getRecordsQueryString()}`;
    };
 
+   // @ts-ignore
+   const defaultLabelDisplayedRows = ({from, to, count}) => `${from.toLocaleString()}–${to.toLocaleString()} of ${count !== -1 ? count.toLocaleString() : `more than ${to.toLocaleString()}`}`;
+
+   function CustomPagination()
+   {
+      return (
+         <TablePagination
+            component="div"
+            count={totalRecords}
+            page={pageNumber}
+            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(event, value) => handlePageChange(value)}
+            onRowsPerPageChange={(event) => handleRowsPerPageChange(Number(event.target.value))}
+            labelDisplayedRows={defaultLabelDisplayedRows}
+         />
+      );
+   }
+
    function CustomToolbar()
    {
       const [bulkActionsMenuAnchor, setBulkActionsMenuAnchor] = useState(null as HTMLElement);
@@ -519,8 +538,8 @@ function EntityList({table}: Props): JSX.Element
                <Button
                   id="refresh-button"
                   onClick={updateTable}
+                  startIcon={<Icon>refresh</Icon>}
                >
-                  <Icon>refresh</Icon>
                   Refresh
                </Button>
             </div>
@@ -538,8 +557,8 @@ function EntityList({table}: Props): JSX.Element
                   aria-controls={bulkActionsMenuOpen ? "basic-menu" : undefined}
                   aria-haspopup="true"
                   aria-expanded={bulkActionsMenuOpen ? "true" : undefined}
+                  startIcon={<Icon>table_rows</Icon>}
                >
-                  <Icon>fact_check</Icon>
                   Bulk Actions
                </Button>
                <Menu
@@ -680,7 +699,7 @@ function EntityList({table}: Props): JSX.Element
             <Card>
                <MDBox height="100%">
                   <DataGridPro
-                     components={{Toolbar: CustomToolbar}}
+                     components={{Toolbar: CustomToolbar, Pagination: CustomPagination}}
                      pagination
                      paginationMode="server"
                      sortingMode="server"
@@ -693,10 +712,7 @@ function EntityList({table}: Props): JSX.Element
                      columns={columns}
                      rowBuffer={10}
                      rowCount={totalRecords}
-                     pageSize={rowsPerPage}
-                     rowsPerPageOptions={[10, 25, 50]}
                      onPageSizeChange={handleRowsPerPageChange}
-                     onPageChange={handlePageChange}
                      onRowClick={handleRowClick}
                      density="compact"
                      loading={loading}

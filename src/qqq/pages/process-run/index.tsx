@@ -48,15 +48,10 @@ import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaDat
 import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import FormData from "form-data";
 import QClient from "qqq/utils/QClient";
-import {CircularProgress} from "@mui/material";
+import {CircularProgress, TablePagination} from "@mui/material";
 import QDynamicForm from "../../components/QDynamicForm";
 import MDTypography from "../../../components/MDTypography";
 import Footer from "examples/Footer";
-
-function logFormValidations(prefix: string, formValidations: any)
-{
-   console.log(`${prefix}: ${JSON.stringify(formValidations)} `);
-}
 
 function ProcessRun(): JSX.Element
 {
@@ -122,6 +117,27 @@ function ProcessRun(): JSX.Element
       return (false);
    };
 
+   // @ts-ignore
+   const defaultLabelDisplayedRows = ({from, to, count}) => `${from.toLocaleString()}–${to.toLocaleString()} of ${count !== -1 ? count.toLocaleString() : `more than ${to.toLocaleString()}`}`;
+
+   // @ts-ignore
+   // eslint-disable-next-line react/no-unstable-nested-components
+   function CustomPagination()
+   {
+      return (
+         <TablePagination
+            component="div"
+            count={recordConfig.totalRecords}
+            page={pageNumber}
+            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(event, value) => recordConfig.handlePageChange(value)}
+            onRowsPerPageChange={(event) => recordConfig.handleRowsPerPageChange(Number(event.target.value))}
+            labelDisplayedRows={defaultLabelDisplayedRows}
+         />
+      );
+   }
+
    //////////////////////////////////////////////////////////////
    // event handler for the bulk-edit field-enabled checkboxes //
    //////////////////////////////////////////////////////////////
@@ -136,7 +152,7 @@ function ProcessRun(): JSX.Element
    {
       if (value === null || value === undefined)
       {
-         return <span>--</span>;
+         return <span>∅</span>;
       }
 
       if (typeof value === "string")
@@ -234,7 +250,7 @@ function ProcessRun(): JSX.Element
                      }
                   </div>
                )))}
-            {(step.formFields) && (
+            {step.formFields && (
                <QDynamicForm
                   formData={formData}
                   bulkEditMode={doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM)}
@@ -263,6 +279,7 @@ function ProcessRun(): JSX.Element
                   <br />
                   <MDBox height="100%">
                      <DataGridPro
+                        components={{Pagination: CustomPagination}}
                         page={recordConfig.pageNo}
                         disableSelectionOnClick
                         autoHeight
@@ -389,8 +406,6 @@ function ProcessRun(): JSX.Element
             setInitialValues(initialValues);
             setValidationScheme(Yup.object().shape(formValidations));
             setValidationFunction(null);
-
-            logFormValidations("Post-disable thingie", formValidations);
          }
          else
          {
@@ -402,7 +417,7 @@ function ProcessRun(): JSX.Element
             setValidationFunction(() => true);
          }
       }
-   }, [newStep, rowsPerPage, pageNumber]);
+   }, [newStep]);
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // if there are records to load: build a record config, and set the needRecords state flag //
@@ -448,12 +463,10 @@ function ProcessRun(): JSX.Element
                newDynamicFormFields[field.name].isRequired = false;
                newFormValidations[field.name] = null;
             }
-
-            logFormValidations("Upon update", newFormValidations);
-
-            setFormFields(newDynamicFormFields);
-            setValidationScheme(Yup.object().shape(newFormValidations));
          });
+
+         setFormFields(newDynamicFormFields);
+         setValidationScheme(Yup.object().shape(newFormValidations));
       }
    }, [disabledBulkEditFields]);
 
