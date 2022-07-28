@@ -31,7 +31,7 @@ class QClient
 {
    private static qController: QController;
 
-   private static getInstance()
+   public static getInstance()
    {
       if (this.qController == null)
       {

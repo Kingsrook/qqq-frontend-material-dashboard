@@ -56,12 +56,15 @@
             "devDependencies": true
          }
       ],
+      "import/order": "off",
       "max-len": "off",
       "no-console": "off",
       "no-constant-condition": "off",
       "no-shadow": "off",
       "no-unused-vars": "off",
       "no-plusplus": "off",
+      "no-underscore-dangle": "off",
+      "no-else-return": "off",
       "spaced-comment": "off",
       "object-curly-spacing": [
          "error",

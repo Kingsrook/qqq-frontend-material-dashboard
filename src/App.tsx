@@ -11,6 +11,8 @@ import {
    Routes, Route, Navigate, useLocation,
 } from "react-router-dom";
 
+import {useAuth0} from "@auth0/auth0-react";
+
 // @mui material components
 import {LicenseInfo} from "@mui/x-license-pro";
 import {ThemeProvider} from "@mui/material/styles";
@@ -35,9 +37,10 @@ import {useMaterialUIController, setMiniSidenav, setOpenConfigurator} from "cont
 
 // Images
 import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
-import brandWhite from "assets/images/logo-ct.png";
-import brandDark from "assets/images/logo-ct-dark.png";
 import {Md5} from "ts-md5/dist/md5";
+import AuthenticationButton from "qqq/components/buttons/AuthenticationButton";
+import {useCookies} from "react-cookie";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
@@ -51,42 +54,12 @@ import Analytics from "./layouts/dashboards/analytics";
 import Sales from "./layouts/dashboards/sales";
 import QClient from "./qqq/utils/QClient";
 
-const gravatarBase = "http://www.gravatar.com/avatar/";
-const hash = Md5.hashStr("tim@nutrifreshservices.com");
-const profilePicture = `${gravatarBase}${hash}`;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 function getStaticRoutes()
 {
    return [
-      {
-         type: "collapse",
-         name: "Tim Chamberlain",
-         key: "tim-chamberlain",
-         icon: <MDAvatar src={profilePicture} alt="Brooklyn Alice" size="sm" />,
-         collapse: [
-            {
-               name: "My Profile",
-               key: "my-profile",
-               route: "/pages/profile/profile-overview",
-               component: <ProfileOverview />,
-            },
-            {
-               name: "Settings",
-               key: "profile-settings",
-               route: "/pages/account/settings",
-               component: <Settings />,
-            },
-            {
-               name: "Logout",
-               key: "logout",
-               route: "/authentication/sign-in/basic",
-               component: <SignInBasic />,
-            },
-         ],
-      },
       {type: "divider", key: "divider-0"},
       {
          type: "collapse",
@@ -113,10 +86,44 @@ function getStaticRoutes()
    ];
 }
 
-LicenseInfo.setLicenseKey("4ef48a0226ec7b5fb49d99f14c6b3170Tz00NzI0NyxFPTE2ODkyODU1NzUxMDYsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI=");
+const SESSION_ID_COOKIE_NAME = "sessionId";
+LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
+   const [, setCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
+   const {
+      user, getAccessTokenSilently, getIdTokenClaims, logout,
+   } = useAuth0();
+   const [loadingToken, setLoadingToken] = useState(false);
+   const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
+
+   useEffect(() =>
+   {
+      if (loadingToken)
+      {
+         return;
+      }
+      setLoadingToken(true);
+      (async () =>
+      {
+         try
+         {
+            console.log("Loading token...");
+            const accessToken = await getAccessTokenSilently();
+            const idToken = await getIdTokenClaims();
+            setCookie(SESSION_ID_COOKIE_NAME, idToken.__raw, {path: "/"});
+            setIsFullyAuthenticated(true);
+            console.log("Token load complete.");
+         }
+         catch (e)
+         {
+            console.log(`Error loading token: ${JSON.stringify(e)}`);
+            logout();
+         }
+      })();
+   }, [loadingToken]);
+
    const [controller, dispatch] = useMaterialUIController();
    const {
       miniSidenav,
@@ -139,7 +146,7 @@ export default function App()
    ////////////////////////////////////////////
    useEffect(() =>
    {
-      if (!needToLoadRoutes)
+      if (!needToLoadRoutes || !isFullyAuthenticated)
       {
          return;
       }
@@ -147,43 +154,87 @@ export default function App()
 
       (async () =>
       {
-         const metaData = await QClient.loadMetaData();
+         try
+         {
+            console.log("ok now loading qqq things");
+            const metaData = await QClient.loadMetaData();
 
-         // get the keys sorted
-         const keys = [...metaData.tables.keys()].sort((a, b): number =>
-         {
-            const labelA = metaData.tables.get(a).label;
-            const labelB = metaData.tables.get(b).label;
-            return (labelA.localeCompare(labelB));
-         });
-         const tableList = [] as any[];
-         keys.forEach((key) =>
-         {
-            const table = metaData.tables.get(key);
-            if (!table.isHidden)
+            // get the keys sorted
+            const keys = [...metaData.tables.keys()].sort((a, b): number =>
             {
-               tableList.push({
-                  name: `${table.label}`,
-                  key: table.name,
-                  route: `/${table.name}`,
-                  component: <EntityList table={table} />,
-               });
+               const labelA = metaData.tables.get(a).label;
+               const labelB = metaData.tables.get(b).label;
+               return (labelA.localeCompare(labelB));
+            });
+            const tableList = [] as any[];
+            keys.forEach((key) =>
+            {
+               const table = metaData.tables.get(key);
+               if (!table.isHidden)
+               {
+                  tableList.push({
+                     name: `${table.label}`,
+                     key: table.name,
+                     route: `/${table.name}`,
+                     component: <EntityList table={table} />,
+                  });
+               }
+            });
+
+            let profileRoute = {};
+            const gravatarBase = "http://www.gravatar.com/avatar/";
+            const hash = Md5.hashStr(user.email);
+            const profilePicture = `${gravatarBase}${hash}`;
+            profileRoute = {
+               type: "collapse",
+               name: user.name,
+               key: user.name,
+               icon: <MDAvatar src={profilePicture} alt="{user.name}" size="sm" />,
+               collapse: [
+                  {
+                     name: "My Profile",
+                     key: "my-profile",
+                     route: "/pages/profile/profile-overview",
+                     component: <ProfileOverview />,
+                  },
+                  {
+                     name: "Settings",
+                     key: "profile-settings",
+                     route: "/pages/account/settings",
+                     component: <Settings />,
+                  },
+                  {
+                     name: "Logout",
+                     key: "logout",
+                     route: "/authentication/sign-in/basic",
+                     component: <SignInBasic />,
+                  },
+               ],
+            };
+
+            const tables = {
+               type: "collapse",
+               name: "Tables",
+               key: "tables",
+               icon: <Icon fontSize="medium">dashboard</Icon>,
+               collapse: tableList,
+            };
+
+            const newDynamicRoutes = getStaticRoutes();
+            // @ts-ignore
+            newDynamicRoutes.unshift(profileRoute);
+            newDynamicRoutes.push(tables);
+            setRoutes(newDynamicRoutes);
+         }
+         catch (e)
+         {
+            if (e.toString().indexOf("status code 401") !== -1)
+            {
+               logout();
             }
-         });
-
-         const tables = {
-            type: "collapse",
-            name: "Tables",
-            key: "tables",
-            icon: <Icon fontSize="medium">dashboard</Icon>,
-            collapse: tableList,
-         };
-
-         const newDynamicRoutes = getStaticRoutes();
-         newDynamicRoutes.push(tables);
-         setRoutes(newDynamicRoutes);
+         }
       })();
-   }, [needToLoadRoutes]);
+   }, [needToLoadRoutes, isFullyAuthenticated]);
 
    // Open sidenav when mouse enter on mini sidenav
    const handleOnMouseEnter = () =>
@@ -243,6 +294,27 @@ export default function App()
       },
    );
 
+   const authButton = (
+      <MDBox
+         display="flex"
+         justifyContent="center"
+         alignItems="center"
+         width="3.25rem"
+         height="3.25rem"
+         bgColor="white"
+         shadow="sm"
+         borderRadius="50%"
+         position="fixed"
+         right="2rem"
+         bottom="2rem"
+         zIndex={99}
+         color="dark"
+         sx={{cursor: "pointer"}}
+      >
+         <AuthenticationButton />
+      </MDBox>
+   );
+
    const configsButton = (
       <MDBox
          display="flex"
@@ -288,9 +360,9 @@ export default function App()
                />
                <Configurator />
                {configsButton}
+               {authButton}
             </>
          )}
-         {layout === "vr" && <Configurator />}
          <Routes>
             <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
             <Route path="/:tableName" element={entityListElement} key="entity-list" />

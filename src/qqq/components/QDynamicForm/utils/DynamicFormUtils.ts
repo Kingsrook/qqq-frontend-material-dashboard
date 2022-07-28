@@ -39,46 +39,59 @@ class DynamicFormUtils
 
       qqqFormFields.forEach((field) =>
       {
-         let fieldType: string;
-         switch (field.type.toString())
-         {
-            case QFieldType.DECIMAL:
-            case QFieldType.INTEGER:
-               fieldType = "number";
-               break;
-            case QFieldType.DATE_TIME:
-               fieldType = "datetime-local";
-               break;
-            case QFieldType.PASSWORD:
-            case QFieldType.TIME:
-            case QFieldType.DATE:
-               fieldType = field.type.toString();
-               break;
-            case QFieldType.TEXT:
-            case QFieldType.HTML:
-            case QFieldType.STRING:
-            default:
-               fieldType = "text";
-         }
-
-         let label = field.label ? field.label : field.name;
-         label += field.isRequired ? " *" : "";
-
-         dynamicFormFields[field.name] = {
-            name: field.name,
-            label: label,
-            isRequired: field.isRequired,
-            type: fieldType,
-            // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
-         };
-
-         if (field.isRequired)
-         {
-            formValidations[field.name] = Yup.string().required(`${field.label} is required.`);
-         }
+         dynamicFormFields[field.name] = this.getDynamicField(field);
+         formValidations[field.name] = this.getValidationForField(field);
       });
 
       return {dynamicFormFields, formValidations};
+   }
+
+   public static getDynamicField(field: QFieldMetaData)
+   {
+      let fieldType: string;
+      switch (field.type.toString())
+      {
+         case QFieldType.DECIMAL:
+         case QFieldType.INTEGER:
+            fieldType = "number";
+            break;
+         case QFieldType.DATE_TIME:
+            fieldType = "datetime-local";
+            break;
+         case QFieldType.PASSWORD:
+         case QFieldType.TIME:
+         case QFieldType.DATE:
+            fieldType = field.type.toString();
+            break;
+         case QFieldType.BLOB:
+            fieldType = "file";
+            break;
+         case QFieldType.TEXT:
+         case QFieldType.HTML:
+         case QFieldType.STRING:
+         default:
+            fieldType = "text";
+      }
+
+      let label = field.label ? field.label : field.name;
+      label += field.isRequired ? " *" : "";
+
+      return ({
+         name: field.name,
+         label: label,
+         isRequired: field.isRequired,
+         type: fieldType,
+         // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
+      });
+   }
+
+   public static getValidationForField(field: QFieldMetaData)
+   {
+      if (field.isRequired)
+      {
+         return (Yup.string().required(`${field.label} is required.`));
+      }
+      return (null);
    }
 }
 

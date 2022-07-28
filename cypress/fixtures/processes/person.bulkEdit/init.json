@@ -1,0 +1,9 @@
+{
+  "values": {
+    "recordsParam": "recordIds",
+    "recordIds": "1,2,3,4,5",
+    "queryFilterJSON": "{\"criteria\":[{\"fieldName\":\"id\",\"operator\":\"IN\",\"values\":[\"1\",\"2\",\"3\",\"4\",\"5\"]}]}"
+  },
+  "processUUID": "74a03a7d-2f53-4784-9911-3a21f7646c43",
+  "nextStep": "edit"
+}

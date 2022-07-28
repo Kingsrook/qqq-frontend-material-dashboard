@@ -20,7 +20,7 @@ import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Link from "@mui/material/Link";
-import {Alert} from "@mui/material";
+import {Alert, TablePagination} from "@mui/material";
 import {
    DataGridPro,
    GridCallbackDetails,
@@ -37,8 +37,9 @@ import {
    GridToolbarColumnsButton,
    GridToolbarContainer,
    GridToolbarDensitySelector,
-   GridToolbarExport,
+   GridToolbarExportContainer,
    GridToolbarFilterButton,
+   GridExportMenuItemProps,
 } from "@mui/x-data-grid-pro";
 
 // Material Dashboard 2 PRO React TS components
@@ -57,6 +58,8 @@ import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFil
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import QClient from "qqq/utils/QClient";
+import Navbar from "qqq/components/Navbar";
+import Button from "@mui/material/Button";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
@@ -96,6 +99,7 @@ function EntityList({table}: Props): JSX.Element
 
    const [buttonText, setButtonText] = useState("");
    const [tableState, setTableState] = useState("");
+   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
@@ -189,11 +193,12 @@ function EntityList({table}: Props): JSX.Element
    {
       (async () =>
       {
-         const tableMetaData = await QClient.loadTableMetaData(tableName);
+         const newTableMetaData = await QClient.loadTableMetaData(tableName);
+         setTableMetaData(newTableMetaData);
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
-               field: tableMetaData.primaryKeyField,
+               field: newTableMetaData.primaryKeyField,
                sort: "desc",
             });
             setColumnSortModel(columnSortModel);
@@ -203,8 +208,8 @@ function EntityList({table}: Props): JSX.Element
 
          const count = await QClient.count(tableName, qFilter);
          setTotalRecords(count);
-         setButtonText(`new ${tableMetaData.label}`);
-         setTableLabel(tableMetaData.label);
+         setButtonText(`new ${newTableMetaData.label}`);
+         setTableLabel(newTableMetaData.label);
 
          const columns = [] as GridColDef[];
 
@@ -233,10 +238,10 @@ function EntityList({table}: Props): JSX.Element
             rows.push(Object.fromEntries(record.values.entries()));
          });
 
-         const sortedKeys = [...tableMetaData.fields.keys()].sort();
+         const sortedKeys = [...newTableMetaData.fields.keys()].sort();
          sortedKeys.forEach((key) =>
          {
-            const field = tableMetaData.fields.get(key);
+            const field = newTableMetaData.fields.get(key);
 
             let columnType = "string";
             switch (field.type)
@@ -265,7 +270,7 @@ function EntityList({table}: Props): JSX.Element
                width: 200,
             };
 
-            if (key === tableMetaData.primaryKeyField)
+            if (key === newTableMetaData.primaryKeyField)
             {
                column.width = 75;
                columns.splice(0, 0, column);
@@ -366,14 +371,208 @@ function EntityList({table}: Props): JSX.Element
       })();
    }
 
-   function CustomToolbar()
+   interface QExportMenuItemProps extends GridExportMenuItemProps<{}>
+   {
+      format: string;
+   }
+
+   function ExportMenuItem(props: QExportMenuItemProps)
+   {
+      const {format, hideMenu} = props;
+
+      return (
+         <MenuItem
+            disabled={totalRecords === 0}
+            onClick={() =>
+            {
+               ///////////////////////////////////////////////////////////////////////////////
+               // build the list of visible fields.  note, not doing them in-order (in case //
+               // the user did drag & drop), because column order model isn't right yet     //
+               // so just doing them to match columns (which were pKey, then sorted)        //
+               ///////////////////////////////////////////////////////////////////////////////
+               const visibleFields: string[] = [];
+               columns.forEach((gridColumn) =>
+               {
+                  const fieldName = gridColumn.field;
+                  // @ts-ignore
+                  if (columnVisibilityModel[fieldName] !== false)
+                  {
+                     visibleFields.push(fieldName);
+                  }
+               });
+
+               ///////////////////////
+               // zero-pad function //
+               ///////////////////////
+               const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
+
+               //////////////////////////////////////
+               // construct the url for the export //
+               //////////////////////////////////////
+               const d = new Date();
+               const dateString = `${d.getFullYear()}-${zp(d.getMonth())}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+               const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter()))}&fields=${visibleFields.join(",")}`;
+
+               //////////////////////////////////////////////////////////////////////////////////////
+               // open a window (tab) with a little page that says the file is being generated.    //
+               // then have that page load the url for the export.                                 //
+               // If there's an error, it'll appear in that window.  else, the file will download. //
+               //////////////////////////////////////////////////////////////////////////////////////
+               const exportWindow = window.open("", "_blank");
+               exportWindow.document.write(`<html lang="en">
+                  <head>
+                     <style>
+                        * { font-family: "Roboto","Helvetica","Arial",sans-serif; }
+                     </style>
+                     <title>${filename}</title>
+                     <script>
+                        setTimeout(() => 
+                        {
+                           window.location.href="${url}";
+                        }, 1);
+                     </script>
+                  </head>
+                  <body>Generating file <u>${filename}</u> with ${totalRecords.toLocaleString()} records...</body>
+               </html>`);
+
+               ///////////////////////////////////////////
+               // Hide the export menu after the export //
+               ///////////////////////////////////////////
+               hideMenu?.();
+            }}
+         >
+            Export
+            {` ${format.toUpperCase()}`}
+         </MenuItem>
+      );
+   }
+
+   function getNoOfSelectedRecords()
+   {
+      if (selectFullFilterState === "filter")
+      {
+         return (totalRecords);
+      }
+
+      return (selectedIds.length);
+   }
+
+   function getRecordsQueryString()
+   {
+      if (selectFullFilterState === "filter")
+      {
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
+      }
+
+      if (selectedIds.length > 0)
+      {
+         return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
+      }
+
+      return "";
+   }
+
+   const bulkLoadClicked = () =>
+   {
+      document.location.href = `/processes/${tableName}.bulkInsert`;
+   };
+
+   const bulkEditClicked = () =>
+   {
+      if (getNoOfSelectedRecords() === 0)
+      {
+         setAlertContent("No records were selected to Bulk Edit.");
+         return;
+      }
+      document.location.href = `/processes/${tableName}.bulkEdit${getRecordsQueryString()}`;
+   };
+
+   const bulkDeleteClicked = () =>
+   {
+      if (getNoOfSelectedRecords() === 0)
+      {
+         setAlertContent("No records were selected to Bulk Delete.");
+         return;
+      }
+      document.location.href = `/processes/${tableName}.bulkDelete${getRecordsQueryString()}`;
+   };
+
+   // @ts-ignore
+   const defaultLabelDisplayedRows = ({from, to, count}) => `${from.toLocaleString()}–${to.toLocaleString()} of ${count !== -1 ? count.toLocaleString() : `more than ${to.toLocaleString()}`}`;
+
+   function CustomPagination()
    {
       return (
+         <TablePagination
+            component="div"
+            count={totalRecords}
+            page={pageNumber}
+            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(event, value) => handlePageChange(value)}
+            onRowsPerPageChange={(event) => handleRowsPerPageChange(Number(event.target.value))}
+            labelDisplayedRows={defaultLabelDisplayedRows}
+         />
+      );
+   }
+
+   function CustomToolbar()
+   {
+      const [bulkActionsMenuAnchor, setBulkActionsMenuAnchor] = useState(null as HTMLElement);
+      const bulkActionsMenuOpen = Boolean(bulkActionsMenuAnchor);
+
+      const openBulkActionsMenu = (event: React.MouseEvent<HTMLElement>) =>
+      {
+         setBulkActionsMenuAnchor(event.currentTarget);
+      };
+
+      const closeBulkActionsMenu = () =>
+      {
+         setBulkActionsMenuAnchor(null);
+      };
+
+      return (
          <GridToolbarContainer>
+            <div>
+               <Button
+                  id="refresh-button"
+                  onClick={updateTable}
+                  startIcon={<Icon>refresh</Icon>}
+               >
+                  Refresh
+               </Button>
+            </div>
             <GridToolbarColumnsButton />
             <GridToolbarFilterButton />
             <GridToolbarDensitySelector />
-            <GridToolbarExport />
+            <GridToolbarExportContainer>
+               <ExportMenuItem format="csv" />
+               <ExportMenuItem format="xlsx" />
+            </GridToolbarExportContainer>
+            <div>
+               <Button
+                  id="bulk-actions-button"
+                  onClick={openBulkActionsMenu}
+                  aria-controls={bulkActionsMenuOpen ? "basic-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={bulkActionsMenuOpen ? "true" : undefined}
+                  startIcon={<Icon>table_rows</Icon>}
+               >
+                  Bulk Actions
+               </Button>
+               <Menu
+                  id="bulk-actions-menu"
+                  open={bulkActionsMenuOpen}
+                  anchorEl={bulkActionsMenuAnchor}
+                  onClose={closeBulkActionsMenu}
+                  MenuListProps={{"aria-labelledby": "bulk-actions-button"}}
+               >
+                  <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
+                  <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
+                  <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
+               </Menu>
+            </div>
             <div>
                {
                   selectFullFilterState === "checked" && (
@@ -416,21 +615,6 @@ function EntityList({table}: Props): JSX.Element
       );
    }
 
-   function getRecordsQueryString()
-   {
-      if (selectFullFilterState === "filter")
-      {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
-      }
-
-      if (selectedIds.length > 0)
-      {
-         return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
-      }
-
-      return "";
-   }
-
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
@@ -461,11 +645,19 @@ function EntityList({table}: Props): JSX.Element
 
    return (
       <DashboardLayout>
-         <DashboardNavbar />
+         <Navbar />
          <MDBox my={3}>
             {alertContent ? (
                <MDBox mb={3}>
-                  <Alert severity="error">{alertContent}</Alert>
+                  <Alert
+                     severity="error"
+                     onClose={() =>
+                     {
+                        setAlertContent(null);
+                     }}
+                  >
+                     {alertContent}
+                  </Alert>
                </MDBox>
             ) : (
                ""
@@ -507,7 +699,7 @@ function EntityList({table}: Props): JSX.Element
             <Card>
                <MDBox height="100%">
                   <DataGridPro
-                     components={{Toolbar: CustomToolbar}}
+                     components={{Toolbar: CustomToolbar, Pagination: CustomPagination}}
                      pagination
                      paginationMode="server"
                      sortingMode="server"
@@ -520,10 +712,7 @@ function EntityList({table}: Props): JSX.Element
                      columns={columns}
                      rowBuffer={10}
                      rowCount={totalRecords}
-                     pageSize={rowsPerPage}
-                     rowsPerPageOptions={[10, 25, 50]}
                      onPageSizeChange={handleRowsPerPageChange}
-                     onPageChange={handlePageChange}
                      onRowClick={handleRowClick}
                      density="compact"
                      loading={loading}

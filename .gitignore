@@ -4,6 +4,7 @@
 *.iml
 .yalc*
 yalc.lock
+.env
 
 # dependencies
 /node_modules
