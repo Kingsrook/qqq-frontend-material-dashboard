@@ -28,14 +28,14 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
  *******************************************************************************/
 class QProcessUtils
 {
-   public static getProcessesForTable(metaData: QInstance, tableName: string): QProcessMetaData[]
+   public static getProcessesForTable(metaData: QInstance, tableName: string, includeHidden = false): QProcessMetaData[]
    {
       const matchingProcesses: QProcessMetaData[] = [];
       const processKeys = [...metaData.processes.keys()];
       processKeys.forEach((key) =>
       {
          const process = metaData.processes.get(key);
-         if (!process.isHidden && process.tableName === tableName)
+         if (process.tableName === tableName && (includeHidden || !process.isHidden))
          {
             matchingProcesses.push(process);
          }

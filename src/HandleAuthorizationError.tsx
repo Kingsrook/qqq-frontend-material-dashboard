@@ -1,13 +1,6 @@
-import React, {
-   useState,
-   useEffect,
-   JSXElementConstructor,
-   Key,
-   ReactElement,
-} from "react";
+import React, {useEffect} from "react";
 import {SESSION_ID_COOKIE_NAME} from "App";
 import {useCookies} from "react-cookie";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 
 interface Props
 {
@@ -27,3 +20,7 @@ export default function HandleAuthorizationError({errorMessage}: Props)
       <div>{errorMessage}</div>
    );
 }
+
+HandleAuthorizationError.defaultProps = {
+   errorMessage: "User authorization error.",
+};

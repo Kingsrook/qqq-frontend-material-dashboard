@@ -77,10 +77,6 @@ function QDynamicForm(props: Props): JSX.Element
             && Object.keys(formFields).map((fieldName: any) =>
             {
                const field = formFields[fieldName];
-               if (primaryKeyId && fieldName === primaryKeyId)
-               {
-                  return null;
-               }
                if (values[fieldName] === undefined)
                {
                   values[fieldName] = "";
@@ -109,17 +105,18 @@ function QDynamicForm(props: Props): JSX.Element
 
                // todo? inputProps={{ autoComplete: "" }}
                // todo? placeholder={password.placeholder}
-               // todo? success={!errors[fieldName] && touched[fieldName]}
                return (
                   <Grid item xs={12} sm={6} key={fieldName}>
                      <QDynamicFormField
                         type={field.type}
                         label={field.label}
+                        isEditable={field.isEditable}
                         name={fieldName}
                         value={values[fieldName]}
                         error={errors[fieldName] && touched[fieldName]}
                         bulkEditMode={bulkEditMode}
                         bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
+                        success={!errors[fieldName] && touched[fieldName]}
                      />
                   </Grid>
                );

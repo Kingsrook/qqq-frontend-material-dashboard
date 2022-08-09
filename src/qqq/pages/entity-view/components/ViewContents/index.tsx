@@ -1,23 +1,31 @@
-/**
- =========================================================
- * Material Dashboard 2 PRO React TS - v1.0.0
- =========================================================
- * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
- * Copyright 2022 Creative Tim (https://www.creative-tim.com)
- Coded by www.creative-tim.com
- =========================================================
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 // react components
-import {useParams, useSearchParams} from "react-router-dom";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import React, {useReducer, useState} from "react";
 
 // @material-ui core components
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -26,7 +34,6 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 
 // qqq imports
-import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 
 // Material Dashboard 2 PRO React TS components
@@ -34,31 +41,46 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Icon from "@mui/material/Icon";
 import MDAlert from "components/MDAlert";
-import MDButton from "../../../../../components/MDButton";
 import QProcessUtils from "../../../../utils/QProcessUtils";
 import QClient from "qqq/utils/QClient";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
+import QValueUtils from "qqq/utils/QValueUtils";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import Icon from "@mui/material/Icon";
+import Avatar from "@mui/material/Avatar";
+import QRecordSidebar from "qqq/components/QRecordSidebar";
+import QTableUtils from "qqq/utils/QTableUtils";
 
 const qController = QClient.getInstance();
 
 // Declaring props types for ViewForm
 interface Props
 {
-  id: string;
+   id: string;
+   table?: QTableMetaData;
 }
 
-function ViewContents({id}: Props): JSX.Element
+function ViewContents({id, table}: Props): JSX.Element
 {
-   const {tableName} = useParams();
+   const location = useLocation();
+   const navigate = useNavigate();
+
+   const pathParts = location.pathname.split("/");
+   const tableName = table ? table.name : pathParts[pathParts.length - 2];
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [nameValues, setNameValues] = useState([] as JSX.Element[]);
+   const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
+   const [t1Section, setT1Section] = useState(null as JSX.Element);
    const [open, setOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
+   const [record, setRecord] = useState(null as QRecord);
+   const [tableSections, setTableSections] = useState(null as any);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
-   const [searchParams, setSearchParams] = useSearchParams();
+   const [searchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -70,28 +92,66 @@ function ViewContents({id}: Props): JSX.Element
 
       (async () =>
       {
-         const tableMetaData = await qController.loadTableMetaData(tableName);
+         //////////////////////////////////////////
+         // load the table meta-data (if needed) //
+         //////////////////////////////////////////
+         const tableMetaData = table || await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
 
+         //////////////////////////////////////////////////////////////////
+         // load top-level meta-data (e.g., to find processes for table) //
+         //////////////////////////////////////////////////////////////////
          const metaData = await qController.loadMetaData();
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 
-         const foundRecord = await qController.get(tableName, id);
+         /////////////////////
+         // load the record //
+         /////////////////////
+         const record = await qController.get(tableName, id);
+         setRecord(record);
 
-         nameValues.push(
-            <MDBox key={tableMetaData.primaryKeyField} display="flex" py={1} pr={2}>
-               <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-                  {tableMetaData.primaryKeyField}
-                  : &nbsp;
-               </MDTypography>
-               <MDTypography variant="button" fontWeight="regular" color="text">
-            &nbsp;
-                  {id}
-               </MDTypography>
-            </MDBox>,
-         );
+         /////////////////////////////////////////////////
+         // define the sections, e.g., for the left-bar //
+         /////////////////////////////////////////////////
+         const tableSections = QTableUtils.getSectionsForRecordSidebar(tableMetaData);
+         setTableSections(tableSections);
 
-         const sortedKeys = [...foundRecord.values.keys()].sort();
+         ////////////////////////////////////////////////////
+         // make elements with the values for each section //
+         ////////////////////////////////////////////////////
+         const sectionFieldElements = new Map();
+         for (let i = 0; i < tableSections.length; i++)
+         {
+            const section = tableSections[i];
+            sectionFieldElements.set(
+               section.name,
+               <MDBox key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
+                  {
+                     section.fieldNames.map((fieldName: string) => (
+                        <MDBox key={fieldName} flexDirection="row" pr={2}>
+                           <MDTypography variant="button" fontWeight="bold">
+                              {tableMetaData.fields.get(fieldName).label}
+                              : &nbsp;
+                           </MDTypography>
+                           <MDTypography variant="button" fontWeight="regular" color="text">
+                              &nbsp;
+                              {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record)}
+                           </MDTypography>
+                        </MDBox>
+                     ))
+                  }
+               </MDBox>,
+            );
+
+            if (section.tier === "T1")
+            {
+               setT1Section(sectionFieldElements.get(section.name));
+            }
+         }
+         setSectionFieldElements(sectionFieldElements);
+
+         // todo - delete this
+         const sortedKeys = [...record.values.keys()].sort();
          sortedKeys.forEach((key) =>
          {
             if (key !== tableMetaData.primaryKeyField)
@@ -103,15 +163,15 @@ function ViewContents({id}: Props): JSX.Element
                         : &nbsp;
                      </MDTypography>
                      <MDTypography variant="button" fontWeight="regular" color="text">
-                &nbsp;
-                        {foundRecord.values.get(key)}
+                        &nbsp;
+                        {QValueUtils.getDisplayValue(tableMetaData.fields.get(key), record)}
                      </MDTypography>
                   </MDBox>,
                );
             }
          });
-
          setNameValues(nameValues);
+
          forceUpdate();
       })();
    }
@@ -134,32 +194,45 @@ function ViewContents({id}: Props): JSX.Element
          await qController.delete(tableName, id)
             .then(() =>
             {
-               window.location.href = `/${tableName}?deleteSuccess=true`;
+               const path = `${pathParts.slice(0, -1).join("/")}?deleteSuccess=true`;
+               navigate(path);
             });
       })();
    };
 
-   const editPath = `/${tableName}/${id}/edit`;
+   function processClicked(process: QProcessMetaData)
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/${process.name}?recordIds=${id}`;
+      navigate(path);
+   }
 
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
          anchorOrigin={{
             vertical: "bottom",
-            horizontal: "left",
+            horizontal: "right",
          }}
          transformOrigin={{
             vertical: "top",
-            horizontal: "left",
+            horizontal: "right",
          }}
          open={Boolean(actionsMenu)}
          onClose={closeActionsMenu}
          keepMounted
       >
+         <MenuItem onClick={() => navigate("edit")}>Edit</MenuItem>
+         <MenuItem onClick={() =>
+         {
+            setActionsMenu(null);
+            handleClickConfirmOpen();
+         }}
+         >
+            Delete
+         </MenuItem>
+         <MenuItem divider />
          {tableProcesses.map((process) => (
-            <MenuItem key={process.name}>
-               <Link href={`/processes/${process.name}?recordIds=${id}`}>{process.label}</Link>
-            </MenuItem>
+            <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
          ))}
       </Menu>
    );
@@ -179,77 +252,89 @@ function ViewContents({id}: Props): JSX.Element
                </MDAlert>
             ) : ("")
          }
-         <Card id="basic-info" sx={{overflow: "visible"}}>
-            <MDBox p={3}>
-               <MDBox display="flex" justifyContent="space-between">
-                  <MDTypography variant="h5">
-                     Viewing
-                     {" "}
-                     {tableMetaData?.label}
-                     {" "}
-                     (
-                     {id}
-                     )
-                  </MDTypography>
-                  {tableProcesses.length > 0 && (
-                     <MDButton
-                        variant={actionsMenu ? "contained" : "outlined"}
-                        color="dark"
-                        onClick={openActionsMenu}
-                     >
-                        actions&nbsp;
-                        <Icon>keyboard_arrow_down</Icon>
-                     </MDButton>
-                  )}
-                  {renderActionsMenu}
-               </MDBox>
-            </MDBox>
-            <MDBox p={3}>{nameValues}</MDBox>
-            <MDBox component="form" pb={3} px={3}>
-               <Grid key="tres" container spacing={3}>
-                  <MDBox ml="auto" mr={3}>
-                     <MDButton
-                        variant="gradient"
-                        color="primary"
-                        size="small"
-                        onClick={handleClickConfirmOpen}
-                     >
-                        delete
-                        {" "}
-                        {tableMetaData?.label}
-                     </MDButton>
-                     <Dialog
-                        open={open}
-                        onClose={handleClickConfirmClose}
-                        aria-labelledby="alert-dialog-title"
-                        aria-describedby="alert-dialog-description"
-                     >
-                        <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
-                        <DialogContent>
-                           <DialogContentText id="alert-dialog-description">
-                              Are you sure you want to delete this record?
-                           </DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                           <Button onClick={handleClickConfirmClose}>No</Button>
-                           <Button onClick={handleDelete} autoFocus>
-                              Yes
-                           </Button>
-                        </DialogActions>
-                     </Dialog>
-                  </MDBox>
-                  <MDBox>
-                     <MDButton variant="gradient" color="dark" size="small">
-                        <Link href={editPath}>
-                           {`edit ${tableMetaData?.label}`}
-                        </Link>
-                     </MDButton>
-                  </MDBox>
+
+         <Grid container spacing={3}>
+            <Grid item xs={12} lg={3}>
+               <QRecordSidebar tableSections={tableSections} />
+            </Grid>
+            <Grid item xs={12} lg={9}>
+
+               <Grid container spacing={3}>
+                  <Grid item xs={12} mb={3}>
+                     <Card>
+                        <MDBox display="flex" p={3} pb={1}>
+                           <MDBox mr={1.5}>
+                              <Avatar sx={{bgcolor: "rgb(26, 115, 232)"}}>
+                                 <Icon>
+                                    {tableMetaData?.iconName}
+                                 </Icon>
+                              </Avatar>
+                           </MDBox>
+                           <MDBox display="flex" justifyContent="space-between" width="100%" alignItems="center">
+                              <MDTypography variant="h5">
+                                 {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel}` : ""}
+                              </MDTypography>
+                              {tableProcesses.length > 0 && (
+                                 <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
+                              )}
+                              {renderActionsMenu}
+                           </MDBox>
+                        </MDBox>
+                        {t1Section ? (<MDBox p={3} pt={0}>{t1Section}</MDBox>) : null}
+                     </Card>
+                  </Grid>
                </Grid>
-            </MDBox>
-         </Card>
+               {tableSections && sectionFieldElements ? tableSections.map(({
+                  icon, label, name, fieldNames, tier,
+               }: any) => (tier !== "T1"
+                  ? (
+                     <MDBox mb={3} key={name}>
+                        <Card key={name} id={name} sx={{overflow: "visible"}}>
+                           <MDTypography variant="h5" p={3} pb={1}>
+                              {label}
+                           </MDTypography>
+                           <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
+                        </Card>
+                     </MDBox>
+                  ) : null)) : null}
+
+               <MDBox component="form" p={3}>
+                  <Grid container justifyContent="flex-end" spacing={3}>
+                     <QDeleteButton onClickHandler={handleClickConfirmOpen} />
+                     <QEditButton />
+                  </Grid>
+               </MDBox>
+
+            </Grid>
+         </Grid>
+
+         {/* Delete confirmation Dialog */}
+         <Dialog
+            open={open}
+            onClose={handleClickConfirmClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+         >
+            <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
+            <DialogContent>
+               <DialogContentText id="alert-dialog-description">
+                  Are you sure you want to delete this record?
+               </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+               <Button onClick={handleClickConfirmClose}>No</Button>
+               <Button onClick={handleDelete} autoFocus>
+                  Yes
+               </Button>
+            </DialogActions>
+         </Dialog>
       </MDBox>
+
    );
 }
+
+ViewContents.defaultProps = {
+   table: null,
+};
 
 export default ViewContents;

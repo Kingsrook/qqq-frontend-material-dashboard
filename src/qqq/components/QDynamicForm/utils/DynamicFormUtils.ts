@@ -83,6 +83,7 @@ class DynamicFormUtils
          name: field.name,
          label: label,
          isRequired: field.isRequired,
+         isEditable: field.isEditable,
          type: fieldType,
          // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
       });

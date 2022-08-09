@@ -1,26 +1,39 @@
-/**
- =========================================================
- * Material Dashboard 2 PRO React TS - v1.0.0
- =========================================================
- * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
- * Copyright 2022 Creative Tim (https://www.creative-tim.com)
- Coded by www.creative-tim.com
- =========================================================
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-/*  eslint-disable react/no-unstable-nested-components */
 
-import React, {useEffect, useReducer, useState} from "react";
-import {useParams, useSearchParams} from "react-router-dom";
+import React, {
+   SyntheticEvent,
+   useCallback,
+   useEffect, useReducer, useRef, useState,
+} from "react";
+import {
+   Link, useNavigate, useParams, useSearchParams,
+} from "react-router-dom";
 
 // @mui material components
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Link from "@mui/material/Link";
-import {Alert, TablePagination} from "@mui/material";
+import {Alert, Pagination, TablePagination} from "@mui/material";
 import {
    DataGridPro,
    GridCallbackDetails,
@@ -40,6 +53,7 @@ import {
    GridToolbarExportContainer,
    GridToolbarFilterButton,
    GridExportMenuItemProps,
+   MuiEvent,
 } from "@mui/x-data-grid-pro";
 
 // Material Dashboard 2 PRO React TS components
@@ -64,11 +78,13 @@ import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
 import "./styles.css";
+import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
+import QValueUtils from "qqq/utils/QValueUtils";
+import LinearProgress from "@mui/material/LinearProgress";
 
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 
-// Declaring props types for DefaultCell
 interface Props
 {
    table?: QTableMetaData;
@@ -98,7 +114,6 @@ function EntityList({table}: Props): JSX.Element
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
    }
 
-   const [buttonText, setButtonText] = useState("");
    const [tableState, setTableState] = useState("");
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [, setFiltersMenu] = useState(null);
@@ -117,6 +132,9 @@ function EntityList({table}: Props): JSX.Element
    const [tableLabel, setTableLabel] = useState("");
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
+   const [gridMouseDownX, setGridMouseDownX] = useState(0);
+   const [gridMouseDownY, setGridMouseDownY] = useState(0);
+   const instance = useRef({timer: null});
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -192,14 +210,15 @@ function EntityList({table}: Props): JSX.Element
 
    const updateTable = () =>
    {
+      setRows([]);
       (async () =>
       {
-         const newTableMetaData = await qController.loadTableMetaData(tableName);
-         setTableMetaData(newTableMetaData);
+         const tableMetaData = await qController.loadTableMetaData(tableName);
+         setTableMetaData(tableMetaData);
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
-               field: newTableMetaData.primaryKeyField,
+               field: tableMetaData.primaryKeyField,
                sort: "desc",
             });
             setColumnSortModel(columnSortModel);
@@ -209,8 +228,7 @@ function EntityList({table}: Props): JSX.Element
 
          const count = await qController.count(tableName, qFilter);
          setTotalRecords(count);
-         setButtonText(`new ${newTableMetaData.label}`);
-         setTableLabel(newTableMetaData.label);
+         setTableLabel(tableMetaData.label);
 
          const columns = [] as GridColDef[];
 
@@ -233,47 +251,65 @@ function EntityList({table}: Props): JSX.Element
                throw error;
             });
 
+         const fields = [...tableMetaData.fields.values()];
+
          const rows = [] as any[];
          results.forEach((record) =>
          {
-            rows.push(Object.fromEntries(record.values.entries()));
+            const row: any = {};
+            fields.forEach((field) =>
+            {
+               row[field.name] = QValueUtils.getDisplayValue(field, record);
+            });
+
+            rows.push(row);
          });
 
-         const sortedKeys = [...newTableMetaData.fields.keys()].sort();
+         const sortedKeys = [...tableMetaData.fields.keys()].sort();
          sortedKeys.forEach((key) =>
          {
-            const field = newTableMetaData.fields.get(key);
+            const field = tableMetaData.fields.get(key);
 
             let columnType = "string";
+            let columnWidth = 200;
             switch (field.type)
             {
                case QFieldType.DECIMAL:
                case QFieldType.INTEGER:
                   columnType = "number";
+                  columnWidth = 100;
+
+                  if (key === tableMetaData.primaryKeyField && field.label.length < 3)
+                  {
+                     columnWidth = 75;
+                  }
+
                   break;
                case QFieldType.DATE:
                   columnType = "date";
+                  columnWidth = 100;
                   break;
                case QFieldType.DATE_TIME:
                   columnType = "dateTime";
+                  columnWidth = 200;
                   break;
                case QFieldType.BOOLEAN:
                   columnType = "boolean";
+                  columnWidth = 75;
                   break;
                default:
-               // noop
+               // noop - leave as string
             }
 
             const column = {
                field: field.name,
                type: columnType,
                headerName: field.label,
-               width: 200,
+               width: columnWidth,
             };
 
-            if (key === newTableMetaData.primaryKeyField)
+            if (key === tableMetaData.primaryKeyField)
             {
-               column.width = 75;
                columns.splice(0, 0, column);
             }
             else
@@ -299,10 +335,48 @@ function EntityList({table}: Props): JSX.Element
       setRowsPerPage(size);
    };
 
-   const handleRowClick = (params: GridRowParams) =>
+   const navigate = useNavigate();
+   const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
-      document.location.href = `/${tableName}/${params.id}`;
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // strategy for when to trigger or not trigger a row click:                                                      //
+      // To avoid a drag-event that highlighted text in a cell:                                                        //
+      // - we capture the x & y upon mouse-down - then compare them in this method (which fires when the mouse is up)  //
+      //   if they are more than 5 pixels away from the mouse-down, then assume it's a drag, not a click.              //
+      // - avoid clicking the row upon double-click, by setting a 500ms timer here - and in the onDoubleClick handler, //
+      //   cancelling the timer.                                                                                       //
+      // - also avoid a click, then click-again-and-start-dragging, by always cancelling the timer in mouse-down.      //
+      // All in, these seem to have good results - the only downside being the half-second delay...                    //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      navigate(`${params.id}`);
+      /*
+      const diff = Math.max(Math.abs(event.clientX - gridMouseDownX), Math.abs(event.clientY - gridMouseDownY));
+      if (diff < 5)
+      {
+         clearTimeout(instance.current.timer);
+         instance.current.timer = setTimeout(() =>
+         {
+            navigate(`${params.id}`);
+         }, 500);
+      }
+      else
+      {
+         console.log(`row-click mouse-up happened ${diff} x or y pixels away from the mouse-down - so not considering it a click.`);
+      }
+      */
    };
+
+   const handleGridMouseDown = useCallback((event: any) =>
+   {
+      setGridMouseDownX(event.clientX);
+      setGridMouseDownY(event.clientY);
+      clearTimeout(instance.current.timer);
+   }, []);
+
+   const handleGridDoubleClick = useCallback((event: any) =>
+   {
+      clearTimeout(instance.current.timer);
+   }, []);
 
    const handleFilterChange = (filterModel: GridFilterModel) =>
    {
@@ -377,6 +451,8 @@ function EntityList({table}: Props): JSX.Element
       format: string;
    }
 
+   // todo - figure out what's up here...
+   // eslint-disable-next-line react/no-unstable-nested-components
    function ExportMenuItem(props: QExportMenuItemProps)
    {
       const {format, hideMenu} = props;
@@ -476,7 +552,7 @@ function EntityList({table}: Props): JSX.Element
 
    const bulkLoadClicked = () =>
    {
-      document.location.href = `/processes/${tableName}.bulkInsert`;
+      navigate(`${tableName}.bulkInsert`);
    };
 
    const bulkEditClicked = () =>
@@ -486,7 +562,7 @@ function EntityList({table}: Props): JSX.Element
          setAlertContent("No records were selected to Bulk Edit.");
          return;
       }
-      document.location.href = `/processes/${tableName}.bulkEdit${getRecordsQueryString()}`;
+      navigate(`${tableName}.bulkEdit${getRecordsQueryString()}`);
    };
 
    const bulkDeleteClicked = () =>
@@ -496,12 +572,21 @@ function EntityList({table}: Props): JSX.Element
          setAlertContent("No records were selected to Bulk Delete.");
          return;
       }
-      document.location.href = `/processes/${tableName}.bulkDelete${getRecordsQueryString()}`;
+      navigate(`${tableName}.bulkDelete${getRecordsQueryString()}`);
+   };
+
+   const processClicked = (process: QProcessMetaData) =>
+   {
+      // todo - let the process specify that it needs initial rows - err if none selected.
+      //  alternatively, let a process itself have an initial screen to select rows...
+      navigate(`${process.name}${getRecordsQueryString()}`);
    };
 
    // @ts-ignore
-   const defaultLabelDisplayedRows = ({from, to, count}) => `${from.toLocaleString()}–${to.toLocaleString()} of ${count !== -1 ? count.toLocaleString() : `more than ${to.toLocaleString()}`}`;
+   const defaultLabelDisplayedRows = ({from, to, count}) => `Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${count !== -1 ? `${count.toLocaleString()} records` : `more than ${to.toLocaleString()} records`}`;
 
+   // todo - figure out what's up here...
+   // eslint-disable-next-line react/no-unstable-nested-components
    function CustomPagination()
    {
       return (
@@ -518,23 +603,28 @@ function EntityList({table}: Props): JSX.Element
       );
    }
 
+   // todo - figure out what's up here...
+   // eslint-disable-next-line react/no-unstable-nested-components
+   function Loading()
+   {
+      return (
+         <LinearProgress color="info" />
+      );
+   }
+
+   // todo - figure out what's up here...
+   // eslint-disable-next-line react/no-unstable-nested-components
    function CustomToolbar()
    {
-      const [bulkActionsMenuAnchor, setBulkActionsMenuAnchor] = useState(null as HTMLElement);
-      const bulkActionsMenuOpen = Boolean(bulkActionsMenuAnchor);
-
-      const openBulkActionsMenu = (event: React.MouseEvent<HTMLElement>) =>
+      function gtcMouseDown(e: React.MouseEvent<HTMLDivElement>)
       {
-         setBulkActionsMenuAnchor(event.currentTarget);
-      };
-
-      const closeBulkActionsMenu = () =>
-      {
-         setBulkActionsMenuAnchor(null);
-      };
+         console.log(e.target);
+      }
 
       return (
-         <GridToolbarContainer>
+         <GridToolbarContainer
+            onMouseDown={(e) => gtcMouseDown(e)}
+         >
             <div>
                <Button
                   id="refresh-button"
@@ -551,29 +641,6 @@ function EntityList({table}: Props): JSX.Element
                <ExportMenuItem format="csv" />
                <ExportMenuItem format="xlsx" />
             </GridToolbarExportContainer>
-            <div>
-               <Button
-                  id="bulk-actions-button"
-                  onClick={openBulkActionsMenu}
-                  aria-controls={bulkActionsMenuOpen ? "basic-menu" : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={bulkActionsMenuOpen ? "true" : undefined}
-                  startIcon={<Icon>table_rows</Icon>}
-               >
-                  Bulk Actions
-               </Button>
-               <Menu
-                  id="bulk-actions-menu"
-                  open={bulkActionsMenuOpen}
-                  anchorEl={bulkActionsMenuAnchor}
-                  onClose={closeBulkActionsMenu}
-                  MenuListProps={{"aria-labelledby": "bulk-actions-button"}}
-               >
-                  <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
-                  <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
-                  <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
-               </Menu>
-            </div>
             <div>
                {
                   selectFullFilterState === "checked" && (
@@ -621,28 +688,37 @@ function EntityList({table}: Props): JSX.Element
          anchorEl={actionsMenu}
          anchorOrigin={{
             vertical: "bottom",
-            horizontal: "left",
+            horizontal: "right",
          }}
          transformOrigin={{
             vertical: "top",
-            horizontal: "left",
+            horizontal: "right",
          }}
          open={Boolean(actionsMenu)}
          onClose={closeActionsMenu}
          keepMounted
       >
+         <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
+         <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
+         <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
+         <MenuItem divider />
          {tableProcesses.map((process) => (
-            <MenuItem key={process.name}>
-               <Link href={`/processes/${process.name}${getRecordsQueryString()}`}>{process.label}</Link>
-            </MenuItem>
+            <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
          ))}
       </Menu>
    );
 
    useEffect(() =>
    {
+      setLoading(true);
       updateTable();
    }, [pageNumber, rowsPerPage, tableState, columnSortModel, filterModel]);
+
+   useEffect(() =>
+   {
+      document.documentElement.scrollTop = 0;
+      document.scrollingElement.scrollTop = 0;
+   }, [pageNumber, rowsPerPage]);
 
    return (
       <DashboardLayout>
@@ -668,39 +744,27 @@ function EntityList({table}: Props): JSX.Element
                   <MDAlert color="success" dismissible>
                      {`${tableLabel} successfully deleted`}
                   </MDAlert>
-               ) : ("")
+               ) : null
             }
-            <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-               {buttonText ? (
-                  <Link href={`/${tableName}/create`}>
-                     <MDButton variant="gradient" color="info">
-                        {
-                           buttonText
-                        }
-                     </MDButton>
-                  </Link>
-               ) : (
-                  ""
-               )}
+            <MDBox display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
 
-               <MDBox display="flex">
+               <MDBox display="flex" width="150px">
                   {tableProcesses.length > 0 && (
-                     <MDButton
-                        variant={actionsMenu ? "contained" : "outlined"}
-                        color="dark"
-                        onClick={openActionsMenu}
-                     >
-                        actions&nbsp;
-                        <Icon>keyboard_arrow_down</Icon>
-                     </MDButton>
+                     <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                   )}
                   {renderActionsMenu}
                </MDBox>
+
+               <QCreateNewButton />
+
             </MDBox>
             <Card>
+               {/* with these turned on, the toolbar & pagination controls become very flaky...
+               onMouseDown={(e) => handleGridMouseDown(e)} onDoubleClick={(e) => handleGridDoubleClick(e)} */}
                <MDBox height="100%">
                   <DataGridPro
-                     components={{Toolbar: CustomToolbar, Pagination: CustomPagination}}
+                     components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
+                     pinnedColumns={{left: ["__check__", "id"]}}
                      pagination
                      paginationMode="server"
                      sortingMode="server"
@@ -715,7 +779,7 @@ function EntityList({table}: Props): JSX.Element
                      rowCount={totalRecords}
                      onPageSizeChange={handleRowsPerPageChange}
                      onRowClick={handleRowClick}
-                     density="compact"
+                     density="standard"
                      loading={loading}
                      onFilterModelChange={handleFilterChange}
                      columnVisibilityModel={columnVisibilityModel}

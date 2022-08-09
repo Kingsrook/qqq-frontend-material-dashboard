@@ -53,16 +53,21 @@ interface Props {
   brandName: string;
   routes: {
     [key: string]:
-      | ReactNode
-      | string
-      | {
-          [key: string]:
-            | ReactNode
-            | string
-            | {
-                [key: string]: ReactNode | string;
-              }[];
+       | ReactNode
+       | string
+       | {
+      [key: string]:
+         | ReactNode
+         | string
+         | {
+        [key: string]:
+           | ReactNode
+           | string
+           | {
+          [key: string]: ReactNode | string;
         }[];
+      }[];
+    }[];
   }[];
   [key: string]: any;
 }

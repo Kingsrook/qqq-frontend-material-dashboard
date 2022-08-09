@@ -19,40 +19,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @mui material components
-import Grid from "@mui/material/Grid";
-
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-
-// Settings page components
-import EntityForm from "qqq/components/EntityForm";
-import BaseLayout from "qqq/components/BaseLayout";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {useParams} from "react-router-dom";
 
-interface Props
+/*******************************************************************************
+ ** Utility class for working with QQQ Tables
+ **
+ *******************************************************************************/
+class QTableUtils
 {
-   table?: QTableMetaData;
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): any
+   {
+      const tableSections = [];
+      if (tableMetaData.sections)
+      {
+         for (let i = 0; i < tableMetaData.sections.length; i++)
+         {
+            const section = tableMetaData.sections[i];
+            tableSections.push({
+               icon: section.iconName, label: section.label, name: section.name, fieldNames: section.fieldNames, tier: section.tier,
+            });
+         }
+      }
+      else
+      {
+         tableSections.push({
+            icon: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
+         });
+      }
+
+      return (tableSections);
+   }
 }
 
-function EntityCreate({table}: Props): JSX.Element
-{
-   return (
-      <BaseLayout>
-         <MDBox mt={4}>
-            <Grid container spacing={3}>
-               <Grid item xs={12} lg={12}>
-                  <EntityForm table={table} />
-               </Grid>
-            </Grid>
-         </MDBox>
-      </BaseLayout>
-   );
-}
-
-EntityCreate.defaultProps = {
-   table: null,
-};
-
-export default EntityCreate;
+export default QTableUtils;
