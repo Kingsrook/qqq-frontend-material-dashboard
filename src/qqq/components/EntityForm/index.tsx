@@ -21,6 +21,7 @@ import {Alert} from "@mui/material";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "../../../components/MDButton";
+import QClient from "qqq/utils/QClient";
 
 // Declaring props types for EntityForm
 interface Props
@@ -30,7 +31,7 @@ interface Props
 
 function EntityForm({id}: Props): JSX.Element
 {
-   const qController = new QController("");
+   const qController = QClient.getInstance();
    const {tableName} = useParams();
 
    const [validations, setValidations] = useState({});

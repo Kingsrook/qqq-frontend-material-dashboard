@@ -87,6 +87,7 @@ function EntityList({table}: Props): JSX.Element
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
+   const qController = QClient.getInstance();
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -193,7 +194,7 @@ function EntityList({table}: Props): JSX.Element
    {
       (async () =>
       {
-         const newTableMetaData = await QClient.loadTableMetaData(tableName);
+         const newTableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(newTableMetaData);
          if (columnSortModel.length === 0)
          {
@@ -206,14 +207,14 @@ function EntityList({table}: Props): JSX.Element
 
          const qFilter = buildQFilter();
 
-         const count = await QClient.count(tableName, qFilter);
+         const count = await qController.count(tableName, qFilter);
          setTotalRecords(count);
          setButtonText(`new ${newTableMetaData.label}`);
          setTableLabel(newTableMetaData.label);
 
          const columns = [] as GridColDef[];
 
-         const results = await QClient.query(
+         const results = await qController.query(
             tableName,
             qFilter,
             rowsPerPage,
@@ -362,7 +363,7 @@ function EntityList({table}: Props): JSX.Element
          setTableState(tableName);
          setFilterModel(null);
          setFiltersMenu(null);
-         const metaData = await QClient.loadMetaData();
+         const metaData = await qController.loadMetaData();
 
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 

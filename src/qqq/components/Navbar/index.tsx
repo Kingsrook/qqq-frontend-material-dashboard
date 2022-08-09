@@ -38,7 +38,6 @@ import {
 } from "context";
 
 // qqq
-import AuthenticationButton from "qqq/components/buttons/AuthenticationButton";
 
 // Declaring prop types for Navbar
 interface Props
@@ -159,14 +158,6 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
                      <MDInput label="Search here" />
                   </MDBox>
                   <MDBox color={light ? "white" : "inherit"}>
-                     <AuthenticationButton />
-                     { /*
-                     <Link to="/authentication/sign-in/basic">
-                        <IconButton sx={navbarIconButton} size="small" disableRipple>
-                           <Icon sx={iconsStyle}>account_circle</Icon>
-                        </IconButton>
-                     </Link>
-                     */ }
                      <IconButton
                         size="small"
                         disableRipple

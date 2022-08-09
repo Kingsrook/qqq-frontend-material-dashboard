@@ -38,8 +38,9 @@ import Icon from "@mui/material/Icon";
 import MDAlert from "components/MDAlert";
 import MDButton from "../../../../../components/MDButton";
 import QProcessUtils from "../../../../utils/QProcessUtils";
+import QClient from "qqq/utils/QClient";
 
-const qController = new QController("");
+const qController = QClient.getInstance();
 
 // Declaring props types for ViewForm
 interface Props

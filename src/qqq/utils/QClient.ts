@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {useAuth0} from "@auth0/auth0-react";
 
 /*******************************************************************************
  ** client wrapper of qqq backend
@@ -31,39 +31,24 @@ class QClient
 {
    private static qController: QController;
 
+   private static handleException(exception: QException)
+   {
+      console.log(`Caught Exception: ${JSON.stringify(exception)}`);
+      const {logout} = useAuth0();
+      if (exception.status === "401")
+      {
+         logout();
+      }
+   }
+
    public static getInstance()
    {
       if (this.qController == null)
       {
-         this.qController = new QController("");
+         this.qController = new QController("", this.handleException);
       }
 
       return this.qController;
-   }
-
-   public static loadTableMetaData(tableName: string)
-   {
-      return this.getInstance().loadTableMetaData(tableName);
-   }
-
-   public static loadMetaData()
-   {
-      return this.getInstance().loadMetaData();
-   }
-
-   public static query(tableName: string, filter: QQueryFilter, limit: number, skip: number)
-   {
-      return this.getInstance()
-         .query(tableName, filter, limit, skip)
-         .catch((error) =>
-         {
-            throw error;
-         });
-   }
-
-   public static count(tableName: string, filter: QQueryFilter)
-   {
-      return this.getInstance().count(tableName, filter);
    }
 }
 

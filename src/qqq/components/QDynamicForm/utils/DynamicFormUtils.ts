@@ -66,6 +66,9 @@ class DynamicFormUtils
          case QFieldType.BLOB:
             fieldType = "file";
             break;
+         case QFieldType.BOOLEAN:
+            fieldType = "checkbox";
+            break;
          case QFieldType.TEXT:
          case QFieldType.HTML:
          case QFieldType.STRING:
