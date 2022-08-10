@@ -7,7 +7,7 @@ interface Props
    errorMessage?: string;
 }
 
-export default function HandleAuthorizationError({errorMessage}: Props)
+function HandleAuthorizationError({errorMessage}: Props)
 {
    const [, , removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
 
@@ -24,3 +24,5 @@ export default function HandleAuthorizationError({errorMessage}: Props)
 HandleAuthorizationError.defaultProps = {
    errorMessage: "User authorization error.",
 };
+
+export default HandleAuthorizationError;
