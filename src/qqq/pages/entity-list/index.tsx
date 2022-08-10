@@ -265,7 +265,17 @@ function EntityList({table}: Props): JSX.Element
             rows.push(row);
          });
 
-         const sortedKeys = [...tableMetaData.fields.keys()].sort();
+         const sortedKeys: string[] = [];
+
+         for (let i = 0; i < tableMetaData.sections.length; i++)
+         {
+            const section = tableMetaData.sections[i];
+            for (let j = 0; j < section.fieldNames.length; j++)
+            {
+               sortedKeys.push(section.fieldNames[j]);
+            }
+         }
+
          sortedKeys.forEach((key) =>
          {
             const field = tableMetaData.fields.get(key);
