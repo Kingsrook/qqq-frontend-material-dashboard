@@ -450,6 +450,7 @@ export default function App()
                </>
             )}
             <Routes>
+               <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
                {appRoutes && getRoutes(appRoutes)}
                {sideNavRoutes && getRoutes(sideNavRoutes)}
             </Routes>
