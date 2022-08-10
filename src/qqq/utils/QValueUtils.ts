@@ -38,6 +38,10 @@ class QValueUtils
 
       if (field.type === QFieldType.DATE_TIME)
       {
+         if (!rawValue)
+         {
+            return ("");
+         }
          const date = new Date(rawValue);
          // @ts-ignore
          return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
