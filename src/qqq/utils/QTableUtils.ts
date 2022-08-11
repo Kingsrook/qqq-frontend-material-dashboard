@@ -20,6 +20,7 @@
  */
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Tables
@@ -27,27 +28,18 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
  *******************************************************************************/
 class QTableUtils
 {
-   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): any
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): QSection[]
    {
-      const tableSections = [];
       if (tableMetaData.sections)
       {
-         for (let i = 0; i < tableMetaData.sections.length; i++)
-         {
-            const section = tableMetaData.sections[i];
-            tableSections.push({
-               icon: section.iconName, label: section.label, name: section.name, fieldNames: section.fieldNames, tier: section.tier,
-            });
-         }
+         return (tableMetaData.sections);
       }
       else
       {
-         tableSections.push({
-            icon: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
-         });
+         return ([new QSection({
+            iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
+         })]);
       }
-
-      return (tableSections);
    }
 }
 

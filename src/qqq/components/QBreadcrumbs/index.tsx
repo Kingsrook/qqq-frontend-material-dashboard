@@ -44,9 +44,14 @@ const ucFirst = (input: string): string =>
    return (input.substring(0, 1).toUpperCase() + input.substring(1));
 };
 
-const routeToLabel = (route: string): string =>
+export const routeToLabel = (route: string): string =>
 {
-   const label = ucFirst(route.replace(".", " ").replace("-", " ").replace("_", " ").replace(/([A-Z])/g, " $1"));
+   const label = ucFirst(route
+      .replace(".", " ")
+      .replace("-", " ")
+      .replace("_", " ")
+      .replace(/([a-z])([A-Z]+)/g, "$1 $2") // transform personUSA => person USA
+      .replace(/^([A-Z]+)([A-Z])([a-z])/, "$1 $2$3")); // transform USAPerson => USA Person
    return (label);
 };
 

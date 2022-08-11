@@ -29,6 +29,8 @@ import Avatar from "@mui/material/Avatar";
 import Icon from "@mui/material/Icon";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
 import QTableUtils from "qqq/utils/QTableUtils";
+import colors from "assets/theme/base/colors";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 interface Props
 {
@@ -46,6 +48,7 @@ function EntityForm({table, id}: Props): JSX.Element
    const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
    const [formFields, setFormFields] = useState(null as Map<string, any>);
    const [t1sectionName, setT1SectionName] = useState(null as string);
+   const [nonT1Sections, setNonT1Sections] = useState([] as QSection[]);
 
    const [alertContent, setAlertContent] = useState("");
 
@@ -53,7 +56,7 @@ function EntityForm({table, id}: Props): JSX.Element
    const [formValues, setFormValues] = useState({} as { [key: string]: string });
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [record, setRecord] = useState(null as QRecord);
-   const [tableSections, setTableSections] = useState(null as any);
+   const [tableSections, setTableSections] = useState(null as QSection[]);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const navigate = useNavigate();
@@ -76,7 +79,7 @@ function EntityForm({table, id}: Props): JSX.Element
       {
          return <div>Loading...</div>;
       }
-      return <QDynamicForm formData={formData} primaryKeyId={tableMetaData.primaryKeyField} />;
+      return <QDynamicForm formData={formData} />;
    }
 
    if (!asyncLoadInited)
@@ -131,6 +134,7 @@ function EntityForm({table, id}: Props): JSX.Element
          /////////////////////////////////////
          const dynamicFormFieldsBySection = new Map<string, any>();
          let t1sectionName;
+         const nonT1Sections: QSection[] = [];
          for (let i = 0; i < tableSections.length; i++)
          {
             const section = tableSections[i];
@@ -140,6 +144,11 @@ function EntityForm({table, id}: Props): JSX.Element
             {
                const fieldName = section.fieldNames[j];
                const field = tableMetaData.fields.get(fieldName);
+
+               ////////////////////////////////////////////////////////////////////////////////////////////
+               // if id !== null - means we're on the edit screen -- show all fields on the edit screen. //
+               // || (or) we're on the insert screen in which case, only show editable fields.           //
+               ////////////////////////////////////////////////////////////////////////////////////////////
                if (id !== null || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
@@ -153,6 +162,7 @@ function EntityForm({table, id}: Props): JSX.Element
                ////////////////////////////////////////////////////////////////////////////////////////////////
                tableSections.splice(i, 1);
                i--;
+               continue;
             }
             else
             {
@@ -166,8 +176,13 @@ function EntityForm({table, id}: Props): JSX.Element
             {
                t1sectionName = section.name;
             }
+            else
+            {
+               nonT1Sections.push(section);
+            }
          }
          setT1SectionName(t1sectionName);
+         setNonT1Sections(nonT1Sections);
          setFormFields(dynamicFormFieldsBySection);
          setValidations(Yup.object().shape(formValidations));
 
@@ -177,6 +192,11 @@ function EntityForm({table, id}: Props): JSX.Element
 
    const handleCancelClicked = () =>
    {
+      ///////////////////////////////////////////////////////////////////////////////////////
+      // todo - we might have rather just done a navigate(-1) (to keep history clean)      //
+      //  but if the user used the anchors on the page, this doesn't effectively cancel... //
+      //  what we have here pushed a new history entry (I think?), so could be better      //
+      ///////////////////////////////////////////////////////////////////////////////////////
       if (id !== null)
       {
          const path = `${location.pathname.replace(/\/edit$/, "")}`;
@@ -274,7 +294,7 @@ function EntityForm({table, id}: Props): JSX.Element
                            <Card id={`${t1sectionName}`} sx={{overflow: "visible"}}>
                               <MDBox display="flex" p={3} pb={1}>
                                  <MDBox mr={1.5}>
-                                    <Avatar sx={{bgcolor: "rgb(26, 115, 232)"}}>
+                                    <Avatar sx={{bgcolor: colors.info.main}}>
                                        <Icon>
                                           {tableMetaData?.iconName}
                                        </Icon>
@@ -295,23 +315,22 @@ function EntityForm({table, id}: Props): JSX.Element
                               }
                            </Card>
                         </MDBox>
-                        {tableSections && formFields ? tableSections.map((section: any) => (section.name !== t1sectionName
-                           ? (
-                              <MDBox key={`edit-card-${section.name}`} pb={3}>
-                                 <Card id={section.name} sx={{overflow: "visible"}}>
-                                    <MDTypography variant="h5" p={3} pb={1}>
-                                       {section.label}
-                                    </MDTypography>
-                                    <MDBox pb={3} px={3}>
-                                       <MDBox p={3} width="100%">
-                                          {
-                                             getFormSection(values, touched, formFields.get(section.name), errors)
-                                          }
-                                       </MDBox>
+                        {formFields && nonT1Sections.length ? nonT1Sections.map((section: QSection) => (
+                           <MDBox key={`edit-card-${section.name}`} pb={3}>
+                              <Card id={section.name} sx={{overflow: "visible"}}>
+                                 <MDTypography variant="h5" p={3} pb={1}>
+                                    {section.label}
+                                 </MDTypography>
+                                 <MDBox pb={3} px={3}>
+                                    <MDBox p={3} width="100%">
+                                       {
+                                          getFormSection(values, touched, formFields.get(section.name), errors)
+                                       }
                                     </MDBox>
-                                 </Card>
-                              </MDBox>
-                           ) : null)) : null}
+                                 </MDBox>
+                              </Card>
+                           </MDBox>
+                        )) : null}
 
                         <MDBox component="div" p={3}>
                            <Grid container justifyContent="flex-end" spacing={3}>

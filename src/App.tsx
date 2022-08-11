@@ -35,7 +35,6 @@ import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "cont
 import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import {Md5} from "ts-md5/dist/md5";
 import {useCookies} from "react-cookie";
-import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
@@ -51,6 +50,7 @@ import QClient from "./qqq/utils/QClient";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import QProcessUtils from "qqq/utils/QProcessUtils";
+import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -94,6 +94,7 @@ export default function App()
    } = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
+   const [profileRoutes, setProfileRoutes] = useState({});
 
    useEffect(() =>
    {
@@ -137,8 +138,6 @@ export default function App()
    const [sideNavRoutes, setSideNavRoutes] = useState(getStaticRoutes());
    const [appRoutes, setAppRoutes] = useState(null as any);
 
-   const dynamicAppChildElement = <AppHome />;
-
    ////////////////////////////////////////////
    // load qqq meta data to make more routes //
    ////////////////////////////////////////////
@@ -152,7 +151,7 @@ export default function App()
 
       (async () =>
       {
-         function addAppToSideNavList(app: QAppMetaData, appList: any[], parentPath: string, depth: number)
+         function addAppToSideNavList(app: QAppTreeNode, appList: any[], parentPath: string, depth: number)
          {
             const path = `${parentPath}/${app.name}`;
             if (app.type !== QAppNodeType.APP)
@@ -160,62 +159,65 @@ export default function App()
                return;
             }
 
-            if (app.type === QAppNodeType.APP && depth <= 2)
+            if (depth > 2)
             {
-               const childList: any[] = [];
-               app.children.forEach((child: QAppMetaData) =>
-               {
-                  addAppToSideNavList(child, childList, path, depth + 1);
-               });
+               console.warn("App depth is greater than 2 - not including app in side nav...");
+               return;
+            }
 
-               if (childList.length === 0)
+            const childList: any[] = [];
+            app.children.forEach((child: QAppTreeNode) =>
+            {
+               addAppToSideNavList(child, childList, path, depth + 1);
+            });
+
+            if (childList.length === 0)
+            {
+               if (depth === 0)
                {
-                  if (depth === 0)
-                  {
-                     /////////////////////////////////////////////////////
-                     // at level 0, the entry must always be a collapse //
-                     /////////////////////////////////////////////////////
-                     appList.push({
-                        type: "collapse",
-                        name: app.label,
-                        key: app.name,
-                        route: path,
-                        icon: <Icon fontSize="medium">{app.iconName}</Icon>,
-                        noCollapse: true,
-                        component: <AppHome />,
-                     });
-                  }
-                  else
-                  {
-                     appList.push({
-                        name: app.label,
-                        key: app.name,
-                        route: path,
-                        icon: <Icon fontSize="medium">{app.iconName}</Icon>,
-                        component: <AppHome />,
-                     });
-                  }
-               }
-               else
-               {
+                  /////////////////////////////////////////////////////
+                  // at level 0, the entry must always be a collapse //
+                  /////////////////////////////////////////////////////
                   appList.push({
                      type: "collapse",
                      name: app.label,
                      key: app.name,
-                     dropdown: true,
+                     route: path,
                      icon: <Icon fontSize="medium">{app.iconName}</Icon>,
-                     collapse: childList,
+                     noCollapse: true,
+                     component: <AppHome />,
+                  });
+               }
+               else
+               {
+                  appList.push({
+                     name: app.label,
+                     key: app.name,
+                     route: path,
+                     icon: <Icon fontSize="medium">{app.iconName}</Icon>,
+                     component: <AppHome />,
                   });
                }
             }
+            else
+            {
+               appList.push({
+                  type: "collapse",
+                  name: app.label,
+                  key: app.name,
+                  dropdown: true,
+                  icon: <Icon fontSize="medium">{app.iconName}</Icon>,
+                  collapse: childList,
+               });
+            }
          }
 
-         function addAppToAppRoutesList(metaData: QInstance, app: QAppMetaData, routeList: any[], parentPath: string, depth: number)
+         function addAppToAppRoutesList(metaData: QInstance, app: QAppTreeNode, routeList: any[], parentPath: string, depth: number)
          {
             const path = `${parentPath}/${app.name}`;
             if (app.type === QAppNodeType.APP)
             {
-               app.children.forEach((child: QAppMetaData) =>
+               app.children.forEach((child: QAppTreeNode) =>
                {
                   addAppToAppRoutesList(metaData, child, routeList, path, depth + 1);
                });
@@ -261,16 +263,6 @@ export default function App()
                const processesForTable = QProcessUtils.getProcessesForTable(metaData, table.name, true);
                processesForTable.forEach((process) =>
                {
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // special provision for the standard bulk processes - strip the table name from the process name //
-                  // todo - this var isn't used - is this needed?
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////
-                  let processName = process.name;
-                  if (processName.startsWith(`${process.tableName}.`))
-                  {
-                     processName = processName.replace(`${process.tableName}.`, "");
-                  }
-
                   routeList.push({
                      name: process.label,
                      key: process.name,
@@ -295,11 +287,11 @@ export default function App()
          {
             const metaData = await QClient.getInstance().loadMetaData();
 
-            let profileRoute = {};
+            let profileRoutes = {};
             const gravatarBase = "http://www.gravatar.com/avatar/";
             const hash = Md5.hashStr(user.email);
             const profilePicture = `${gravatarBase}${hash}`;
-            profileRoute = {
+            profileRoutes = {
                type: "collapse",
                name: user.name,
                key: user.name,
@@ -319,6 +311,7 @@ export default function App()
                   },
                ],
             };
+            setProfileRoutes(profileRoutes);
 
             const sideNavAppList = [] as any[];
             const appRoutesList = [] as any[];
@@ -331,7 +324,7 @@ export default function App()
 
             const newSideNavRoutes = getStaticRoutes();
             // @ts-ignore
-            newSideNavRoutes.unshift(profileRoute);
+            newSideNavRoutes.unshift(profileRoutes);
             for (let i = 0; i < sideNavAppList.length; i++)
             {
                newSideNavRoutes.push(sideNavAppList[i]);
@@ -386,6 +379,9 @@ export default function App()
       document.scrollingElement.scrollTop = 0;
    }, [pathname]);
 
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // convert an object that works for the Sidenav into one that works for the react-router //
+   ///////////////////////////////////////////////////////////////////////////////////////////
    const getRoutes = (allRoutes: any[]): any => allRoutes.map(
       (route: {
          collapse: any;
@@ -452,7 +448,8 @@ export default function App()
             <Routes>
                <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
                {appRoutes && getRoutes(appRoutes)}
-               {sideNavRoutes && getRoutes(sideNavRoutes)}
+               {getRoutes(getStaticRoutes())}
+               {profileRoutes && getRoutes([profileRoutes])}
             </Routes>
          </ThemeProvider>
       )

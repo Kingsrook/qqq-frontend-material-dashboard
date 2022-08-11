@@ -29,7 +29,6 @@ import MDBox from "components/MDBox";
 import EntityForm from "qqq/components/EntityForm";
 import BaseLayout from "qqq/components/BaseLayout";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {useParams} from "react-router-dom";
 
 interface Props
 {

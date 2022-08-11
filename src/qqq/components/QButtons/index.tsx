@@ -61,12 +61,10 @@ interface QDeleteButtonProps
 export function QDeleteButton({onClickHandler}: QDeleteButtonProps): JSX.Element
 {
    return (
-      <MDBox ml={3} mr={3}>
-         <MDBox width={standardWidth}>
-            <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>}>
-               Delete
-            </MDButton>
-         </MDBox>
+      <MDBox ml={3} mr={3} width={standardWidth}>
+         <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>}>
+            Delete
+         </MDButton>
       </MDBox>
    );
 }
@@ -74,13 +72,11 @@ export function QDeleteButton({onClickHandler}: QDeleteButtonProps): JSX.Element
 export function QEditButton(): JSX.Element
 {
    return (
-      <MDBox>
+      <MDBox width={standardWidth}>
          <Link to="edit">
-            <MDBox width={standardWidth}>
-               <MDButton variant="gradient" color="dark" size="small" fullWidth startIcon={<Icon>edit</Icon>}>
-                  Edit
-               </MDButton>
-            </MDBox>
+            <MDButton variant="gradient" color="dark" size="small" fullWidth startIcon={<Icon>edit</Icon>}>
+               Edit
+            </MDButton>
          </Link>
       </MDBox>
    );

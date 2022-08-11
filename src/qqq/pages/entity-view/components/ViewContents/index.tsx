@@ -52,6 +52,8 @@ import Icon from "@mui/material/Icon";
 import Avatar from "@mui/material/Avatar";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
 import QTableUtils from "qqq/utils/QTableUtils";
+import colors from "assets/theme/base/colors";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 const qController = QClient.getInstance();
 
@@ -73,11 +75,13 @@ function ViewContents({id, table}: Props): JSX.Element
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [nameValues, setNameValues] = useState([] as JSX.Element[]);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
-   const [t1Section, setT1Section] = useState(null as JSX.Element);
-   const [open, setOpen] = useState(false);
+   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
    const [record, setRecord] = useState(null as QRecord);
-   const [tableSections, setTableSections] = useState(null as any);
+   const [tableSections, setTableSections] = useState([] as QSection[]);
+   const [t1SectionName, setT1SectionName] = useState(null as string);
+   const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
+   const [nonT1TableSections, setNonT1TableSections] = useState([] as QSection[]);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [searchParams] = useSearchParams();
@@ -120,6 +124,7 @@ function ViewContents({id, table}: Props): JSX.Element
          // make elements with the values for each section //
          ////////////////////////////////////////////////////
          const sectionFieldElements = new Map();
+         const nonT1TableSections = [];
          for (let i = 0; i < tableSections.length; i++)
          {
             const section = tableSections[i];
@@ -145,45 +150,29 @@ function ViewContents({id, table}: Props): JSX.Element
 
             if (section.tier === "T1")
             {
-               setT1Section(sectionFieldElements.get(section.name));
+               setT1SectionElement(sectionFieldElements.get(section.name));
+               setT1SectionName(section.name);
+            }
+            else
+            {
+               nonT1TableSections.push(tableSections[i]);
             }
          }
          setSectionFieldElements(sectionFieldElements);
-
-         // todo - delete this
-         const sortedKeys = [...record.values.keys()].sort();
-         sortedKeys.forEach((key) =>
-         {
-            if (key !== tableMetaData.primaryKeyField)
-            {
-               nameValues.push(
-                  <MDBox key={key} display="flex" py={1} pr={2}>
-                     <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
-                        {tableMetaData.fields.get(key).label}
-                        : &nbsp;
-                     </MDTypography>
-                     <MDTypography variant="button" fontWeight="regular" color="text">
-                        &nbsp;
-                        {QValueUtils.getDisplayValue(tableMetaData.fields.get(key), record)}
-                     </MDTypography>
-                  </MDBox>,
-               );
-            }
-         });
-         setNameValues(nameValues);
+         setNonT1TableSections(nonT1TableSections);
 
          forceUpdate();
       })();
    }
 
-   const handleClickConfirmOpen = () =>
+   const handleClickDeleteButton = () =>
    {
-      setOpen(true);
+      setDeleteConfirmationOpen(true);
    };
 
-   const handleClickConfirmClose = () =>
+   const handleDeleteConfirmClose = () =>
    {
-      setOpen(false);
+      setDeleteConfirmationOpen(false);
    };
 
    const handleDelete = (event: { preventDefault: () => void }) =>
@@ -225,12 +214,12 @@ function ViewContents({id, table}: Props): JSX.Element
          <MenuItem onClick={() =>
          {
             setActionsMenu(null);
-            handleClickConfirmOpen();
+            handleClickDeleteButton();
          }}
          >
             Delete
          </MenuItem>
-         <MenuItem divider />
+         {tableProcesses.length > 0 && <MenuItem divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
          ))}
@@ -261,10 +250,10 @@ function ViewContents({id, table}: Props): JSX.Element
 
                <Grid container spacing={3}>
                   <Grid item xs={12} mb={3}>
-                     <Card>
+                     <Card id={t1SectionName}>
                         <MDBox display="flex" p={3} pb={1}>
                            <MDBox mr={1.5}>
-                              <Avatar sx={{bgcolor: "rgb(26, 115, 232)"}}>
+                              <Avatar sx={{bgcolor: colors.info.main}}>
                                  <Icon>
                                     {tableMetaData?.iconName}
                                  </Icon>
@@ -274,33 +263,29 @@ function ViewContents({id, table}: Props): JSX.Element
                               <MDTypography variant="h5">
                                  {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel}` : ""}
                               </MDTypography>
-                              {tableProcesses.length > 0 && (
-                                 <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
-                              )}
+                              <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                               {renderActionsMenu}
                            </MDBox>
                         </MDBox>
-                        {t1Section ? (<MDBox p={3} pt={0}>{t1Section}</MDBox>) : null}
+                        {t1SectionElement ? (<MDBox p={3} pt={0}>{t1SectionElement}</MDBox>) : null}
                      </Card>
                   </Grid>
                </Grid>
-               {tableSections && sectionFieldElements ? tableSections.map(({
-                  icon, label, name, fieldNames, tier,
-               }: any) => (tier !== "T1"
-                  ? (
-                     <MDBox mb={3} key={name}>
-                        <Card key={name} id={name} sx={{overflow: "visible"}}>
-                           <MDTypography variant="h5" p={3} pb={1}>
-                              {label}
-                           </MDTypography>
-                           <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
-                        </Card>
-                     </MDBox>
-                  ) : null)) : null}
-
+               {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
+                  iconName, label, name, fieldNames, tier,
+               }: any) => (
+                  <MDBox mb={3} key={name}>
+                     <Card key={name} id={name} sx={{overflow: "visible"}}>
+                        <MDTypography variant="h5" p={3} pb={1}>
+                           {label}
+                        </MDTypography>
+                        <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
+                     </Card>
+                  </MDBox>
+               )) : null}
                <MDBox component="form" p={3}>
                   <Grid container justifyContent="flex-end" spacing={3}>
-                     <QDeleteButton onClickHandler={handleClickConfirmOpen} />
+                     <QDeleteButton onClickHandler={handleClickDeleteButton} />
                      <QEditButton />
                   </Grid>
                </MDBox>
@@ -310,8 +295,8 @@ function ViewContents({id, table}: Props): JSX.Element
 
          {/* Delete confirmation Dialog */}
          <Dialog
-            open={open}
-            onClose={handleClickConfirmClose}
+            open={deleteConfirmationOpen}
+            onClose={handleDeleteConfirmClose}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
          >
@@ -322,7 +307,7 @@ function ViewContents({id, table}: Props): JSX.Element
                </DialogContentText>
             </DialogContent>
             <DialogActions>
-               <Button onClick={handleClickConfirmClose}>No</Button>
+               <Button onClick={handleDeleteConfirmClose}>No</Button>
                <Button onClick={handleDelete} autoFocus>
                   Yes
                </Button>

@@ -28,9 +28,10 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import Card from "@mui/material/Card";
 import {Theme} from "@mui/material/styles";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 interface Props {
-   tableSections: any;
+   tableSections: QSection[];
    light?: boolean;
 }
 
@@ -40,11 +41,11 @@ function QRecordSidebar({tableSections, light}: Props): JSX.Element
       <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "1%"}}>
          <MDBox component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
-               tableSections ? tableSections.map(({icon, label, name}: any, key: number) => (
-                  <MDBox key={`section-${name}`} component="li" pt={key === 0 ? 0 : 1}>
+               tableSections ? tableSections.map((section: QSection, key: number) => (
+                  <MDBox key={`section-${section.name}`} component="li" pt={key === 0 ? 0 : 1}>
                      <MDTypography
                         component="a"
-                        href={`#${name}`}
+                        href={`#${section.name}`}
                         variant="button"
                         fontWeight="regular"
                         sx={({
@@ -65,9 +66,9 @@ function QRecordSidebar({tableSections, light}: Props): JSX.Element
                         })}
                      >
                         <MDBox mr={1.5} lineHeight={1} color="black">
-                           <Icon fontSize="small">{icon}</Icon>
+                           <Icon fontSize="small">{section.iconName}</Icon>
                         </MDBox>
-                        {label}
+                        {section.label}
                      </MDTypography>
                   </MDBox>
                )) : null

@@ -34,7 +34,6 @@ import QDynamicFormField from "qqq/components/QDynamicFormField";
 interface Props {
   formLabel?: string;
   formData: any;
-  primaryKeyId?: string;
   bulkEditMode?: boolean;
   bulkEditSwitchChangeHandler?: any
 }
@@ -42,7 +41,7 @@ interface Props {
 function QDynamicForm(props: Props): JSX.Element
 {
    const {
-      formData, formLabel, primaryKeyId, bulkEditMode, bulkEditSwitchChangeHandler,
+      formData, formLabel, bulkEditMode, bulkEditSwitchChangeHandler,
    } = props;
    const {
       formFields, values, errors, touched,
@@ -116,7 +115,7 @@ function QDynamicForm(props: Props): JSX.Element
                         error={errors[fieldName] && touched[fieldName]}
                         bulkEditMode={bulkEditMode}
                         bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
-                        success={!errors[fieldName] && touched[fieldName]}
+                        success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
                      />
                   </Grid>
                );
@@ -129,7 +128,6 @@ function QDynamicForm(props: Props): JSX.Element
 
 QDynamicForm.defaultProps = {
    formLabel: undefined,
-   primaryKeyId: undefined,
    bulkEditMode: false,
    bulkEditSwitchChangeHandler: () =>
    {},

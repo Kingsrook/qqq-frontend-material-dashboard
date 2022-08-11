@@ -58,7 +58,7 @@ import {
 } from "context";
 
 // qqq
-import QBreadcrumbs from "qqq/components/QBreadcrumbs";
+import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
 
 // Declaring prop types for Navbar
 interface Props
@@ -156,7 +156,7 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       },
    });
 
-   const breadcrumbTitle = route[route.length - 1].replace(/([A-Z])/g, " $1").trim();
+   const breadcrumbTitle = routeToLabel(route[route.length - 1]);
 
    return (
       <AppBar

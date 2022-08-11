@@ -134,6 +134,7 @@ function EntityList({table}: Props): JSX.Element
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
    const [gridMouseDownX, setGridMouseDownX] = useState(0);
    const [gridMouseDownY, setGridMouseDownY] = useState(0);
+   const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
    const instance = useRef({timer: null});
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -223,6 +224,7 @@ function EntityList({table}: Props): JSX.Element
             });
             setColumnSortModel(columnSortModel);
          }
+         setPinnedColumns({left: ["__check__", tableMetaData.primaryKeyField]});
 
          const qFilter = buildQFilter();
 
@@ -626,15 +628,8 @@ function EntityList({table}: Props): JSX.Element
    // eslint-disable-next-line react/no-unstable-nested-components
    function CustomToolbar()
    {
-      function gtcMouseDown(e: React.MouseEvent<HTMLDivElement>)
-      {
-         console.log(e.target);
-      }
-
       return (
-         <GridToolbarContainer
-            onMouseDown={(e) => gtcMouseDown(e)}
-         >
+         <GridToolbarContainer>
             <div>
                <Button
                   id="refresh-button"
@@ -711,7 +706,7 @@ function EntityList({table}: Props): JSX.Element
          <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
          <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
          <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
-         <MenuItem divider />
+         {tableProcesses.length > 0 && <MenuItem divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
          ))}
@@ -759,9 +754,7 @@ function EntityList({table}: Props): JSX.Element
             <MDBox display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
 
                <MDBox display="flex" width="150px">
-                  {tableProcesses.length > 0 && (
-                     <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
-                  )}
+                  <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                   {renderActionsMenu}
                </MDBox>
 
@@ -774,7 +767,7 @@ function EntityList({table}: Props): JSX.Element
                <MDBox height="100%">
                   <DataGridPro
                      components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
-                     pinnedColumns={{left: ["__check__", "id"]}}
+                     initialState={{pinnedColumns: pinnedColumns}}
                      pagination
                      paginationMode="server"
                      sortingMode="server"

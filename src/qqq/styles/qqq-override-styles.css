@@ -81,7 +81,8 @@
 /* shrink font on in the pagination control */
 .MuiTablePagination-displayedRows,
 .MuiTablePagination-selectLabel,
-.MuiTablePagination-select.MuiSelect-select.MuiSelect-standard
+.MuiTablePagination-select.MuiSelect-select.MuiSelect-standard,
+.MuiDataGrid-selectedRowCount
 {
    font-size: 0.85rem !important;
 }
@@ -93,14 +94,8 @@
    border-radius: 5px !important;
 }
 
-/* hide the selected row count (we show our own) */
-.MuiDataGrid-selectedRowCount
-{
-   visibility: hidden !important;
-}
-
 /* move the green check / red x down to align with the calendar icon */
 .MuiFormControl-root
 {
-   background-position-y: 1.4rem;
+   background-position-y: 1.4rem !important;
 }
