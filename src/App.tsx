@@ -1,14 +1,10 @@
 import React, {
-   useState,
-   useEffect,
-   JSXElementConstructor,
-   Key,
-   ReactElement,
+   JSXElementConstructor, Key, ReactElement, useEffect, useState,
 } from "react";
 
 // react-router components
 import {
-   Routes, Route, Navigate, useLocation,
+   Navigate, Route, Routes, useLocation,
 } from "react-router-dom";
 
 import {useAuth0} from "@auth0/auth0-react";
@@ -33,26 +29,28 @@ import theme from "assets/theme";
 import themeDark from "assets/theme-dark";
 
 // Material Dashboard 2 PRO React TS contexts
-import {useMaterialUIController, setMiniSidenav, setOpenConfigurator} from "context";
+import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
 
 // Images
 import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import {Md5} from "ts-md5/dist/md5";
-import AuthenticationButton from "qqq/components/buttons/AuthenticationButton";
 import {useCookies} from "react-cookie";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityList from "./qqq/pages/entity-list";
 import EntityView from "./qqq/pages/entity-view";
 import EntityEdit from "./qqq/pages/entity-edit";
 import ProcessRun from "./qqq/pages/process-run";
+import AppHome from "qqq/pages/app-home";
 import MDAvatar from "./components/MDAvatar";
 import ProfileOverview from "./layouts/pages/profile/profile-overview";
 import Settings from "./layouts/pages/account/settings";
-import SignInBasic from "./layouts/authentication/sign-in/basic";
 import Analytics from "./layouts/dashboards/analytics";
 import Sales from "./layouts/dashboards/sales";
 import QClient from "./qqq/utils/QClient";
+import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import QProcessUtils from "qqq/utils/QProcessUtils";
+import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -82,21 +80,21 @@ function getStaticRoutes()
          ],
       },
       {type: "divider", key: "divider-1"},
-      {type: "title", title: "Tables", key: "title-docs"},
    ];
 }
 
-const SESSION_ID_COOKIE_NAME = "sessionId";
+export const SESSION_ID_COOKIE_NAME = "sessionId";
 LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
    const [, setCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
    const {
-      user, getAccessTokenSilently, getIdTokenClaims, logout,
+      user, getAccessTokenSilently, getIdTokenClaims, logout, loginWithRedirect,
    } = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
+   const [profileRoutes, setProfileRoutes] = useState({});
 
    useEffect(() =>
    {
@@ -110,7 +108,7 @@ export default function App()
          try
          {
             console.log("Loading token...");
-            const accessToken = await getAccessTokenSilently();
+            await getAccessTokenSilently();
             const idToken = await getIdTokenClaims();
             setCookie(SESSION_ID_COOKIE_NAME, idToken.__raw, {path: "/"});
             setIsFullyAuthenticated(true);
@@ -131,15 +129,14 @@ export default function App()
       layout,
       openConfigurator,
       sidenavColor,
-      transparentSidenav,
-      whiteSidenav,
       darkMode,
    } = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
 
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
-   const [routes, setRoutes] = useState(getStaticRoutes());
+   const [sideNavRoutes, setSideNavRoutes] = useState(getStaticRoutes());
+   const [appRoutes, setAppRoutes] = useState(null as any);
 
    ////////////////////////////////////////////
    // load qqq meta data to make more routes //
@@ -154,38 +151,147 @@ export default function App()
 
       (async () =>
       {
-         try
+         function addAppToSideNavList(app: QAppTreeNode, appList: any[], parentPath: string, depth: number)
          {
-            console.log("ok now loading qqq things");
-            const metaData = await QClient.loadMetaData();
+            const path = `${parentPath}/${app.name}`;
+            if (app.type !== QAppNodeType.APP)
+            {
+               return;
+            }
 
-            // get the keys sorted
-            const keys = [...metaData.tables.keys()].sort((a, b): number =>
+            if (depth > 2)
             {
-               const labelA = metaData.tables.get(a).label;
-               const labelB = metaData.tables.get(b).label;
-               return (labelA.localeCompare(labelB));
+               console.warn("App depth is greater than 2 - not including app in side nav...");
+               return;
+            }
+
+            const childList: any[] = [];
+            app.children.forEach((child: QAppTreeNode) =>
+            {
+               addAppToSideNavList(child, childList, path, depth + 1);
             });
-            const tableList = [] as any[];
-            keys.forEach((key) =>
+
+            if (childList.length === 0)
             {
-               const table = metaData.tables.get(key);
-               if (!table.isHidden)
+               if (depth === 0)
                {
-                  tableList.push({
-                     name: `${table.label}`,
-                     key: table.name,
-                     route: `/${table.name}`,
-                     component: <EntityList table={table} />,
+                  /////////////////////////////////////////////////////
+                  // at level 0, the entry must always be a collapse //
+                  /////////////////////////////////////////////////////
+                  appList.push({
+                     type: "collapse",
+                     name: app.label,
+                     key: app.name,
+                     route: path,
+                     icon: <Icon fontSize="medium">{app.iconName}</Icon>,
+                     noCollapse: true,
+                     component: <AppHome />,
                   });
                }
-            });
+               else
+               {
+                  appList.push({
+                     name: app.label,
+                     key: app.name,
+                     route: path,
+                     icon: <Icon fontSize="medium">{app.iconName}</Icon>,
+                     component: <AppHome />,
+                  });
+               }
+            }
+            else
+            {
+               appList.push({
+                  type: "collapse",
+                  name: app.label,
+                  key: app.name,
+                  dropdown: true,
+                  icon: <Icon fontSize="medium">{app.iconName}</Icon>,
+                  collapse: childList,
+               });
+            }
+         }
 
-            let profileRoute = {};
+         function addAppToAppRoutesList(metaData: QInstance, app: QAppTreeNode, routeList: any[], parentPath: string, depth: number)
+         {
+            const path = `${parentPath}/${app.name}`;
+            if (app.type === QAppNodeType.APP)
+            {
+               app.children.forEach((child: QAppTreeNode) =>
+               {
+                  addAppToAppRoutesList(metaData, child, routeList, path, depth + 1);
+               });
+
+               routeList.push({
+                  name: `${app.label}`,
+                  key: app.name,
+                  route: path,
+                  component: <AppHome app={app} />,
+               });
+            }
+            else if (app.type === QAppNodeType.TABLE)
+            {
+               const table = metaData.tables.get(app.name);
+               routeList.push({
+                  name: `${app.label}`,
+                  key: app.name,
+                  route: path,
+                  component: <EntityList table={table} />,
+               });
+
+               routeList.push({
+                  name: `${app.label} Create`,
+                  key: `${app.name}.create`,
+                  route: `${path}/create`,
+                  component: <EntityCreate table={table} />,
+               });
+
+               routeList.push({
+                  name: `${app.label} View`,
+                  key: `${app.name}.view`,
+                  route: `${path}/:id`,
+                  component: <EntityView table={table} />,
+               });
+
+               routeList.push({
+                  name: `${app.label}`,
+                  key: `${app.name}.edit`,
+                  route: `${path}/:id/edit`,
+                  component: <EntityEdit table={table} />,
+               });
+
+               const processesForTable = QProcessUtils.getProcessesForTable(metaData, table.name, true);
+               processesForTable.forEach((process) =>
+               {
+                  routeList.push({
+                     name: process.label,
+                     key: process.name,
+                     route: `${path}/${process.name}`,
+                     component: <ProcessRun process={process} />,
+                  });
+               });
+            }
+            else if (app.type === QAppNodeType.PROCESS)
+            {
+               const process = metaData.processes.get(app.name);
+               routeList.push({
+                  name: `${app.label}`,
+                  key: app.name,
+                  route: path,
+                  component: <ProcessRun process={process} />,
+               });
+            }
+         }
+
+         try
+         {
+            const metaData = await QClient.getInstance().loadMetaData();
+
+            let profileRoutes = {};
             const gravatarBase = "http://www.gravatar.com/avatar/";
             const hash = Md5.hashStr(user.email);
             const profilePicture = `${gravatarBase}${hash}`;
-            profileRoute = {
+            profileRoutes = {
                type: "collapse",
                name: user.name,
                key: user.name,
@@ -203,28 +309,29 @@ export default function App()
                      route: "/pages/account/settings",
                      component: <Settings />,
                   },
-                  {
-                     name: "Logout",
-                     key: "logout",
-                     route: "/authentication/sign-in/basic",
-                     component: <SignInBasic />,
-                  },
                ],
             };
+            setProfileRoutes(profileRoutes);
 
-            const tables = {
-               type: "collapse",
-               name: "Tables",
-               key: "tables",
-               icon: <Icon fontSize="medium">dashboard</Icon>,
-               collapse: tableList,
-            };
+            const sideNavAppList = [] as any[];
+            const appRoutesList = [] as any[];
+            for (let i = 0; i < metaData.appTree.length; i++)
+            {
+               const app = metaData.appTree[i];
+               addAppToSideNavList(app, sideNavAppList, "", 0);
+               addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
+            }
 
-            const newDynamicRoutes = getStaticRoutes();
+            const newSideNavRoutes = getStaticRoutes();
             // @ts-ignore
-            newDynamicRoutes.unshift(profileRoute);
-            newDynamicRoutes.push(tables);
-            setRoutes(newDynamicRoutes);
+            newSideNavRoutes.unshift(profileRoutes);
+            for (let i = 0; i < sideNavAppList.length; i++)
+            {
+               newSideNavRoutes.push(sideNavAppList[i]);
+            }
+
+            setSideNavRoutes(newSideNavRoutes);
+            setAppRoutes(appRoutesList);
          }
          catch (e)
          {
@@ -272,6 +379,9 @@ export default function App()
       document.scrollingElement.scrollTop = 0;
    }, [pathname]);
 
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // convert an object that works for the Sidenav into one that works for the react-router //
+   ///////////////////////////////////////////////////////////////////////////////////////////
    const getRoutes = (allRoutes: any[]): any => allRoutes.map(
       (route: {
          collapse: any;
@@ -292,27 +402,6 @@ export default function App()
 
          return null;
       },
-   );
-
-   const authButton = (
-      <MDBox
-         display="flex"
-         justifyContent="center"
-         alignItems="center"
-         width="3.25rem"
-         height="3.25rem"
-         bgColor="white"
-         shadow="sm"
-         borderRadius="50%"
-         position="fixed"
-         right="2rem"
-         bottom="2rem"
-         zIndex={99}
-         color="dark"
-         sx={{cursor: "pointer"}}
-      >
-         <AuthenticationButton />
-      </MDBox>
    );
 
    const configsButton = (
@@ -339,39 +428,30 @@ export default function App()
       </MDBox>
    );
 
-   const entityListElement = <EntityList />;
-   const entityCreateElement = <EntityCreate />;
-   const entityViewElement = <EntityView />;
-   const entityEditElement = <EntityEdit />;
-   const processRunElement = <ProcessRun />;
-
    return (
-      <ThemeProvider theme={darkMode ? themeDark : theme}>
-         <CssBaseline />
-         {layout === "dashboard" && (
-            <>
-               <Sidenav
-                  color={sidenavColor}
-                  brand={nfLogo}
-                  brandName="Nutrifresh One"
-                  routes={routes}
-                  onMouseEnter={handleOnMouseEnter}
-                  onMouseLeave={handleOnMouseLeave}
-               />
-               <Configurator />
-               {configsButton}
-               {authButton}
-            </>
-         )}
-         <Routes>
-            <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
-            <Route path="/:tableName" element={entityListElement} key="entity-list" />
-            <Route path="/:tableName/create" element={entityCreateElement} key="entity-create" />
-            <Route path="/processes/:processName" element={processRunElement} key="process-run" />
-            <Route path="/:tableName/:id" element={entityViewElement} key="entity-view" />
-            <Route path="/:tableName/:id/edit" element={entityEditElement} key="entity-edit" />
-            {getRoutes(routes)}
-         </Routes>
-      </ThemeProvider>
+      appRoutes && (
+         <ThemeProvider theme={darkMode ? themeDark : theme}>
+            <CssBaseline />
+            {layout === "dashboard" && (
+               <>
+                  <Sidenav
+                     color={sidenavColor}
+                     brand={nfLogo}
+                     brandName="Nutrifresh One"
+                     routes={sideNavRoutes}
+                     onMouseEnter={handleOnMouseEnter}
+                     onMouseLeave={handleOnMouseLeave}
+                  />
+                  <Configurator />
+               </>
+            )}
+            <Routes>
+               <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
+               {appRoutes && getRoutes(appRoutes)}
+               {getRoutes(getStaticRoutes())}
+               {profileRoutes && getRoutes([profileRoutes])}
+            </Routes>
+         </ThemeProvider>
+      )
    );
 }

@@ -19,6 +19,83 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-.MuiDrawer-docked .MuiPaper-elevation {
+.MuiDrawer-docked .MuiPaper-elevation
+{
    white-space: normal;
+}
+
+/* Disable red outlines on clicked cells */
+.MuiDataGrid-cell:focus,
+.MuiDataGrid-columnHeader:focus,
+.MuiDataGrid-columnHeader:focus-within,
+.MuiDataGrid-cell:focus-within
+{
+   outline: none !important;
+}
+
+/* lighten & shrink cell font */
+.MuiDataGrid-cell
+{
+   color: rgb(45, 45, 45);
+   font-size: 0.85rem;
+}
+
+/* lighten & shrink header font */
+.MuiDataGrid-columnHeaderTitle
+{
+   color: rgb(95, 95, 95);
+   font-size: 0.75rem;
+   font-weight: 500 !important;
+}
+
+/* tighten widths in headers */
+.MuiDataGrid-iconButtonContainer
+{
+   width: 20px;
+}
+
+/* tighten widths in headers */
+.MuiDataGrid-iconButtonContainer .MuiIconButton-root
+{
+   padding: 2px;
+}
+
+/* tighten widths in headers */
+.MuiDataGrid-menuIcon
+{
+   margin-left: -5px !important;
+}
+
+/* tighten widths in headers */
+.MuiDataGrid-menuIcon .MuiDataGrid-menuIconButton
+{
+   padding: 2px;
+}
+
+/* when checked-column is pinned, its checkboxes disappear as gray-on-gray - this helps. */
+.MuiCheckbox-root .MuiSvgIcon-root
+{
+   background-color: white;
+}
+
+/* shrink font on in the pagination control */
+.MuiTablePagination-displayedRows,
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-select.MuiSelect-select.MuiSelect-standard,
+.MuiDataGrid-selectedRowCount
+{
+   font-size: 0.85rem !important;
+}
+
+/* try to make the pagination select box look like one */
+.MuiTablePagination-select
+{
+   border: 1px solid rgb(175 175 175) !important;
+   border-radius: 5px !important;
+}
+
+/* move the green check / red x down to align with the calendar icon */
+.MuiFormControl-root
+{
+   background-position-y: 1.4rem !important;
 }

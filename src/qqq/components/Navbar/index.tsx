@@ -1,7 +1,28 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import {useState, useEffect} from "react";
 
 // react-router components
-import {useLocation, Link} from "react-router-dom";
+import {useLocation} from "react-router-dom";
 
 // @material-ui core components
 import AppBar from "@mui/material/AppBar";
@@ -16,7 +37,6 @@ import MDInput from "components/MDInput";
 import MDBadge from "components/MDBadge";
 
 // Material Dashboard 2 PRO React TS examples components
-import Breadcrumbs from "examples/Breadcrumbs";
 import NotificationItem from "examples/Items/NotificationItem";
 
 // Custom styles for Navbar
@@ -38,7 +58,7 @@ import {
 } from "context";
 
 // qqq
-import AuthenticationButton from "qqq/components/buttons/AuthenticationButton";
+import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
 
 // Declaring prop types for Navbar
 interface Props
@@ -107,9 +127,11 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
          onClose={handleCloseMenu}
          sx={{mt: 2}}
       >
-         <NotificationItem icon={<Icon>email</Icon>} title="Check new messages" />
+         <NotificationItem icon={<Icon>email</Icon>} title="0 messages available" />
+         {/*
          <NotificationItem icon={<Icon>podcasts</Icon>} title="Manage Podcast sessions" />
          <NotificationItem icon={<Icon>shopping_cart</Icon>} title="Payment successfully completed" />
+         */}
       </Menu>
    );
 
@@ -134,7 +156,7 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       },
    });
 
-   const breadcrumbTitle = route[route.length - 1].replace(/([A-Z])/g, " $1").trim();
+   const breadcrumbTitle = routeToLabel(route[route.length - 1]);
 
    return (
       <AppBar
@@ -146,7 +168,7 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       >
          <Toolbar sx={navbarContainer}>
             <MDBox color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
-               <Breadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
+               <QBreadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
                <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
                   <Icon fontSize="medium" sx={iconsStyle}>
                      {miniSidenav ? "menu_open" : "menu"}
@@ -159,14 +181,6 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
                      <MDInput label="Search here" />
                   </MDBox>
                   <MDBox color={light ? "white" : "inherit"}>
-                     <AuthenticationButton />
-                     { /*
-                     <Link to="/authentication/sign-in/basic">
-                        <IconButton sx={navbarIconButton} size="small" disableRipple>
-                           <Icon sx={iconsStyle}>account_circle</Icon>
-                        </IconButton>
-                     </Link>
-                     */ }
                      <IconButton
                         size="small"
                         disableRipple
@@ -193,7 +207,7 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
                         sx={navbarIconButton}
                         onClick={handleOpenMenu}
                      >
-                        <MDBadge badgeContent={9} color="error" size="xs" circular>
+                        <MDBadge badgeContent={0} color="error" size="xs" circular>
                            <Icon sx={iconsStyle}>notifications</Icon>
                         </MDBadge>
                      </IconButton>

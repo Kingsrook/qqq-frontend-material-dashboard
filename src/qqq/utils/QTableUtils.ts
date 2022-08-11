@@ -19,19 +19,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {withAuthenticationRequired} from "@auth0/auth0-react";
-import React from "react";
-import Loader from "./loader";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
-// @ts-ignore
-function ProtectedRoute({component}) : JSX.Element
+/*******************************************************************************
+ ** Utility class for working with QQQ Tables
+ **
+ *******************************************************************************/
+class QTableUtils
 {
-   const Component = withAuthenticationRequired(component, {
-      // eslint-disable-next-line react/no-unstable-nested-components
-      onRedirecting: () => <Loader />,
-   });
-
-   return <Component />;
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): QSection[]
+   {
+      if (tableMetaData.sections)
+      {
+         return (tableMetaData.sections);
+      }
+      else
+      {
+         return ([new QSection({
+            iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
+         })]);
+      }
+   }
 }
 
-export default ProtectedRoute;
+export default QTableUtils;

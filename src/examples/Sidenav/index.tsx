@@ -44,6 +44,7 @@ import {
   setTransparentSidenav,
   setWhiteSidenav,
 } from "context";
+import AuthenticationButton from "qqq/components/Buttons/AuthenticationButton";
 
 // Declaring props types for Sidenav
 interface Props {
@@ -52,16 +53,21 @@ interface Props {
   brandName: string;
   routes: {
     [key: string]:
-      | ReactNode
-      | string
-      | {
-          [key: string]:
-            | ReactNode
-            | string
-            | {
-                [key: string]: ReactNode | string;
-              }[];
+       | ReactNode
+       | string
+       | {
+      [key: string]:
+         | ReactNode
+         | string
+         | {
+        [key: string]:
+           | ReactNode
+           | string
+           | {
+          [key: string]: ReactNode | string;
         }[];
+      }[];
+    }[];
   }[];
   [key: string]: any;
 }
@@ -314,6 +320,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
         }
       />
       <List>{renderRoutes}</List>
+      <AuthenticationButton />
     </SidenavRoot>
   );
 }

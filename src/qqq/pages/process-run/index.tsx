@@ -1,16 +1,22 @@
-/**
- =========================================================
- * Material Dashboard 2 PRO React TS - v1.0.0
- =========================================================
-
- * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
- * Copyright 2022 Creative Tim (https://www.creative-tim.com)
-
- Coded by www.creative-tim.com
-
- =========================================================
-
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import React, {useEffect, useState, Fragment} from "react";
@@ -31,9 +37,7 @@ import MDButton from "components/MDButton";
 
 // Material Dashboard 2 PRO React TS examples components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 
-// ProcessRun layout schemas for form and form fields
 import * as Yup from "yup";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
@@ -52,10 +56,18 @@ import {CircularProgress, TablePagination} from "@mui/material";
 import QDynamicForm from "../../components/QDynamicForm";
 import MDTypography from "../../../components/MDTypography";
 import Footer from "examples/Footer";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import Navbar from "qqq/components/Navbar";
 
-function ProcessRun(): JSX.Element
+interface Props
 {
-   const {processName} = useParams();
+   process?: QProcessMetaData;
+}
+
+function ProcessRun({process}: Props): JSX.Element
+{
+   const processNameParam = useParams().processName;
+   const processName = process === null ? processNameParam : process.name;
 
    ///////////////////
    // process state //
@@ -686,7 +698,7 @@ function ProcessRun(): JSX.Element
 
    return (
       <DashboardLayout>
-         <DashboardNavbar />
+         <Navbar />
          <MDBox py={3} mb={20}>
             <Grid
                container
@@ -787,5 +799,9 @@ function ProcessRun(): JSX.Element
       </DashboardLayout>
    );
 }
+
+ProcessRun.defaultProps = {
+   process: null,
+};
 
 export default ProcessRun;

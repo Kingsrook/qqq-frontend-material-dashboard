@@ -26,7 +26,6 @@ import {ErrorMessage, Field} from "formik";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDInput from "components/MDInput";
-import QDynamicForm from "qqq/components/QDynamicForm";
 import React, {useState} from "react";
 import Grid from "@mui/material/Grid";
 import Switch from "@mui/material/Switch";
@@ -36,24 +35,33 @@ interface Props
 {
    label: string;
    name: string;
+   type: string;
+   isEditable?: boolean;
    [key: string]: any;
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any
 }
 
 function QDynamicFormField({
-   label, name, bulkEditMode, bulkEditSwitchChangeHandler, ...rest
+   label, name, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, ...rest
 }: Props): JSX.Element
 {
    const [switchChecked, setSwitchChecked] = useState(false);
-   const [isDisabled, setIsDisabled] = useState(bulkEditMode);
+   const [isDisabled, setIsDisabled] = useState(!isEditable || bulkEditMode);
+
+   const inputLabelProps = {};
+   if (type.toLowerCase().match("(date|time)"))
+   {
+      // @ts-ignore
+      inputLabelProps.shrink = true;
+   }
 
    const field = () => (
       <>
-         <Field {...rest} name={name} as={MDInput} variant="standard" label={label} fullWidth disabled={isDisabled} />
+         <Field {...rest} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} fullWidth disabled={isDisabled} />
          <MDBox mt={0.75}>
             <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-               {!isDisabled && <ErrorMessage name={name} />}
+               {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} /></div>}
             </MDTypography>
          </MDBox>
       </>
@@ -100,6 +108,7 @@ function QDynamicFormField({
 
 QDynamicFormField.defaultProps = {
    bulkEditMode: false,
+   isEditable: true,
    bulkEditSwitchChangeHandler: () =>
    {},
 };

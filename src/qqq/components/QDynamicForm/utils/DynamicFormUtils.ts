@@ -66,6 +66,9 @@ class DynamicFormUtils
          case QFieldType.BLOB:
             fieldType = "file";
             break;
+         case QFieldType.BOOLEAN:
+            fieldType = "checkbox";
+            break;
          case QFieldType.TEXT:
          case QFieldType.HTML:
          case QFieldType.STRING:
@@ -80,6 +83,7 @@ class DynamicFormUtils
          name: field.name,
          label: label,
          isRequired: field.isRequired,
+         isEditable: field.isEditable,
          type: fieldType,
          // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
       });

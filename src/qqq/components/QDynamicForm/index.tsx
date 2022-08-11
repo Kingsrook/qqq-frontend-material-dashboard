@@ -34,7 +34,6 @@ import QDynamicFormField from "qqq/components/QDynamicFormField";
 interface Props {
   formLabel?: string;
   formData: any;
-  primaryKeyId?: string;
   bulkEditMode?: boolean;
   bulkEditSwitchChangeHandler?: any
 }
@@ -42,7 +41,7 @@ interface Props {
 function QDynamicForm(props: Props): JSX.Element
 {
    const {
-      formData, formLabel, primaryKeyId, bulkEditMode, bulkEditSwitchChangeHandler,
+      formData, formLabel, bulkEditMode, bulkEditSwitchChangeHandler,
    } = props;
    const {
       formFields, values, errors, touched,
@@ -77,10 +76,6 @@ function QDynamicForm(props: Props): JSX.Element
             && Object.keys(formFields).map((fieldName: any) =>
             {
                const field = formFields[fieldName];
-               if (primaryKeyId && fieldName === primaryKeyId)
-               {
-                  return null;
-               }
                if (values[fieldName] === undefined)
                {
                   values[fieldName] = "";
@@ -109,17 +104,18 @@ function QDynamicForm(props: Props): JSX.Element
 
                // todo? inputProps={{ autoComplete: "" }}
                // todo? placeholder={password.placeholder}
-               // todo? success={!errors[fieldName] && touched[fieldName]}
                return (
                   <Grid item xs={12} sm={6} key={fieldName}>
                      <QDynamicFormField
                         type={field.type}
                         label={field.label}
+                        isEditable={field.isEditable}
                         name={fieldName}
                         value={values[fieldName]}
                         error={errors[fieldName] && touched[fieldName]}
                         bulkEditMode={bulkEditMode}
                         bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
+                        success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
                      />
                   </Grid>
                );
@@ -132,7 +128,6 @@ function QDynamicForm(props: Props): JSX.Element
 
 QDynamicForm.defaultProps = {
    formLabel: undefined,
-   primaryKeyId: undefined,
    bulkEditMode: false,
    bulkEditSwitchChangeHandler: () =>
    {},

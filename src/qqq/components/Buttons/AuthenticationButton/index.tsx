@@ -19,19 +19,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {withAuthenticationRequired} from "@auth0/auth0-react";
+import {useAuth0} from "@auth0/auth0-react";
 import React from "react";
-import Loader from "./loader";
+import {Button} from "@mui/material";
 
-// @ts-ignore
-function ProtectedRoute({component}) : JSX.Element
+function AuthenticationButton()
 {
-   const Component = withAuthenticationRequired(component, {
-      // eslint-disable-next-line react/no-unstable-nested-components
-      onRedirecting: () => <Loader />,
-   });
+   const {loginWithRedirect, logout, isAuthenticated} = useAuth0();
 
-   return <Component />;
+   if (isAuthenticated)
+   {
+      return <Button onClick={() => logout({returnTo: window.location.origin})}>Log Out</Button>;
+   }
+
+   return <Button onClick={() => loginWithRedirect()}>Log In</Button>;
 }
 
-export default ProtectedRoute;
+export default AuthenticationButton;

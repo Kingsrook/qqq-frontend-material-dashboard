@@ -60,6 +60,7 @@
       "max-len": "off",
       "no-console": "off",
       "no-constant-condition": "off",
+      "no-continue": "off",
       "no-shadow": "off",
       "no-unused-vars": "off",
       "no-plusplus": "off",
