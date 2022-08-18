@@ -84,6 +84,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
+const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 
 interface Props
 {
@@ -95,15 +96,17 @@ function EntityList({table}: Props): JSX.Element
    const tableNameParam = useParams().tableName;
    const tableName = table === null ? tableNameParam : table.name;
    const [searchParams] = useSearchParams();
+   const qController = QClient.getInstance();
 
    ////////////////////////////////////////////
    // look for defaults in the local storage //
    ////////////////////////////////////////////
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
-   const qController = QClient.getInstance();
+   let _defaultFilter = {items: []} as GridFilterModel;
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -113,6 +116,24 @@ function EntityList({table}: Props): JSX.Element
    {
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
    }
+   if (localStorage.getItem(filterLocalStorageKey))
+   {
+      _defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
+      console.log(`Got default from LS: ${JSON.stringify(_defaultFilter)}`);
+   }
+
+   const [filterModel, setFilterModel] = useState(_defaultFilter);
+   const [columnSortModel, setColumnSortModel] = useState(defaultSort);
+   const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   // for some reason, if we set the filterModel to what is in local storage, an onChange event //
+   // fires on the grid anyway with an empty filter, so be aware of the first onchange, and     //
+   // when that happens put the default back - it needs to be in state                          //
+   // const [defaultFilter1] = useState(defaultFilter);                                         //
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   const [defaultFilter] = useState(_defaultFilter);
+   const [filterChangeHasOccurred, setFilterChangeHasOccurred] = useState(false);
 
    const [tableState, setTableState] = useState("");
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
@@ -127,11 +148,8 @@ function EntityList({table}: Props): JSX.Element
    const [columns, setColumns] = useState([] as GridColDef[]);
    const [rows, setRows] = useState([] as GridRowsProp[]);
    const [loading, setLoading] = useState(true);
-   const [filterModel, setFilterModel] = useState(null as GridFilterModel);
    const [alertContent, setAlertContent] = useState("");
    const [tableLabel, setTableLabel] = useState("");
-   const [columnSortModel, setColumnSortModel] = useState(defaultSort);
-   const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
    const [gridMouseDownX, setGridMouseDownX] = useState(0);
    const [gridMouseDownY, setGridMouseDownY] = useState(0);
    const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
@@ -390,11 +408,6 @@ function EntityList({table}: Props): JSX.Element
       clearTimeout(instance.current.timer);
    }, []);
 
-   const handleFilterChange = (filterModel: GridFilterModel) =>
-   {
-      setFilterModel(filterModel);
-   };
-
    const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) =>
    {
       const newSelectedIds: string[] = [];
@@ -433,6 +446,26 @@ function EntityList({table}: Props): JSX.Element
       console.log(columnOrderChangeParams);
    };
 
+   const handleFilterChange = (filterModel: GridFilterModel) =>
+   {
+      if (!filterChangeHasOccurred)
+      {
+         setFilterModel(defaultFilter);
+         setFilterChangeHasOccurred(true);
+      }
+      else
+      {
+         setFilterModel(filterModel);
+         if (filterLocalStorageKey)
+         {
+            localStorage.setItem(
+               filterLocalStorageKey,
+               JSON.stringify(filterModel),
+            );
+         }
+      }
+   };
+
    const handleSortChange = (gridSort: GridSortModel) =>
    {
       if (gridSort && gridSort.length > 0)
@@ -447,7 +480,6 @@ function EntityList({table}: Props): JSX.Element
       (async () =>
       {
          setTableState(tableName);
-         setFilterModel(null);
          setFiltersMenu(null);
          const metaData = await qController.loadMetaData();
 
@@ -784,6 +816,7 @@ function EntityList({table}: Props): JSX.Element
                      onRowClick={handleRowClick}
                      density="standard"
                      loading={loading}
+                     filterModel={filterModel}
                      onFilterModelChange={handleFilterChange}
                      columnVisibilityModel={columnVisibilityModel}
                      onColumnVisibilityModelChange={handleColumnVisibilityChange}
