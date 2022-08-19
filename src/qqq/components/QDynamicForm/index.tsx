@@ -111,6 +111,7 @@ function QDynamicForm(props: Props): JSX.Element
                         label={field.label}
                         isEditable={field.isEditable}
                         name={fieldName}
+                        displayFormat={field.displayFormat}
                         value={values[fieldName]}
                         error={errors[fieldName] && touched[fieldName]}
                         bulkEditMode={bulkEditMode}

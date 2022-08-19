@@ -29,12 +29,14 @@ import MDInput from "components/MDInput";
 import React, {useState} from "react";
 import Grid from "@mui/material/Grid";
 import Switch from "@mui/material/Switch";
+import {InputAdornment} from "@mui/material";
 
 // Declaring props types for FormField
 interface Props
 {
    label: string;
    name: string;
+   displayFormat: string;
    type: string;
    isEditable?: boolean;
    [key: string]: any;
@@ -43,7 +45,7 @@ interface Props
 }
 
 function QDynamicFormField({
-   label, name, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, ...rest
+   label, name, displayFormat, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, ...rest
 }: Props): JSX.Element
 {
    const [switchChecked, setSwitchChecked] = useState(false);
@@ -56,9 +58,16 @@ function QDynamicFormField({
       inputLabelProps.shrink = true;
    }
 
+   const inputProps = {};
+   if (displayFormat && displayFormat.startsWith("$"))
+   {
+      // @ts-ignore
+      inputProps.startAdornment = <InputAdornment position="start">$</InputAdornment>;
+   }
+
    const field = () => (
       <>
-         <Field {...rest} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} fullWidth disabled={isDisabled} />
+         <Field {...rest} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled} />
          <MDBox mt={0.75}>
             <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
                {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} /></div>}

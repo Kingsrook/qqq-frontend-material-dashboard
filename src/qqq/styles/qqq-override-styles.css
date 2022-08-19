@@ -99,3 +99,8 @@
 {
    background-position-y: 1.4rem !important;
 }
+
+.MuiInputAdornment-sizeMedium *
+{
+   font-size: .875rem !important;
+}

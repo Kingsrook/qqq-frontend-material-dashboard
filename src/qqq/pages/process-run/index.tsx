@@ -58,6 +58,7 @@ import MDTypography from "../../../components/MDTypography";
 import Footer from "examples/Footer";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import Navbar from "qqq/components/Navbar";
+import BaseLayout from "qqq/components/BaseLayout";
 
 interface Props
 {
@@ -530,12 +531,13 @@ function ProcessRun({process}: Props): JSX.Element
       if (lastProcessResponse)
       {
          setLastProcessResponse(null);
-
          setQJobRunning(null);
+
          if (lastProcessResponse instanceof QJobComplete)
          {
             const qJobComplete = lastProcessResponse as QJobComplete;
             console.log("Setting new step.");
+            setJobUUID(null);
             setNewStep(qJobComplete.nextStep);
             setProcessValues(qJobComplete.values);
             // console.log(`Updated process values: ${JSON.stringify(qJobComplete.values)}`);
@@ -544,6 +546,7 @@ function ProcessRun({process}: Props): JSX.Element
          {
             const qJobStarted = lastProcessResponse as QJobStarted;
             setJobUUID(qJobStarted.jobUUID);
+            console.log("setting need to check because started");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobRunning)
@@ -551,12 +554,14 @@ function ProcessRun({process}: Props): JSX.Element
             const qJobRunning = lastProcessResponse as QJobRunning;
             setQJobRunning(qJobRunning);
             setQJobRunningDate(new Date());
+            console.log("setting need to check because running");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobError)
          {
             const qJobError = lastProcessResponse as QJobError;
             console.log(`Got an error from the backend... ${qJobError.error}`);
+            setJobUUID(null);
             setProcessError(qJobError.error);
          }
       }
@@ -567,21 +572,26 @@ function ProcessRun({process}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
+      console.log("In effect for checking status");
       if (needToCheckJobStatus)
       {
+         console.log("  and the bool was true");
          setNeedToCheckJobStatus(false);
-         (async () =>
+         if (jobUUID)
          {
-            setTimeout(async () =>
+            (async () =>
             {
-               const processResponse = await QClient.getInstance().processJobStatus(
-                  processName,
-                  processUUID,
-                  jobUUID,
-               );
-               setLastProcessResponse(processResponse);
-            }, 1500);
-         })();
+               setTimeout(async () =>
+               {
+                  const processResponse = await QClient.getInstance().processJobStatus(
+                     processName,
+                     processUUID,
+                     jobUUID,
+                  );
+                  setLastProcessResponse(processResponse);
+               }, 1500);
+            })();
+         }
       }
    }, [needToCheckJobStatus]);
 
@@ -685,20 +695,24 @@ function ProcessRun({process}: Props): JSX.Element
          "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
       };
 
-      console.log("Calling processStep...");
-      const processResponse = await QClient.getInstance().processStep(
-         processName,
-         processUUID,
-         activeStep.name,
-         formData,
-         formDataHeaders,
-      );
-      setLastProcessResponse(processResponse);
+      setLastProcessResponse(new QJobRunning({message: "Working..."}));
+
+      setTimeout(async () =>
+      {
+         console.log("Calling processStep...");
+         const processResponse = await QClient.getInstance().processStep(
+            processName,
+            processUUID,
+            activeStep.name,
+            formData,
+            formDataHeaders,
+         );
+         setLastProcessResponse(processResponse);
+      });
    };
 
    return (
-      <DashboardLayout>
-         <Navbar />
+      <BaseLayout>
          <MDBox py={3} mb={20}>
             <Grid
                container
@@ -718,7 +732,7 @@ function ProcessRun({process}: Props): JSX.Element
                         values, errors, touched, isSubmitting,
                      }) => (
                         <Form id={formId} autoComplete="off">
-                           <Card sx={{height: "100%"}}>
+                           <Card sx={{minHeight: "calc(100vh - 400px)"}}>
                               <MDBox mx={2} mt={-3}>
                                  <Stepper activeStep={activeStepIndex} alternativeLabel>
                                     {steps.map((step) => (
@@ -795,8 +809,7 @@ function ProcessRun({process}: Props): JSX.Element
                </Grid>
             </Grid>
          </MDBox>
-         <Footer />
-      </DashboardLayout>
+      </BaseLayout>
    );
 }
 

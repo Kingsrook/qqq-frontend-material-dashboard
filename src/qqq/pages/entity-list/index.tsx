@@ -218,7 +218,7 @@ function EntityList({table}: Props): JSX.Element
             let criteria = new QFilterCriteria(item.columnField, operator, [item.value]);
             if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
             {
-               criteria = new QFilterCriteria(item.columnField, translateCriteriaOperator(item.operatorValue), null);
+               criteria = new QFilterCriteria(item.columnField, operator, null);
             }
             qFilter.addCriteria(criteria);
          });
@@ -272,7 +272,6 @@ function EntityList({table}: Props): JSX.Element
             });
 
          const fields = [...tableMetaData.fields.values()];
-
          const rows = [] as any[];
          results.forEach((record) =>
          {
@@ -302,33 +301,37 @@ function EntityList({table}: Props): JSX.Element
 
             let columnType = "string";
             let columnWidth = 200;
-            switch (field.type)
+
+            if (!field.possibleValueSourceName)
             {
-               case QFieldType.DECIMAL:
-               case QFieldType.INTEGER:
-                  columnType = "number";
-                  columnWidth = 100;
+               switch (field.type)
+               {
+                  case QFieldType.DECIMAL:
+                  case QFieldType.INTEGER:
+                     columnType = "number";
+                     columnWidth = 100;
 
-                  if (key === tableMetaData.primaryKeyField && field.label.length < 3)
-                  {
+                     if (key === tableMetaData.primaryKeyField && field.label.length < 3)
+                     {
+                        columnWidth = 75;
+                     }
+
+                     break;
+                  case QFieldType.DATE:
+                     columnType = "date";
+                     columnWidth = 100;
+                     break;
+                  case QFieldType.DATE_TIME:
+                     columnType = "dateTime";
+                     columnWidth = 200;
+                     break;
+                  case QFieldType.BOOLEAN:
+                     columnType = "boolean";
                      columnWidth = 75;
-                  }
-
-                  break;
-               case QFieldType.DATE:
-                  columnType = "date";
-                  columnWidth = 100;
-                  break;
-               case QFieldType.DATE_TIME:
-                  columnType = "dateTime";
-                  columnWidth = 200;
-                  break;
-               case QFieldType.BOOLEAN:
-                  columnType = "boolean";
-                  columnWidth = 75;
-                  break;
-               default:
-               // noop - leave as string
+                     break;
+                  default:
+                  // noop - leave as string
+               }
             }
 
             const column = {
@@ -336,11 +339,15 @@ function EntityList({table}: Props): JSX.Element
                type: columnType,
                headerName: field.label,
                width: columnWidth,
+               renderCell: null as any,
             };
 
             if (key === tableMetaData.primaryKeyField)
             {
                columns.splice(0, 0, column);
+               column.renderCell = (cellValues: any) => (
+                  <Link to={cellValues.value}>{cellValues.value}</Link>
+               );
             }
             else
             {
