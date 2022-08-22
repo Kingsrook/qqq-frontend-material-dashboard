@@ -33,8 +33,6 @@ import MiniStatisticsCard from "examples/Cards/StatisticsCards/MiniStatisticsCar
 import {Icon} from "@mui/material";
 import MDTypography from "components/MDTypography";
 import Card from "@mui/material/Card";
-import ComplexStatisticsCard from "examples/Cards/StatisticsCards/ComplexStatisticsCard";
-import ReportsLineChart from "examples/Charts/LineCharts/ReportsLineChart";
 import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
 import MDBadgeDot from "components/MDBadgeDot";
 import ReportsBarChart from "examples/Charts/BarCharts/ReportsBarChart";
@@ -57,6 +55,9 @@ function AppHome({app}: Props): JSX.Element
    const [tables, setTables] = useState([] as QTableMetaData[]);
    const [processes, setProcesses] = useState([] as QProcessMetaData[]);
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
+   const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number}>());
+   const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
+   const [widgets, setWidgets] = useState([] as any[]);
 
    const location = useLocation();
 
@@ -102,154 +103,207 @@ function AppHome({app}: Props): JSX.Element
       setTables(newTables);
       setProcesses(newProcesses);
       setChildApps(newChildApps);
+
+      const tableCounts = new Map<string, { isLoading: boolean, value: number}>();
+      newTables.forEach((table) =>
+      {
+         tableCounts.set(table.name, {isLoading: true, value: null});
+
+         setTimeout(async () =>
+         {
+            const count = await qController.count(table.name);
+            tableCounts.set(table.name, {isLoading: false, value: count});
+            setTableCounts(tableCounts);
+            setUpdatedTableCounts(new Date());
+         }, 1);
+      });
+      setTableCounts(tableCounts);
+
+      console.log(app.widgets);
+      if (app.widgets)
+      {
+         const widgets: any[] = [];
+         for (let i = 0; i < app.widgets.length; i++)
+         {
+            widgets[i] = {};
+            setTimeout(async () =>
+            {
+               const widget = await qController.widget(app.widgets[i]);
+               widgets[i] = widget;
+               setUpdatedTableCounts(new Date());
+            }, 1);
+         }
+         setWidgets(widgets);
+      }
    }, [qInstance, location]);
 
-   const reportsBarChartData = {
-      labels: ["M", "T", "W", "T", "F", "S", "S"],
-      datasets: {label: "Sales", data: [50, 20, 10, 22, 50, 10, 40]},
-   };
-
-   interface Types {
-      labels: string[];
-      datasets: {
-         label: string;
-         color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-         data: number[];
-      }[];
-   }
-
-   const demoLineChartData: Types = {
-      labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-      datasets: [
-         {
-            label: "Facebook Ads",
-            color: "info",
-            data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
+   /*
+   const charts = [
+      {
+         type: "barChart",
+         title: "Parcel Invoice Lines per Month",
+         barChartData: {
+            labels: ["Feb 22", "Mar 22", "Apr 22", "May 22", "Jun 22", "Jul 22", "Aug 22"],
+            datasets: {label: "Parcel Invoice Lines", data: [50000, 22000, 11111, 22333, 40404, 9876, 2355]},
          },
-         {
-            label: "Google Ads",
-            color: "dark",
-            data: [10, 30, 40, 120, 150, 220, 280, 250, 280],
+      },
+      {
+         type: "lineChart",
+         title: "Total Charges by Carrier per Month",
+         lineChartData: {
+            labels: ["Feb 22", "Mar 22", "Apr 22", "May 22", "Jun 22", "Jul 22", "Aug 22"],
+            datasets: [
+               {label: "UPS", color: "info", data: [50000, 22000, 11111, 22333, 40404, 9876, 2355]},
+               {label: "FedEx", color: "dark", data: [5000, 22000, 31111, 32333, 20404, 19876, 24355]},
+               {label: "LSO", color: "error", data: [500, 2200, 1111, 2333, 404, 17876, 2355]},
+            ],
          },
-      ],
-   };
+      },
+   ];
+   */
+
+   console.log(`Widgets: ${widgets} and tables: ${tables}`);
+
+   const haveWidgets = widgets && widgets.length;
+   const widgetCount = widgets ? widgets.length : 0;
+
+   // eslint-disable-next-line no-nested-ternary
+   const tileSizeLg = (widgetCount === 0 ? 3 : widgetCount === 1 ? 4 : 6);
 
    return (
       <BaseLayout>
          <MDBox mt={4}>
             <Grid container spacing={3}>
-
-               <Grid item xs={6} lg={6}>
-                  <Grid container spacing={3}>
-
-                     <Grid item xs={6} lg={6}>
-                        <MDBox mb={3}>
-                           <MDBox mb={3}>
-                              <ReportsBarChart
-                                 color="info"
-                                 title="Packages Shipped"
-                                 description="Total outbound shipments"
-                                 date="Updated at 7:04 a.m. ET"
-                                 chart={reportsBarChartData}
-                              />
-                           </MDBox>
-                        </MDBox>
-                     </Grid>
-
-                     <Grid item xs={6} lg={6}>
-                        <DefaultLineChart
-                           title="Revenue"
-                           description={(
-                              <MDBox display="flex" justifyContent="space-between">
-                                 <MDBox display="flex" ml={-1}>
-                                    <MDBadgeDot color="info" size="sm" badgeContent="UPS" />
-                                    <MDBadgeDot color="dark" size="sm" badgeContent="FedEx" />
-                                 </MDBox>
-                                 <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
-                              </MDBox>
-                           )}
-                           chart={demoLineChartData}
-                        />
-                     </Grid>
-
-                  </Grid>
-               </Grid>
-
-               <Grid item xs={6} lg={6}>
-                  {
-                     tables.length ? (
-                        <MDBox mb={3}>
-                           <Card id="basic-info" sx={{overflow: "visible"}}>
-                              <MDBox p={3}>
-                                 <MDTypography variant="h5">Tables</MDTypography>
-                              </MDBox>
-                              <Grid container spacing={3} padding={3} paddingTop={0}>
-                                 {tables.map((table) => (
-                                    <Grid key={table.name} item xs={12} md={12} lg={6}>
-                                       <Link to={table.name}>
-                                          <MDBox mb={3}>
-                                             <MiniStatisticsCard
-                                                title={{fontWeight: "bold", text: table.label}}
-                                                count="17,013"
-                                                percentage={{color: "info", text: "total records"}}
-                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
-                                                direction="right"
+               {
+                  widgetCount > 0 ? (
+                     <Grid item xs={12} lg={widgetCount === 1 ? 3 : 6}>
+                        <Grid container spacing={3}>
+                           {
+                              widgets.map((chart) => (
+                                 <Grid key={`${chart.type}-${chart.title}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
+                                    <MDBox mb={3}>
+                                       {
+                                          chart.type === "barChart" && (
+                                             <ReportsBarChart
+                                                color="info"
+                                                title={chart.title}
+                                                date={`As of ${new Date().toDateString()}`}
+                                                chart={chart.barChartData}
                                              />
-                                          </MDBox>
-                                       </Link>
-                                    </Grid>
-                                 ))}
-                              </Grid>
-                           </Card>
-                        </MDBox>
-                     ) : null
-                  }
+                                          )
+                                       }
+                                       {
+                                          chart.type === "lineChart" && (
+                                             <DefaultLineChart
+                                                title={chart.title}
+                                                description={(
+                                                   <MDBox display="flex" justifyContent="space-between">
+                                                      <MDBox display="flex" ml={-1}>
+                                                         {
+                                                            chart.lineChartData.datasets.map((dataSet: any) => (
+                                                               <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
+                                                            ))
+                                                         }
+                                                      </MDBox>
+                                                      <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                                                   </MDBox>
+                                                )}
+                                                chart={chart.lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                                             />
+                                          )
+                                       }
+                                    </MDBox>
+                                 </Grid>
+                              ))
+                           }
+                        </Grid>
+                     </Grid>
+                  ) : null
+               }
 
-                  {
-                     processes.length ? (
-                        <MDBox mb={3}>
-                           <Card id="basic-info" sx={{overflow: "visible"}}>
-                              <MDBox p={3}>
-                                 <MDTypography variant="h5">Processes</MDTypography>
+               {
+                  tables.length > 0 || processes.length > 0 || childApps.length > 0 ? (
+                     // eslint-disable-next-line no-nested-ternary
+                     <Grid item xs={12} lg={widgetCount === 0 ? 12 : widgetCount === 1 ? 9 : 6}>
+                        {
+                           tables.length ? (
+                              <MDBox mb={3}>
+                                 <Card id="basic-info" sx={{overflow: "visible"}}>
+                                    <MDBox p={3}>
+                                       <MDTypography variant="h5">Tables</MDTypography>
+                                    </MDBox>
+                                    <Grid container spacing={3} padding={3} paddingTop={0}>
+                                       {tables.map((table) => (
+                                          <Grid key={table.name} item xs={12} md={12} lg={tileSizeLg}>
+                                             <Link to={table.name}>
+                                                <MDBox mb={3}>
+                                                   <MiniStatisticsCard
+                                                      title={{fontWeight: "bold", text: table.label}}
+                                                      count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : tableCounts.get(table.name).value.toLocaleString()}
+                                                      percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : "total records")}}
+                                                      icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
+                                                      direction="right"
+                                                   />
+                                                </MDBox>
+                                             </Link>
+                                          </Grid>
+                                       ))}
+                                    </Grid>
+                                 </Card>
                               </MDBox>
-                              <Grid container spacing={3} padding={3} paddingTop={3}>
-                                 {processes.map((process) => (
-                                    <Grid key={process.name} item xs={12} md={12} lg={6}>
-                                       <Link to={process.name}>
-                                          <ProcessLinkCard
-                                             icon={process.iconName || app.iconName}
-                                             title={process.label}
-                                          />
-                                       </Link>
-                                    </Grid>
-                                 ))}
-                              </Grid>
-                           </Card>
-                        </MDBox>
-                     ) : null
-                  }
+                           ) : null
+                        }
 
-                  {
-                     childApps.length ? (
-                        <MDBox mb={3}>
-                           <Card id="basic-info" sx={{overflow: "visible"}}>
-                              <Grid container spacing={3} padding={3} paddingTop={3}>
-                                 {childApps.map((childApp) => (
-                                    <Grid key={childApp.name} item xs={12} md={12} lg={6}>
-                                       <Link to={childApp.name}>
-                                          <DefaultInfoCard
-                                             icon={childApp.iconName || app.iconName}
-                                             title={childApp.label}
-                                          />
-                                       </Link>
+                        {
+                           processes.length ? (
+                              <MDBox mb={3}>
+                                 <Card id="basic-info" sx={{overflow: "visible"}}>
+                                    <MDBox p={3}>
+                                       <MDTypography variant="h5">Processes</MDTypography>
+                                    </MDBox>
+                                    <Grid container spacing={3} padding={3} paddingTop={3}>
+                                       {processes.map((process) => (
+                                          <Grid key={process.name} item xs={12} md={12} lg={tileSizeLg}>
+                                             <Link to={process.name}>
+                                                <ProcessLinkCard
+                                                   icon={process.iconName || app.iconName}
+                                                   title={process.label}
+                                                />
+                                             </Link>
+                                          </Grid>
+                                       ))}
                                     </Grid>
-                                 ))}
-                              </Grid>
-                           </Card>
-                        </MDBox>
-                     ) : null
-                  }
-               </Grid>
+                                 </Card>
+                              </MDBox>
+                           ) : null
+                        }
+
+                        {
+                           childApps.length ? (
+                              <MDBox mb={3}>
+                                 <Card id="basic-info" sx={{overflow: "visible"}}>
+                                    <MDBox p={3}>
+                                       <MDTypography variant="h5">Apps</MDTypography>
+                                    </MDBox>
+                                    <Grid container spacing={3} padding={3} paddingTop={3}>
+                                       {childApps.map((childApp) => (
+                                          <Grid key={childApp.name} item xs={12} md={12} lg={tileSizeLg}>
+                                             <Link to={childApp.name}>
+                                                <DefaultInfoCard
+                                                   icon={childApp.iconName || app.iconName}
+                                                   title={childApp.label}
+                                                />
+                                             </Link>
+                                          </Grid>
+                                       ))}
+                                    </Grid>
+                                 </Card>
+                              </MDBox>
+                           ) : null
+                        }
+                     </Grid>
+                  ) : null
+               }
 
             </Grid>
          </MDBox>

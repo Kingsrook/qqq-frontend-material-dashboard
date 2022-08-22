@@ -226,7 +226,7 @@ export default function App()
                   name: `${app.label}`,
                   key: app.name,
                   route: path,
-                  component: <AppHome app={app} />,
+                  component: <AppHome app={metaData.apps.get(app.name)} />,
                });
             }
             else if (app.type === QAppNodeType.TABLE)
