@@ -22,7 +22,7 @@
 import React, {useEffect, useState, Fragment} from "react";
 
 // formik components
-import {Form, Formik, useFormikContext} from "formik";
+import {Form, Formik} from "formik";
 
 // @mui material components
 import Grid from "@mui/material/Grid";
@@ -59,11 +59,16 @@ import Footer from "examples/Footer";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import Navbar from "qqq/components/Navbar";
 import BaseLayout from "qqq/components/BaseLayout";
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 
 interface Props
 {
    process?: QProcessMetaData;
 }
+
+const INITIAL_RETRY_MILLIS = 1_500;
+const RETRY_MAX_MILLIS = 12_000;
+const BACKOFF_AMOUNT = 1.5;
 
 function ProcessRun({process}: Props): JSX.Element
 {
@@ -74,6 +79,7 @@ function ProcessRun({process}: Props): JSX.Element
    // process state //
    ///////////////////
    const [processUUID, setProcessUUID] = useState(null as string);
+   const [retryMillis, setRetryMillis] = useState(INITIAL_RETRY_MILLIS);
    const [jobUUID, setJobUUID] = useState(null as string);
    const [qJobRunning, setQJobRunning] = useState(null as QJobRunning);
    const [qJobRunningDate, setQJobRunningDate] = useState(null as Date);
@@ -526,6 +532,8 @@ function ProcessRun({process}: Props): JSX.Element
       if (lastProcessResponse)
       {
          setLastProcessResponse(null);
+         setRetryMillis(INITIAL_RETRY_MILLIS);
+
          setQJobRunning(null);
 
          if (lastProcessResponse instanceof QJobComplete)
@@ -566,23 +574,47 @@ function ProcessRun({process}: Props): JSX.Element
       if (needToCheckJobStatus)
       {
          setNeedToCheckJobStatus(false);
-         if (jobUUID)
+         (async () =>
          {
-            (async () =>
+            setTimeout(async () =>
             {
-               setTimeout(async () =>
+               try
                {
+                  console.log("OK");
                   const processResponse = await QClient.getInstance().processJobStatus(
                      processName,
                      processUUID,
                      jobUUID,
                   );
                   setLastProcessResponse(processResponse);
-               }, 1500);
-            })();
-         }
+               }
+               catch (e)
+               {
+                  if (e instanceof QException)
+                  {
+                     const qException = e as QException;
+                     const status = Number(qException.status);
+                     if (status !== undefined && !Number.isNaN(status) && status >= 500 && status <= 600)
+                     {
+                        if (retryMillis < RETRY_MAX_MILLIS)
+                        {
+                           console.log(`500 error, attempting to retry in ${retryMillis + retryMillis} millis`);
+                           setRetryMillis(retryMillis * BACKOFF_AMOUNT);
+                           setNeedToCheckJobStatus(true);
+                           return;
+                        }
+
+                        console.log(`Retry millis [${retryMillis}] is greater or equal to the max retry limit [${RETRY_MAX_MILLIS}], giving up...`);
+                        setProcessError("Could not connect to server");
+                     }
+                  }
+
+                  throw (e);
+               }
+            }, retryMillis);
+         })();
       }
-   }, [needToCheckJobStatus]);
+   }, [needToCheckJobStatus, retryMillis]);
 
    //////////////////////////////////////////////////////////////////////////////////////////
    // do the initial load of data for the process - that is, meta data, plus the init step //
