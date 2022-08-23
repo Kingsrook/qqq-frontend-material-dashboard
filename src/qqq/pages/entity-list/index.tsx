@@ -77,7 +77,6 @@ import Button from "@mui/material/Button";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
 
-import "./styles.css";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
 import QValueUtils from "qqq/utils/QValueUtils";
 import LinearProgress from "@mui/material/LinearProgress";
