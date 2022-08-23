@@ -355,8 +355,6 @@ function ProcessRun({process}: Props): JSX.Element
          return;
       }
 
-      // console.log(`Steps are: ${steps}`);
-      // console.log(`Setting step to ${newStep}`);
       let newIndex = null;
       if (typeof newStep === "number")
       {
@@ -458,9 +456,6 @@ function ProcessRun({process}: Props): JSX.Element
    {
       if (activeStep && activeStep.formFields)
       {
-         console.log("In useEffect for disabledBulkEditFields");
-         console.log(disabledBulkEditFields);
-
          const newDynamicFormFields: any = {};
          const newFormValidations: any = {};
          activeStep.formFields.forEach((field) =>
@@ -536,17 +531,14 @@ function ProcessRun({process}: Props): JSX.Element
          if (lastProcessResponse instanceof QJobComplete)
          {
             const qJobComplete = lastProcessResponse as QJobComplete;
-            console.log("Setting new step.");
             setJobUUID(null);
             setNewStep(qJobComplete.nextStep);
             setProcessValues(qJobComplete.values);
-            // console.log(`Updated process values: ${JSON.stringify(qJobComplete.values)}`);
          }
          else if (lastProcessResponse instanceof QJobStarted)
          {
             const qJobStarted = lastProcessResponse as QJobStarted;
             setJobUUID(qJobStarted.jobUUID);
-            console.log("setting need to check because started");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobRunning)
@@ -554,7 +546,6 @@ function ProcessRun({process}: Props): JSX.Element
             const qJobRunning = lastProcessResponse as QJobRunning;
             setQJobRunning(qJobRunning);
             setQJobRunningDate(new Date());
-            console.log("setting need to check because running");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobError)
@@ -572,10 +563,8 @@ function ProcessRun({process}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      console.log("In effect for checking status");
       if (needToCheckJobStatus)
       {
-         console.log("  and the bool was true");
          setNeedToCheckJobStatus(false);
          if (jobUUID)
          {
@@ -622,8 +611,6 @@ function ProcessRun({process}: Props): JSX.Element
          //else if(urlSearchParams.get("filterId")) {
          //   queryStringForInit = `recordsParam=filterId&filterId=${urlSearchParams.get("filterId")}`
          // }
-
-         console.log(`@dk: Query String for init: ${queryStringForInit}`);
 
          try
          {
@@ -699,7 +686,6 @@ function ProcessRun({process}: Props): JSX.Element
 
       setTimeout(async () =>
       {
-         console.log("Calling processStep...");
          const processResponse = await QClient.getInstance().processStep(
             processName,
             processUUID,
