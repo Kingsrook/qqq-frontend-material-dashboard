@@ -18,14 +18,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import {ReactNode} from "react";
 
-// @mui material components
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
-
-// Material Dashboard 2 PRO React TS components
+import {ReactNode} from "react";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 

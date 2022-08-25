@@ -19,16 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, {ReactNode} from "react";
-
-import {Link} from "react-router-dom";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 import {Breadcrumbs as MuiBreadcrumbs} from "@mui/material";
+import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
+import {Theme} from "@mui/material/styles";
+import React, {ReactNode} from "react";
+import {Link} from "react-router-dom";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import Card from "@mui/material/Card";
-import {Theme} from "@mui/material/styles";
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 interface Props {
    tableSections: QSection[];

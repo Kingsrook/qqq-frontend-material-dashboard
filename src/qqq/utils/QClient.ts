@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {useAuth0} from "@auth0/auth0-react";
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {useAuth0} from "@auth0/auth0-react";
 
 /*******************************************************************************
  ** client wrapper of qqq backend

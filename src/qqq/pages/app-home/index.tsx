@@ -19,28 +19,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
+import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {Icon} from "@mui/material";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
 import React, {useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
-
-// Material Dashboard 2 PRO React TS examples components
-import QClient from "qqq/utils/QClient";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
-import BaseLayout from "qqq/components/BaseLayout";
-import MDBox from "components/MDBox";
-import Grid from "@mui/material/Grid";
-import MiniStatisticsCard from "examples/Cards/StatisticsCards/MiniStatisticsCard";
-import {Icon} from "@mui/material";
-import MDTypography from "components/MDTypography";
-import Card from "@mui/material/Card";
-import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
 import MDBadgeDot from "components/MDBadgeDot";
-import ReportsBarChart from "examples/Charts/BarCharts/ReportsBarChart";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import MDBox from "components/MDBox";
+import MDTypography from "components/MDTypography";
 import DefaultInfoCard from "examples/Cards/InfoCards/DefaultInfoCard";
+import MiniStatisticsCard from "examples/Cards/StatisticsCards/MiniStatisticsCard";
+import ReportsBarChart from "examples/Charts/BarCharts/ReportsBarChart";
+import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
+import BaseLayout from "qqq/components/BaseLayout";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
+import QClient from "qqq/utils/QClient";
 
 const qController = QClient.getInstance();
 
@@ -55,7 +53,7 @@ function AppHome({app}: Props): JSX.Element
    const [tables, setTables] = useState([] as QTableMetaData[]);
    const [processes, setProcesses] = useState([] as QProcessMetaData[]);
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
-   const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number}>());
+   const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number }>());
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
@@ -104,7 +102,7 @@ function AppHome({app}: Props): JSX.Element
       setProcesses(newProcesses);
       setChildApps(newChildApps);
 
-      const tableCounts = new Map<string, { isLoading: boolean, value: number}>();
+      const tableCounts = new Map<string, { isLoading: boolean, value: number }>();
       newTables.forEach((table) =>
       {
          tableCounts.set(table.name, {isLoading: true, value: null});

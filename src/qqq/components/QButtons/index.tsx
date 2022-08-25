@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import MDBox from "components/MDBox";
-import {Link} from "react-router-dom";
-import MDButton from "components/MDButton";
 import Icon from "@mui/material/Icon";
 import React from "react";
+import {Link} from "react-router-dom";
+import MDBox from "components/MDBox";
+import MDButton from "components/MDButton";
 
 // eslint-disable import/prefer-default-export
 

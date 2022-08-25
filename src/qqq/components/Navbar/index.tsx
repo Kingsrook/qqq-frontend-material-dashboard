@@ -19,45 +19,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {useState, useEffect} from "react";
-
-// react-router components
-import {useLocation} from "react-router-dom";
-
-// @material-ui core components
 import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
+import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
-import Icon from "@mui/material/Icon";
-
-// Material Dashboard 2 PRO React TS components
+import Toolbar from "@mui/material/Toolbar";
+import {useState, useEffect} from "react";
+import {useLocation} from "react-router-dom";
+import MDBadge from "components/MDBadge";
 import MDBox from "components/MDBox";
 import MDInput from "components/MDInput";
-import MDBadge from "components/MDBadge";
-
-// Material Dashboard 2 PRO React TS examples components
+import {useMaterialUIController, setTransparentNavbar, setMiniSidenav, setOpenConfigurator,} from "context";
 import NotificationItem from "examples/Items/NotificationItem";
-
-// Custom styles for Navbar
-import {
-   navbar,
-   navbarContainer,
-   navbarRow,
-   navbarIconButton,
-   navbarDesktopMenu,
-   navbarMobileMenu,
-} from "qqq/components/Navbar/styles";
-
-// Material Dashboard 2 PRO React context
-import {
-   useMaterialUIController,
-   setTransparentNavbar,
-   setMiniSidenav,
-   setOpenConfigurator,
-} from "context";
-
-// qqq
+import {navbar, navbarContainer, navbarRow, navbarIconButton, navbarDesktopMenu, navbarMobileMenu,} from "qqq/components/Navbar/styles";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
 
 // Declaring prop types for Navbar

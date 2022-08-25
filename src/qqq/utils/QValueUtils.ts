@@ -20,8 +20,8 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 
 import "datejs";
 

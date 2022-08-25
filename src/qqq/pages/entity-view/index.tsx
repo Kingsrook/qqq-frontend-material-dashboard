@@ -19,19 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {useParams} from "react-router-dom";
-
-// @mui material components
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Grid from "@mui/material/Grid";
-
-// Material Dashboard 2 PRO React TS components
+import {useParams} from "react-router-dom";
 import MDBox from "components/MDBox";
-
-// Settings page components
 import BaseLayout from "qqq/components/BaseLayout";
 import ViewContents from "./components/ViewContents";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import EntityList from "qqq/pages/entity-list";
 
 interface Props
 {

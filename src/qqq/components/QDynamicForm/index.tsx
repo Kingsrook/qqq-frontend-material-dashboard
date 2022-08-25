@@ -19,23 +19,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @mui material components
 import Grid from "@mui/material/Grid";
-
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-
-// NewUser page components
 import {useFormikContext} from "formik";
 import React from "react";
+import MDBox from "components/MDBox";
+import MDTypography from "components/MDTypography";
 import QDynamicFormField from "qqq/components/QDynamicFormField";
 
-interface Props {
-  formLabel?: string;
-  formData: any;
-  bulkEditMode?: boolean;
-  bulkEditSwitchChangeHandler?: any
+interface Props
+{
+   formLabel?: string;
+   formData: any;
+   bulkEditMode?: boolean;
+   bulkEditSwitchChangeHandler?: any;
 }
 
 function QDynamicForm(props: Props): JSX.Element
@@ -72,55 +68,55 @@ function QDynamicForm(props: Props): JSX.Element
          <MDBox mt={1.625}>
             <Grid container spacing={3}>
                {formFields
-            && Object.keys(formFields).length > 0
-            && Object.keys(formFields).map((fieldName: any) =>
-            {
-               const field = formFields[fieldName];
-               if (values[fieldName] === undefined)
-               {
-                  values[fieldName] = "";
-               }
+                  && Object.keys(formFields).length > 0
+                  && Object.keys(formFields).map((fieldName: any) =>
+                  {
+                     const field = formFields[fieldName];
+                     if (values[fieldName] === undefined)
+                     {
+                        values[fieldName] = "";
+                     }
 
-               if (field.type === "file")
-               {
-                  return (
-                     <Grid item xs={12} sm={6} key={fieldName}>
-                        <MDBox mb={1.5}>
-                           <input
-                              id={fieldName}
+                     if (field.type === "file")
+                     {
+                        return (
+                           <Grid item xs={12} sm={6} key={fieldName}>
+                              <MDBox mb={1.5}>
+                                 <input
+                                    id={fieldName}
+                                    name={fieldName}
+                                    type="file"
+                                    onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
+                                 />
+                                 <MDBox mt={0.75}>
+                                    <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+                                       {errors[fieldName] && <span>You must select a file to proceed</span>}
+                                    </MDTypography>
+                                 </MDBox>
+                              </MDBox>
+                           </Grid>
+                        );
+                     }
+
+                     // todo? inputProps={{ autoComplete: "" }}
+                     // todo? placeholder={password.placeholder}
+                     return (
+                        <Grid item xs={12} sm={6} key={fieldName}>
+                           <QDynamicFormField
+                              type={field.type}
+                              label={field.label}
+                              isEditable={field.isEditable}
                               name={fieldName}
-                              type="file"
-                              onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
+                              displayFormat={field.displayFormat}
+                              value={values[fieldName]}
+                              error={errors[fieldName] && touched[fieldName]}
+                              bulkEditMode={bulkEditMode}
+                              bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
+                              success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
                            />
-                           <MDBox mt={0.75}>
-                              <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                                 {errors[fieldName] && <span>You must select a file to proceed</span>}
-                              </MDTypography>
-                           </MDBox>
-                        </MDBox>
-                     </Grid>
-                  );
-               }
-
-               // todo? inputProps={{ autoComplete: "" }}
-               // todo? placeholder={password.placeholder}
-               return (
-                  <Grid item xs={12} sm={6} key={fieldName}>
-                     <QDynamicFormField
-                        type={field.type}
-                        label={field.label}
-                        isEditable={field.isEditable}
-                        name={fieldName}
-                        displayFormat={field.displayFormat}
-                        value={values[fieldName]}
-                        error={errors[fieldName] && touched[fieldName]}
-                        bulkEditMode={bulkEditMode}
-                        bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
-                        success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
-                     />
-                  </Grid>
-               );
-            })}
+                        </Grid>
+                     );
+                  })}
             </Grid>
          </MDBox>
       </MDBox>
@@ -131,7 +127,8 @@ QDynamicForm.defaultProps = {
    formLabel: undefined,
    bulkEditMode: false,
    bulkEditSwitchChangeHandler: () =>
-   {},
+   {
+   },
 };
 
 export default QDynamicForm;
