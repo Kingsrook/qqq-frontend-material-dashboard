@@ -20,9 +20,7 @@
  */
 
 import React, {
-   SyntheticEvent,
-   useCallback,
-   useEffect, useReducer, useRef, useState,
+   useCallback, useEffect, useReducer, useRef, useState,
 } from "react";
 import {
    Link, useNavigate, useParams, useSearchParams,
@@ -33,13 +31,14 @@ import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import {Alert, Pagination, TablePagination} from "@mui/material";
+import {Alert, TablePagination} from "@mui/material";
 import {
    DataGridPro,
    GridCallbackDetails,
    GridColDef,
    GridColumnOrderChangeParams,
    GridColumnVisibilityModel,
+   GridExportMenuItemProps,
    GridFilterModel,
    GridRowId,
    GridRowParams,
@@ -52,15 +51,12 @@ import {
    GridToolbarDensitySelector,
    GridToolbarExportContainer,
    GridToolbarFilterButton,
-   GridExportMenuItemProps,
    MuiEvent,
 } from "@mui/x-data-grid-pro";
 
 // Material Dashboard 2 PRO React TS components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
-import MDButton from "components/MDButton";
 import MDAlert from "components/MDAlert";
 
 // QQQ
@@ -80,6 +76,7 @@ import QProcessUtils from "../../utils/QProcessUtils";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
 import QValueUtils from "qqq/utils/QValueUtils";
 import LinearProgress from "@mui/material/LinearProgress";
+import QFilterUtils from "qqq/utils/QFilterUtils";
 
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
@@ -88,6 +85,52 @@ const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 interface Props
 {
    table?: QTableMetaData;
+}
+
+/*******************************************************************************
+ ** Get the default filter to use on the page - either from query string, or
+ ** local storage, or a default (empty).
+ *******************************************************************************/
+function getDefaultFilter(searchParams: URLSearchParams, filterLocalStorageKey: string): GridFilterModel
+{
+   if (searchParams.has("filter"))
+   {
+      try
+      {
+         const qQueryFilter = JSON.parse(searchParams.get("filter")) as QQueryFilter;
+         console.log(`Got a filter from the query string: ${JSON.stringify(qQueryFilter)}`);
+
+         //////////////////////////////////////////////////////////////////
+         // translate from a qqq-style filter to one that the grid wants //
+         //////////////////////////////////////////////////////////////////
+         const defaultFilter = {items: []} as GridFilterModel;
+         let id = 1;
+         qQueryFilter.criteria.forEach((criteria) =>
+         {
+            defaultFilter.items.push({
+               columnField: criteria.fieldName,
+               operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator),
+               value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values),
+               id: id++, // not sure what this id is!!
+            });
+         });
+
+         return (defaultFilter);
+      }
+      catch (e)
+      {
+         console.warn("Error parsing filter from query string", e);
+      }
+   }
+
+   if (localStorage.getItem(filterLocalStorageKey))
+   {
+      const defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
+      console.log(`Got default from LS: ${JSON.stringify(defaultFilter)}`);
+      return (defaultFilter);
+   }
+
+   return ({items: []});
 }
 
 function EntityList({table}: Props): JSX.Element
@@ -105,7 +148,7 @@ function EntityList({table}: Props): JSX.Element
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
-   let _defaultFilter = {items: []} as GridFilterModel;
+   const _defaultFilter = getDefaultFilter(searchParams, filterLocalStorageKey);
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -114,11 +157,6 @@ function EntityList({table}: Props): JSX.Element
    if (localStorage.getItem(columnVisibilityLocalStorageKey))
    {
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
-   }
-   if (localStorage.getItem(filterLocalStorageKey))
-   {
-      _defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
-      console.log(`Got default from LS: ${JSON.stringify(_defaultFilter)}`);
    }
 
    const [filterModel, setFilterModel] = useState(_defaultFilter);
@@ -159,46 +197,6 @@ function EntityList({table}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const translateCriteriaOperator = (operator: string) =>
-   {
-      switch (operator)
-      {
-         case "contains":
-            return QCriteriaOperator.CONTAINS;
-         case "startsWith":
-            return QCriteriaOperator.STARTS_WITH;
-         case "endsWith":
-            return QCriteriaOperator.ENDS_WITH;
-         case "is":
-         case "equals":
-         case "=":
-            return QCriteriaOperator.EQUALS;
-         case "isNot":
-         case "!=":
-            return QCriteriaOperator.NOT_EQUALS;
-         case "after":
-         case ">":
-            return QCriteriaOperator.GREATER_THAN;
-         case "onOrAfter":
-         case ">=":
-            return QCriteriaOperator.GREATER_THAN_OR_EQUALS;
-         case "before":
-         case "<":
-            return QCriteriaOperator.LESS_THAN;
-         case "onOrBefore":
-         case "<=":
-            return QCriteriaOperator.LESS_THAN_OR_EQUALS;
-         case "isEmpty":
-            return QCriteriaOperator.IS_BLANK;
-         case "isNotEmpty":
-            return QCriteriaOperator.IS_NOT_BLANK;
-         // case "is any of":
-         // TODO: handle this case
-         default:
-            return QCriteriaOperator.EQUALS;
-      }
-   };
-
    const buildQFilter = () =>
    {
       const qFilter = new QQueryFilter();
@@ -213,13 +211,9 @@ function EntityList({table}: Props): JSX.Element
       {
          filterModel.items.forEach((item) =>
          {
-            const operator = translateCriteriaOperator(item.operatorValue);
-            let criteria = new QFilterCriteria(item.columnField, operator, [item.value]);
-            if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
-            {
-               criteria = new QFilterCriteria(item.columnField, operator, null);
-            }
-            qFilter.addCriteria(criteria);
+            const operator = QFilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
+            const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value);
+            qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
          });
       }
 

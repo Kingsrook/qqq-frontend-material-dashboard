@@ -56,6 +56,11 @@ class QValueUtils
          return (displayValue);
       }
 
+      if (displayValue === undefined && rawValue !== undefined)
+      {
+         return (rawValue);
+      }
+
       return (displayValue);
    }
 }

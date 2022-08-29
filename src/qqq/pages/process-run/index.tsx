@@ -19,47 +19,46 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, {useEffect, useState, Fragment} from "react";
+import * as Yup from "yup";
 
+import {CircularProgress, TablePagination} from "@mui/material";
+import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 // formik components
 import {Form, Formik} from "formik";
+import React, {Fragment, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 
-// @mui material components
-import Grid from "@mui/material/Grid";
+import BaseLayout from "qqq/components/BaseLayout";
 import Card from "@mui/material/Card";
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-
+import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
+import FormData from "form-data";
+import Grid from "@mui/material/Grid";
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
-
-// Material Dashboard 2 PRO React TS examples components
-import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-
-import * as Yup from "yup";
+import MDProgress from "components/MDProgress";
+import MDTypography from "../../../components/MDTypography";
+import QClient from "qqq/utils/QClient";
+import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
+import QDynamicForm from "../../components/QDynamicForm";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
-import {useLocation, useParams} from "react-router-dom";
-import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
-import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
-import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
-import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
-import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
-import FormData from "form-data";
-import QClient from "qqq/utils/QClient";
-import {CircularProgress, TablePagination} from "@mui/material";
-import QDynamicForm from "../../components/QDynamicForm";
-import MDTypography from "../../../components/MDTypography";
-import Footer from "examples/Footer";
+import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import Navbar from "qqq/components/Navbar";
-import BaseLayout from "qqq/components/BaseLayout";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+import Stepper from "@mui/material/Stepper";
+import QValidationReview from "qqq/pages/process-run/components/QValidationReview";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import QProcessSummaryResults from "./components/QProcessSummaryResults";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QCancelButton, QSubmitButton} from "qqq/components/QButtons";
+import {formatDate} from "@fullcalendar/react";
 
 interface Props
 {
@@ -89,12 +88,16 @@ function ProcessRun({process}: Props): JSX.Element
    const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [processMetaData, setProcessMetaData] = useState(null);
+   const [tableMetaData, setTableMetaData] = useState(null);
+   const [qInstance, setQInstance] = useState(null as QInstance);
    const [processValues, setProcessValues] = useState({} as any);
    const [processError, setProcessError] = useState(null as string);
    const [needToCheckJobStatus, setNeedToCheckJobStatus] = useState(false);
    const [lastProcessResponse, setLastProcessResponse] = useState(
       null as QJobStarted | QJobComplete | QJobError | QJobRunning,
    );
+
+   const [overrideOnLastStep, setOverrideOnLastStep] = useState(null as boolean);
    const onLastStep = activeStepIndex === steps.length - 2;
    const noMoreSteps = activeStepIndex === steps.length - 1;
 
@@ -115,11 +118,15 @@ function ProcessRun({process}: Props): JSX.Element
    const [recordConfig, setRecordConfig] = useState({} as any);
    const [pageNumber, setPageNumber] = useState(0);
    const [rowsPerPage, setRowsPerPage] = useState(10);
+   const [records, setRecords] = useState([] as QRecord[]);
 
    //////////////////////////////
    // state for bulk edit form //
    //////////////////////////////
    const [disabledBulkEditFields, setDisabledBulkEditFields] = useState({} as any);
+
+   const navigate = useNavigate();
+   const location = useLocation();
 
    const doesStepHaveComponent = (step: QFrontendStepMetaData, type: QComponentType): boolean =>
    {
@@ -171,7 +178,7 @@ function ProcessRun({process}: Props): JSX.Element
    {
       if (value === null || value === undefined)
       {
-         return <span>∅</span>;
+         return <span>&nbsp;</span>;
       }
 
       if (typeof value === "string")
@@ -202,13 +209,14 @@ function ProcessRun({process}: Props): JSX.Element
       processError: string,
       processValues: any,
       recordConfig: any,
+      setFieldValue: any,
    ): JSX.Element =>
    {
       if (processError)
       {
          return (
             <>
-               <MDTypography color="error" variant="h5">
+               <MDTypography color="error" variant="h5" component="div">
                   Error
                </MDTypography>
                <MDTypography color="body" variant="button">
@@ -218,44 +226,49 @@ function ProcessRun({process}: Props): JSX.Element
          );
       }
 
-      if (qJobRunning)
+      if (qJobRunning || step === null)
       {
          return (
-            <>
-               <MDTypography variant="h5">
-                  {" "}
-                  Working
-               </MDTypography>
-               <Grid container>
-                  <Grid item padding={1}>
-                     <CircularProgress color="info" />
-                  </Grid>
-                  <Grid item>
-                     <MDTypography color="body" variant="button">
-                        {qJobRunning?.message}
-                        <br />
-                        {qJobRunning.current && qJobRunning.total && (
-                           <div>{`${qJobRunning.current.toLocaleString()} of ${qJobRunning.total.toLocaleString()}`}</div>
-                        )}
-                        <i>
-                           {`Updated at ${qJobRunningDate.toLocaleTimeString()}`}
-                        </i>
-                     </MDTypography>
-                  </Grid>
+            <Grid m={3} mt={9} container>
+               <Grid item xs={0} lg={3} />
+               <Grid item xs={12} lg={6}>
+                  <Card>
+                     <MDBox p={3}>
+                        <MDTypography variant="h5" component="div">
+                           Working
+                        </MDTypography>
+                        <Grid container>
+                           <Grid item padding={2}>
+                              <CircularProgress color="info" />
+                           </Grid>
+                           <Grid item padding={1}>
+                              <MDTypography color="body" variant="button">
+                                 {qJobRunning?.message}
+                                 <br />
+                                 {qJobRunning?.current && qJobRunning?.total && (
+                                    <>
+                                       <div>{`${qJobRunning.current.toLocaleString()} of ${qJobRunning.total.toLocaleString()}`}</div>
+                                       <MDBox width="20rem">
+                                          <MDProgress variant="gradient" value={100 * (qJobRunning.current / qJobRunning.total)} color="success" />
+                                       </MDBox>
+                                    </>
+                                 )}
+                                 {
+                                    qJobRunningDate && (<i>{`Updated at ${qJobRunningDate?.toLocaleTimeString()}`}</i>)
+                                 }
+                              </MDTypography>
+                           </Grid>
+                        </Grid>
+                     </MDBox>
+                  </Card>
                </Grid>
-            </>
+            </Grid>
          );
-      }
-
-      if (step === null)
-      {
-         console.log("in getDynamicStepContent.  No step yet, so returning 'loading'");
-         return <div>Loading...</div>;
       }
 
       return (
          <>
-            <MDTypography variation="h5" fontWeight="bold">{step?.label}</MDTypography>
+            <MDTypography variation="h5" component="div" fontWeight="bold">{step?.label}</MDTypography>
             {step.components && (
                step.components.map((component: QFrontendComponent, index: number) => (
                   // eslint-disable-next-line react/no-array-index-key
@@ -267,60 +280,97 @@ function ProcessRun({process}: Props): JSX.Element
                            </MDTypography>
                         )
                      }
+                     {
+                        component.type === QComponentType.BULK_EDIT_FORM && (
+                           <QDynamicForm formData={formData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
+                        )
+                     }
+                     {
+                        component.type === QComponentType.EDIT_FORM && (
+                           <QDynamicForm formData={formData} />
+                        )
+                     }
+                     {
+                        component.type === QComponentType.VIEW_FORM && step.viewFields && (
+                           <div>
+                              {step.viewFields.map((field: QFieldMetaData) => (
+                                 <MDBox key={field.name} display="flex" py={1} pr={2}>
+                                    <MDTypography variant="button" fontWeight="bold">
+                                       {field.label}
+                                       : &nbsp;
+                                    </MDTypography>
+                                    <MDTypography variant="button" fontWeight="regular" color="text">
+                                       {formatViewValue(processValues[field.name])}
+                                    </MDTypography>
+                                 </MDBox>
+                              ))}
+                           </div>
+                        )
+                     }
+                     {
+                        component.type === QComponentType.VALIDATION_REVIEW_SCREEN && (
+                           <QValidationReview
+                              qInstance={qInstance}
+                              process={processMetaData}
+                              table={tableMetaData}
+                              processValues={processValues}
+                              step={step}
+                              previewRecords={records}
+                              formValues={formData.values}
+                              doFullValidationRadioChangedHandler={(event: any) =>
+                              {
+                                 const {value} = event.currentTarget;
+
+                                 //////////////////////////////////////////////////////////////
+                                 // call the formik function to set the value in this field. //
+                                 //////////////////////////////////////////////////////////////
+                                 setFieldValue("doFullValidation", value);
+
+                                 // eslint-disable-next-line no-unneeded-ternary
+                                 setOverrideOnLastStep(value === "true" ? false : true);
+                              }}
+                           />
+                        )
+                     }
+                     {
+                        component.type === QComponentType.PROCESS_SUMMARY_RESULTS && (
+                           <QProcessSummaryResults qInstance={qInstance} process={processMetaData} table={tableMetaData} processValues={processValues} step={step} />
+                        )
+                     }
+                     {
+                        component.type === QComponentType.RECORD_LIST && step.recordListFields && recordConfig.columns && (
+                           <div>
+                              <MDTypography variant="button" fontWeight="bold">Records</MDTypography>
+                              {" "}
+                              <br />
+                              <MDBox height="100%">
+                                 <DataGridPro
+                                    components={{Pagination: CustomPagination}}
+                                    page={recordConfig.pageNo}
+                                    disableSelectionOnClick
+                                    autoHeight
+                                    rows={recordConfig.rows}
+                                    columns={recordConfig.columns}
+                                    rowBuffer={10}
+                                    rowCount={recordConfig.totalRecords}
+                                    pageSize={recordConfig.rowsPerPage}
+                                    rowsPerPageOptions={[10, 25, 50]}
+                                    onPageSizeChange={recordConfig.handleRowsPerPageChange}
+                                    onPageChange={recordConfig.handlePageChange}
+                                    onRowClick={recordConfig.handleRowClick}
+                                    getRowId={(row) => row.__idForDataGridPro__}
+                                    paginationMode="server"
+                                    pagination
+                                    density="compact"
+                                    loading={recordConfig.loading}
+                                    disableColumnFilter
+                                 />
+                              </MDBox>
+                           </div>
+                        )
+                     }
                   </div>
                )))}
-            {step.formFields && (
-               <QDynamicForm
-                  formData={formData}
-                  bulkEditMode={doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM)}
-                  bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
-               />
-            )}
-            {step.viewFields && (
-               <div>
-                  {step.viewFields.map((field: QFieldMetaData) => (
-                     <MDBox key={field.name} display="flex" py={1} pr={2}>
-                        <MDTypography variant="button" fontWeight="bold">
-                           {field.label}
-                           : &nbsp;
-                        </MDTypography>
-                        <MDTypography variant="button" fontWeight="regular" color="text">
-                           {formatViewValue(processValues[field.name])}
-                        </MDTypography>
-                     </MDBox>
-                  ))}
-               </div>
-            )}
-            {(step.recordListFields && recordConfig.columns) && (
-               <div>
-                  <MDTypography variant="button" fontWeight="bold">Records</MDTypography>
-                  {" "}
-                  <br />
-                  <MDBox height="100%">
-                     <DataGridPro
-                        components={{Pagination: CustomPagination}}
-                        page={recordConfig.pageNo}
-                        disableSelectionOnClick
-                        autoHeight
-                        rows={recordConfig.rows}
-                        columns={recordConfig.columns}
-                        rowBuffer={10}
-                        rowCount={recordConfig.totalRecords}
-                        pageSize={recordConfig.rowsPerPage}
-                        rowsPerPageOptions={[10, 25, 50]}
-                        onPageSizeChange={recordConfig.handleRowsPerPageChange}
-                        onPageChange={recordConfig.handlePageChange}
-                        onRowClick={recordConfig.handleRowClick}
-                        getRowId={(row) => row.__idForDataGridPro__}
-                        paginationMode="server"
-                        pagination
-                        density="compact"
-                        loading={recordConfig.loading}
-                        disableColumnFilter
-                     />
-                  </MDBox>
-               </div>
-            )}
          </>
       );
    };
@@ -382,6 +432,7 @@ function ProcessRun({process}: Props): JSX.Element
          setProcessError(`Unknown process step ${newStep}.`);
       }
       setActiveStepIndex(newIndex);
+      setOverrideOnLastStep(null);
 
       if (steps)
       {
@@ -418,6 +469,26 @@ function ProcessRun({process}: Props): JSX.Element
                });
                setDisabledBulkEditFields(newDisabledBulkEditFields);
             }
+
+            setFormFields(dynamicFormFields);
+            setInitialValues(initialValues);
+            setValidationScheme(Yup.object().shape(formValidations));
+            setValidationFunction(null);
+         }
+         else if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
+         {
+            ////////////////////////////////////////
+            // this component requires this field //
+            ////////////////////////////////////////
+            const dynamicFormFields: any = {};
+            dynamicFormFields.doFullValidation = {type: "radio"};
+
+            const initialValues: any = {};
+            initialValues.doFullValidation = "true";
+            setOverrideOnLastStep(false);
+
+            const formValidations: any = {};
+            formValidations.doFullValidation = null;
 
             setFormFields(dynamicFormFields);
             setInitialValues(initialValues);
@@ -502,6 +573,7 @@ function ProcessRun({process}: Props): JSX.Element
             );
 
             const {records} = response;
+            setRecords(records);
 
             /////////////////////////////////////////////////////////////////////////////////////////
             // re-construct the recordConfig object, so the setState call triggers a new rendering //
@@ -542,6 +614,12 @@ function ProcessRun({process}: Props): JSX.Element
             setJobUUID(null);
             setNewStep(qJobComplete.nextStep);
             setProcessValues(qJobComplete.values);
+            setQJobRunning(null);
+
+            if (activeStep && activeStep.recordListFields)
+            {
+               setNeedRecords(true);
+            }
          }
          else if (lastProcessResponse instanceof QJobStarted)
          {
@@ -562,6 +640,7 @@ function ProcessRun({process}: Props): JSX.Element
             console.log(`Got an error from the backend... ${qJobError.error}`);
             setJobUUID(null);
             setProcessError(qJobError.error);
+            setQJobRunning(null);
          }
       }
    }, [lastProcessResponse]);
@@ -574,13 +653,18 @@ function ProcessRun({process}: Props): JSX.Element
       if (needToCheckJobStatus)
       {
          setNeedToCheckJobStatus(false);
+         if (!processUUID || !jobUUID)
+         {
+            console.log(`Missing processUUID[${processUUID}] or jobUUID[${jobUUID}], so returning without checking job status`);
+            return;
+         }
+
          (async () =>
          {
             setTimeout(async () =>
             {
                try
                {
-                  console.log("OK");
                   const processResponse = await QClient.getInstance().processJobStatus(
                      processName,
                      processUUID,
@@ -624,8 +708,7 @@ function ProcessRun({process}: Props): JSX.Element
       setNeedInitialLoad(false);
       (async () =>
       {
-         const {search} = useLocation();
-         const urlSearchParams = new URLSearchParams(search);
+         const urlSearchParams = new URLSearchParams(location.search);
          let queryStringForInit = null;
          if (urlSearchParams.get("recordIds"))
          {
@@ -646,9 +729,33 @@ function ProcessRun({process}: Props): JSX.Element
 
          try
          {
+            const qInstance = await QClient.getInstance().loadMetaData();
+            setQInstance(qInstance);
+         }
+         catch (e)
+         {
+            setProcessError("Error loading process definition.");
+            return;
+         }
+
+         try
+         {
             const processMetaData = await QClient.getInstance().loadProcessMetaData(processName);
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
+            if (processMetaData.tableName)
+            {
+               try
+               {
+                  const tableMetaData = await QClient.getInstance().loadTableMetaData(processMetaData.tableName);
+                  setTableMetaData(tableMetaData);
+               }
+               catch (e)
+               {
+                  setProcessError("Error loading process's table definition.");
+                  return;
+               }
+            }
          }
          catch (e)
          {
@@ -714,6 +821,8 @@ function ProcessRun({process}: Props): JSX.Element
          "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
       };
 
+      setProcessValues({});
+      setRecords([]);
       setLastProcessResponse(new QJobRunning({message: "Working..."}));
 
       setTimeout(async () =>
@@ -729,15 +838,42 @@ function ProcessRun({process}: Props): JSX.Element
       });
    };
 
+   const handleCancelClicked = () =>
+   {
+      const pathParts = location.pathname.split(/\//);
+      pathParts.pop();
+      const path = pathParts.join("/");
+      navigate(path, {replace: true});
+   };
+
+   const mainCardStyles: any = {};
+   mainCardStyles.minHeight = "calc(100vh - 400px)";
+   if (qJobRunning || activeStep === null)
+   {
+      mainCardStyles.background = "none";
+      mainCardStyles.boxShadow = "none";
+   }
+
+   let nextButtonLabel = "Next";
+   let nextButtonIcon = "arrow_forward";
+   if (overrideOnLastStep !== null)
+   {
+      if (overrideOnLastStep)
+      {
+         nextButtonLabel = "Submit";
+         nextButtonIcon = "check";
+      }
+   }
+   else if (onLastStep)
+   {
+      nextButtonLabel = "Submit";
+      nextButtonIcon = "check";
+   }
+
    return (
       <BaseLayout>
          <MDBox py={3} mb={20}>
-            <Grid
-               container
-               justifyContent="center"
-               alignItems="center"
-               sx={{height: "100%", mt: 8}}
-            >
+            <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
                <Grid item xs={12} lg={8}>
                   <Formik
                      enableReinitialize
@@ -747,10 +883,10 @@ function ProcessRun({process}: Props): JSX.Element
                      onSubmit={handleSubmit}
                   >
                      {({
-                        values, errors, touched, isSubmitting,
+                        values, errors, touched, isSubmitting, setFieldValue,
                      }) => (
                         <Form id={formId} autoComplete="off">
-                           <Card sx={{minHeight: "calc(100vh - 400px)"}}>
+                           <Card sx={mainCardStyles}>
                               <MDBox mx={2} mt={-3}>
                                  <Stepper activeStep={activeStepIndex} alternativeLabel>
                                     {steps.map((step) => (
@@ -760,6 +896,7 @@ function ProcessRun({process}: Props): JSX.Element
                                     ))}
                                  </Stepper>
                               </MDBox>
+
                               <MDBox p={3}>
                                  <MDBox>
                                     {/***************************************************************************
@@ -777,28 +914,18 @@ function ProcessRun({process}: Props): JSX.Element
                                        processError,
                                        processValues,
                                        recordConfig,
+                                       setFieldValue,
                                     )}
                                     {/********************************
                                      ** back &| next/submit buttons **
                                      ********************************/}
-                                    <MDBox
-                                       mt={2}
-                                       width="100%"
-                                       display="flex"
-                                       justifyContent="space-between"
-                                    >
+                                    <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
                                        {true || activeStepIndex === 0 ? (
                                           <MDBox />
                                        ) : (
-                                          <MDButton
-                                             variant="gradient"
-                                             color="light"
-                                             onClick={handleBack}
-                                          >
-                                             back
-                                          </MDButton>
+                                          <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
                                        )}
-                                       {noMoreSteps || processError || qJobRunning ? (
+                                       {processError || qJobRunning || !activeStep ? (
                                           <MDBox />
                                        ) : (
                                           <>
@@ -807,14 +934,19 @@ function ProcessRun({process}: Props): JSX.Element
                                                    {formError}
                                                 </MDTypography>
                                              )}
-                                             <MDButton
-                                                disabled={isSubmitting}
-                                                type="submit"
-                                                variant="gradient"
-                                                color="dark"
-                                             >
-                                                {onLastStep ? "submit" : "next"}
-                                             </MDButton>
+                                             {
+                                                noMoreSteps && <QCancelButton onClickHandler={handleCancelClicked} label="Return" iconName="arrow_back" disabled={isSubmitting} />
+                                             }
+                                             {
+                                                !noMoreSteps && (
+                                                   <MDBox component="div" py={3}>
+                                                      <Grid container justifyContent="flex-end" spacing={3}>
+                                                         <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                                                         <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
+                                                      </Grid>
+                                                   </MDBox>
+                                                )
+                                             }
                                           </>
                                        )}
                                     </MDBox>
