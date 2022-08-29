@@ -45,6 +45,9 @@ import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
 import Footer from "../../components/Footer";
 import QProcessUtils from "../../utils/QProcessUtils";
+import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
+import QValueUtils from "qqq/utils/QValueUtils";
+import LinearProgress from "@mui/material/LinearProgress";
 import "./styles.css";
 
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
@@ -657,15 +660,11 @@ function EntityList({table}: Props): JSX.Element
                         The
                         <strong>{` ${selectedIds.length.toLocaleString()} `}</strong>
                         records on this page are selected.
-                        <button
-                           type="button"
-                           onClick={() => setSelectFullFilterState("filter")}
-                           className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root"
-                        >
+                        <Button onClick={() => setSelectFullFilterState("filter")}>
                            Select all
                            {` ${totalRecords.toLocaleString()} `}
                            records matching this query
-                        </button>
+                        </Button>
                      </div>
                   )
                }
@@ -675,15 +674,11 @@ function EntityList({table}: Props): JSX.Element
                         All
                         <strong>{` ${totalRecords.toLocaleString()} `}</strong>
                         records matching this query are selected.
-                        <button
-                           type="button"
-                           onClick={() => setSelectFullFilterState("checked")}
-                           className="MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButtonBase-root  css-knwngq-MuiButtonBase-root-MuiButton-root"
-                        >
+                        <Button onClick={() => setSelectFullFilterState("checked")}>
                            Select the
                            {` ${selectedIds.length.toLocaleString()} `}
                            records on this page
-                        </button>
+                        </Button>
                      </div>
                   )
                }

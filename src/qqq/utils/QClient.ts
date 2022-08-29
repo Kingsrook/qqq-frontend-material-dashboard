@@ -34,11 +34,7 @@ class QClient
    private static handleException(exception: QException)
    {
       console.log(`Caught Exception: ${JSON.stringify(exception)}`);
-      const {logout} = useAuth0();
-      if (exception.status === "401")
-      {
-         logout();
-      }
+      throw (exception);
    }
 
    public static getInstance()

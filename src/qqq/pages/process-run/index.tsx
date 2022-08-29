@@ -20,6 +20,7 @@
  */
 
 import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
@@ -53,6 +54,10 @@ interface Props
    process?: QProcessMetaData;
 }
 
+const INITIAL_RETRY_MILLIS = 1_500;
+const RETRY_MAX_MILLIS = 12_000;
+const BACKOFF_AMOUNT = 1.5;
+
 function ProcessRun({process}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
@@ -62,6 +67,7 @@ function ProcessRun({process}: Props): JSX.Element
    // process state //
    ///////////////////
    const [processUUID, setProcessUUID] = useState(null as string);
+   const [retryMillis, setRetryMillis] = useState(INITIAL_RETRY_MILLIS);
    const [jobUUID, setJobUUID] = useState(null as string);
    const [qJobRunning, setQJobRunning] = useState(null as QJobRunning);
    const [qJobRunningDate, setQJobRunningDate] = useState(null as Date);
@@ -343,8 +349,6 @@ function ProcessRun({process}: Props): JSX.Element
          return;
       }
 
-      // console.log(`Steps are: ${steps}`);
-      // console.log(`Setting step to ${newStep}`);
       let newIndex = null;
       if (typeof newStep === "number")
       {
@@ -446,9 +450,6 @@ function ProcessRun({process}: Props): JSX.Element
    {
       if (activeStep && activeStep.formFields)
       {
-         console.log("In useEffect for disabledBulkEditFields");
-         console.log(disabledBulkEditFields);
-
          const newDynamicFormFields: any = {};
          const newFormValidations: any = {};
          activeStep.formFields.forEach((field) =>
@@ -519,22 +520,21 @@ function ProcessRun({process}: Props): JSX.Element
       if (lastProcessResponse)
       {
          setLastProcessResponse(null);
+         setRetryMillis(INITIAL_RETRY_MILLIS);
+
          setQJobRunning(null);
 
          if (lastProcessResponse instanceof QJobComplete)
          {
             const qJobComplete = lastProcessResponse as QJobComplete;
-            console.log("Setting new step.");
             setJobUUID(null);
             setNewStep(qJobComplete.nextStep);
             setProcessValues(qJobComplete.values);
-            // console.log(`Updated process values: ${JSON.stringify(qJobComplete.values)}`);
          }
          else if (lastProcessResponse instanceof QJobStarted)
          {
             const qJobStarted = lastProcessResponse as QJobStarted;
             setJobUUID(qJobStarted.jobUUID);
-            console.log("setting need to check because started");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobRunning)
@@ -542,7 +542,6 @@ function ProcessRun({process}: Props): JSX.Element
             const qJobRunning = lastProcessResponse as QJobRunning;
             setQJobRunning(qJobRunning);
             setQJobRunningDate(new Date());
-            console.log("setting need to check because running");
             setNeedToCheckJobStatus(true);
          }
          else if (lastProcessResponse instanceof QJobError)
@@ -560,28 +559,50 @@ function ProcessRun({process}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      console.log("In effect for checking status");
       if (needToCheckJobStatus)
       {
-         console.log("  and the bool was true");
          setNeedToCheckJobStatus(false);
-         if (jobUUID)
+         (async () =>
          {
-            (async () =>
+            setTimeout(async () =>
             {
-               setTimeout(async () =>
+               try
                {
+                  console.log("OK");
                   const processResponse = await QClient.getInstance().processJobStatus(
                      processName,
                      processUUID,
                      jobUUID,
                   );
                   setLastProcessResponse(processResponse);
-               }, 1500);
-            })();
-         }
+               }
+               catch (e)
+               {
+                  if (e instanceof QException)
+                  {
+                     const qException = e as QException;
+                     const status = Number(qException.status);
+                     if (status !== undefined && !Number.isNaN(status) && status >= 500 && status <= 600)
+                     {
+                        if (retryMillis < RETRY_MAX_MILLIS)
+                        {
+                           console.log(`500 error, attempting to retry in ${retryMillis + retryMillis} millis`);
+                           setRetryMillis(retryMillis * BACKOFF_AMOUNT);
+                           setNeedToCheckJobStatus(true);
+                           return;
+                        }
+
+                        console.log(`Retry millis [${retryMillis}] is greater or equal to the max retry limit [${RETRY_MAX_MILLIS}], giving up...`);
+                        setProcessError("Could not connect to server");
+                     }
+                  }
+
+                  throw (e);
+               }
+            }, retryMillis);
+         })();
       }
-   }, [needToCheckJobStatus]);
+   }, [needToCheckJobStatus, retryMillis]);
 
    //////////////////////////////////////////////////////////////////////////////////////////
    // do the initial load of data for the process - that is, meta data, plus the init step //
@@ -610,8 +631,6 @@ function ProcessRun({process}: Props): JSX.Element
          //else if(urlSearchParams.get("filterId")) {
          //   queryStringForInit = `recordsParam=filterId&filterId=${urlSearchParams.get("filterId")}`
          // }
-
-         console.log(`@dk: Query String for init: ${queryStringForInit}`);
 
          try
          {
@@ -687,7 +706,6 @@ function ProcessRun({process}: Props): JSX.Element
 
       setTimeout(async () =>
       {
-         console.log("Calling processStep...");
          const processResponse = await QClient.getInstance().processStep(
             processName,
             processUUID,
