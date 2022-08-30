@@ -21,7 +21,9 @@
 
 import * as Yup from "yup";
 
-import {CircularProgress, TablePagination} from "@mui/material";
+import {
+   Button, CircularProgress, Icon, TablePagination,
+} from "@mui/material";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 // formik components
 import {Form, Formik} from "formik";
@@ -96,8 +98,13 @@ function ProcessRun({process}: Props): JSX.Element
    const [lastProcessResponse, setLastProcessResponse] = useState(
       null as QJobStarted | QJobComplete | QJobError | QJobRunning,
    );
+   const [showErrorDetail, setShowErrorDetail] = useState(false);
 
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // the validation screen - it can change whether next is actually the final step or not... so, use this state field to track that. //
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    const [overrideOnLastStep, setOverrideOnLastStep] = useState(null as boolean);
+
    const onLastStep = activeStepIndex === steps.length - 2;
    const noMoreSteps = activeStepIndex === steps.length - 1;
 
@@ -199,6 +206,11 @@ function ProcessRun({process}: Props): JSX.Element
       return (<span>{value}</span>);
    };
 
+   const toggleShowErrorDetail = () =>
+   {
+      setShowErrorDetail(!showErrorDetail);
+   };
+
    ////////////////////////////////////////////////////
    // generate the main form body content for a step //
    ////////////////////////////////////////////////////
@@ -216,11 +228,24 @@ function ProcessRun({process}: Props): JSX.Element
       {
          return (
             <>
-               <MDTypography color="error" variant="h5" component="div">
+               <MDTypography color="error" variant="h3" component="div">
                   Error
                </MDTypography>
                <MDTypography color="body" variant="button">
-                  {processError}
+                  An error occurred while running the process:
+                  {" "}
+                  {process.label}
+                  <MDBox mt={3} display="flex" justifyContent="center">
+                     <MDBox display="flex" flexDirection="column" alignItems="center">
+                        <Button onClick={toggleShowErrorDetail} startIcon={<Icon>{showErrorDetail ? "expand_less" : "expand_more"}</Icon>}>
+                           {showErrorDetail ? "Hide " : "Show "}
+                           detailed error message
+                        </Button>
+                        <MDBox mt={1} style={{display: showErrorDetail ? "block" : "none"}}>
+                           {processError}
+                        </MDBox>
+                     </MDBox>
+                  </MDBox>
                </MDTypography>
             </>
          );
@@ -326,8 +351,7 @@ function ProcessRun({process}: Props): JSX.Element
                                  //////////////////////////////////////////////////////////////
                                  setFieldValue("doFullValidation", value);
 
-                                 // eslint-disable-next-line no-unneeded-ternary
-                                 setOverrideOnLastStep(value === "true" ? false : true);
+                                 setOverrideOnLastStep(value !== "true");
                               }}
                            />
                         )
@@ -823,6 +847,7 @@ function ProcessRun({process}: Props): JSX.Element
 
       setProcessValues({});
       setRecords([]);
+      setOverrideOnLastStep(null);
       setLastProcessResponse(new QJobRunning({message: "Working..."}));
 
       setTimeout(async () =>
@@ -848,7 +873,7 @@ function ProcessRun({process}: Props): JSX.Element
 
    const mainCardStyles: any = {};
    mainCardStyles.minHeight = "calc(100vh - 400px)";
-   if (qJobRunning || activeStep === null)
+   if (!processError && (qJobRunning || activeStep === null))
    {
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";

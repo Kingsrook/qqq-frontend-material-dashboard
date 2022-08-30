@@ -48,15 +48,17 @@ function QProcessSummaryResults({
    qInstance, process, table = null, processValues, step,
 }: Props): JSX.Element
 {
+   const sourceTable = qInstance.tables.get(processValues.sourceTable);
+
    const resultValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount && table && (
+            processValues?.recordCount !== undefined && sourceTable && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      {processValues.recordCount.toLocaleString()}
                      {" "}
-                     {table.label}
+                     {sourceTable.label}
                      {" "}
                      records were processed.
                   </ListItemText>
@@ -65,7 +67,7 @@ function QProcessSummaryResults({
          }
          <List>
             {
-               processValues.processResults && processValues.processResults.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, table, qInstance, true)))
+               processValues.processResults && processValues.processResults.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTable, qInstance, true)))
             }
          </List>
       </List>
@@ -79,8 +81,8 @@ function QProcessSummaryResults({
                <MDBox border="1px solid rgb(70%, 70%, 70%)" borderRadius="lg" p={2} mt={2}>
                   <MDBox mt={-5} p={1} sx={{width: "fit-content"}} bgColor="success" borderRadius=".25em" width="initial" color="white">
                      <MDBox display="flex" alignItems="center" color="white">
-                        <Icon fontSize="medium" sx={{mr: 1}}>{process.iconName}</Icon>
-                        {`${process.label} : ${step.label}`}
+                        {process.iconName && <Icon fontSize="medium" sx={{mr: 1}}>{process.iconName}</Icon>}
+                        Process Summary
                      </MDBox>
                   </MDBox>
                   {resultValidationList}

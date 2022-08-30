@@ -64,6 +64,7 @@ function QValidationReview({
 }: Props): JSX.Element
 {
    const [previewRecordIndex, setPreviewRecordIndex] = useState(0);
+   const sourceTable = qInstance.tables.get(processValues.sourceTable);
 
    const updatePreviewRecordIndex = (offset: number) =>
    {
@@ -89,15 +90,44 @@ function QValidationReview({
       },
    });
 
+   const buildDoFullValidationRadioListItem = (value: "true" | "false", labelText: string, tooltipHTML: JSX.Element): JSX.Element =>
+   {
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // split up the label into words - then we'll display the last word by itself with a non-breaking space, no-wrap-glued to the button. //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const labelWords = labelText.split(" ");
+      const lastWord = labelWords[labelWords.length - 1];
+      labelWords.splice(labelWords.length - 1, 1);
+
+      return (
+         <ListItem sx={{pl: 2}}>
+            <FormControlLabel
+               value={value}
+               control={<Radio />}
+               label={(
+                  <ListItemText primaryTypographyProps={{fontSize: 16, pt: 0.625}}>
+                     {`${labelWords.join(" ")} `}
+                     <span style={{whiteSpace: "nowrap"}}>
+                        {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+                        {lastWord}.&nbsp;<CustomWidthTooltip title={tooltipHTML}>
+                           <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
+                           {/* eslint-disable-next-line react/jsx-closing-tag-location */}
+                        </CustomWidthTooltip>
+                     </span>
+                  </ListItemText>
+               )}
+            />
+         </ListItem>
+      );
+   };
+
    const preValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount && table && (
+            processValues?.recordCount !== undefined && sourceTable && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                     You selected
-                     {` ${processValues.recordCount.toLocaleString()} ${table?.label} `}
-                     records.
+                     {`Input: ${processValues.recordCount.toLocaleString()} ${sourceTable?.label} record${processValues.recordCount === 1 ? "" : "s"}.`}
                   </ListItemText>
                </ListItem>
             )
@@ -108,59 +138,36 @@ function QValidationReview({
                   <ListItem sx={{mb: 1, mt: 6}}>
                      <ListItemText primaryTypographyProps={{fontSize: 16}}>How would you like to proceed?</ListItemText>
                   </ListItem>
-                  <List>
+                  <List className="doFullValidationRadios">
                      <RadioGroup name="doFullValidation" value={formValues.doFullValidation} onChange={doFullValidationRadioChangedHandler}>
-                        <ListItem sx={{pl: 2}}>
-                           <FormControlLabel
-                              value="true"
-                              control={<Radio />}
-                              label={(
-                                 <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                                    Perform Validation on all records before processing.
-                                    <CustomWidthTooltip
-                                       title={(
-                                          <div>
-                                             If you choose this option, a Validation step will run on all of the records that you selected.
-                                             You will then be told how many can process successfully, and how many have issues.
-                                             <br />
-                                             <br />
-                                             Running this validation may take several minutes, depending on the complexity of the work, and the number of records.
-                                             <br />
-                                             <br />
-                                             Choose this option if you want more information about what will happen, and you are willing to wait for that information.
-                                          </div>
-                                       )}
-                                    >
-                                       <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
-                                    </CustomWidthTooltip>
-                                 </ListItemText>
-                              )}
-                           />
-                        </ListItem>
-                        <ListItem sx={{pl: 2}}>
-                           <FormControlLabel
-                              value="false"
-                              control={<Radio />}
-                              label={(
-                                 <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                                    Skip Validation.  Submit the records for immediate processing.
-                                    <CustomWidthTooltip
-                                       title={(
-                                          <div>
-                                             If you choose this option, the records you selected will immediately be processed.
-                                             You will be told how many records were successfully processed, and which ones had issues after the processing is completed.
-                                             <br />
-                                             <br />
-                                             Choose this option if you feel that you do not need this information, or are not willing to wait for it.
-                                          </div>
-                                       )}
-                                    >
-                                       <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
-                                    </CustomWidthTooltip>
-                                 </ListItemText>
-                              )}
-                           />
-                        </ListItem>
+                        {buildDoFullValidationRadioListItem(
+                           "true",
+                           "Perform Validation on all records before processing", (
+                              <div>
+                                 If you choose this option, a Validation step will run on all of the input records.
+                                 You will then be told how many can process successfully, and how many have issues.
+                                 <br />
+                                 <br />
+                                 Running this validation may take several minutes, depending on the complexity of the work, and the number of records.
+                                 <br />
+                                 <br />
+                                 Choose this option if you want more information about what will happen, and you are willing to wait for that information.
+                              </div>
+                           ),
+                        )}
+
+                        {buildDoFullValidationRadioListItem(
+                           "false",
+                           "Skip Validation.  Submit the records for immediate processing", (
+                              <div>
+                                 If you choose this option, the records input records will immediately be processed.
+                                 You will be told how many records were successfully processed, and which ones had issues after the processing is completed.
+                                 <br />
+                                 <br />
+                                 Choose this option if you feel that you do not need this information, or are not willing to wait for it.
+                              </div>
+                           ),
+                        )}
                      </RadioGroup>
                   </List>
                </>
@@ -172,11 +179,11 @@ function QValidationReview({
    const postValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount && table && (
+            processValues?.recordCount !== undefined && sourceTable && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      Validation complete on
-                     {` ${processValues.recordCount.toLocaleString()} ${table?.label} `}
+                     {` ${processValues.recordCount.toLocaleString()} ${sourceTable?.label} `}
                      records.
                   </ListItemText>
                </ListItem>
@@ -184,7 +191,7 @@ function QValidationReview({
          }
          <List>
             {
-               processValues.validationSummary && processValues.validationSummary.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, table, qInstance)))
+               processValues.validationSummary && processValues.validationSummary.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTable, qInstance)))
             }
          </List>
       </List>
@@ -199,9 +206,9 @@ function QValidationReview({
             <MDTypography color="body" variant="body2" component="div" mb={2}>
                <MDBox display="flex">
                   {
-                     previewRecords && previewRecords.length > 0 ? (
+                     processValues?.previewMessage && previewRecords && previewRecords.length > 0 ? (
                         <>
-                           <i>This is a preview of the records that will be created.</i>
+                           <i>{processValues?.previewMessage}</i>
                            <CustomWidthTooltip
                               title={(
                                  <div>

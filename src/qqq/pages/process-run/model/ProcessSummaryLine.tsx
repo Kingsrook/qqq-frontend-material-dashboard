@@ -59,24 +59,37 @@ export class ProcessSummaryLine
 
    getProcessSummaryListItem(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
    {
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // split up the message into words - then we'll display the last word by itself with a non-breaking space, no-wrap-glued to the button. //
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const messageWords = this.message ? this.message.split(" ") : [];
+      const lastWord = messageWords.length > 1 ? messageWords[messageWords.length - 1] : "";
+      if (messageWords.length > 1)
+      {
+         messageWords.splice(messageWords.length - 1, 1);
+      }
+
       return (
          <ListItem key={i} sx={{pl: 4, my: 2}}>
             <MDBox display="flex" alignItems="top">
                <Icon fontSize="medium" sx={{mr: 1}} color={this.getColor()}>{this.getIcon(isResultScreen)}</Icon>
                <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                  {this.count.toLocaleString()}
-                  {" "}
-                  {this.message}
+                  {/* work hard to prevent the icon from falling down to the next line by itself... */}
+                  {`${this.count.toLocaleString()} ${messageWords.join(" ")} `}
+                  {
+                     (table && this.primaryKeys) ? (
+                        <span style={{whiteSpace: "nowrap"}}>
+                           {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+                           {lastWord}&nbsp;<Link target="_blank" to={this.getLinkToRecords(table, qInstance)}>
+                              <Tooltip title="See these records in a new tab" sx={{py: 0}}>
+                                 <IconButton sx={{py: 0}}><Icon fontSize="small">open_in_new</Icon></IconButton>
+                              </Tooltip>
+                              {/* eslint-disable-next-line react/jsx-closing-tag-location */}
+                           </Link>
+                        </span>
+                     ) : <span>{lastWord}</span>
+                  }
                </ListItemText>
-               {
-                  table && this.primaryKeys && (
-                     <Link target="_blank" to={this.getLinkToRecords(table, qInstance)}>
-                        <Tooltip title="See these records in a new tab" sx={{py: 0}}>
-                           <IconButton sx={{py: 0}}><Icon fontSize="small">open_in_new</Icon></IconButton>
-                        </Tooltip>
-                     </Link>
-                  )
-               }
             </MDBox>
          </ListItem>
       );
@@ -131,8 +144,6 @@ export class ProcessSummaryLine
    {
       const tablePath = qInstance.getTablePath(table);
       const filter = new QQueryFilter([new QFilterCriteria(table.primaryKeyField, QCriteriaOperator.IN, this.primaryKeys)]);
-      console.log("Link to records:");
-      console.log(filter);
       return (`${tablePath}?filter=${JSON.stringify(filter)}`);
    }
 }
