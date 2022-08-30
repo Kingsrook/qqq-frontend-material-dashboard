@@ -31,7 +31,6 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
-import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
 import theme from "assets/theme";
 import themeDark from "assets/theme-dark";
 import MDBox from "components/MDBox";
@@ -45,6 +44,7 @@ import Analytics from "./layouts/dashboards/analytics";
 import Sales from "./layouts/dashboards/sales";
 import Settings from "./layouts/pages/account/settings";
 import ProfileOverview from "./layouts/pages/profile/profile-overview";
+import Logo from "./qqq/images/logo.png";
 import EntityCreate from "./qqq/pages/entity-create";
 import EntityEdit from "./qqq/pages/entity-edit";
 import EntityList from "./qqq/pages/entity-list";
@@ -436,7 +436,7 @@ export default function App()
                <>
                   <Sidenav
                      color={sidenavColor}
-                     brand={nfLogo}
+                     brand={Logo}
                      brandName="Nutrifresh One"
                      routes={sideNavRoutes}
                      onMouseEnter={handleOnMouseEnter}

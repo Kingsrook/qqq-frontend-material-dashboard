@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";

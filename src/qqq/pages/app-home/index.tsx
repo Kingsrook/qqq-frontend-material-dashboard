@@ -34,10 +34,11 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import DefaultInfoCard from "examples/Cards/InfoCards/DefaultInfoCard";
 import MiniStatisticsCard from "examples/Cards/StatisticsCards/MiniStatisticsCard";
-import ReportsBarChart from "examples/Charts/BarCharts/ReportsBarChart";
 import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
 import BaseLayout from "qqq/components/BaseLayout";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
+import BarChart from "qqq/components/Widgets/BarChart";
+import QuickSightChart from "qqq/components/Widgets/QuickSightChart";
 import QClient from "qqq/utils/QClient";
 
 const qController = QClient.getInstance();
@@ -167,6 +168,7 @@ function AppHome({app}: Props): JSX.Element
 
    // eslint-disable-next-line no-nested-ternary
    const tileSizeLg = (widgetCount === 0 ? 3 : widgetCount === 1 ? 4 : 6);
+   let gridIndex = 0;
 
    return (
       <BaseLayout>
@@ -178,11 +180,16 @@ function AppHome({app}: Props): JSX.Element
                         <Grid container spacing={3}>
                            {
                               widgets.map((chart) => (
-                                 <Grid key={`${chart.type}-${chart.title}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
+                                 <Grid key={`${gridIndex++}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
                                     <MDBox mb={3}>
                                        {
+                                          chart.type === "quickSightChart" && (
+                                             <QuickSightChart url={chart.url} label={chart.label} />
+                                          )
+                                       }
+                                       {
                                           chart.type === "barChart" && (
-                                             <ReportsBarChart
+                                             <BarChart
                                                 color="info"
                                                 title={chart.title}
                                                 date={`As of ${new Date().toDateString()}`}
