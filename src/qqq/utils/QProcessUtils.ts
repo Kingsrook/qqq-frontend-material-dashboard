@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Processes

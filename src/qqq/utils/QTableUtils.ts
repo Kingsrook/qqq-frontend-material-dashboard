@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Tables

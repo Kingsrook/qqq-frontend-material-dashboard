@@ -19,39 +19,39 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import Grid from "@mui/material/Grid";
-import {useParams} from "react-router-dom";
+import Card from "@mui/material/Card";
+import React from "react";
 import MDBox from "components/MDBox";
-import BaseLayout from "qqq/components/BaseLayout";
-import ViewContents from "./components/ViewContents";
+import MDTypography from "components/MDTypography";
 
 interface Props
 {
-   table?: QTableMetaData;
+   label: string;
+   url: string;
 }
 
-function EntityView({table}: Props): JSX.Element
+interface IframeProps
 {
-   const {id} = useParams();
+   iframe: string;
+}
+
+function Iframe({iframe}: IframeProps)
+{
+   return (<div dangerouslySetInnerHTML={{__html: iframe || ""}} />);
+}
+
+function QuickSightChart({label, url}: Props): JSX.Element
+{
+   const iframe = `<iframe style='border: 0 solid #1A73E8; height: 411px; width: 99%' title=${label} src=${url} />`;
 
    return (
-      <BaseLayout>
-         <MDBox>
-            <Grid container>
-               <Grid item xs={12}>
-                  <MDBox mb={3}>
-                     <ViewContents id={id} />
-                  </MDBox>
-               </Grid>
-            </Grid>
+      <Card sx={{height: "100%"}}>
+         <MDBox padding="1rem">
+            <MDTypography variant="h5">{label}</MDTypography>
+            <Iframe iframe={iframe} />
          </MDBox>
-      </BaseLayout>
+      </Card>
    );
 }
 
-EntityView.defaultProps = {
-   table: null,
-};
-
-export default EntityView;
+export default QuickSightChart;

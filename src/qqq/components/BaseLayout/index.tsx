@@ -20,14 +20,10 @@
  */
 
 import {useState, useEffect, ReactNode} from "react";
-
-// Material Dashboard 2 PRO React TS Base Styles
 import breakpoints from "assets/theme/base/breakpoints";
-
-// Material Dashboard 2 PRO React TS examples components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import Navbar from "qqq/components/Navbar";
 import Footer from "qqq/components/Footer";
+import Navbar from "qqq/components/Navbar";
 import MDBox from "../../../components/MDBox";
 
 // Declaring props types for BaseLayout

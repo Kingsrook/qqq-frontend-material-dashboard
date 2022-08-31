@@ -19,12 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// misc imports
-import * as Yup from "yup";
-
-// qqq imports
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import * as Yup from "yup";
 
 /*******************************************************************************
  ** Meta-data to represent a single field in a table.

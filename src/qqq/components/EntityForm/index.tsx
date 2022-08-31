@@ -1,36 +1,46 @@
-// react components
-import {useParams, useNavigate, useLocation} from "react-router-dom";
-import React, {useReducer, useState} from "react";
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
-// misc components
-import * as Yup from "yup";
-import {
-   Form, Formik, useFormik, useFormikContext,
-} from "formik";
-
-// qqq components
-import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
-import QDynamicForm from "qqq/components/QDynamicForm";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-
-// @material-ui core components
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {Alert} from "@mui/material";
+import Avatar from "@mui/material/Avatar";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import {Alert} from "@mui/material";
-
-// Material Dashboard 2 PRO React TS components
+import Icon from "@mui/material/Icon";
+import {Form, Formik} from "formik";
+import React, {useReducer, useState} from "react";
+import {useParams, useNavigate, useLocation} from "react-router-dom";
+import * as Yup from "yup";
+import colors from "assets/theme/base/colors";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import QClient from "qqq/utils/QClient";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import Avatar from "@mui/material/Avatar";
-import Icon from "@mui/material/Icon";
+import QDynamicForm from "qqq/components/QDynamicForm";
+import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
+import QClient from "qqq/utils/QClient";
 import QTableUtils from "qqq/utils/QTableUtils";
-import colors from "assets/theme/base/colors";
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 
 interface Props
 {
