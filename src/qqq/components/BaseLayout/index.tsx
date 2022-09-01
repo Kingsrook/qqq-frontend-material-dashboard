@@ -19,18 +19,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {useState, useEffect, ReactNode} from "react";
-import breakpoints from "assets/theme/base/breakpoints";
-import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
+import {useState, ReactNode, useEffect} from "react";
+import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
-import MDBox from "../../../components/MDBox";
+import MDBox from "qqq/components/Temporary/MDBox";
 
-// Declaring props types for BaseLayout
-interface Props {
-  stickyNavbar?: boolean;
-  children: ReactNode;
+interface Props
+{
+   stickyNavbar?: boolean;
+   children: ReactNode;
 }
+
+export const breakpoints = {
+   values: {
+      xs: 0,
+      sm: 576,
+      md: 768,
+      lg: 992,
+      xl: 1200,
+      xxl: 1400,
+   }
+};
 
 function BaseLayout({stickyNavbar, children}: Props): JSX.Element
 {
@@ -47,8 +57,8 @@ function BaseLayout({stickyNavbar, children}: Props): JSX.Element
       }
 
       /**
-         The event listener that's calling the handleTabsOrientation function when resizing the window.
-         */
+       The event listener that's calling the handleTabsOrientation function when resizing the window.
+       */
       window.addEventListener("resize", handleTabsOrientation);
 
       // Call the handleTabsOrientation function to set the state with the initial value.

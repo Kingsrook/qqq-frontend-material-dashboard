@@ -23,8 +23,8 @@ import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import {ReactNode} from "react";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 interface Props {
   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";

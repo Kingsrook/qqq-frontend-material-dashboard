@@ -23,8 +23,8 @@ import {Breadcrumbs as MuiBreadcrumbs} from "@mui/material";
 import Icon from "@mui/material/Icon";
 import {ReactNode} from "react";
 import {Link} from "react-router-dom";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 interface Props {
   icon: ReactNode;
@@ -124,7 +124,6 @@ function QBreadcrumbs({
             color={light ? "white" : "dark"}
             noWrap
          >
-            {routeToLabel(title)}
          </MDTypography>
       </MDBox>
    );

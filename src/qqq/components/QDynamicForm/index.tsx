@@ -22,9 +22,9 @@
 import Grid from "@mui/material/Grid";
 import {useFormikContext} from "formik";
 import React from "react";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
 import QDynamicFormField from "qqq/components/QDynamicFormField";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 interface Props
 {

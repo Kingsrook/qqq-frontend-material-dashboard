@@ -26,13 +26,13 @@ import Menu from "@mui/material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import {useState, useEffect} from "react";
 import {useLocation} from "react-router-dom";
-import MDBadge from "components/MDBadge";
-import MDBox from "components/MDBox";
-import MDInput from "components/MDInput";
 import {useMaterialUIController, setTransparentNavbar, setMiniSidenav, setOpenConfigurator,} from "context";
-import NotificationItem from "examples/Items/NotificationItem";
 import {navbar, navbarContainer, navbarRow, navbarIconButton, navbarDesktopMenu, navbarMobileMenu,} from "qqq/components/Navbar/styles";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
+import MDBadge from "qqq/components/Temporary/MDBadge";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDInput from "qqq/components/Temporary/MDInput";
+import NotificationItem from "qqq/components/Temporary/NotificationItem";
 
 // Declaring prop types for Navbar
 interface Props

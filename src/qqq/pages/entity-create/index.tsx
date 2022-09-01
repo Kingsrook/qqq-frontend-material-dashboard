@@ -21,9 +21,9 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Grid from "@mui/material/Grid";
-import MDBox from "components/MDBox";
 import BaseLayout from "qqq/components/BaseLayout";
 import EntityForm from "qqq/components/EntityForm";
+import MDBox from "qqq/components/Temporary/MDBox";
 
 interface Props
 {

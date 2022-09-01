@@ -87,6 +87,7 @@
       "no-plusplus": "off",
       "no-underscore-dangle": "off",
       "no-else-return": "off",
+      "react/display-name": "off",
       "spaced-comment": "off",
       "object-curly-spacing": [
          "error",

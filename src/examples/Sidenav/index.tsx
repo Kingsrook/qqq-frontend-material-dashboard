@@ -287,7 +287,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
       variant="permanent"
       ownerState={{ transparentSidenav, whiteSidenav, miniSidenav, darkMode }}
     >
-      <MDBox pt={3} pb={1} px={4} textAlign="center">
+      <MDBox pt={3} mr={1} pb={0} px={4} textAlign="center">
         <MDBox
           display={{ xs: "block", xl: "none" }}
           position="absolute"
@@ -302,15 +302,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
           </MDTypography>
         </MDBox>
         <MDBox component={NavLink} to="/" display="flex" alignItems="center">
-          {brand && <MDBox component="img" src={brand} alt="Brand" width="2rem" />}
-          <MDBox
-            width={!brandName && "100%"}
-            sx={(theme: any) => sidenavLogoLabel(theme, { miniSidenav })}
-          >
-            <MDTypography component="h6" variant="button" fontWeight="medium" color={textColor}>
-              {brandName}
-            </MDTypography>
-          </MDBox>
+          <MDBox component="img" src={brand} alt="Brand" width="100%" />
         </MDBox>
       </MDBox>
       <Divider

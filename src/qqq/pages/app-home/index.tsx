@@ -1,5 +1,4 @@
-/*
- * QQQ - Low-code Application Framework for Engineers.
+/* QQQ - Low-code Application Framework for Engineers.
  * Copyright (C) 2021-2022.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
@@ -29,17 +28,18 @@ import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import React, {useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
-import MDBadgeDot from "components/MDBadgeDot";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-import DefaultInfoCard from "examples/Cards/InfoCards/DefaultInfoCard";
-import MiniStatisticsCard from "examples/Cards/StatisticsCards/MiniStatisticsCard";
-import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
 import BaseLayout from "qqq/components/BaseLayout";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
-import BarChart from "qqq/components/Widgets/BarChart";
-import QuickSightChart from "qqq/components/Widgets/QuickSightChart";
+import DefaultInfoCard from "qqq/components/Temporary/DefaultInfoCard";
+import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import MiniStatisticsCard from "qqq/components/Temporary/MiniStatisticsCard";
+import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
+import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
+import SmallLineChart from "qqq/pages/dashboards/Widgets/SmallLineChart";
 import QClient from "qqq/utils/QClient";
+import LineChart from "../dashboards/Widgets/LineChart";
 
 const qController = QClient.getInstance();
 
@@ -199,7 +199,7 @@ function AppHome({app}: Props): JSX.Element
                                        }
                                        {
                                           chart.type === "lineChart" && (
-                                             <DefaultLineChart
+                                             <LineChart
                                                 title={chart.title}
                                                 description={(
                                                    <MDBox display="flex" justifyContent="space-between">

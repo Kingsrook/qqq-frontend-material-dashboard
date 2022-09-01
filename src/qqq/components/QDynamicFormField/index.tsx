@@ -24,9 +24,9 @@ import Grid from "@mui/material/Grid";
 import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field} from "formik";
 import React, {useState} from "react";
-import MDBox from "components/MDBox";
-import MDInput from "components/MDInput";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDInput from "qqq/components/Temporary/MDInput";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 // Declaring props types for FormField
 interface Props

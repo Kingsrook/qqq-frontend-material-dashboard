@@ -22,8 +22,8 @@
 import Icon from "@mui/material/Icon";
 import React from "react";
 import {Link} from "react-router-dom";
-import MDBox from "components/MDBox";
-import MDButton from "components/MDButton";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDButton from "qqq/components/Temporary/MDButton";
 
 // eslint-disable import/prefer-default-export
 

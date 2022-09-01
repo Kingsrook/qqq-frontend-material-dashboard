@@ -32,13 +32,13 @@ import {Form, Formik} from "formik";
 import React, {useReducer, useState} from "react";
 import {useParams, useNavigate, useLocation} from "react-router-dom";
 import * as Yup from "yup";
-import colors from "assets/theme/base/colors";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
+import colors from "qqq/components/Temporary/colors";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 import QClient from "qqq/utils/QClient";
 import QTableUtils from "qqq/utils/QTableUtils";
 

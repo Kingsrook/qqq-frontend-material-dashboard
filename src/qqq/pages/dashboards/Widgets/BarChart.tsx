@@ -24,9 +24,9 @@ import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import {useMemo, ReactNode} from "react";
 import {Bar} from "react-chartjs-2";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-import configs from "qqq/components/Widgets/Configs/BarChartConfig";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import configs from "qqq/pages/dashboards/Widgets/Configs/BarChartConfig";
 
 // Declaring props types for ReportsBarChart
 interface Props {
@@ -44,7 +44,7 @@ interface Props {
   [key: string]: any;
 }
 
-function ReportsBarChart({color, title, description, date, chart}: Props): JSX.Element
+function BarChart({color, title, description, date, chart}: Props): JSX.Element
 {
    const {data, options} = configs(chart.labels || [], chart.datasets || {});
 
@@ -91,9 +91,9 @@ function ReportsBarChart({color, title, description, date, chart}: Props): JSX.E
 }
 
 // Setting default values for the props of ReportsBarChart
-ReportsBarChart.defaultProps = {
+BarChart.defaultProps = {
    color: "dark",
    description: "",
 };
 
-export default ReportsBarChart;
+export default BarChart;

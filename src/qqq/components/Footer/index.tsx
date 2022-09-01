@@ -20,9 +20,9 @@
  */
 
 import Link from "@mui/material/Link";
-import typography from "assets/theme/base/typography";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import typography from "qqq/components/Temporary/typography";
 
 
 // Declaring props types for Footer

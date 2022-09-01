@@ -31,26 +31,23 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
-import theme from "assets/theme";
-import themeDark from "assets/theme-dark";
-import MDBox from "components/MDBox";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
-import Configurator from "examples/Configurator";
-import Sidenav from "examples/Sidenav";
+import Sidenav from "qqq/components/Sidenav";
+import Configurator from "qqq/components/Temporary/Configurator";
+import MDAvatar from "qqq/components/Temporary/MDAvatar";
+import MDBox from "qqq/components/Temporary/MDBox";
+import theme from "qqq/components/Temporary/Theme"
+import Logo from "qqq/images/logo-blue.png";
 import AppHome from "qqq/pages/app-home";
+import CarrierPerformance from "qqq/pages/dashboards/CarrierPerformance";
+import Overview from "qqq/pages/dashboards/Overview";
+import EntityCreate from "qqq/pages/entity-create";
+import EntityEdit from "qqq/pages/entity-edit";
+import EntityList from "qqq/pages/entity-list";
+import EntityView from "qqq/pages/entity-view";
+import ProcessRun from "qqq/pages/process-run";
+import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
-import MDAvatar from "./components/MDAvatar";
-import Analytics from "./layouts/dashboards/analytics";
-import Sales from "./layouts/dashboards/sales";
-import Settings from "./layouts/pages/account/settings";
-import ProfileOverview from "./layouts/pages/profile/profile-overview";
-import Logo from "./qqq/images/logo.png";
-import EntityCreate from "./qqq/pages/entity-create";
-import EntityEdit from "./qqq/pages/entity-edit";
-import EntityList from "./qqq/pages/entity-list";
-import EntityView from "./qqq/pages/entity-view";
-import ProcessRun from "./qqq/pages/process-run";
-import QClient from "./qqq/utils/QClient";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -66,16 +63,16 @@ function getStaticRoutes()
          icon: <Icon fontSize="medium">dashboard</Icon>,
          collapse: [
             {
-               name: "Analytics",
-               key: "analytics",
-               route: "/dashboards/analytics",
-               component: <Analytics />,
+               name: "Overview",
+               key: "overview",
+               route: "/dashboards/overview",
+               component: <Overview />,
             },
             {
-               name: "Sales",
-               key: "sales",
-               route: "/dashboards/sales",
-               component: <Sales />,
+               name: "Carrier Performance",
+               key: "carrierPerformance",
+               route: "/dashboards/carrierPerformance",
+               component: <CarrierPerformance />,
             },
          ],
       },
@@ -129,7 +126,6 @@ export default function App()
       layout,
       openConfigurator,
       sidenavColor,
-      darkMode,
    } = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
@@ -296,20 +292,6 @@ export default function App()
                name: user.name,
                key: user.name,
                icon: <MDAvatar src={profilePicture} alt="{user.name}" size="sm" />,
-               collapse: [
-                  {
-                     name: "My Profile",
-                     key: "my-profile",
-                     route: "/pages/profile/profile-overview",
-                     component: <ProfileOverview />,
-                  },
-                  {
-                     name: "Settings",
-                     key: "profile-settings",
-                     route: "/pages/account/settings",
-                     component: <Settings />,
-                  },
-               ],
             };
             setProfileRoutes(profileRoutes);
 
@@ -430,7 +412,7 @@ export default function App()
 
    return (
       appRoutes && (
-         <ThemeProvider theme={darkMode ? themeDark : theme}>
+         <ThemeProvider theme={theme}>
             <CssBaseline />
             {layout === "dashboard" && (
                <>
@@ -446,7 +428,7 @@ export default function App()
                </>
             )}
             <Routes>
-               <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
+               <Route path="*" element={<Navigate to="/dashboards/overview" />} />
                {appRoutes && getRoutes(appRoutes)}
                {getRoutes(getStaticRoutes())}
                {profileRoutes && getRoutes([profileRoutes])}

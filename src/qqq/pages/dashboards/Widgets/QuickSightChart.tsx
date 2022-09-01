@@ -21,8 +21,8 @@
 
 import Card from "@mui/material/Card";
 import React from "react";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 interface Props
 {
@@ -42,7 +42,7 @@ function Iframe({iframe}: IframeProps)
 
 function QuickSightChart({label, url}: Props): JSX.Element
 {
-   const iframe = `<iframe style='border: 0 solid #1A73E8; height: 411px; width: 99%' title=${label} src=${url} />`;
+   const iframe = `<iframe style='border: 0 solid #04aaef; height: 411px; width: 99%' title=${label} src=${url} />`;
 
    return (
       <Card sx={{height: "100%"}}>

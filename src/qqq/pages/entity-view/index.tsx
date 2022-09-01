@@ -22,8 +22,8 @@
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Grid from "@mui/material/Grid";
 import {useParams} from "react-router-dom";
-import MDBox from "components/MDBox";
 import BaseLayout from "qqq/components/BaseLayout";
+import MDBox from "qqq/components/Temporary/MDBox";
 import ViewContents from "./components/ViewContents";
 
 interface Props

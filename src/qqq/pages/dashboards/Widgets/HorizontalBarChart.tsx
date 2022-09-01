@@ -21,13 +21,13 @@
 
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
-import {useMemo, ReactNode} from "react";
-import {Pie} from "react-chartjs-2";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-import configs from "qqq/components/Widgets/Configs/PieChartConfigs"
+import {ReactNode, useMemo} from "react";
+import {Bar} from "react-chartjs-2";
+import colors from "qqq/components/Temporary/colors";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import configs from "qqq/pages/dashboards/Widgets/Configs/HorizontalBarChartConfigs"
 
-// Declaring props types for PieChart
 interface Props
 {
    icon?: {
@@ -41,17 +41,31 @@ interface Props
       labels: string[];
       datasets: {
          label: string;
-         backgroundColors: string[];
+         color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
          data: number[];
-      };
+      }[];
    };
 
    [key: string]: any;
 }
 
-function PieChart({icon, title, description, height, chart}: Props): JSX.Element
+function HorizontalBarChart({icon, title, description, height, chart}: Props): JSX.Element
 {
-   const {data, options} = configs(chart.labels || [], chart.datasets || {});
+   const chartDatasets = chart.datasets
+      ? chart.datasets.map((dataset) => ({
+         ...dataset,
+         weight: 5,
+         borderWidth: 0,
+         borderRadius: 4,
+         backgroundColor: colors[dataset.color]
+            ? colors[dataset.color || "dark"].main
+            : colors.dark.main,
+         fill: false,
+         maxBarThickness: 35,
+      }))
+      : [];
+
+   const {data, options} = configs(chart.labels || [], chartDatasets);
 
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
@@ -88,7 +102,7 @@ function PieChart({icon, title, description, height, chart}: Props): JSX.Element
          {useMemo(
             () => (
                <MDBox height={height}>
-                  <Pie data={data} options={options} />
+                  <Bar data={data} options={options} />
                </MDBox>
             ),
             [chart, height]
@@ -99,12 +113,11 @@ function PieChart({icon, title, description, height, chart}: Props): JSX.Element
    return title || description ? <Card>{renderChart}</Card> : renderChart;
 }
 
-// Declaring default props for PieChart
-PieChart.defaultProps = {
+HorizontalBarChart.defaultProps = {
    icon: {color: "info", component: ""},
    title: "",
    description: "",
    height: "19.125rem",
 };
 
-export default PieChart;
+export default HorizontalBarChart;

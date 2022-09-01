@@ -24,11 +24,10 @@ import React from "react";
 import {render} from "react-dom";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
+import "qqq/styles/qqq-override-styles.css";
 import {MaterialUIControllerProvider} from "context";
-import "./qqq/styles/qqq-override-styles.css";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/auth0/protected-route";
-
 
 const domain = process.env.REACT_APP_AUTH0_DOMAIN;
 const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
@@ -67,7 +66,7 @@ render(
       <Auth0ProviderWithRedirectCallback
          domain={domain}
          clientId={clientId}
-         redirectUri={`${window.location.origin}/dashboards/analytics`}
+         redirectUri={`${window.location.origin}/dashboards/overview`}
       >
          <MaterialUIControllerProvider>
             <ProtectedRoute component={App} />
