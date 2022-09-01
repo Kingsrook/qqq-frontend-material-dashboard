@@ -78,6 +78,7 @@
             }
          }
       ],
+      "jsx-one-expression-per-line": "off",
       "max-len": "off",
       "no-console": "off",
       "no-constant-condition": "off",

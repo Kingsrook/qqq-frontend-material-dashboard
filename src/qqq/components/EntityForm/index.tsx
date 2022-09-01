@@ -344,8 +344,8 @@ function EntityForm({table, id}: Props): JSX.Element
 
                         <MDBox component="div" p={3}>
                            <Grid container justifyContent="flex-end" spacing={3}>
-                              <QCancelButton onClickHandler={handleCancelClicked} />
-                              <QSaveButton />
+                              <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                              <QSaveButton disabled={isSubmitting} />
                            </Grid>
                         </MDBox>
 
