@@ -20,6 +20,7 @@
  */
 
 import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import {useMaterialUIController} from "context";
 import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
@@ -36,54 +37,50 @@ function ShipmentsByCarrierPieChart(): JSX.Element
    return (
       <Card sx={{height: "100%"}}>
          <MDBox display="flex" justifyContent="space-between" alignItems="center" pt={2} px={2}>
-            <MDTypography variant="h6">Shipments By Carrier YTD</MDTypography>
+            <MDTypography variant="h6">Shipments By Carrier Year To Date</MDTypography>
          </MDBox>
          <MDBox mt={3}>
             <Grid container alignItems="center">
                <Grid item xs={7}>
-                  <PieChart chart={shipmentsByCarrierPieChartData} height="12.5rem" />
+                  <PieChart chart={shipmentsByCarrierPieChartData} height="9.5rem" />
                </Grid>
                <Grid item xs={5}>
                   <MDBox pr={1}>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="dark" size="sm" badgeContent="AxleHire" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="info" size="sm" badgeContent="CDL" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="primary" size="sm" badgeContent="DHL" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="success" size="sm" badgeContent="FedEx" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="error" size="sm" badgeContent="LSO" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="secondary" size="sm" badgeContent="OnTrac" />
                      </MDBox>
-                     <MDBox mb={1}>
+                     <MDBox>
                         <MDBadgeDot color="warning" size="sm" badgeContent="UPS" />
                      </MDBox>
                   </MDBox>
                </Grid>
             </Grid>
-         </MDBox>
-         <MDBox
-            pt={4}
-            pb={2}
-            px={2}
-            display="flex"
-            flexDirection={{xs: "column", sm: "row"}}
-            mt="auto"
-         >
-            <MDBox width={{xs: "100%", sm: "60%"}} lineHeight={1}>
-               <MDTypography variant="button" color="text" fontWeight="light">
-                  More than <strong>1,200,000</strong> sales are made using referral marketing, and{" "}
-                  <strong>700,000</strong> are from social media.
-               </MDTypography>
-            </MDBox>
+            <Divider />
+            <Grid container>
+               <Grid item xs={12}>
+                  <MDBox pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto" >
+                     <MDTypography variant="button" color="text" fontWeight="light">
+                        <strong>Fedex and UPS</strong> delivered the majority of shipments with a combined percentage of <strong>55%</strong>.
+                        The fewest shipments were delivered by <strong>AxleHire and OnTrac</strong> combining for <strong>6%</strong>.
+                     </MDTypography>
+                  </MDBox>
+               </Grid>
+            </Grid>
          </MDBox>
       </Card>
    );

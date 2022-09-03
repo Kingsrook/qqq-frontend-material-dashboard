@@ -29,7 +29,7 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props {
   image: string;
   title: string;
-  description: string;
+  description: string | ReactNode;
   price: string;
   location: ReactNode;
   action?: ReactNode | boolean;
@@ -39,13 +39,7 @@ interface Props {
 function WarehouseCard({image, title, description, price, location, action}: Props): JSX.Element
 {
    return (
-      <Card
-         sx={{
-            "&:hover .card-header": {
-               transform: action && "translate3d(0, -50px, 0)",
-            },
-         }}
-      >
+      <Card>
          <MDBox
             position="relative"
             borderRadius="lg"

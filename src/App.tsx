@@ -32,6 +32,8 @@ import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
+import Settings from "layouts/pages/account/settings";
+import ProfileOverview from "layouts/pages/profile/profile-overview";
 import Sidenav from "qqq/components/Sidenav";
 import Configurator from "qqq/components/Temporary/Configurator";
 import MDAvatar from "qqq/components/Temporary/MDAvatar";
@@ -292,6 +294,20 @@ export default function App()
                name: user.name,
                key: user.name,
                icon: <MDAvatar src={profilePicture} alt="{user.name}" size="sm" />,
+               collapse: [
+                  {
+                     name: "My Profile",
+                     key: "my-profile",
+                     route: "/pages/profile/profile-overview",
+                     component: <ProfileOverview />,
+                  },
+                  {
+                     name: "Settings",
+                     key: "profile-settings",
+                     route: "/pages/account/settings",
+                     component: <Settings />,
+                  },
+               ],
             };
             setProfileRoutes(profileRoutes);
 
@@ -419,7 +435,6 @@ export default function App()
                   <Sidenav
                      color={sidenavColor}
                      brand={Logo}
-                     brandName="Nutrifresh One"
                      routes={sideNavRoutes}
                      onMouseEnter={handleOnMouseEnter}
                      onMouseLeave={handleOnMouseLeave}

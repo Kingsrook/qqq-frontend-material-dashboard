@@ -168,7 +168,6 @@ function AppHome({app}: Props): JSX.Element
 
    // eslint-disable-next-line no-nested-ternary
    const tileSizeLg = (widgetCount === 0 ? 3 : widgetCount === 1 ? 4 : 6);
-   let gridIndex = 0;
 
    return (
       <BaseLayout>
@@ -179,8 +178,8 @@ function AppHome({app}: Props): JSX.Element
                      <Grid item xs={12} lg={widgetCount === 1 ? 3 : 6}>
                         <Grid container spacing={3}>
                            {
-                              widgets.map((chart) => (
-                                 <Grid key={`${gridIndex++}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
+                              widgets.map((chart, i) => (
+                                 <Grid key={`${i}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
                                     <MDBox mb={3}>
                                        {
                                           chart.type === "quickSightChart" && (
@@ -245,7 +244,7 @@ function AppHome({app}: Props): JSX.Element
                                                    <MiniStatisticsCard
                                                       title={{fontWeight: "bold", text: table.label}}
                                                       count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : tableCounts.get(table.name).value.toLocaleString()}
-                                                      percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : "total records")}}
+                                                      percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCounts.get(table.name).value === 1 ? "total record" : "total records"))}}
                                                       icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
                                                       direction="right"
                                                    />

@@ -28,6 +28,7 @@ import {useLocation, NavLink} from "react-router-dom";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import {useMaterialUIController, setMiniSidenav, setTransparentSidenav, setWhiteSidenav,} from "context";
+import sidenavLogoLabel from "examples/Sidenav/styles/sidenav";
 import AuthenticationButton from "qqq/components/Buttons/AuthenticationButton";
 import SidenavCollapse from "qqq/components/Sidenav/SidenavCollapse";
 import SidenavItem from "qqq/components/Sidenav/SidenavItem";
@@ -37,7 +38,7 @@ import SidenavRoot from "qqq/components/Sidenav/SidenavRoot";
 interface Props {
   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
   brand?: string;
-  brandName: string;
+  brandName?: string;
   routes: {
     [key: string]:
        | ReactNode
@@ -313,7 +314,13 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
                </MDTypography>
             </MDBox>
             <MDBox component={NavLink} to="/" display="flex" alignItems="center">
-               <MDBox component="img" src={brand} alt="Brand" width="100%" />
+               {brand && <MDBox component="img" src={brand} alt="Brand" width="100%" />}
+               {brandName && <MDBox width={!brandName && "100%"} sx={(theme: any) => sidenavLogoLabel(theme, {miniSidenav})}>
+                  <MDTypography component="h6" variant="button" fontWeight="medium" color={textColor}>
+                     {brandName}
+                  </MDTypography>
+               </MDBox>
+               }
             </MDBox>
          </MDBox>
          <Divider
@@ -332,6 +339,7 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
 Sidenav.defaultProps = {
    color: "info",
    brand: "",
+   brandName: "",
 };
 
 export default Sidenav;

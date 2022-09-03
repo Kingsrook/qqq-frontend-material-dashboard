@@ -22,15 +22,14 @@
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip";
-import booking1 from "assets/images/products/product-1-min.jpg";
-import booking2 from "assets/images/products/product-2-min.jpg";
-import booking3 from "assets/images/products/product-3-min.jpg";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
-import BookingCard from "qqq/components/Temporary/BookingCard";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
+import edisonWarehouse from "qqq/images/warehouses/edison_nj.jpg";
+import pattersonWarehouse from "qqq/images/warehouses/patterson.jpg";
+import stocktonWarehouse from "qqq/images/warehouses/stockton.jpg";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import shipmentsByDayBarChartData from "qqq/pages/dashboards/Widgets/Data/ShipmentsByDayBarChartData";
 import shipmentsByMonthLineChartData from "qqq/pages/dashboards/Widgets/Data/ShipmentsByMonthLineChartData";
@@ -38,6 +37,7 @@ import ShipmentsByCarrierPieChart from "qqq/pages/dashboards/Widgets/ShipmentsBy
 import ShipmentsByWarehouse from "qqq/pages/dashboards/Widgets/ShipmentsByWarehouse";
 import SmallLineChart from "qqq/pages/dashboards/Widgets/SmallLineChart";
 import StatisticsCard from "qqq/pages/dashboards/Widgets/StatisticsCard";
+import WarehouseCard from "qqq/pages/dashboards/Widgets/WarehouseCard";
 
 function Overview(): JSX.Element
 {
@@ -75,7 +75,9 @@ function Overview(): JSX.Element
                         <BarChart
                            color="info"
                            title="Total Shipments by Day"
-                           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce at auctor leo. Aliquam luctus est purus, ut placerat libero aliquet sed. Quisque consequat sem vitae iaculis tempus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. "
+                           description={
+                              <span>Over the last week there have been <strong>3 days</strong> with total shipments <strong>greater than</strong> the daily average of <strong>564 shipments</strong>.</span>
+                           }
                            date="Updated 3 minutes ago"
                            chart={shipmentsByDayBarChartData}
                         />
@@ -91,7 +93,9 @@ function Overview(): JSX.Element
                         <SmallLineChart
                            color="dark"
                            title="shipments by month"
-                           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce at auctor leo. Aliquam luctus est purus, ut placerat libero aliquet sed. Quisque consequat sem vitae iaculis tempus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. "
+                           description={
+                              <span>Total shipments have been <strong>increasing</strong> over the last eight months.</span>
+                           }
                            date="Just updated"
                            chart={shipmentsByMonthLineChartData}
                         />
@@ -165,10 +169,12 @@ function Overview(): JSX.Element
                <Grid container spacing={3}>
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mt={3}>
-                        <BookingCard
-                           image={booking1}
-                           title="Warehouse Performance Report"
-                           description='The place is close to Barceloneta Beach and bus stop just 2 min by walk and near to "Naviglio" where you can enjoy the main night life in Barcelona.'
+                        <WarehouseCard
+                           image={edisonWarehouse}
+                           title="Edison, NJ"
+                           description={
+                              <span>The Edison, NJ warehouse currently has <strong>38 open orders</strong> and <strong>39 ASNs</strong> are expected in the next week.</span>
+                           }
                            price="99% SLA"
                            location="Edison, NJ"
                            action={actionButtons}
@@ -177,10 +183,12 @@ function Overview(): JSX.Element
                   </Grid>
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mt={3}>
-                        <BookingCard
-                           image={booking3}
-                           title="Warehouse Performance Report"
-                           description='The place is close to Metro Station and bus stop just 2 min by walk and near to "Naviglio" where you can enjoy the main night life in Milan.'
+                        <WarehouseCard
+                           image={pattersonWarehouse}
+                           title="Patterson, CA"
+                           description={
+                              <span>The Patterson, CA warehouse shipped <strong>32,032</strong> this year.  The delivery SLA is <strong>97.3%</strong>, up <strong>0.8%</strong> from last week.</span>
+                           }
                            price="98% SLA"
                            location="Patterson, CA"
                            action={actionButtons}
@@ -189,10 +197,12 @@ function Overview(): JSX.Element
                   </Grid>
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mt={3}>
-                        <BookingCard
-                           image={booking2}
-                           title="Warehouse Performance Report"
-                           description='The place is close to Metro Station and bus stop just 2 min by walk and near to "Naviglio" where you can enjoy the night life in London, UK.'
+                        <WarehouseCard
+                           image={stocktonWarehouse}
+                           title="Stockton, CA"
+                           description={
+                              <span>The Stockton, CA warehouse shipped <strong>2,032</strong> packages yesterday. Last week&apos;s failed shipments were down by <strong>12%</strong>.</span>
+                           }
                            price="95% SLA"
                            location="Stockton, CA"
                            action={actionButtons}

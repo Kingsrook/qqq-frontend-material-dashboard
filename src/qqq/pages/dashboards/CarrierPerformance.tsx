@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Title} from "@mui/icons-material";
+import {Icon} from "@mui/material";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Tooltip from "@mui/material/Tooltip";
-import {useState} from "react";
+import React, {useState} from "react";
 import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DataTable from "examples/Tables/DataTable";
@@ -33,60 +33,84 @@ import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
 import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
-import MDButton from "qqq/components/Temporary/MDButton";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import ShipmentsByWarehouseTable from "qqq/pages/dashboards/Tables/ShipmentsByWarehouseTable";
 import carrierSpendData from "qqq/pages/dashboards/Widgets/Data/CarrierSpendData";
 import carrierVolumeLineChartData from "qqq/pages/dashboards/Widgets/Data/CarrierVolumeLineChartData";
 import smallShipmentsByWarehouseData from "qqq/pages/dashboards/Widgets/Data/SmallShipmentsByWarehouseData";
-import timeInTransitBarChartData from "qqq/pages/dashboards/Widgets/Data/timeInTransitBarChartData";
+import timeInTransitBarChartData from "qqq/pages/dashboards/Widgets/Data/TimeInTransitBarChartData";
 import ShipmentsByCarrierPieChart from "qqq/pages/dashboards/Widgets/ShipmentsByChannelPieChart";
 import SimpleStatisticsCard from "qqq/pages/dashboards/Widgets/SimpleStatisticsCard";
 import HorizontalBarChart from "./Widgets/HorizontalBarChart";
 
 function CarrierPerformance(): JSX.Element
 {
-   const [salesDropdownValue, setSalesDropdownValue] = useState<string>("Last 30 Days");
-   const [customersDropdownValue, setCustomersDropdownValue] = useState<string>("Last 30 Days");
-   const [revenueDropdownValue, setRevenueDropdownValue] = useState<string>("Last 30 Days");
+   const openArrowIcon = "arrow_drop_down";
+   const closeArrowIcon = "arrow_drop_up";
 
-   const [salesDropdown, setSalesDropdown] = useState<string | null>(null);
-   const [customersDropdown, setCustomersDropdown] = useState<string | null>(null);
-   const [revenueDropdown, setRevenueDropdown] = useState<string | null>(null);
+   const [shipmentsDropdownValue, setShipmentsDropdownValue] = useState<string>("Last 30 Days");
+   const [deliveriesDropdownValue, setDeliveriesDropdownValue] = useState<string>("Last 30 Days");
+   const [failuresDropdownValue, setFailuresDropdownValue] = useState<string>("Last 30 Days");
 
-   const openSalesDropdown = ({currentTarget}: any) => setSalesDropdown(currentTarget);
-   const closeSalesDropdown = ({currentTarget}: any) =>
+   const [shipmentsDropdown, setShipmentsDropdown] = useState<string | null>(null);
+   const [deliveriesDropdown, setDeliveriesDropdown] = useState<string | null>(null);
+   const [failuresDropdown, setFailuresDropdown] = useState<string | null>(null);
+
+   const [shipmentsDropdownIcon, setShipmentsDropdownIcon] = useState<string>(openArrowIcon);
+   const [deliveriesDropdownIcon, setDeliveriesDropdownIcon] = useState<string>(openArrowIcon);
+   const [failuresDropdownIcon, setFailuresDropdownIcon] = useState<string>(openArrowIcon);
+
+   const openShipmentsDropdown = ({currentTarget}: any) =>
    {
-      setSalesDropdown(null);
-      setSalesDropdownValue(currentTarget.innerText || salesDropdownValue);
+      setShipmentsDropdown(currentTarget);
+      setShipmentsDropdownIcon(closeArrowIcon);
+   }
+   const closeShipmentsDropdown = ({currentTarget}: any) =>
+   {
+      setShipmentsDropdown(null);
+      setShipmentsDropdownValue(currentTarget.innerText || shipmentsDropdownValue);
+      setShipmentsDropdownIcon(openArrowIcon);
    };
-   const openCustomersDropdown = ({currentTarget}: any) => setCustomersDropdown(currentTarget);
-   const closeCustomersDropdown = ({currentTarget}: any) =>
+   const openDeliveriesDropdown = ({currentTarget}: any) =>
    {
-      setCustomersDropdown(null);
-      setCustomersDropdownValue(currentTarget.innerText || salesDropdownValue);
+      setDeliveriesDropdown(currentTarget);
+      setDeliveriesDropdownIcon(closeArrowIcon)
+   }
+   const closeDeliveriesDropdown = ({currentTarget}: any) =>
+   {
+      setDeliveriesDropdown(null);
+      setDeliveriesDropdownValue(currentTarget.innerText || shipmentsDropdownValue);
+      setDeliveriesDropdownIcon(openArrowIcon);
    };
-   const openRevenueDropdown = ({currentTarget}: any) => setRevenueDropdown(currentTarget);
-   const closeRevenueDropdown = ({currentTarget}: any) =>
+   const openFailuresDropdown = ({currentTarget}: any) =>
    {
-      setRevenueDropdown(null);
-      setRevenueDropdownValue(currentTarget.innerText || salesDropdownValue);
+      setFailuresDropdown(currentTarget);
+      setFailuresDropdownIcon(closeArrowIcon)
+   }
+   const closeFailuresDropdown = ({currentTarget}: any) =>
+   {
+      setFailuresDropdown(null);
+      setFailuresDropdownValue(currentTarget.innerText || shipmentsDropdownValue);
+      setFailuresDropdownIcon(openArrowIcon);
    };
 
    // Dropdown menu template for the DefaultStatisticsCard
-   const renderMenu = (state: any, close: any) => (
-      <Menu
-         anchorEl={state}
-         transformOrigin={{vertical: "top", horizontal: "center"}}
-         open={Boolean(state)}
-         onClose={close}
-         keepMounted
-         disableAutoFocusItem
-      >
-         <MenuItem onClick={close}>Last 7 days</MenuItem>
-         <MenuItem onClick={close}>Last week</MenuItem>
-         <MenuItem onClick={close}>Last 30 days</MenuItem>
-      </Menu>
+   const renderMenu = (state: any, open: any, close: any, icon: string) => (
+      <span style={{whiteSpace: "nowrap"}}>
+         <Icon onClick={open} fontSize={"medium"} style={{cursor: "pointer", float: "right"}}>{icon}</Icon>
+         <Menu
+            anchorEl={state}
+            transformOrigin={{vertical: "top", horizontal: "center"}}
+            open={Boolean(state)}
+            onClose={close}
+            keepMounted
+            disableAutoFocusItem
+         >
+            <MenuItem onClick={close}>Last 7 days</MenuItem>
+            <MenuItem onClick={close}>Last week</MenuItem>
+            <MenuItem onClick={close}>Last 30 days</MenuItem>
+         </Menu>
+      </span>
    );
 
    return (
@@ -105,9 +129,9 @@ function CarrierPerformance(): JSX.Element
                            label: "since last month",
                         }}
                         dropdown={{
-                           action: openSalesDropdown,
-                           menu: renderMenu(salesDropdown, closeSalesDropdown),
-                           value: salesDropdownValue,
+                           action: openShipmentsDropdown,
+                           menu: renderMenu(shipmentsDropdown, openShipmentsDropdown, closeShipmentsDropdown, shipmentsDropdownIcon),
+                           value: shipmentsDropdownValue,
                         }}
                      />
                   </Grid>
@@ -121,9 +145,9 @@ function CarrierPerformance(): JSX.Element
                            label: "since last month",
                         }}
                         dropdown={{
-                           action: openCustomersDropdown,
-                           menu: renderMenu(customersDropdown, closeCustomersDropdown),
-                           value: customersDropdownValue,
+                           action: openDeliveriesDropdown,
+                           menu: renderMenu(deliveriesDropdown, openDeliveriesDropdown, closeDeliveriesDropdown, deliveriesDropdownIcon),
+                           value: deliveriesDropdownValue,
                         }}
                      />
                   </Grid>
@@ -137,9 +161,9 @@ function CarrierPerformance(): JSX.Element
                            label: "since last month",
                         }}
                         dropdown={{
-                           action: openRevenueDropdown,
-                           menu: renderMenu(revenueDropdown, closeRevenueDropdown),
-                           value: revenueDropdownValue,
+                           action: openFailuresDropdown,
+                           menu: renderMenu(failuresDropdown, openFailuresDropdown, closeFailuresDropdown, failuresDropdownIcon),
+                           value: failuresDropdownValue,
                         }}
                      />
                   </Grid>

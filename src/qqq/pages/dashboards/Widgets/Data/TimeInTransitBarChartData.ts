@@ -24,12 +24,12 @@ interface Types {
 }
 
 const timeInTransitBarChartData: Types = {
-   labels: ["<1", "1", "2", "3", "3+"],
+   labels: ["1", "2", "3", "3+"],
    datasets: [
       {
          label: " time in transit",
          color: "dark",
-         data: [150, 2088, 8888, 5883, 203],
+         data: [2088, 8888, 5883, 203],
       },
    ],
 };
