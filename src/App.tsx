@@ -1,56 +1,55 @@
-import React, {
-   JSXElementConstructor, Key, ReactElement, useEffect, useState,
-} from "react";
-
-// react-router components
-import {
-   Navigate, Route, Routes, useLocation,
-} from "react-router-dom";
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 import {useAuth0} from "@auth0/auth0-react";
-
-// @mui material components
-import {LicenseInfo} from "@mui/x-license-pro";
-import {ThemeProvider} from "@mui/material/styles";
+import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
+import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
-
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-
-// Material Dashboard 2 PRO React TS exampless
-import Sidenav from "examples/Sidenav";
-import Configurator from "examples/Configurator";
-
-// Material Dashboard 2 PRO React TS themes
-import theme from "assets/theme";
-
-// Material Dashboard 2 PRO React TS Dark Mode themes
-import themeDark from "assets/theme-dark";
-
-// Material Dashboard 2 PRO React TS contexts
-import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
-
-// Images
-import nfLogo from "assets/images/nutrifresh_one_icon_white.png";
-import {Md5} from "ts-md5/dist/md5";
+import {ThemeProvider} from "@mui/material/styles";
+import {LicenseInfo} from "@mui/x-license-pro";
+import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
 import {useCookies} from "react-cookie";
-import EntityCreate from "./qqq/pages/entity-create";
-import EntityList from "./qqq/pages/entity-list";
-import EntityView from "./qqq/pages/entity-view";
-import EntityEdit from "./qqq/pages/entity-edit";
-import ProcessRun from "./qqq/pages/process-run";
+import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
+import {Md5} from "ts-md5/dist/md5";
+import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
+import Settings from "layouts/pages/account/settings";
+import ProfileOverview from "layouts/pages/profile/profile-overview";
+import Sidenav from "qqq/components/Sidenav";
+import Configurator from "qqq/components/Temporary/Configurator";
+import MDAvatar from "qqq/components/Temporary/MDAvatar";
+import MDBox from "qqq/components/Temporary/MDBox";
+import theme from "qqq/components/Temporary/Theme"
+import Logo from "qqq/images/logo-blue.png";
 import AppHome from "qqq/pages/app-home";
-import MDAvatar from "./components/MDAvatar";
-import ProfileOverview from "./layouts/pages/profile/profile-overview";
-import Settings from "./layouts/pages/account/settings";
-import Analytics from "./layouts/dashboards/analytics";
-import Sales from "./layouts/dashboards/sales";
-import QClient from "./qqq/utils/QClient";
-import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import CarrierPerformance from "qqq/pages/dashboards/CarrierPerformance";
+import Overview from "qqq/pages/dashboards/Overview";
+import EntityCreate from "qqq/pages/entity-create";
+import EntityEdit from "qqq/pages/entity-edit";
+import EntityList from "qqq/pages/entity-list";
+import EntityView from "qqq/pages/entity-view";
+import ProcessRun from "qqq/pages/process-run";
+import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
-import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -66,16 +65,16 @@ function getStaticRoutes()
          icon: <Icon fontSize="medium">dashboard</Icon>,
          collapse: [
             {
-               name: "Analytics",
-               key: "analytics",
-               route: "/dashboards/analytics",
-               component: <Analytics />,
+               name: "Overview",
+               key: "overview",
+               route: "/dashboards/overview",
+               component: <Overview />,
             },
             {
-               name: "Sales",
-               key: "sales",
-               route: "/dashboards/sales",
-               component: <Sales />,
+               name: "Carrier Performance",
+               key: "carrierPerformance",
+               route: "/dashboards/carrierPerformance",
+               component: <CarrierPerformance />,
             },
          ],
       },
@@ -129,7 +128,6 @@ export default function App()
       layout,
       openConfigurator,
       sidenavColor,
-      darkMode,
    } = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
@@ -430,14 +428,13 @@ export default function App()
 
    return (
       appRoutes && (
-         <ThemeProvider theme={darkMode ? themeDark : theme}>
+         <ThemeProvider theme={theme}>
             <CssBaseline />
             {layout === "dashboard" && (
                <>
                   <Sidenav
                      color={sidenavColor}
-                     brand={nfLogo}
-                     brandName="Nutrifresh One"
+                     brand={Logo}
                      routes={sideNavRoutes}
                      onMouseEnter={handleOnMouseEnter}
                      onMouseLeave={handleOnMouseLeave}
@@ -446,7 +443,7 @@ export default function App()
                </>
             )}
             <Routes>
-               <Route path="*" element={<Navigate to="/dashboards/analytics" />} />
+               <Route path="*" element={<Navigate to="/dashboards/overview" />} />
                {appRoutes && getRoutes(appRoutes)}
                {getRoutes(getStaticRoutes())}
                {profileRoutes && getRoutes([profileRoutes])}

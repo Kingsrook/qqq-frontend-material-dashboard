@@ -19,28 +19,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @mui material components
 import Link from "@mui/material/Link";
-import Icon from "@mui/material/Icon";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import typography from "qqq/components/Temporary/typography";
 
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-
-// Material Dashboard 2 PRO React TS Base Styles
-import typography from "assets/theme/base/typography";
 
 // Declaring props types for Footer
-interface Props {
-  company?: {
-    href: string;
-    name: string;
-  };
-  links?: {
-    href: string;
-    name: string;
-  }[];
-  [key: string]: any;
+interface Props
+{
+   company?: {
+      href: string;
+      name: string;
+   };
+   links?: {
+      href: string;
+      name: string;
+   }[];
+
+   [key: string]: any;
 }
 
 function Footer({company, links}: Props): JSX.Element
@@ -85,9 +82,9 @@ function Footer({company, links}: Props): JSX.Element
             ,
             <Link href={href} target="_blank">
                <MDTypography variant="button" fontWeight="medium">
-            &nbsp;
+                  &nbsp;
                   {name}
-&nbsp;
+                  &nbsp;
                </MDTypography>
             </Link>
          </MDBox>

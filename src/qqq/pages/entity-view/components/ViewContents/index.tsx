@@ -19,41 +19,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// react components
-import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
-import React, {useReducer, useState} from "react";
-
-// @material-ui core components
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import Grid from "@mui/material/Grid";
 import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
+import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
-
-// qqq imports
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import DialogTitle from "@mui/material/DialogTitle";
+import Grid from "@mui/material/Grid";
+import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import MDAlert from "components/MDAlert";
-import QProcessUtils from "../../../../utils/QProcessUtils";
-import QClient from "qqq/utils/QClient";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import React, {useReducer, useState} from "react";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
-import QValueUtils from "qqq/utils/QValueUtils";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import Icon from "@mui/material/Icon";
-import Avatar from "@mui/material/Avatar";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
+import colors from "qqq/components/Temporary/colors";
+import MDAlert from "qqq/components/Temporary/MDAlert";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import QClient from "qqq/utils/QClient";
 import QTableUtils from "qqq/utils/QTableUtils";
-import colors from "assets/theme/base/colors";
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
+import QValueUtils from "qqq/utils/QValueUtils";
+import QProcessUtils from "../../../../utils/QProcessUtils";
 
 const qController = QClient.getInstance();
 

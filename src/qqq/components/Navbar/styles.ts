@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @mui material components
 import {Theme} from "@mui/material/styles";
 
 function navbar(theme: Theme | any, ownerState: any)

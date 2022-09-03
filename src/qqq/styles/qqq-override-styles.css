@@ -110,3 +110,10 @@
    margin-left: 40px;
    font-size: 14px;
 }
+
+/* Help make the radio, text, and icon wrap in a good way */
+.doFullValidationRadios label
+{
+   display: flex;
+   align-items: flex-start;
+}

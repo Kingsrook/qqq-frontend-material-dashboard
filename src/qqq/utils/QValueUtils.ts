@@ -20,9 +20,8 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
 
 /*******************************************************************************
@@ -54,6 +53,11 @@ class QValueUtils
       else if (field.type === QFieldType.TIME)
       {
          return (displayValue);
+      }
+
+      if (displayValue === undefined && rawValue !== undefined)
+      {
+         return (rawValue);
       }
 
       return (displayValue);

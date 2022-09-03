@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import MDBox from "components/MDBox";
-import {Link} from "react-router-dom";
-import MDButton from "components/MDButton";
 import Icon from "@mui/material/Icon";
 import React from "react";
+import {Link} from "react-router-dom";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDButton from "qqq/components/Temporary/MDButton";
 
 // eslint-disable import/prefer-default-export
 
@@ -42,11 +42,16 @@ export function QCreateNewButton(): JSX.Element
    );
 }
 
-export function QSaveButton(): JSX.Element
+interface QSaveButtonProps
+{
+   disabled: boolean
+}
+
+export function QSaveButton({disabled}: QSaveButtonProps): JSX.Element
 {
    return (
       <MDBox ml={3} width={standardWidth}>
-         <MDButton type="submit" variant="gradient" color="info" size="small" fullWidth startIcon={<Icon>save</Icon>}>
+         <MDButton type="submit" variant="gradient" color="info" size="small" fullWidth startIcon={<Icon>save</Icon>} disabled={disabled}>
             Save
          </MDButton>
       </MDBox>
@@ -108,15 +113,48 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
 interface QCancelButtonProps
 {
    onClickHandler: any;
+   disabled: boolean;
+   label?: string;
+   iconName?: string
 }
 
-export function QCancelButton({onClickHandler}: QCancelButtonProps): JSX.Element
+export function QCancelButton({
+   onClickHandler, disabled, label, iconName,
+}: QCancelButtonProps): JSX.Element
 {
    return (
       <MDBox ml="auto" width={standardWidth}>
-         <MDButton type="button" variant="outlined" color="dark" size="small" fullWidth startIcon={<Icon>cancel</Icon>} onClick={onClickHandler}>
-            Cancel
+         <MDButton type="button" variant="outlined" color="dark" size="small" fullWidth startIcon={<Icon>{iconName}</Icon>} onClick={onClickHandler} disabled={disabled}>
+            {label}
          </MDButton>
       </MDBox>
    );
 }
+
+QCancelButton.defaultProps = {
+   label: "cancel",
+   iconName: "cancel",
+};
+
+interface QSubmitButtonProps
+{
+   label?: string
+   iconName?: string
+   disabled: boolean
+}
+
+export function QSubmitButton({label, iconName, disabled}: QSubmitButtonProps): JSX.Element
+{
+   return (
+      <MDBox ml={3} width={standardWidth}>
+         <MDButton type="submit" variant="gradient" color="dark" size="small" fullWidth startIcon={<Icon>{iconName}</Icon>} disabled={disabled}>
+            {label}
+         </MDButton>
+      </MDBox>
+   );
+}
+
+QSubmitButton.defaultProps = {
+   label: "Submit",
+   iconName: "check",
+};

@@ -19,16 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @mui material components
-import Grid from "@mui/material/Grid";
-
-// Material Dashboard 2 PRO React TS components
-import MDBox from "components/MDBox";
-
-// Settings page components
-import EntityForm from "qqq/components/EntityForm";
-import BaseLayout from "qqq/components/BaseLayout";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import Grid from "@mui/material/Grid";
+import BaseLayout from "qqq/components/BaseLayout";
+import EntityForm from "qqq/components/EntityForm";
+import MDBox from "qqq/components/Temporary/MDBox";
 
 interface Props
 {
