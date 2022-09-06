@@ -64,7 +64,7 @@ class QFilterUtils
             return QCriteriaOperator.IS_BLANK;
          case "isNotEmpty":
             return QCriteriaOperator.IS_NOT_BLANK;
-         case "isAny":
+         case "isAnyOf":
             return QCriteriaOperator.IN;
          case "isNone": // todo - verify - not seen in UI
             return QCriteriaOperator.NOT_IN;
@@ -118,7 +118,7 @@ class QFilterUtils
                   return ("isNot");
             }
          case QCriteriaOperator.IN:
-            return ("isAny");
+            return ("isAnyOf");
          case QCriteriaOperator.NOT_IN:
             return ("isNone"); // todo verify - not seen in UI
          case QCriteriaOperator.STARTS_WITH:

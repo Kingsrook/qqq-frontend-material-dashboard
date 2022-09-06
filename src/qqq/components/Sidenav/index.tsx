@@ -35,32 +35,35 @@ import SidenavItem from "qqq/components/Sidenav/SidenavItem";
 import SidenavList from "qqq/components/Sidenav/SidenavList";
 import SidenavRoot from "qqq/components/Sidenav/SidenavRoot";
 
-interface Props {
-  color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
-  brand?: string;
-  brandName?: string;
-  routes: {
-    [key: string]:
-       | ReactNode
-       | string
-       | {
+interface Props
+{
+   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
+   icon?: string;
+   logo?: string;
+   companyName?: string;
+   routes: {
       [key: string]:
          | ReactNode
          | string
          | {
-        [key: string]:
-           | ReactNode
-           | string
-           | {
-          [key: string]: ReactNode | string;
-        }[];
+         [key: string]:
+            | ReactNode
+            | string
+            | {
+            [key: string]:
+               | ReactNode
+               | string
+               | {
+               [key: string]: ReactNode | string;
+            }[];
+         }[];
       }[];
-    }[];
-  }[];
-  [key: string]: any;
+   }[];
+
+   [key: string]: any;
 }
 
-function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
+function Sidenav({color, icon, logo, companyName, routes, ...rest}: Props): JSX.Element
 {
    const [openCollapse, setOpenCollapse] = useState<boolean | string>(false);
    const [openNestedCollapse, setOpenNestedCollapse] = useState<boolean | string>(false);
@@ -75,17 +78,17 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    let textColor:
-    | "primary"
-    | "secondary"
-    | "info"
-    | "success"
-    | "warning"
-    | "error"
-    | "dark"
-    | "white"
-    | "inherit"
-    | "text"
-    | "light" = "white";
+      | "primary"
+      | "secondary"
+      | "info"
+      | "success"
+      | "warning"
+      | "error"
+      | "dark"
+      | "white"
+      | "inherit"
+      | "text"
+      | "light" = "white";
 
    if (transparentSidenav || (whiteSidenav && !darkMode))
    {
@@ -115,8 +118,8 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
       }
 
       /**
-     The event listener that's calling the handleMiniSidenav function when resizing the window.
-    */
+       The event listener that's calling the handleMiniSidenav function when resizing the window.
+       */
       window.addEventListener("resize", handleMiniSidenav);
       window.onload = () =>
       {
@@ -283,7 +286,7 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
                   key={key}
                   light={
                      (!darkMode && !whiteSidenav && !transparentSidenav) ||
-              (darkMode && !transparentSidenav && whiteSidenav)
+                     (darkMode && !transparentSidenav && whiteSidenav)
                   }
                />
             );
@@ -314,10 +317,11 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
                </MDTypography>
             </MDBox>
             <MDBox component={NavLink} to="/" display="flex" alignItems="center">
-               {brand && <MDBox component="img" src={brand} alt="Brand" width="100%" />}
-               {brandName && <MDBox width={!brandName && "100%"} sx={(theme: any) => sidenavLogoLabel(theme, {miniSidenav})}>
+               {!miniSidenav && logo && <MDBox component="img" src={logo} alt="Logo" width="100%" />}
+               {miniSidenav && icon && <MDBox component="img" src={icon} alt="Icon" width="160%" />}
+               {!miniSidenav && companyName && <MDBox width={!companyName && "100%"} sx={(theme: any) => sidenavLogoLabel(theme, {miniSidenav})}>
                   <MDTypography component="h6" variant="button" fontWeight="medium" color={textColor}>
-                     {brandName}
+                     {companyName}
                   </MDTypography>
                </MDBox>
                }
@@ -326,7 +330,7 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
          <Divider
             light={
                (!darkMode && !whiteSidenav && !transparentSidenav) ||
-          (darkMode && !transparentSidenav && whiteSidenav)
+               (darkMode && !transparentSidenav && whiteSidenav)
             }
          />
          <List>{renderRoutes}</List>
@@ -338,8 +342,9 @@ function Sidenav({color, brand, brandName, routes, ...rest}: Props): JSX.Element
 // Declaring default props for Sidenav
 Sidenav.defaultProps = {
    color: "info",
-   brand: "",
-   brandName: "",
+   icon: "",
+   logo: "",
+   companyName: "",
 };
 
 export default Sidenav;

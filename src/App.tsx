@@ -22,6 +22,7 @@
 import {useAuth0} from "@auth0/auth0-react";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
+import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
@@ -38,8 +39,7 @@ import Sidenav from "qqq/components/Sidenav";
 import Configurator from "qqq/components/Temporary/Configurator";
 import MDAvatar from "qqq/components/Temporary/MDAvatar";
 import MDBox from "qqq/components/Temporary/MDBox";
-import theme from "qqq/components/Temporary/Theme"
-import Logo from "qqq/images/logo-blue.png";
+import theme from "qqq/components/Temporary/Theme";
 import AppHome from "qqq/pages/app-home";
 import CarrierPerformance from "qqq/pages/dashboards/CarrierPerformance";
 import Overview from "qqq/pages/dashboards/Overview";
@@ -50,6 +50,8 @@ import EntityView from "qqq/pages/entity-view";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
+import BlueIcon from "../public/nf-icon-blue.png";
+import BlueLogo from "../public/nf-logo-blue.png";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -87,6 +89,7 @@ LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
+   let logo, icon;
    const [, setCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
    const {
       user, getAccessTokenSilently, getIdTokenClaims, logout, loginWithRedirect,
@@ -94,6 +97,7 @@ export default function App()
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
+   const [branding, setBranding] = useState({} as QBrandingMetaData);
 
    useEffect(() =>
    {
@@ -122,13 +126,7 @@ export default function App()
    }, [loadingToken]);
 
    const [controller, dispatch] = useMaterialUIController();
-   const {
-      miniSidenav,
-      direction,
-      layout,
-      openConfigurator,
-      sidenavColor,
-   } = controller;
+   const {miniSidenav, direction, layout, openConfigurator, sidenavColor} = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
 
@@ -284,9 +282,21 @@ export default function App()
          try
          {
             const metaData = await QClient.getInstance().loadMetaData();
+            setBranding(metaData.branding);
+
+            const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if(favicon)
+            {
+               favicon.href = metaData.branding.icon;
+            }
+            const appleIcon = document.querySelector("link[rel~='apple-touch-icon']") as HTMLLinkElement;
+            if(appleIcon)
+            {
+               appleIcon.href = metaData.branding.icon
+            }
 
             let profileRoutes = {};
-            const gravatarBase = "http://www.gravatar.com/avatar/";
+            const gravatarBase = "https://www.gravatar.com/avatar/";
             const hash = Md5.hashStr(user.email);
             const profilePicture = `${gravatarBase}${hash}`;
             profileRoutes = {
@@ -434,7 +444,9 @@ export default function App()
                <>
                   <Sidenav
                      color={sidenavColor}
-                     brand={Logo}
+                     icon={branding.icon}
+                     logo={branding.logo}
+                     companyName={branding.companyName}
                      routes={sideNavRoutes}
                      onMouseEnter={handleOnMouseEnter}
                      onMouseLeave={handleOnMouseLeave}

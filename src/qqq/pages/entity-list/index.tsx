@@ -59,43 +59,46 @@ interface Props
  ** Get the default filter to use on the page - either from query string, or
  ** local storage, or a default (empty).
  *******************************************************************************/
-function getDefaultFilter(searchParams: URLSearchParams, filterLocalStorageKey: string): GridFilterModel
+function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearchParams, filterLocalStorageKey: string): GridFilterModel
 {
-   if (searchParams.has("filter"))
+   if (tableMetaData.fields !== undefined)
    {
-      try
+      if (searchParams.has("filter"))
       {
-         const qQueryFilter = JSON.parse(searchParams.get("filter")) as QQueryFilter;
-         console.log(`Got a filter from the query string: ${JSON.stringify(qQueryFilter)}`);
-
-         //////////////////////////////////////////////////////////////////
-         // translate from a qqq-style filter to one that the grid wants //
-         //////////////////////////////////////////////////////////////////
-         const defaultFilter = {items: []} as GridFilterModel;
-         let id = 1;
-         qQueryFilter.criteria.forEach((criteria) =>
+         try
          {
-            defaultFilter.items.push({
-               columnField: criteria.fieldName,
-               operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator),
-               value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values),
-               id: id++, // not sure what this id is!!
-            });
-         });
+            const qQueryFilter = JSON.parse(searchParams.get("filter")) as QQueryFilter;
 
+            //////////////////////////////////////////////////////////////////
+            // translate from a qqq-style filter to one that the grid wants //
+            //////////////////////////////////////////////////////////////////
+            const defaultFilter = {items: []} as GridFilterModel;
+            let id = 1;
+            qQueryFilter.criteria.forEach((criteria) =>
+            {
+               const fieldType = tableMetaData.fields.get(criteria.fieldName).type;
+               defaultFilter.items.push({
+                  columnField: criteria.fieldName,
+                  operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, fieldType),
+                  value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values),
+                  id: id++, // not sure what this id is!!
+               });
+            });
+
+            return (defaultFilter);
+         }
+         catch (e)
+         {
+            console.warn("Error parsing filter from query string", e);
+         }
+      }
+
+      if (localStorage.getItem(filterLocalStorageKey))
+      {
+         const defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
+         console.log(`Got default from LS: ${JSON.stringify(defaultFilter)}`);
          return (defaultFilter);
       }
-      catch (e)
-      {
-         console.warn("Error parsing filter from query string", e);
-      }
-   }
-
-   if (localStorage.getItem(filterLocalStorageKey))
-   {
-      const defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
-      console.log(`Got default from LS: ${JSON.stringify(defaultFilter)}`);
-      return (defaultFilter);
    }
 
    return ({items: []});
@@ -116,7 +119,6 @@ function EntityList({table}: Props): JSX.Element
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
-   const _defaultFilter = getDefaultFilter(searchParams, filterLocalStorageKey);
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -127,7 +129,7 @@ function EntityList({table}: Props): JSX.Element
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
    }
 
-   const [filterModel, setFilterModel] = useState(_defaultFilter);
+   const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
 
@@ -137,11 +139,11 @@ function EntityList({table}: Props): JSX.Element
    // when that happens put the default back - it needs to be in state                          //
    // const [defaultFilter1] = useState(defaultFilter);                                         //
    ///////////////////////////////////////////////////////////////////////////////////////////////
-   const [defaultFilter] = useState(_defaultFilter);
-   const [filterChangeHasOccurred, setFilterChangeHasOccurred] = useState(false);
+   const [defaultFilter] = useState({items: []} as GridFilterModel);
 
    const [tableState, setTableState] = useState("");
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+   const [defaultFilterLoaded, setDefaultFilterLoaded] = useState(false);
    const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
@@ -194,6 +196,19 @@ function EntityList({table}: Props): JSX.Element
       (async () =>
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         // we need the table meta data to look up the default filter (if it comes from query string), //
+         // because we need to know field types to translate qqq filter to material filter             //
+         // because we need to know field types to translate qqq filter to material filter             //
+         // return here ane wait for the next 'turn' to allow doing the actual query                   //
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         if (!defaultFilterLoaded)
+         {
+            setDefaultFilterLoaded(true);
+            setFilterModel(getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey));
+            return;
+         }
          setTableMetaData(tableMetaData);
          if (columnSortModel.length === 0)
          {
@@ -416,21 +431,13 @@ function EntityList({table}: Props): JSX.Element
 
    const handleFilterChange = (filterModel: GridFilterModel) =>
    {
-      if (!filterChangeHasOccurred)
+      setFilterModel(filterModel);
+      if (filterLocalStorageKey)
       {
-         setFilterModel(defaultFilter);
-         setFilterChangeHasOccurred(true);
-      }
-      else
-      {
-         setFilterModel(filterModel);
-         if (filterLocalStorageKey)
-         {
-            localStorage.setItem(
-               filterLocalStorageKey,
-               JSON.stringify(filterModel),
-            );
-         }
+         localStorage.setItem(
+            filterLocalStorageKey,
+            JSON.stringify(filterModel),
+         );
       }
    };
 
