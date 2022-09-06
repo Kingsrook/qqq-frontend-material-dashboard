@@ -68,6 +68,21 @@ export class ProcessSummaryLine
          messageWords.splice(messageWords.length - 1, 1);
       }
 
+      //////////////////////////////////////////////////////////////////////////////////////////////
+      // try to get a link to the records - but note, it may come back null for various reasons - //
+      // if it's null, then don't output a link tag.                                              //
+      //////////////////////////////////////////////////////////////////////////////////////////////
+      const linkToRecords = this.getLinkToRecords(table, qInstance);
+      let linkTag = null;
+      if(linkToRecords)
+      {
+         linkTag = <Link target="_blank" to={linkToRecords}>
+            <Tooltip title="See these records in a new tab" sx={{py: 0}}>
+               <IconButton sx={{py: 0}}><Icon fontSize="small">open_in_new</Icon></IconButton>
+            </Tooltip>
+         </Link>
+      }
+
       return (
          <ListItem key={i} sx={{pl: 4, my: 2}}>
             <MDBox display="flex" alignItems="top">
@@ -76,15 +91,9 @@ export class ProcessSummaryLine
                   {/* work hard to prevent the icon from falling down to the next line by itself... */}
                   {`${this.count.toLocaleString()} ${messageWords.join(" ")} `}
                   {
-                     (table && this.primaryKeys) ? (
+                     (linkTag) ? (
                         <span style={{whiteSpace: "nowrap"}}>
-                           {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
-                           {lastWord}&nbsp;<Link target="_blank" to={this.getLinkToRecords(table, qInstance)}>
-                              <Tooltip title="See these records in a new tab" sx={{py: 0}}>
-                                 <IconButton sx={{py: 0}}><Icon fontSize="small">open_in_new</Icon></IconButton>
-                              </Tooltip>
-                              {/* eslint-disable-next-line react/jsx-closing-tag-location */}
-                           </Link>
+                           {lastWord}&nbsp;{linkTag}
                         </span>
                      ) : <span>{lastWord}</span>
                   }
@@ -139,10 +148,42 @@ export class ProcessSummaryLine
       return "";
    }
 
-   private getLinkToRecords(table: QTableMetaData, qInstance: QInstance): string
+   private getLinkToRecords(table: QTableMetaData, qInstance: QInstance): string | null
    {
+      if(!table)
+      {
+         console.log("No table, so not returning a link to records");
+         return (null);
+      }
+
+      if(!table.primaryKeyField)
+      {
+         console.log("No table.primaryKeyField, so not returning a link to records");
+         return (null);
+      }
+
       const tablePath = qInstance.getTablePath(table);
+      if(!tablePath)
+      {
+         console.log("No tablePath, so not returning a link to records");
+         return (null);
+      }
+
+      if(!this.primaryKeys)
+      {
+         console.log("No primaryKeys, so not returning a link to records");
+         return (null);
+      }
+
       const filter = new QQueryFilter([new QFilterCriteria(table.primaryKeyField, QCriteriaOperator.IN, this.primaryKeys)]);
-      return (`${tablePath}?filter=${JSON.stringify(filter)}`);
+      const path = `${tablePath}?filter=${JSON.stringify(filter)}`;
+
+      if(path.length > 2048)
+      {
+         console.log(`Path is too long [${path.length}], so not returning a link to records.`);
+         return (null);
+      }
+
+      return (path);
    }
 }

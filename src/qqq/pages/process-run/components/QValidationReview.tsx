@@ -36,6 +36,7 @@ import React, {useState} from "react";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import {ProcessSummaryLine} from "qqq/pages/process-run/model/ProcessSummaryLine";
+import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
 
 interface Props
@@ -60,7 +61,16 @@ function QValidationReview({
 }: Props): JSX.Element
 {
    const [previewRecordIndex, setPreviewRecordIndex] = useState(0);
-   const sourceTable = qInstance.tables.get(processValues.sourceTable);
+   const [sourceTableMetaData, setSourceTableMetaData] = useState(null as QTableMetaData);
+
+   if(processValues.sourceTable && !sourceTableMetaData)
+   {
+      (async () =>
+      {
+         const sourceTableMetaData = await QClient.getInstance().loadTableMetaData(processValues.sourceTable)
+         setSourceTableMetaData(sourceTableMetaData);
+      })();
+   }
 
    const updatePreviewRecordIndex = (offset: number) =>
    {
@@ -120,10 +130,10 @@ function QValidationReview({
    const preValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount !== undefined && sourceTable && (
+            processValues?.recordCount !== undefined && sourceTableMetaData && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                     {`Input: ${processValues.recordCount.toLocaleString()} ${sourceTable?.label} record${processValues.recordCount === 1 ? "" : "s"}.`}
+                     {`Input: ${processValues.recordCount.toLocaleString()} ${sourceTableMetaData?.label} record${processValues.recordCount === 1 ? "" : "s"}.`}
                   </ListItemText>
                </ListItem>
             )
@@ -175,11 +185,11 @@ function QValidationReview({
    const postValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount !== undefined && sourceTable && (
+            processValues?.recordCount !== undefined && sourceTableMetaData && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      Validation complete on
-                     {` ${processValues.recordCount.toLocaleString()} ${sourceTable?.label} `}
+                     {` ${processValues.recordCount.toLocaleString()} ${sourceTableMetaData?.label} `}
                      records.
                   </ListItemText>
                </ListItem>
@@ -187,7 +197,7 @@ function QValidationReview({
          }
          <List>
             {
-               processValues.validationSummary && processValues.validationSummary.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTable, qInstance)))
+               processValues.validationSummary && processValues.validationSummary.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTableMetaData, qInstance)))
             }
          </List>
       </List>

@@ -28,9 +28,10 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
-import React from "react";
+import React, {useState} from "react";
 import MDBox from "components/MDBox";
 import {ProcessSummaryLine} from "qqq/pages/process-run/model/ProcessSummaryLine";
+import QClient from "qqq/utils/QClient";
 
 interface Props
 {
@@ -48,17 +49,26 @@ function QProcessSummaryResults({
    qInstance, process, table = null, processValues, step,
 }: Props): JSX.Element
 {
-   const sourceTable = qInstance.tables.get(processValues.sourceTable);
+   const [sourceTableMetaData, setSourceTableMetaData] = useState(null as QTableMetaData);
+
+   if(processValues.sourceTable && !sourceTableMetaData)
+   {
+      (async () =>
+      {
+         const sourceTableMetaData = await QClient.getInstance().loadTableMetaData(processValues.sourceTable)
+         setSourceTableMetaData(sourceTableMetaData);
+      })();
+   }
 
    const resultValidationList = (
       <List sx={{mt: 2}}>
          {
-            processValues?.recordCount !== undefined && sourceTable && (
+            processValues?.recordCount !== undefined && sourceTableMetaData && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      {processValues.recordCount.toLocaleString()}
                      {" "}
-                     {sourceTable.label}
+                     {sourceTableMetaData.label}
                      {" "}
                      records were processed.
                   </ListItemText>
@@ -67,7 +77,7 @@ function QProcessSummaryResults({
          }
          <List>
             {
-               processValues.processResults && processValues.processResults.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTable, qInstance, true)))
+               processValues.processResults && processValues.processResults.map((processSummaryLine: ProcessSummaryLine, i: number) => (new ProcessSummaryLine(processSummaryLine).getProcessSummaryListItem(i, sourceTableMetaData, qInstance, true)))
             }
          </List>
       </List>
