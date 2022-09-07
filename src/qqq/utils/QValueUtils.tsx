@@ -23,6 +23,7 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
+import React, {Fragment} from "react";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -61,6 +62,22 @@ class QValueUtils
       }
 
       return (displayValue);
+   }
+
+
+   public static breakTextIntoLines(value: string): JSX.Element
+   {
+      return (
+         <Fragment>
+            {value.split(/\n/).map((value: string, index: number) => (
+               // eslint-disable-next-line react/no-array-index-key
+               <Fragment key={index}>
+                  <span>{value}</span>
+                  <br />
+               </Fragment>
+            ))}
+         </Fragment>
+      );
    }
 }
 

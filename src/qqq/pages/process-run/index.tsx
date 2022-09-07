@@ -32,11 +32,13 @@ import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJob
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Button, Icon, CircularProgress, TablePagination} from "@mui/material";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
+import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
@@ -53,6 +55,7 @@ import MDProgress from "qqq/components/Temporary/MDProgress";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import QValidationReview from "qqq/pages/process-run/components/QValidationReview";
 import QClient from "qqq/utils/QClient";
+import QValueUtils from "qqq/utils/QValueUtils";
 import QProcessSummaryResults from "./components/QProcessSummaryResults";
 
 interface Props
@@ -92,6 +95,7 @@ function ProcessRun({process}: Props): JSX.Element
       null as QJobStarted | QJobComplete | QJobError | QJobRunning,
    );
    const [showErrorDetail, setShowErrorDetail] = useState(false);
+   const [showFullHelpText, setShowFullHelpText] = useState(false);
 
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // the validation screen - it can change whether next is actually the final step or not... so, use this state field to track that. //
@@ -183,17 +187,7 @@ function ProcessRun({process}: Props): JSX.Element
 
       if (typeof value === "string")
       {
-         return (
-            <>
-               {value.split(/\n/).map((value: string, index: number) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <Fragment key={index}>
-                     <span>{value}</span>
-                     <br />
-                  </Fragment>
-               ))}
-            </>
-         );
+         return QValueUtils.breakTextIntoLines(value);
       }
 
       return (<span>{value}</span>);
@@ -202,6 +196,11 @@ function ProcessRun({process}: Props): JSX.Element
    const toggleShowErrorDetail = () =>
    {
       setShowErrorDetail(!showErrorDetail);
+   };
+
+   const toggleShowFullHelpText = () =>
+   {
+      setShowFullHelpText(!showFullHelpText);
    };
 
    ////////////////////////////////////////////////////
@@ -293,9 +292,24 @@ function ProcessRun({process}: Props): JSX.Element
                   <div key={index}>
                      {
                         component.type === QComponentType.HELP_TEXT && (
-                           <MDTypography variant="button" color="info">
-                              {component.values.text}
-                           </MDTypography>
+                           component.values.previewText ?
+                              <>
+                                 <Box mt={1}>
+                                    <Button onClick={toggleShowFullHelpText} startIcon={<Icon>{showFullHelpText ? "expand_less" : "expand_more"}</Icon>} sx={{pl: 1}} >
+                                       {showFullHelpText ? "Hide " : "Show "}
+                                       {component.values.previewText}
+                                    </Button>
+                                 </Box>
+                                 <MDBox mt={1} style={{display: showFullHelpText ? "block" : "none"}}>
+                                    <Typography variant="body2" color="info">
+                                       {QValueUtils.breakTextIntoLines(component.values.text)}
+                                    </Typography>
+                                 </MDBox>
+                              </>
+                              :
+                              <MDTypography variant="button" color="info">
+                                 {QValueUtils.breakTextIntoLines(component.values.text)}
+                              </MDTypography>
                         )
                      }
                      {
@@ -622,8 +636,6 @@ function ProcessRun({process}: Props): JSX.Element
       {
          setLastProcessResponse(null);
          setRetryMillis(INITIAL_RETRY_MILLIS);
-
-         setQJobRunning(null);
 
          if (lastProcessResponse instanceof QJobComplete)
          {

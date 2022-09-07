@@ -19,9 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {colors} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import {useFormikContext} from "formik";
-import React from "react";
+import React, {useState} from "react";
 import QDynamicFormField from "qqq/components/QDynamicFormField";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
@@ -44,9 +47,16 @@ function QDynamicForm(props: Props): JSX.Element
    } = formData;
 
    const formikProps = useFormikContext();
+   const [fileName, setFileName] = useState(null as string);
 
    const fileChanged = (event: React.FormEvent<HTMLInputElement>, field: any) =>
    {
+      setFileName(null)
+      if(event.currentTarget.files && event.currentTarget.files[0])
+      {
+         setFileName(event.currentTarget.files[0].name)
+      }
+
       formikProps.setFieldValue(field.name, event.currentTarget.files[0]);
    };
 
@@ -82,12 +92,23 @@ function QDynamicForm(props: Props): JSX.Element
                         return (
                            <Grid item xs={12} sm={6} key={fieldName}>
                               <MDBox mb={1.5}>
-                                 <input
-                                    id={fieldName}
-                                    name={fieldName}
-                                    type="file"
-                                    onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
-                                 />
+
+                                 <Box display="flex" alignItems="center">
+                                    <Button variant="outlined" component="label">
+                                       <span style={{color: "#606060"}}>Choose file to upload</span>
+                                       <input
+                                          id={fieldName}
+                                          name={fieldName}
+                                          type="file"
+                                          hidden
+                                          onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
+                                       />
+                                    </Button>
+                                    <Box ml={1} fontSize={"1rem"}>
+                                       {fileName}
+                                    </Box>
+                                 </Box>
+
                                  <MDBox mt={0.75}>
                                     <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
                                        {errors[fieldName] && <span>You must select a file to proceed</span>}
