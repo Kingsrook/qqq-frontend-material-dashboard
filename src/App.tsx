@@ -50,8 +50,6 @@ import EntityView from "qqq/pages/entity-view";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
-import BlueIcon from "../public/nf-icon-blue.png";
-import BlueLogo from "../public/nf-logo-blue.png";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // define the parts of the nav that are static - before the qqq tables etc get dynamic added //
@@ -89,7 +87,6 @@ LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
-   let logo, icon;
    const [, setCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
    const {
       user, getAccessTokenSilently, getIdTokenClaims, logout, loginWithRedirect,
@@ -282,17 +279,19 @@ export default function App()
          try
          {
             const metaData = await QClient.getInstance().loadMetaData();
-            setBranding(metaData.branding);
-
-            const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-            if(favicon)
+            if (metaData.branding)
             {
-               favicon.href = metaData.branding.icon;
-            }
-            const appleIcon = document.querySelector("link[rel~='apple-touch-icon']") as HTMLLinkElement;
-            if(appleIcon)
-            {
-               appleIcon.href = metaData.branding.icon
+               setBranding(metaData.branding);
+               const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+               const appleIcon = document.querySelector("link[rel~='apple-touch-icon']") as HTMLLinkElement;
+               if (favicon)
+               {
+                  favicon.href = metaData.branding.icon;
+               }
+               if (appleIcon)
+               {
+                  appleIcon.href = metaData.branding.icon;
+               }
             }
 
             let profileRoutes = {};

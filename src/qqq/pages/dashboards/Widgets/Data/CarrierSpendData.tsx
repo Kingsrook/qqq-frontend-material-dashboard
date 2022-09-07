@@ -40,43 +40,43 @@ const carrierSpendData = {
 
    rows: [
       {
-         product: <ProductCell image={axlehire} name="AxleHire" orders={921} />,
+         product: <ProductCell image={axlehire} name="AxleHire" orders="921" />,
          value: <DefaultCell>$140,925</DefaultCell>,
          adsSpent: <DefaultCell>$24,531</DefaultCell>,
          refunds: <RefundsCell value={121} icon={{color: "success", name: "keyboard_arrow_up"}} />,
       },
       {
-         product: <ProductCell image={cdl} name="CDL" orders={2.421} />,
+         product: <ProductCell image={cdl} name="CDL" orders="2,421" />,
          value: <DefaultCell>$40,600</DefaultCell>,
          adsSpent: <DefaultCell>$9,430</DefaultCell>,
          refunds: <RefundsCell value={54} icon={{color: "success", name: "keyboard_arrow_up"}} />,
       },
       {
-         product: <ProductCell image={dhl} name="DHL" orders={2.421} />,
+         product: <ProductCell image={dhl} name="DHL" orders="1,391" />,
          value: <DefaultCell>$90,233</DefaultCell>,
          adsSpent: <DefaultCell>$18.30</DefaultCell>,
          refunds: <RefundsCell value={54} icon={{color: "success", name: "keyboard_arrow_up"}} />,
       },
       {
-         product: <ProductCell image={fedex} name="FedEx" orders={12.821} />,
+         product: <ProductCell image={fedex} name="FedEx" orders="12,821" />,
          value: <DefaultCell>$80,250</DefaultCell>,
          adsSpent: <DefaultCell>$4,200</DefaultCell>,
          refunds: <RefundsCell value={40} icon={{color: "error", name: "keyboard_arrow_down"}} />,
       },
       {
-         product: <ProductCell image={lso} name="LSO" orders={5.921} />,
+         product: <ProductCell image={lso} name="LSO" orders="5,921" />,
          value: <DefaultCell>$91,300</DefaultCell>,
          adsSpent: <DefaultCell>$7,364</DefaultCell>,
          refunds: <RefundsCell value={5} icon={{color: "error", name: "keyboard_arrow_down"}} />,
       },
       {
-         product: <ProductCell image={ontrac} name="OnTrac" orders={5.921} />,
+         product: <ProductCell image={ontrac} name="OnTrac" orders="5,921" />,
          value: <DefaultCell>$77,300</DefaultCell>,
          adsSpent: <DefaultCell>$4,064</DefaultCell>,
          refunds: <RefundsCell value={5} icon={{color: "error", name: "keyboard_arrow_down"}} />,
       },
       {
-         product: <ProductCell image={ups} name="UPS" orders={8.232} />,
+         product: <ProductCell image={ups} name="UPS" orders="8,232" />,
          value: <DefaultCell>$130,992</DefaultCell>,
          adsSpent: <DefaultCell>$9,500</DefaultCell>,
          refunds: <RefundsCell value={13} icon={{color: "success", name: "keyboard_arrow_up"}} />,
