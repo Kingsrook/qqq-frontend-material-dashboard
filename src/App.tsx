@@ -159,10 +159,13 @@ export default function App()
             }
 
             const childList: any[] = [];
-            app.children.forEach((child: QAppTreeNode) =>
+            if(app.children)
             {
-               addAppToSideNavList(child, childList, path, depth + 1);
-            });
+               app.children.forEach((child: QAppTreeNode) =>
+               {
+                  addAppToSideNavList(child, childList, path, depth + 1);
+               });
+            }
 
             if (childList.length === 0)
             {
@@ -210,10 +213,13 @@ export default function App()
             const path = `${parentPath}/${app.name}`;
             if (app.type === QAppNodeType.APP)
             {
-               app.children.forEach((child: QAppTreeNode) =>
+               if(app.children)
                {
-                  addAppToAppRoutesList(metaData, child, routeList, path, depth + 1);
-               });
+                  app.children.forEach((child: QAppTreeNode) =>
+                  {
+                     addAppToAppRoutesList(metaData, child, routeList, path, depth + 1);
+                  });
+               }
 
                routeList.push({
                   name: `${app.label}`,
@@ -342,6 +348,7 @@ export default function App()
          }
          catch (e)
          {
+            console.log(e);
             if (e.toString().indexOf("status code 401") !== -1)
             {
                logout();
