@@ -133,7 +133,7 @@ function QValidationReview({
             processValues?.recordCount !== undefined && sourceTableMetaData && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                     {`Input: ${processValues.recordCount.toLocaleString()} ${sourceTableMetaData?.label} record${processValues.recordCount === 1 ? "" : "s"}.`}
+                     {`Input: ${QValueUtils.getFormattedNumber(processValues.recordCount)} ${sourceTableMetaData?.label} record${processValues.recordCount === 1 ? "" : "s"}.`}
                   </ListItemText>
                </ListItem>
             )
@@ -189,7 +189,7 @@ function QValidationReview({
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      Validation complete on
-                     {` ${processValues.recordCount.toLocaleString()} ${sourceTableMetaData?.label} `}
+                     {` ${QValueUtils.getFormattedNumber(processValues.recordCount)} ${sourceTableMetaData?.label} `}
                      records.
                   </ListItemText>
                </ListItem>

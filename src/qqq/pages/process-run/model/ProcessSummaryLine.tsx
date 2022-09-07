@@ -32,6 +32,7 @@ import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 import {Link} from "react-router-dom";
 import MDBox from "components/MDBox";
+import QValueUtils from "qqq/utils/QValueUtils";
 
 /*******************************************************************************
  ** Entity that corresponds to qqq backend's ProcessSummaryLine - with methods
@@ -89,7 +90,7 @@ export class ProcessSummaryLine
                <Icon fontSize="medium" sx={{mr: 1}} color={this.getColor()}>{this.getIcon(isResultScreen)}</Icon>
                <ListItemText primaryTypographyProps={{fontSize: 16}}>
                   {/* work hard to prevent the icon from falling down to the next line by itself... */}
-                  {`${this.count.toLocaleString()} ${messageWords.join(" ")} `}
+                  {`${QValueUtils.getFormattedNumber(this.count)} ${messageWords.join(" ")} `}
                   {
                      (linkTag) ? (
                         <span style={{whiteSpace: "nowrap"}}>

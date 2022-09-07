@@ -32,6 +32,7 @@ import React, {useState} from "react";
 import MDBox from "components/MDBox";
 import {ProcessSummaryLine} from "qqq/pages/process-run/model/ProcessSummaryLine";
 import QClient from "qqq/utils/QClient";
+import QValueUtils from "qqq/utils/QValueUtils";
 
 interface Props
 {
@@ -66,7 +67,7 @@ function QProcessSummaryResults({
             processValues?.recordCount !== undefined && sourceTableMetaData && (
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
-                     {processValues.recordCount.toLocaleString()}
+                     {QValueUtils.getFormattedNumber(processValues.recordCount)}
                      {" "}
                      {sourceTableMetaData.label}
                      {" "}

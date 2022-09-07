@@ -64,6 +64,26 @@ class QValueUtils
       return (displayValue);
    }
 
+   public static getFormattedNumber(n: number): string
+   {
+      try
+      {
+         if(n !== null && n !== undefined)
+         {
+            return (n.toLocaleString());
+         }
+         else
+         {
+            return ("");
+         }
+      }
+      catch(e)
+      {
+         return (String(n));
+      }
+   }
+
+
 
    public static breakTextIntoLines(value: string): JSX.Element
    {
