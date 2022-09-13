@@ -171,6 +171,9 @@ function EntityList({table}: Props): JSX.Element
    const [receivedCountTimestamp, setReceivedCountTimestamp] = useState(new Date());
    const [queryResults, setQueryResults] = useState({} as any);
    const [receivedQueryTimestamp, setReceivedQueryTimestamp] = useState(new Date());
+   const [queryErrors, setQueryErrors] = useState({} as any);
+   const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
+
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -202,6 +205,7 @@ function EntityList({table}: Props): JSX.Element
 
    const updateTable = () =>
    {
+      setLoading(true);
       setRows([]);
       (async () =>
       {
@@ -256,19 +260,27 @@ function EntityList({table}: Props): JSX.Element
          })
             .catch((error) =>
             {
+               console.log(`Received error for query ${thisQueryId}`);
+               console.log(error);
+
+               var errorMessage;
                if (error && error.message)
                {
-                  setAlertContent(error.message);
+                  errorMessage = error.message;
                }
                else if(error && error.response && error.response.data && error.response.data.error)
                {
-                  setAlertContent(error.response.data.error);
+                  errorMessage = error.response.data.error;
                }
                else
                {
-                  setAlertContent("Unexpected error running query");
-                  console.log(error);
+                  errorMessage = "Unexpected error running query";
                }
+
+               queryErrors[thisQueryId] = errorMessage;
+               setQueryErrors(queryErrors);
+               setReceivedQueryErrorTimestamp(new Date());
+
                throw error;
             });
       })();
@@ -398,8 +410,32 @@ function EntityList({table}: Props): JSX.Element
       setColumns(columns);
       setRows(rows);
       setLoading(false);
+      setAlertContent(null);
       forceUpdate();
    }, [receivedQueryTimestamp]);
+
+   /////////////////////////
+   // display query error //
+   /////////////////////////
+   useEffect(() =>
+   {
+      if (!queryErrors[latestQueryId])
+      {
+         ///////////////////////////////
+         // same logic as for success //
+         ///////////////////////////////
+         console.log(`No query error for id ${latestQueryId}...`);
+         return;
+      }
+
+      console.log(`Outputting error for query ${latestQueryId}...`);
+      const errorMessage = queryErrors[latestQueryId];
+      delete queryErrors[latestQueryId];
+      setLoading(false);
+      setAlertContent(errorMessage);
+
+   }, [receivedQueryErrorTimestamp]);
+
 
    const handlePageChange = (page: number) =>
    {
@@ -787,7 +823,6 @@ function EntityList({table}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      setLoading(true);
       updateTable();
    }, [pageNumber, rowsPerPage, columnSortModel]);
 
@@ -796,9 +831,8 @@ function EntityList({table}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      setLoading(true);
-      updateTable();
       setTotalRecords(null);
+      updateTable();
    }, [tableState, filterModel]);
 
    useEffect(() =>
