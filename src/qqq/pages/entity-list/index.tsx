@@ -240,7 +240,6 @@ function EntityList({table}: Props): JSX.Element
          setLatestQueryId(thisQueryId);
 
          console.log(`Issuing query: ${thisQueryId}`);
-         setTotalRecords(null);
          qController.count(tableName, qFilter).then((count) =>
          {
             countResults[thisQueryId] = count;
@@ -687,7 +686,7 @@ function EntityList({table}: Props): JSX.Element
             component="div"
             count={totalRecords}
             page={pageNumber}
-            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageOptions={[10, 25, 50, 100, 250]}
             rowsPerPage={rowsPerPage}
             onPageChange={(event, value) => handlePageChange(value)}
             onRowsPerPageChange={(event) => handleRowsPerPageChange(Number(event.target.value))}
@@ -782,11 +781,25 @@ function EntityList({table}: Props): JSX.Element
       </Menu>
    );
 
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // for changes in table controls that don't change the count, call to update the table - //
+   // but without clearing out totalRecords (so pagination doesn't flash)                   //
+   ///////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
       setLoading(true);
       updateTable();
-   }, [pageNumber, rowsPerPage, tableState, columnSortModel, filterModel]);
+   }, [pageNumber, rowsPerPage, columnSortModel]);
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // for state changes that DO change the filter, call to update the table - and DO clear out the totalRecords //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      setLoading(true);
+      updateTable();
+      setTotalRecords(null);
+   }, [tableState, filterModel]);
 
    useEffect(() =>
    {
