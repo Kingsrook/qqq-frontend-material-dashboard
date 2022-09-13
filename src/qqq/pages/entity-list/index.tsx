@@ -22,6 +22,7 @@
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
@@ -162,6 +163,15 @@ function EntityList({table}: Props): JSX.Element
    const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
    const instance = useRef({timer: null});
 
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // use all these states to avoid showing results from an "old" query, that finishes loading after a newer one //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const [latestQueryId, setLatestQueryId] = useState(0);
+   const [countResults, setCountResults] = useState({} as any);
+   const [receivedCountTimestamp, setReceivedCountTimestamp] = useState(new Date());
+   const [queryResults, setQueryResults] = useState({} as any);
+   const [receivedQueryTimestamp, setReceivedQueryTimestamp] = useState(new Date());
+
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -200,7 +210,6 @@ function EntityList({table}: Props): JSX.Element
          ////////////////////////////////////////////////////////////////////////////////////////////////
          // we need the table meta data to look up the default filter (if it comes from query string), //
          // because we need to know field types to translate qqq filter to material filter             //
-         // because we need to know field types to translate qqq filter to material filter             //
          // return here ane wait for the next 'turn' to allow doing the actual query                   //
          ////////////////////////////////////////////////////////////////////////////////////////////////
          if (!defaultFilterLoaded)
@@ -210,6 +219,7 @@ function EntityList({table}: Props): JSX.Element
             return;
          }
          setTableMetaData(tableMetaData);
+         setTableLabel(tableMetaData.label);
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
@@ -222,121 +232,175 @@ function EntityList({table}: Props): JSX.Element
 
          const qFilter = buildQFilter();
 
-         const count = await qController.count(tableName, qFilter);
-         setTotalRecords(count);
-         setTableLabel(tableMetaData.label);
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // assign a new query id to the query being issued here.  then run both the count & query async //
+         // and when they load, store their results associated with this id.                             //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         const thisQueryId = latestQueryId + 1
+         setLatestQueryId(thisQueryId);
 
-         const columns = [] as GridColDef[];
+         console.log(`Issuing query: ${thisQueryId}`);
+         setTotalRecords(null);
+         qController.count(tableName, qFilter).then((count) =>
+         {
+            countResults[thisQueryId] = count;
+            setCountResults(countResults);
+            setReceivedCountTimestamp(new Date());
+         });
 
-         const results = await qController.query(
-            tableName,
-            qFilter,
-            rowsPerPage,
-            pageNumber * rowsPerPage,
-         )
+         qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage).then((results) =>
+         {
+            console.log(`Received results for query ${thisQueryId}`);
+            queryResults[thisQueryId] = results;
+            setQueryResults(queryResults);
+            setReceivedQueryTimestamp(new Date());
+         })
             .catch((error) =>
             {
-               if (error.message)
+               if (error && error.message)
                {
                   setAlertContent(error.message);
                }
-               else
+               else if(error && error.response && error.response.data && error.response.data.error)
                {
                   setAlertContent(error.response.data.error);
                }
+               else
+               {
+                  setAlertContent("Unexpected error running query");
+                  console.log(error);
+               }
                throw error;
             });
+      })();
+   }
 
-         const fields = [...tableMetaData.fields.values()];
-         const rows = [] as any[];
-         results.forEach((record) =>
+   ///////////////////////////
+   // display count results //
+   ///////////////////////////
+   useEffect(() =>
+   {
+      if (countResults[latestQueryId] === null)
+      {
+         ///////////////////////////////////////////////
+         // see same idea in displaying query results //
+         ///////////////////////////////////////////////
+         console.log(`No count results for id ${latestQueryId}...`);
+         return;
+      }
+      setTotalRecords(countResults[latestQueryId]);
+      delete countResults[latestQueryId];
+   }, [receivedCountTimestamp]);
+
+   ///////////////////////////
+   // display query results //
+   ///////////////////////////
+   useEffect(() => 
+   {
+      if(!queryResults[latestQueryId])
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         // to avoid showing results from an "older" query (e.g., one that was slow, and returned //
+         // AFTER a newer one) only ever show results here for the latestQueryId that was issued. //
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         console.log(`No query results for id ${latestQueryId}...`);
+         return;
+      }
+
+      console.log(`Outputting results for query ${latestQueryId}...`);
+      const results = queryResults[latestQueryId];
+      delete queryResults[latestQueryId];
+
+      const fields = [...tableMetaData.fields.values()];
+      const rows = [] as any[];
+      results.forEach((record: QRecord) =>
+      {
+         const row: any = {};
+         fields.forEach((field) =>
          {
-            const row: any = {};
-            fields.forEach((field) =>
-            {
-               row[field.name] = QValueUtils.getDisplayValue(field, record);
-            });
-
-            rows.push(row);
+            row[field.name] = QValueUtils.getDisplayValue(field, record);
          });
 
-         const sortedKeys: string[] = [];
+         rows.push(row);
+      });
 
-         for (let i = 0; i < tableMetaData.sections.length; i++)
+      const sortedKeys: string[] = [];
+
+      for (let i = 0; i < tableMetaData.sections.length; i++)
+      {
+         const section = tableMetaData.sections[i];
+         for (let j = 0; j < section.fieldNames.length; j++)
          {
-            const section = tableMetaData.sections[i];
-            for (let j = 0; j < section.fieldNames.length; j++)
+            sortedKeys.push(section.fieldNames[j]);
+         }
+      }
+
+      const columns = [] as GridColDef[];
+      sortedKeys.forEach((key) =>
+      {
+         const field = tableMetaData.fields.get(key);
+
+         let columnType = "string";
+         let columnWidth = 200;
+
+         if (!field.possibleValueSourceName)
+         {
+            switch (field.type)
             {
-               sortedKeys.push(section.fieldNames[j]);
+               case QFieldType.DECIMAL:
+               case QFieldType.INTEGER:
+                  columnType = "number";
+                  columnWidth = 100;
+
+                  if (key === tableMetaData.primaryKeyField && field.label.length < 3)
+                  {
+                     columnWidth = 75;
+                  }
+
+                  break;
+               case QFieldType.DATE:
+                  columnType = "date";
+                  columnWidth = 100;
+                  break;
+               case QFieldType.DATE_TIME:
+                  columnType = "dateTime";
+                  columnWidth = 200;
+                  break;
+               case QFieldType.BOOLEAN:
+                  columnType = "boolean";
+                  columnWidth = 75;
+                  break;
+               default:
+                  // noop - leave as string
             }
          }
 
-         sortedKeys.forEach((key) =>
+         const column = {
+            field: field.name,
+            type: columnType,
+            headerName: field.label,
+            width: columnWidth,
+            renderCell: null as any,
+         };
+
+         if (key === tableMetaData.primaryKeyField)
          {
-            const field = tableMetaData.fields.get(key);
+            columns.splice(0, 0, column);
+            column.renderCell = (cellValues: any) => (
+               <Link to={cellValues.value}>{cellValues.value}</Link>
+            );
+         }
+         else
+         {
+            columns.push(column);
+         }
+      });
 
-            let columnType = "string";
-            let columnWidth = 200;
-
-            if (!field.possibleValueSourceName)
-            {
-               switch (field.type)
-               {
-                  case QFieldType.DECIMAL:
-                  case QFieldType.INTEGER:
-                     columnType = "number";
-                     columnWidth = 100;
-
-                     if (key === tableMetaData.primaryKeyField && field.label.length < 3)
-                     {
-                        columnWidth = 75;
-                     }
-
-                     break;
-                  case QFieldType.DATE:
-                     columnType = "date";
-                     columnWidth = 100;
-                     break;
-                  case QFieldType.DATE_TIME:
-                     columnType = "dateTime";
-                     columnWidth = 200;
-                     break;
-                  case QFieldType.BOOLEAN:
-                     columnType = "boolean";
-                     columnWidth = 75;
-                     break;
-                  default:
-                  // noop - leave as string
-               }
-            }
-
-            const column = {
-               field: field.name,
-               type: columnType,
-               headerName: field.label,
-               width: columnWidth,
-               renderCell: null as any,
-            };
-
-            if (key === tableMetaData.primaryKeyField)
-            {
-               columns.splice(0, 0, column);
-               column.renderCell = (cellValues: any) => (
-                  <Link to={cellValues.value}>{cellValues.value}</Link>
-               );
-            }
-            else
-            {
-               columns.push(column);
-            }
-         });
-
-         setColumns(columns);
-         setRows(rows);
-         setLoading(false);
-         forceUpdate();
-      })();
-   };
+      setColumns(columns);
+      setRows(rows);
+      setLoading(false);
+      forceUpdate();
+   }, [receivedQueryTimestamp]);
 
    const handlePageChange = (page: number) =>
    {
@@ -470,8 +534,6 @@ function EntityList({table}: Props): JSX.Element
       format: string;
    }
 
-   // todo - figure out what's up here...
-   // eslint-disable-next-line react/no-unstable-nested-components
    function ExportMenuItem(props: QExportMenuItemProps)
    {
       const {format, hideMenu} = props;
@@ -602,10 +664,22 @@ function EntityList({table}: Props): JSX.Element
    };
 
    // @ts-ignore
-   const defaultLabelDisplayedRows = ({from, to, count}) => `Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${count !== -1 ? `${count.toLocaleString()} records` : `more than ${to.toLocaleString()} records`}`;
+   const defaultLabelDisplayedRows = ({from, to, count}) =>
+   {
+      if(count !== null && count !== undefined)
+      {
+         if(count === 0)
+         {
+            return ("No rows");
+         }
+         return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${count !== -1 ? `${count.toLocaleString()} records` : `more than ${to.toLocaleString()} records`}`);
+      }
+      else
+      {
+         return ("Counting records...");
+      }
+   }
 
-   // todo - figure out what's up here...
-   // eslint-disable-next-line react/no-unstable-nested-components
    function CustomPagination()
    {
       return (
@@ -622,8 +696,6 @@ function EntityList({table}: Props): JSX.Element
       );
    }
 
-   // todo - figure out what's up here...
-   // eslint-disable-next-line react/no-unstable-nested-components
    function Loading()
    {
       return (
@@ -631,8 +703,6 @@ function EntityList({table}: Props): JSX.Element
       );
    }
 
-   // todo - figure out what's up here...
-   // eslint-disable-next-line react/no-unstable-nested-components
    function CustomToolbar()
    {
       return (
