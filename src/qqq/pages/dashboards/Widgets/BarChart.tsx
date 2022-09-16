@@ -22,31 +22,124 @@
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
-import {useMemo, ReactNode} from "react";
+import parse from "html-react-parser";
+import {useMemo} from "react";
 import {Bar} from "react-chartjs-2";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import configs from "qqq/pages/dashboards/Widgets/Configs/BarChartConfig";
+import {GenericChartDataSingleDataset} from "qqq/pages/dashboards/Widgets/Data/GenericChartDataSingleDataset";
 
-// Declaring props types for ReportsBarChart
-interface Props {
-  color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
-  title: string;
-  description?: string | ReactNode;
-  date: string;
-  chart: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-    };
-  };
-  [key: string]: any;
+
+///////////////////////////
+// options for bar chart //
+///////////////////////////
+const options = {
+   responsive: true,
+   maintainAspectRatio: false,
+   plugins: {
+      legend: {
+         display: false,
+      },
+   },
+   interaction: {
+      intersect: false,
+      mode: "index",
+   },
+   scales: {
+      y: {
+         grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            borderDash: [5, 5],
+            color: "rgba(255, 255, 255, .2)",
+         },
+         ticks: {
+            suggestedMin: 0,
+            suggestedMax: 500,
+            beginAtZero: true,
+            padding: 10,
+            font: {
+               size: 14,
+               weight: 300,
+               family: "Roboto",
+               style: "normal",
+               lineHeight: 2,
+            },
+            color: "#fff",
+         },
+      },
+      x: {
+         grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            borderDash: [5, 5],
+            color: "rgba(255, 255, 255, .2)",
+         },
+         ticks: {
+            display: true,
+            color: "#f8f9fa",
+            padding: 10,
+            font: {
+               size: 14,
+               weight: 300,
+               family: "Roboto",
+               style: "normal",
+               lineHeight: 2,
+            },
+         },
+      },
+   },
+};
+
+
+////////////////////////////////////
+// define properties and defaults //
+////////////////////////////////////
+interface Props
+{
+   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
+   title: string;
+   description?: string;
+   date: string;
+   data: GenericChartDataSingleDataset;
 }
 
-function BarChart({color, title, description, date, chart}: Props): JSX.Element
+BarChart.defaultProps = {
+   color: "dark",
+   description: "",
+};
+
+function getChartData(labels: any, dataset: any)
 {
-   const {data, options} = configs(chart.labels || [], chart.datasets || {});
+   return {
+      chartData: {
+         labels,
+         datasets: [
+            {
+               label: dataset?.label,
+               tension: 0.4,
+               borderWidth: 0,
+               borderRadius: 4,
+               borderSkipped: false,
+               backgroundColor: "rgba(255, 255, 255, 0.8)",
+               data: dataset?.data,
+               maxBarThickness: 6,
+            },
+         ],
+      }
+   };
+}
+
+function BarChart({color, title, description, date, data}: Props): JSX.Element
+{
+   /////////////////////////////////////////////////////////
+   // enrich data with expected customizations and styles //
+   /////////////////////////////////////////////////////////
+   const {chartData} = getChartData(data?.labels, data?.dataset);
 
    return (
       <Card sx={{height: "100%"}}>
@@ -63,17 +156,17 @@ function BarChart({color, title, description, date, chart}: Props): JSX.Element
                      mt={-5}
                      height="12.5rem"
                   >
-                     <Bar data={data} options={options} />
+                     <Bar data={chartData} options={options} />
                   </MDBox>
                ),
-               [chart, color]
+               [data, color]
             )}
             <MDBox pt={3} pb={1} px={1}>
                <MDTypography variant="h6" textTransform="capitalize">
                   {title}
                </MDTypography>
                <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                  {description}
+                  {parse(description)}
                </MDTypography>
                <Divider />
                <MDBox display="flex" alignItems="center">
@@ -89,11 +182,5 @@ function BarChart({color, title, description, date, chart}: Props): JSX.Element
       </Card>
    );
 }
-
-// Setting default values for the props of ReportsBarChart
-BarChart.defaultProps = {
-   color: "dark",
-   description: "",
-};
 
 export default BarChart;

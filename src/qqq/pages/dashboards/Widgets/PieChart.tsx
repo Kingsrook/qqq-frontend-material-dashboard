@@ -21,11 +21,26 @@
 
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
-import {useMemo, ReactNode} from "react";
+import parse from "html-react-parser";
+import {ReactNode, useMemo} from "react";
 import {Pie} from "react-chartjs-2";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import configs from "qqq/pages/dashboards/Widgets/Configs/PieChartConfigs"
+import configs from "qqq/pages/dashboards/Widgets/Configs/PieChartConfigs";
+
+//////////////////////////////////////////
+// structure of expected bar chart data //
+//////////////////////////////////////////
+export interface PieChartData
+{
+   labels: string[];
+   dataset: {
+      label: string;
+      backgroundColors?: string[];
+      data: number[];
+   };
+}
+
 
 // Declaring props types for PieChart
 interface Props
@@ -35,23 +50,16 @@ interface Props
       component: ReactNode;
    };
    title?: string;
-   description?: string | ReactNode;
+   description?: string;
    height?: string | number;
-   chart: {
-      labels: string[];
-      datasets: {
-         label: string;
-         backgroundColors: string[];
-         data: number[];
-      };
-   };
+   chart: PieChartData;
 
    [key: string]: any;
 }
 
 function PieChart({icon, title, description, height, chart}: Props): JSX.Element
 {
-   const {data, options} = configs(chart.labels || [], chart.datasets || {});
+   const {data, options} = configs(chart?.labels || [], chart?.dataset || {});
 
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
@@ -79,7 +87,7 @@ function PieChart({icon, title, description, height, chart}: Props): JSX.Element
                   {title && <MDTypography variant="h6">{title}</MDTypography>}
                   <MDBox mb={2}>
                      <MDTypography component="div" variant="button" color="text">
-                        {description}
+                        {parse(description)}
                      </MDTypography>
                   </MDBox>
                </MDBox>

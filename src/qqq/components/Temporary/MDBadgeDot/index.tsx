@@ -26,7 +26,7 @@ import MDTypography from "components/MDTypography";
 interface Props
 {
    variant?: "gradient" | "contained";
-   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+   color?: string;
    size?: "xs" | "sm" | "md" | "lg";
    badgeContent: string;
    font?:

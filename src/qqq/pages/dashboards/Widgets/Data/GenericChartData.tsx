@@ -19,9 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const shipmentsByDayBarChartData = {
-   labels: ["M", "T", "W", "T", "F", "S", "S"],
-   datasets: {label: "Sales", data: [503, 202, 1001, 354, 659, 938, 350]},
-};
 
-export default shipmentsByDayBarChartData;
+//////////////////////////////////////
+// structure of expected chart data //
+//////////////////////////////////////
+export interface GenericChartData
+{
+   description?: string;
+   labels: string[];
+   datasets: {
+      label: string;
+      color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+      data: number[];
+   }[];
+}

@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Tables
@@ -28,7 +28,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
  *******************************************************************************/
 class QTableUtils
 {
-   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): QSection[]
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): QTableSection[]
    {
       if (tableMetaData.sections)
       {
@@ -36,7 +36,7 @@ class QTableUtils
       }
       else
       {
-         return ([new QSection({
+         return ([new QTableSection({
             iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
          })]);
       }

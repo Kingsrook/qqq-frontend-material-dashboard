@@ -26,12 +26,14 @@ import {Link} from "react-router-dom";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-interface Props {
-  icon: ReactNode;
-  title: string;
-  route: string | string[];
-  light?: boolean;
-  [key: string]: any;
+interface Props
+{
+   icon: ReactNode;
+   title: string;
+   route: string | string[];
+   light?: boolean;
+
+   [key: string]: any;
 }
 
 const ucFirst = (input: string): string =>
@@ -107,23 +109,16 @@ function QBreadcrumbs({
                   </MDTypography>
                </Link>
             ))}
-            <MDTypography
-               variant="button"
-               fontWeight="regular"
-               textTransform="capitalize"
-               color={light ? "white" : "dark"}
-               sx={{lineHeight: 0}}
-            >
-               {routeToLabel(title)}
-            </MDTypography>
          </MuiBreadcrumbs>
          <MDTypography
+            pt={1}
             fontWeight="bold"
             textTransform="capitalize"
-            variant="h6"
+            variant="h5"
             color={light ? "white" : "dark"}
             noWrap
          >
+            {routeToLabel(title)}
          </MDTypography>
       </MDBox>
    );

@@ -22,30 +22,42 @@
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
-import {useMemo, ReactNode} from "react";
+import parse from "html-react-parser";
+import {useMemo} from "react";
 import {Line} from "react-chartjs-2";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import configs from "qqq/pages/dashboards/Widgets/Configs/LineChartConfigs"
+import configs from "qqq/pages/dashboards/Widgets/Configs/LineChartConfigs";
 
-interface Props {
-  color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
-  title: string;
-  description?: string | ReactNode;
-  date: string;
-  chart: {
-    labels: string[];
-    datasets: {
+//////////////////////////////////////////
+// structure of expected bar chart data //
+//////////////////////////////////////////
+export interface SmallLineChartData
+{
+   labels: string[];
+   dataset: {
       label: string;
       data: number[];
-    };
-  };
-  [key: string]: any;
+   };
+}
+
+
+interface Props
+{
+   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
+   title: string;
+   description?: string;
+   date: string;
+   chart: SmallLineChartData;
+
+   [key: string]: any;
 }
 
 function SmallLineChart({color, title, description, date, chart}: Props): JSX.Element
 {
-   const {data, options} = configs(chart.labels || [], chart.datasets || {});
+   const {data, options} = configs(chart?.labels || [], chart?.dataset || {});
+
+   console.log(`DATA: ${JSON.stringify(data)}`);
 
    return (
       <Card sx={{height: "100%"}}>
@@ -72,7 +84,7 @@ function SmallLineChart({color, title, description, date, chart}: Props): JSX.El
                   {title}
                </MDTypography>
                <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                  {description}
+                  {parse(description)}
                </MDTypography>
                <Divider />
                <MDBox display="flex" alignItems="center">

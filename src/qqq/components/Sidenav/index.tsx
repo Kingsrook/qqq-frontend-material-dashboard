@@ -23,11 +23,11 @@ import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import Link from "@mui/material/Link";
 import List from "@mui/material/List";
-import {useEffect, useState, ReactNode, useReducer} from "react";
-import {useLocation, NavLink} from "react-router-dom";
+import {ReactNode, useEffect, useReducer, useState} from "react";
+import {NavLink, useLocation} from "react-router-dom";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import {useMaterialUIController, setMiniSidenav, setTransparentSidenav, setWhiteSidenav,} from "context";
+import {setMiniSidenav, setTransparentSidenav, setWhiteSidenav, useMaterialUIController,} from "context";
 import sidenavLogoLabel from "examples/Sidenav/styles/sidenav";
 import AuthenticationButton from "qqq/components/Buttons/AuthenticationButton";
 import SidenavCollapse from "qqq/components/Sidenav/SidenavCollapse";
@@ -334,6 +334,12 @@ function Sidenav({color, icon, logo, companyName, routes, ...rest}: Props): JSX.
             }
          />
          <List>{renderRoutes}</List>
+         <Divider
+            light={
+               (!darkMode && !whiteSidenav && !transparentSidenav) ||
+               (darkMode && !transparentSidenav && whiteSidenav)
+            }
+         />
          <AuthenticationButton />
       </SidenavRoot>
    );

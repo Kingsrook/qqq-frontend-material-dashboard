@@ -19,35 +19,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Title} from "@mui/icons-material";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {Icon} from "@mui/material";
-import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import React, {useState} from "react";
-import DefaultLineChart from "examples/Charts/LineCharts/DefaultLineChart";
-import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DataTable from "examples/Tables/DataTable";
+import React, {useEffect, useState} from "react";
+import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
-import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
+import {TableDataInput} from "qqq/components/Temporary/DataTable";
 import MDBox from "qqq/components/Temporary/MDBox";
-import MDTypography from "qqq/components/Temporary/MDTypography";
 import ShipmentsByWarehouseTable from "qqq/pages/dashboards/Tables/ShipmentsByWarehouseTable";
-import carrierSpendData from "qqq/pages/dashboards/Widgets/Data/CarrierSpendData";
-import carrierVolumeLineChartData from "qqq/pages/dashboards/Widgets/Data/CarrierVolumeLineChartData";
+import {GenericChartData} from "qqq/pages/dashboards/Widgets/Data/GenericChartData";
 import smallShipmentsByWarehouseData from "qqq/pages/dashboards/Widgets/Data/SmallShipmentsByWarehouseData";
-import timeInTransitBarChartData from "qqq/pages/dashboards/Widgets/Data/TimeInTransitBarChartData";
-import ShipmentsByCarrierPieChart from "qqq/pages/dashboards/Widgets/ShipmentsByChannelPieChart";
+import DefaultLineChart, {DefaultLineChartData} from "qqq/pages/dashboards/Widgets/DefaultLineChart";
+import HorizontalBarChart from "qqq/pages/dashboards/Widgets/HorizontalBarChart";
+import {PieChartData} from "qqq/pages/dashboards/Widgets/PieChart";
+import PieChartCard from "qqq/pages/dashboards/Widgets/PieChartCard";
 import SimpleStatisticsCard from "qqq/pages/dashboards/Widgets/SimpleStatisticsCard";
-import HorizontalBarChart from "./Widgets/HorizontalBarChart";
+import {StatisticsCardData} from "qqq/pages/dashboards/Widgets/StatisticsCard";
+import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
+import QClient from "qqq/utils/QClient";
+
+const qController = QClient.getInstance();
+
 
 function CarrierPerformance(): JSX.Element
 {
    const openArrowIcon = "arrow_drop_down";
    const closeArrowIcon = "arrow_drop_up";
-
    const [shipmentsDropdownValue, setShipmentsDropdownValue] = useState<string>("Last 30 Days");
    const [deliveriesDropdownValue, setDeliveriesDropdownValue] = useState<string>("Last 30 Days");
    const [failuresDropdownValue, setFailuresDropdownValue] = useState<string>("Last 30 Days");
@@ -64,7 +65,7 @@ function CarrierPerformance(): JSX.Element
    {
       setShipmentsDropdown(currentTarget);
       setShipmentsDropdownIcon(closeArrowIcon);
-   }
+   };
    const closeShipmentsDropdown = ({currentTarget}: any) =>
    {
       setShipmentsDropdown(null);
@@ -74,8 +75,8 @@ function CarrierPerformance(): JSX.Element
    const openDeliveriesDropdown = ({currentTarget}: any) =>
    {
       setDeliveriesDropdown(currentTarget);
-      setDeliveriesDropdownIcon(closeArrowIcon)
-   }
+      setDeliveriesDropdownIcon(closeArrowIcon);
+   };
    const closeDeliveriesDropdown = ({currentTarget}: any) =>
    {
       setDeliveriesDropdown(null);
@@ -85,8 +86,8 @@ function CarrierPerformance(): JSX.Element
    const openFailuresDropdown = ({currentTarget}: any) =>
    {
       setFailuresDropdown(currentTarget);
-      setFailuresDropdownIcon(closeArrowIcon)
-   }
+      setFailuresDropdownIcon(closeArrowIcon);
+   };
    const closeFailuresDropdown = ({currentTarget}: any) =>
    {
       setFailuresDropdown(null);
@@ -94,7 +95,140 @@ function CarrierPerformance(): JSX.Element
       setFailuresDropdownIcon(openArrowIcon);
    };
 
-   // Dropdown menu template for the DefaultStatisticsCard
+
+   const [totalShipmentsData, setTotalShipmentsData] = useState({} as StatisticsCardData);
+   const [successfulDeliveriesData, setSuccessfulDeliveriesData] = useState({} as StatisticsCardData);
+   const [serviceFailuresData, setServiceFailuresData] = useState({} as StatisticsCardData);
+
+   const [shipmentsByCarrierTitle, setShipmentsByCarrierTitle] = useState("");
+   const [shipmentsByCarrierDescription, setShipmentsByCarrierDescription] = useState("");
+   const [shipmentsByCarrierData, setShipmentsByCarrierData] = useState({} as PieChartData);
+
+   const [carrierVolumeTitle, setCarrierVolumeTitle] = useState("");
+   const [carrierVolumeData, setCarrierVolumeData] = useState({} as DefaultLineChartData);
+
+   const [spendByCarrierTitle, setSpendByCarrierTitle] = useState("");
+   const [spendByCarrierData, setSpendByCarrierData] = useState({columns: [], rows: []} as TableDataInput);
+
+   const [timeInTransitTitle, setTimeInTransitTitle] = useState("");
+   const [timeInTransitData, setTimeInTransitData] = useState({} as GenericChartData);
+
+   const [qInstance, setQInstance] = useState(null as QInstance);
+   const [dataLoaded, setDataLoaded] = useState(false);
+
+   //////////////////////////
+   // load meta data first //
+   //////////////////////////
+   useEffect(() =>
+   {
+      (async () =>
+      {
+         const newQInstance = await qController.loadMetaData();
+         setQInstance(newQInstance);
+      })();
+   }, []);
+
+
+   ///////////////////////////////////////////////////
+   // once meta data has loaded, load widgets' data //
+   ///////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      if (!qInstance || dataLoaded)
+      {
+         return;
+      }
+
+      setDataLoaded(true);
+      loadYTDShipmentsByCarrierData();
+      loadTotalShipmentsData();
+      loadSuccessfulDeliveriesData();
+      loadServiceFailuresData();
+      loadCarrierVolumeData();
+      loadSpendByCarrierData();
+      loadTimeInTransitData();
+
+   }, [qInstance]);
+
+
+   function loadTotalShipmentsData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("TotalShipmentsStatisticsCard");
+         setTotalShipmentsData(widgetData);
+      })();
+   }
+
+   function loadSuccessfulDeliveriesData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("SuccessfulDeliveriesStatisticsCard");
+         setSuccessfulDeliveriesData(widgetData);
+      })();
+   }
+
+   function loadServiceFailuresData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("ServiceFailuresStatisticsCard");
+         setServiceFailuresData(widgetData);
+      })();
+   }
+
+   function loadCarrierVolumeData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("CarrierVolumeLineChart");
+         setCarrierVolumeTitle(widgetData.title);
+         setCarrierVolumeData(widgetData.chartData);
+      })();
+   }
+
+   function loadYTDShipmentsByCarrierData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("YTDShipmentsByCarrierPieChart");
+         setShipmentsByCarrierTitle(widgetData.title);
+         setShipmentsByCarrierDescription(widgetData.description);
+         setShipmentsByCarrierData(widgetData.chartData);
+      })();
+   }
+
+   function loadSpendByCarrierData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("YTDSpendByCarrierTable");
+         setSpendByCarrierTitle(widgetData.title);
+         setSpendByCarrierData(widgetData);
+      })();
+   }
+
+   function loadTimeInTransitData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("TimeInTransitBarChart");
+         setTimeInTransitTitle(widgetData.title);
+
+         ///////////////////////////////////////////////////////////////////
+         // todo: need to make it so all charts can use multiple datasets //
+         ///////////////////////////////////////////////////////////////////
+         const data = {
+            labels: widgetData.chartData.labels,
+            datasets: [
+               widgetData.chartData.dataset
+            ]
+         };
+         setTimeInTransitData(data);
+      })();
+   }
+
    const renderMenu = (state: any, open: any, close: any, icon: string) => (
       <span style={{whiteSpace: "nowrap"}}>
          <Icon onClick={open} fontSize={"medium"} style={{cursor: "pointer", float: "right"}}>{icon}</Icon>
@@ -121,13 +255,8 @@ function CarrierPerformance(): JSX.Element
                <Grid container spacing={3}>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title="total shipments"
-                        count="50,234"
-                        percentage={{
-                           color: "success",
-                           value: "+5%",
-                           label: "since last month",
-                        }}
+                        data={totalShipmentsData}
+                        increaseIsGood={true}
                         dropdown={{
                            action: openShipmentsDropdown,
                            menu: renderMenu(shipmentsDropdown, openShipmentsDropdown, closeShipmentsDropdown, shipmentsDropdownIcon),
@@ -137,29 +266,20 @@ function CarrierPerformance(): JSX.Element
                   </Grid>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title="Successful deliveries"
-                        count="49,234"
-                        percentage={{
-                           color: "success",
-                           value: "+12%",
-                           label: "since last month",
-                        }}
+                        data={successfulDeliveriesData}
+                        increaseIsGood={true}
                         dropdown={{
                            action: openDeliveriesDropdown,
                            menu: renderMenu(deliveriesDropdown, openDeliveriesDropdown, closeDeliveriesDropdown, deliveriesDropdownIcon),
                            value: deliveriesDropdownValue,
                         }}
+
                      />
                   </Grid>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title="service failures"
-                        count="832"
-                        percentage={{
-                           color: "error",
-                           value: "+1.2%",
-                           label: "since last month",
-                        }}
+                        data={serviceFailuresData}
+                        increaseIsGood={false}
                         dropdown={{
                            action: openFailuresDropdown,
                            menu: renderMenu(failuresDropdown, openFailuresDropdown, closeFailuresDropdown, failuresDropdownIcon),
@@ -171,54 +291,35 @@ function CarrierPerformance(): JSX.Element
             </MDBox>
             <MDBox mb={3}>
                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6} lg={4}>
-                     <ShipmentsByCarrierPieChart />
-                  </Grid>
                   <Grid item xs={12} sm={6} lg={8}>
                      <DefaultLineChart
-                        title="Carrier Volume by Month"
-                        description={
-                           <MDBox display="flex" justifyContent="space-between">
-                              <MDBox display="flex" ml={-1}>
-                                 <MDBadgeDot color="dark" size="sm" badgeContent="AxleHire" />
-                                 <MDBadgeDot color="info" size="sm" badgeContent="CDL" />
-                                 <MDBadgeDot color="primary" size="sm" badgeContent="DHL" />
-                                 <MDBadgeDot color="success" size="sm" badgeContent="FedEx" />
-                                 <MDBadgeDot color="error" size="sm" badgeContent="LSO" />
-                                 <MDBadgeDot color="secondary" size="sm" badgeContent="OnTrac" />
-                                 <MDBadgeDot color="warning" size="sm" badgeContent="UPS" />
-                              </MDBox>
-                           </MDBox>
-                        }
-                        chart={carrierVolumeLineChartData}
+                        title={carrierVolumeTitle}
+                        data={carrierVolumeData}
                      />
+                  </Grid>
+                  <Grid item xs={12} md={6} lg={4}>
+                     <MDBox mb={3}>
+                        <PieChartCard
+                           title={shipmentsByCarrierTitle}
+                           description={shipmentsByCarrierDescription}
+                           data={shipmentsByCarrierData}
+                        />
+                     </MDBox>
                   </Grid>
                </Grid>
             </MDBox>
             <Grid container spacing={3} mb={3}>
                <Grid item xs={12}>
-                  <Card>
-                     <MDBox pt={3} px={3}>
-                        <MDTypography variant="h6" fontWeight="medium">
-                           Spend by Carrier YTD
-                        </MDTypography>
-                     </MDBox>
-                     <MDBox py={1}>
-                        <DataTable
-                           table={carrierSpendData}
-                           entriesPerPage={false}
-                           showTotalEntries={false}
-                           isSorted={false}
-                           noEndBorder
-                        />
-                     </MDBox>
-                  </Card>
+                  <TableCard
+                     title={spendByCarrierTitle}
+                     data={spendByCarrierData}
+                  />
                </Grid>
             </Grid>
             <MDBox mb={3}>
                <Grid container spacing={3}>
                   <Grid item xs={12} lg={8}>
-                     <HorizontalBarChart title="Time in Transit Last 30 Days" chart={timeInTransitBarChartData} />
+                     <HorizontalBarChart height={250} title={timeInTransitTitle} data={timeInTransitData} />
                   </Grid>
                   <Grid item xs={12} lg={4}>
                      <ShipmentsByWarehouseTable title="Shipments by Warehouse" rows={smallShipmentsByWarehouseData} />

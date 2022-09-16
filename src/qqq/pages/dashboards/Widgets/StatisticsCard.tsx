@@ -26,22 +26,67 @@ import {ReactNode} from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-// Declaring props types for CompleStatisticsCard
-interface Props {
-  color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-  title: string;
-  count: string | number;
-  percentage?: {
-    color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark" | "white";
-    amount: string | number;
-    label: string;
-  };
-  icon: ReactNode;
-  [key: string]: any;
+///////////////////////////////////////////
+// structure of expected stats card data //
+///////////////////////////////////////////
+export interface StatisticsCardData
+{
+   title: string;
+   count: number;
+   percentageAmount: number;
+   percentageLabel: string;
 }
 
-function StatisticsCard({color, title, count, percentage, icon}: Props): JSX.Element
+/////////////////////////
+// inputs and defaults //
+/////////////////////////
+interface Props
 {
+   data: StatisticsCardData;
+   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+   icon: ReactNode;
+   increaseIsGood: boolean;
+   dropdown?: {
+      action: (...args: any) => void;
+      menu: ReactNode;
+      value: string;
+   };
+
+   [key: string]: any;
+}
+
+StatisticsCard.defaultProps = {
+   color: "info",
+   increaseIsGood: true
+};
+
+function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
+{
+   const {title, count, percentageAmount, percentageLabel} = data;
+
+   let percentageString = "";
+   if (percentageAmount)
+   {
+      percentageString = percentageAmount.toLocaleString() + "%";
+      if (percentageAmount > 0)
+      {
+         percentageString = "+" + percentageString;
+      }
+   }
+
+   let percentColor = "dark";
+   if (percentageAmount !== 0)
+   {
+      if (increaseIsGood)
+      {
+         percentColor = (percentageAmount > 0) ? "success" : "warning";
+      }
+      else
+      {
+         percentColor = (percentageAmount < 0) ? "success" : "warning";
+      }
+   }
+
    return (
       <Card>
          <MDBox display="flex" justifyContent="space-between" pt={1} px={2}>
@@ -66,34 +111,34 @@ function StatisticsCard({color, title, count, percentage, icon}: Props): JSX.Ele
                <MDTypography variant="button" fontWeight="light" color="text">
                   {title}
                </MDTypography>
-               <MDTypography variant="h4">{count}</MDTypography>
+               {
+                  count !== undefined ? (
+                     <MDTypography variant="h4">{count.toLocaleString()}</MDTypography>
+                  ) : null
+               }
             </MDBox>
          </MDBox>
          <Divider />
-         <MDBox pb={2} px={2}>
-            <MDTypography component="p" variant="button" color="text" display="flex">
-               <MDTypography
-                  component="span"
-                  variant="button"
-                  fontWeight="bold"
-                  color={percentage.color}
-               >
-                  {percentage.amount}
-               </MDTypography>
-          &nbsp;{percentage.label}
-            </MDTypography>
-         </MDBox>
+         {
+            percentageAmount !== undefined && percentageAmount !== 0 ? (
+               <MDBox pb={2} px={2}>
+                  <MDTypography component="p" variant="button" color="text" display="flex">
+                     <MDTypography
+                        component="span"
+                        variant="button"
+                        fontWeight="bold"
+                        color={percentColor}
+                     >
+                        {percentageString}
+                     </MDTypography>
+                     &nbsp;{percentageLabel}
+                  </MDTypography>
+               </MDBox>
+            ) : null
+         }
       </Card>
    );
 }
 
-StatisticsCard.defaultProps = {
-   color: "info",
-   percentage: {
-      color: "success",
-      text: "",
-      label: "",
-   },
-};
 
 export default StatisticsCard;

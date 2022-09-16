@@ -20,6 +20,7 @@
  */
 
 import {useAuth0} from "@auth0/auth0-react";
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
@@ -87,10 +88,8 @@ LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
-   const [, setCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
-   const {
-      user, getAccessTokenSilently, getIdTokenClaims, logout, loginWithRedirect,
-   } = useAuth0();
+   const [, setCookie, removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
+   const {user, getAccessTokenSilently, getIdTokenClaims, logout} = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
@@ -117,7 +116,9 @@ export default function App()
          catch (e)
          {
             console.log(`Error loading token: ${JSON.stringify(e)}`);
+            removeCookie(SESSION_ID_COOKIE_NAME);
             logout();
+            return;
          }
       })();
    }, [loadingToken]);
@@ -159,7 +160,7 @@ export default function App()
             }
 
             const childList: any[] = [];
-            if(app.children)
+            if (app.children)
             {
                app.children.forEach((child: QAppTreeNode) =>
                {
@@ -213,7 +214,7 @@ export default function App()
             const path = `${parentPath}/${app.name}`;
             if (app.type === QAppNodeType.APP)
             {
-               if(app.children)
+               if (app.children)
                {
                   app.children.forEach((child: QAppTreeNode) =>
                   {
@@ -348,10 +349,14 @@ export default function App()
          }
          catch (e)
          {
-            console.log(e);
-            if (e.toString().indexOf("status code 401") !== -1)
+            if (e instanceof QException)
             {
-               logout();
+               if ((e as QException).message.indexOf("status code 401") !== -1)
+               {
+                  removeCookie(SESSION_ID_COOKIE_NAME);
+                  logout();
+                  return;
+               }
             }
          }
       })();

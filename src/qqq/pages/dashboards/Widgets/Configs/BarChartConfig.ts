@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-function configs(labels: any, datasets: any) 
+function configs(labels: any, datasets: any)
 {
    return {
-      data: {
+      dataderp: {
          labels,
          datasets: [
             {

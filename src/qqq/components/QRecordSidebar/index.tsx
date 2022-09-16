@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
@@ -27,8 +27,9 @@ import React from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-interface Props {
-   tableSections: QSection[];
+interface Props
+{
+   tableSections: QTableSection[];
    light?: boolean;
 }
 
@@ -38,7 +39,7 @@ function QRecordSidebar({tableSections, light}: Props): JSX.Element
       <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "1%"}}>
          <MDBox component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
-               tableSections ? tableSections.map((section: QSection, key: number) => (
+               tableSections ? tableSections.map((section: QTableSection, key: number) => (
                   <MDBox key={`section-${section.name}`} component="li" pt={key === 0 ? 0 : 1}>
                      <MDTypography
                         component="a"

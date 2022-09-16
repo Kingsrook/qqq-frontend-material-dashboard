@@ -19,28 +19,215 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip";
+import {useEffect, useState} from "react";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import edisonWarehouse from "qqq/images/warehouses/edison_nj.jpg";
-import pattersonWarehouse from "qqq/images/warehouses/patterson.jpg";
-import stocktonWarehouse from "qqq/images/warehouses/stockton.jpg";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
-import shipmentsByDayBarChartData from "qqq/pages/dashboards/Widgets/Data/ShipmentsByDayBarChartData";
-import shipmentsByMonthLineChartData from "qqq/pages/dashboards/Widgets/Data/ShipmentsByMonthLineChartData";
-import ShipmentsByCarrierPieChart from "qqq/pages/dashboards/Widgets/ShipmentsByChannelPieChart";
+import {GenericChartDataSingleDataset} from "qqq/pages/dashboards/Widgets/Data/GenericChartDataSingleDataset";
+import LocationCard, {LocationCardData} from "qqq/pages/dashboards/Widgets/LocationCard";
+import {PieChartData} from "qqq/pages/dashboards/Widgets/PieChart";
+import PieChartCard from "qqq/pages/dashboards/Widgets/PieChartCard";
 import ShipmentsByWarehouse from "qqq/pages/dashboards/Widgets/ShipmentsByWarehouse";
 import SmallLineChart from "qqq/pages/dashboards/Widgets/SmallLineChart";
-import StatisticsCard from "qqq/pages/dashboards/Widgets/StatisticsCard";
-import WarehouseCard from "qqq/pages/dashboards/Widgets/WarehouseCard";
+import StatisticsCard, {StatisticsCardData} from "qqq/pages/dashboards/Widgets/StatisticsCard";
+import QClient from "qqq/utils/QClient";
+
+const qController = QClient.getInstance();
 
 function Overview(): JSX.Element
 {
+   //////////////////////////////////
+   // shipments by day widget data //
+   //////////////////////////////////
+   const [shipmentsByDayTitle, setShipmentsByDayTitle] = useState("");
+   const [shipmentsByDayDescription, setShipmentsByDayDescription] = useState("");
+   const [shipmentsByDayData, setShipmentsByDayData] = useState({} as GenericChartDataSingleDataset);
+
+   const [shipmentsByMonthTitle, setShipmentsByMonthTitle] = useState("");
+   const [shipmentsByMonthDescription, setShipmentsByMonthDescription] = useState("");
+   const [shipmentsByMonthData, setShipmentsByMonthData] = useState({} as GenericChartDataSingleDataset);
+
+   const [shipmentsByCarrierTitle, setShipmentsByCarrierTitle] = useState("");
+   const [shipmentsByCarrierDescription, setShipmentsByCarrierDescription] = useState("");
+   const [shipmentsByCarrierData, setShipmentsByCarrierData] = useState({} as PieChartData);
+
+   const [todaysShipmentsData, setTodaysShipmentsData] = useState({} as StatisticsCardData);
+   const [shipmentsInTransitData, setShipmentsInTransitData] = useState({} as StatisticsCardData);
+   const [openOrdersData, setOpenOrdersData] = useState({} as StatisticsCardData);
+   const [shippingExceptionsData, setShippingExceptionsData] = useState({} as StatisticsCardData);
+
+   const [warehouseData, setWarehouseData] = useState([] as LocationCardData[]);
+
+   const [qInstance, setQInstance] = useState(null as QInstance);
+
+
+   //////////////////////////
+   // load meta data first //
+   //////////////////////////
+   useEffect(() =>
+   {
+      (async () =>
+      {
+         const newQInstance = await qController.loadMetaData();
+         setQInstance(newQInstance);
+      })();
+   }, []);
+
+   ///////////////////////////////////////////////////
+   // once meta data has loaded, load widgets' data //
+   ///////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      if (!qInstance)
+      {
+         return;
+      }
+
+      loadShipmentsByDayData();
+      loadShipmentsByMonthData();
+      loadYTDShipmentsByCarrierData();
+
+      loadTodaysShipmentsData();
+      loadShipmentsInTransitData();
+      loadOpenOrdersData();
+      loadShippingExceptionsData();
+
+      loadWarehouseData();
+
+   }, [qInstance]);
+
+
+   function loadShipmentsByDayData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("TotalShipmentsByDayBarChart");
+
+         ////////////////////////////////////////////////////////////
+         // calculate average and number of days over that average //
+         ////////////////////////////////////////////////////////////
+         let dataValues = widgetData.chartData.dataset.data;
+         let totalShipments = 0;
+         for (let i = 0; i < dataValues.length; i++)
+         {
+            totalShipments += dataValues[i];
+         }
+
+         let daysOverAverage = 0;
+         let average = Math.floor(totalShipments / 7);
+         for (let i = 0; i < dataValues.length; i++)
+         {
+            if (dataValues[i] > average)
+            {
+               daysOverAverage++;
+            }
+         }
+
+         const description = "Over the last week there have been <strong>" + daysOverAverage.toLocaleString() + (daysOverAverage == 1 ? " day" : " days") + "</strong> with total shipments greater than the daily average of <strong>" + average.toLocaleString() + " shipments</strong>.";
+         setShipmentsByDayTitle(widgetData.title);
+         setShipmentsByDayData(widgetData.chartData);
+         setShipmentsByDayDescription(description);
+      })();
+   }
+
+   function loadShipmentsByMonthData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("TotalShipmentsByMonthLineChart");
+
+         /////////////////////////////////////////////
+         // calculate if 'increasing or decreasing' //
+         /////////////////////////////////////////////
+         let dataValues = widgetData.chartData.dataset.data;
+         let firstHalf = 0;
+         let secondHalf = 0;
+         for (let i = 0; i < dataValues.length; i++)
+         {
+            if (i < dataValues.length / 2)
+            {
+               firstHalf += dataValues[i];
+            }
+            else
+            {
+               secondHalf += dataValues[i];
+            }
+         }
+
+         const description = "Total shipments have been <strong>" + ((secondHalf >= firstHalf) ? "increasing" : "decreasing") + "</strong> over the last eight months.";
+         setShipmentsByMonthTitle(widgetData.title);
+         setShipmentsByMonthDescription(description);
+         setShipmentsByMonthData(widgetData.chartData);
+      })();
+   }
+
+   function loadYTDShipmentsByCarrierData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("YTDShipmentsByCarrierPieChart");
+         setShipmentsByCarrierTitle(widgetData.title);
+         setShipmentsByCarrierDescription(widgetData.description);
+         setShipmentsByCarrierData(widgetData.chartData);
+      })();
+   }
+
+
+   function loadTodaysShipmentsData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("TodaysShipmentsStatisticsCard");
+         setTodaysShipmentsData(widgetData);
+      })();
+   }
+
+
+   function loadShipmentsInTransitData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("ShipmentsInTransitStatisticsCard");
+         setShipmentsInTransitData(widgetData);
+      })();
+   }
+
+
+   function loadOpenOrdersData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("OpenOrdersStatisticsCard");
+         setOpenOrdersData(widgetData);
+      })();
+   }
+
+   function loadShippingExceptionsData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("ShippingExceptionsStatisticsCard");
+         setShippingExceptionsData(widgetData);
+      })();
+   }
+
+   function loadWarehouseData()
+   {
+      (async () =>
+      {
+         const widgetData = await qController.widget("WarehouseLocationCards");
+         setWarehouseData(widgetData);
+      })();
+   }
+
+
    const actionButtons = (
       <>
          <Tooltip title="Refresh" placement="bottom">
@@ -74,30 +261,30 @@ function Overview(): JSX.Element
                      <MDBox mb={3}>
                         <BarChart
                            color="info"
-                           title="Total Shipments by Day"
-                           description={
-                              <span>Over the last week there have been <strong>3 days</strong> with total shipments <strong>greater than</strong> the daily average of <strong>564 shipments</strong>.</span>
-                           }
+                           title={shipmentsByDayTitle}
+                           description={shipmentsByDayDescription}
                            date="Updated 3 minutes ago"
-                           chart={shipmentsByDayBarChartData}
+                           data={shipmentsByDayData}
                         />
                      </MDBox>
                   </Grid>
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mb={3}>
-                        <ShipmentsByCarrierPieChart />
+                        <PieChartCard
+                           title={shipmentsByCarrierTitle}
+                           description={shipmentsByCarrierDescription}
+                           data={shipmentsByCarrierData}
+                        />
                      </MDBox>
                   </Grid>
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mb={3}>
                         <SmallLineChart
                            color="dark"
-                           title="shipments by month"
-                           description={
-                              <span>Total shipments have been <strong>increasing</strong> over the last eight months.</span>
-                           }
-                           date="Just updated"
-                           chart={shipmentsByMonthLineChartData}
+                           title={shipmentsByMonthTitle}
+                           description={shipmentsByMonthDescription}
+                           date="Just updatederp"
+                           chart={shipmentsByMonthData}
                         />
                      </MDBox>
                   </Grid>
@@ -109,13 +296,8 @@ function Overview(): JSX.Element
                      <MDBox mb={1.5}>
                         <StatisticsCard
                            icon="widgets"
-                           title="Today's Shipments"
-                           count="2,813"
-                           percentage={{
-                              color: "success",
-                              amount: "+15%",
-                              label: "than lask week",
-                           }}
+                           data={todaysShipmentsData}
+                           increaseIsGood={true}
                         />
                      </MDBox>
                   </Grid>
@@ -123,13 +305,8 @@ function Overview(): JSX.Element
                      <MDBox mb={1.5}>
                         <StatisticsCard
                            icon="local_shipping"
-                           title="Shipments In Transit"
-                           count="1,023"
-                           percentage={{
-                              color: "success",
-                              amount: "+1%",
-                              label: "than yesterday",
-                           }}
+                           data={shipmentsInTransitData}
+                           increaseIsGood={true}
                         />
                      </MDBox>
                   </Grid>
@@ -138,13 +315,8 @@ function Overview(): JSX.Element
                         <StatisticsCard
                            color="warning"
                            icon="receipt"
-                           title="Open Orders"
-                           count="213"
-                           percentage={{
-                              color: "error",
-                              amount: "+3%",
-                              label: "than last week",
-                           }}
+                           data={openOrdersData}
+                           increaseIsGood={true}
                         />
                      </MDBox>
                   </Grid>
@@ -153,13 +325,8 @@ function Overview(): JSX.Element
                         <StatisticsCard
                            color="error"
                            icon="error"
-                           title="Shipping Exceptions"
-                           count="28"
-                           percentage={{
-                              color: "success",
-                              amount: "-12%",
-                              label: "than yesterday",
-                           }}
+                           data={shippingExceptionsData}
+                           increaseIsGood={false}
                         />
                      </MDBox>
                   </Grid>
@@ -167,48 +334,18 @@ function Overview(): JSX.Element
             </MDBox>
             <MDBox mt={2}>
                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6} lg={4}>
-                     <MDBox mt={3}>
-                        <WarehouseCard
-                           image={edisonWarehouse}
-                           title="Edison, NJ"
-                           description={
-                              <span>The Edison, NJ warehouse currently has <strong>38 open orders</strong> and <strong>39 ASNs</strong> are expected in the next week.</span>
-                           }
-                           price="99% SLA"
-                           location="Edison, NJ"
-                           action={actionButtons}
-                        />
-                     </MDBox>
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={4}>
-                     <MDBox mt={3}>
-                        <WarehouseCard
-                           image={pattersonWarehouse}
-                           title="Patterson, CA"
-                           description={
-                              <span>The Patterson, CA warehouse shipped <strong>32,032</strong> this year.  The delivery SLA is <strong>97.3%</strong>, up <strong>0.8%</strong> from last week.</span>
-                           }
-                           price="98% SLA"
-                           location="Patterson, CA"
-                           action={actionButtons}
-                        />
-                     </MDBox>
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={4}>
-                     <MDBox mt={3}>
-                        <WarehouseCard
-                           image={stocktonWarehouse}
-                           title="Stockton, CA"
-                           description={
-                              <span>The Stockton, CA warehouse shipped <strong>2,032</strong> packages yesterday. Last week&apos;s failed shipments were down by <strong>12%</strong>.</span>
-                           }
-                           price="95% SLA"
-                           location="Stockton, CA"
-                           action={actionButtons}
-                        />
-                     </MDBox>
-                  </Grid>
+                  {
+                     warehouseData && warehouseData.map((data) => (
+                        <Grid item xs={12} md={6} lg={4} key={data.title}>
+                           <MDBox mt={3}>
+                              <LocationCard
+                                 locationData={data}
+                                 action={actionButtons}
+                              />
+                           </MDBox>
+                        </Grid>
+                     ))
+                  }
                </Grid>
             </MDBox>
          </MDBox>

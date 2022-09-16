@@ -22,22 +22,39 @@
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
+import parse from "html-react-parser";
 import {ReactNode} from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-interface Props {
-  image: string;
-  title: string;
-  description: string | ReactNode;
-  price: string;
-  location: ReactNode;
-  action?: ReactNode | boolean;
-  [key: string]: any;
+//////////////////////////////////////////
+// structure of location card data //
+//////////////////////////////////////////
+export interface LocationCardData
+{
+   imageUrl: string;
+   title: string;
+   description: string;
+   footerText: string;
+   location: string;
 }
 
-function WarehouseCard({image, title, description, price, location, action}: Props): JSX.Element
+interface Props
 {
+   locationData: LocationCardData;
+   action?: ReactNode | boolean;
+
+   [key: string]: any;
+}
+
+LocationCard.defaultProps = {
+   action: false,
+};
+
+function LocationCard({locationData, action}: Props): JSX.Element
+{
+   const {imageUrl, title, description, footerText, location} = locationData;
+
    return (
       <Card>
          <MDBox
@@ -50,7 +67,7 @@ function WarehouseCard({image, title, description, price, location, action}: Pro
          >
             <MDBox
                component="img"
-               src={image}
+               src={imageUrl}
                alt={title}
                borderRadius="lg"
                shadow="md"
@@ -68,7 +85,7 @@ function WarehouseCard({image, title, description, price, location, action}: Pro
                left={0}
                top="0"
                sx={{
-                  backgroundImage: `url(${image})`,
+                  backgroundImage: `url(${locationData.imageUrl})`,
                   transform: "scale(0.94)",
                   filter: "blur(12px)",
                   backgroundSize: "cover",
@@ -83,7 +100,7 @@ function WarehouseCard({image, title, description, price, location, action}: Pro
                {title}
             </MDTypography>
             <MDTypography variant="body2" color="text" sx={{mt: 1.5, mb: 1}}>
-               {description}
+               {parse(description)}
             </MDTypography>
          </MDBox>
          <Divider />
@@ -97,11 +114,11 @@ function WarehouseCard({image, title, description, price, location, action}: Pro
             lineHeight={1}
          >
             <MDTypography variant="body2" fontWeight="regular" color="text">
-               {price}
+               {footerText}
             </MDTypography>
             <MDBox color="text" display="flex" alignItems="center">
                <Icon color="inherit" sx={{m: 0.5}}>
-            place
+                  place
                </Icon>
                <MDTypography variant="button" fontWeight="light" color="text">
                   {location}
@@ -112,8 +129,4 @@ function WarehouseCard({image, title, description, price, location, action}: Pro
    );
 }
 
-WarehouseCard.defaultProps = {
-   action: false,
-};
-
-export default WarehouseCard;
+export default LocationCard;

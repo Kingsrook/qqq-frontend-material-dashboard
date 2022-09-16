@@ -21,31 +21,121 @@
 
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
-import {useMemo, ReactNode} from "react";
+import {ReactNode, useMemo} from "react";
 import {Line} from "react-chartjs-2";
 import colors from "qqq/components/Temporary/colors";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import configs from "qqq/pages/dashboards/Widgets/Configs/LineChartConfigs";
 
-interface Props {
-  icon?: {
-    color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-    component: ReactNode;
-  };
-  title?: string;
-  description?: string | ReactNode;
-  height?: string | number;
-  chart: {
-    labels: string[];
-    datasets: {
+
+///////////////////////////////////////////
+// structure of expected line chart data //
+///////////////////////////////////////////
+export interface LineChartData
+{
+   labels: string[];
+   datasets: {
       label: string;
       color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
       data: number[];
-    }[];
-  };
-  [key: string]: any;
+   }[];
+};
+
+
+////////////////////////
+// line chart options //
+////////////////////////
+const options = {
+   responsive: true,
+   maintainAspectRatio: false,
+   plugins: {
+      legend: {
+         display: false,
+      },
+   },
+   interaction: {
+      intersect: false,
+      mode: "index",
+   },
+   scales: {
+      y: {
+         grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            borderDash: [5, 5],
+            color: "rgba(255, 255, 255, .2)",
+         },
+         ticks: {
+            display: true,
+            color: "#f8f9fa",
+            padding: 10,
+            font: {
+               size: 14,
+               weight: 300,
+               family: "Roboto",
+               style: "normal",
+               lineHeight: 2,
+            },
+         },
+      },
+      x: {
+         grid: {
+            drawBorder: false,
+            display: false,
+            drawOnChartArea: false,
+            drawTicks: false,
+            borderDash: [5, 5],
+         },
+         ticks: {
+            display: true,
+            color: "#f8f9fa",
+            padding: 10,
+            font: {
+               size: 14,
+               weight: 300,
+               family: "Roboto",
+               style: "normal",
+               lineHeight: 2,
+            },
+         },
+      },
+   },
+};
+
+
+//////////////////////////////////////////
+// define input properties and defaults //
+//////////////////////////////////////////
+interface Props
+{
+   icon?: {
+      color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+      component: ReactNode;
+   };
+   title?: string;
+   description?: string | ReactNode;
+   height?: string | number;
+   chart: {
+      labels: string[];
+      datasets: {
+         label: string;
+         color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+         data: number[];
+      }[];
+   };
+
+   [key: string]: any;
 }
+
+LineChart.defaultProps = {
+   icon: {color: "info", component: ""},
+   title: "",
+   description: "",
+   height: "19.125rem",
+};
 
 function LineChart({icon, title, description, height, chart}: Props): JSX.Element
 {
@@ -67,7 +157,7 @@ function LineChart({icon, title, description, height, chart}: Props): JSX.Elemen
       }))
       : [];
 
-   const {data, options} = configs(chart.labels || [], chartDatasets);
+   const {data} = configs(chart.labels || [], chartDatasets);
 
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
@@ -115,11 +205,5 @@ function LineChart({icon, title, description, height, chart}: Props): JSX.Elemen
    return title || description ? <Card>{renderChart}</Card> : renderChart;
 }
 
-LineChart.defaultProps = {
-   icon: {color: "info", component: ""},
-   title: "",
-   description: "",
-   height: "19.125rem",
-};
 
 export default LineChart;

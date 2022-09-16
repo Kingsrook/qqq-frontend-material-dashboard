@@ -20,8 +20,8 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
@@ -30,7 +30,7 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import {Form, Formik} from "formik";
 import React, {useReducer, useState} from "react";
-import {useParams, useNavigate, useLocation} from "react-router-dom";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
@@ -58,7 +58,7 @@ function EntityForm({table, id}: Props): JSX.Element
    const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
    const [formFields, setFormFields] = useState(null as Map<string, any>);
    const [t1sectionName, setT1SectionName] = useState(null as string);
-   const [nonT1Sections, setNonT1Sections] = useState([] as QSection[]);
+   const [nonT1Sections, setNonT1Sections] = useState([] as QTableSection[]);
 
    const [alertContent, setAlertContent] = useState("");
 
@@ -66,7 +66,7 @@ function EntityForm({table, id}: Props): JSX.Element
    const [formValues, setFormValues] = useState({} as { [key: string]: string });
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [record, setRecord] = useState(null as QRecord);
-   const [tableSections, setTableSections] = useState(null as QSection[]);
+   const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const navigate = useNavigate();
@@ -144,7 +144,7 @@ function EntityForm({table, id}: Props): JSX.Element
          /////////////////////////////////////
          const dynamicFormFieldsBySection = new Map<string, any>();
          let t1sectionName;
-         const nonT1Sections: QSection[] = [];
+         const nonT1Sections: QTableSection[] = [];
          for (let i = 0; i < tableSections.length; i++)
          {
             const section = tableSections[i];
@@ -325,7 +325,7 @@ function EntityForm({table, id}: Props): JSX.Element
                               }
                            </Card>
                         </MDBox>
-                        {formFields && nonT1Sections.length ? nonT1Sections.map((section: QSection) => (
+                        {formFields && nonT1Sections.length ? nonT1Sections.map((section: QTableSection) => (
                            <MDBox key={`edit-card-${section.name}`} pb={3}>
                               <Card id={section.name} sx={{overflow: "visible"}}>
                                  <MDTypography variant="h5" p={3} pb={1}>

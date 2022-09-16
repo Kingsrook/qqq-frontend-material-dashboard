@@ -22,30 +22,46 @@
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import {ReactNode} from "react";
-import {useMaterialUIController} from "context";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
+import {StatisticsCardData} from "qqq/pages/dashboards/Widgets/StatisticsCard";
 
-interface Props {
-  title: string;
-  count: string | number;
-  percentage?: {
-    color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark" | "white";
-    value: string | number;
-    label: string;
-  };
-  dropdown?: {
-    action: (...args: any) => void;
-    menu: ReactNode;
-    value: string;
-  };
-  [key: string]: any;
+interface Props
+{
+   data: StatisticsCardData;
+   increaseIsGood: boolean;
+   dropdown?: {
+      action: (...args: any) => void;
+      menu: ReactNode;
+      value: string;
+   };
+
+   [key: string]: any;
 }
 
-function SimpleStatisticsCard({title, count, percentage, dropdown}: Props): JSX.Element
+function SimpleStatisticsCard({data, increaseIsGood, dropdown}: Props): JSX.Element
 {
-   const [controller] = useMaterialUIController();
-   const {darkMode} = controller;
+   const {title, count, percentageAmount, percentageLabel} = data;
+
+   let percentageString = "";
+   if (percentageAmount)
+   {
+      percentageString = percentageAmount.toLocaleString() + "%";
+      if (percentageAmount > 0)
+      {
+         percentageString = "+" + percentageString;
+      }
+   }
+
+   let percentColor: string;
+   if (increaseIsGood)
+   {
+      percentColor = (percentageAmount > 0) ? "success" : "warning";
+   }
+   else
+   {
+      percentColor = (percentageAmount < 0) ? "success" : "warning";
+   }
 
    return (
       <Card>
@@ -63,17 +79,21 @@ function SimpleStatisticsCard({title, count, percentage, dropdown}: Props): JSX.
                      </MDTypography>
                   </MDBox>
                   <MDBox lineHeight={1}>
-                     <MDTypography variant="h5" fontWeight="bold">
-                        {count}
-                     </MDTypography>
-                     <MDTypography variant="button" fontWeight="bold" color={percentage.color}>
-                        {percentage.value}&nbsp;
+                     {
+                        count ? (
+                           <MDTypography variant="h5" fontWeight="bold">
+                              {count.toLocaleString()}
+                           </MDTypography>
+                        ) : null
+                     }
+                     <MDTypography variant="button" fontWeight="bold" color={percentColor}>
+                        {percentageString}&nbsp;
                         <MDTypography
                            variant="button"
                            fontWeight="regular"
-                           color={darkMode ? "text" : "secondary"}
+                           color={"secondary"}
                         >
-                           {percentage.label}
+                           {percentageLabel}
                         </MDTypography>
                      </MDTypography>
                   </MDBox>

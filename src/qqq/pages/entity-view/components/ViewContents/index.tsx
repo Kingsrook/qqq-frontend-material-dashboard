@@ -20,8 +20,8 @@
  */
 
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import {QSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QSection";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
@@ -71,10 +71,10 @@ function ViewContents({id, table}: Props): JSX.Element
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
    const [record, setRecord] = useState(null as QRecord);
-   const [tableSections, setTableSections] = useState([] as QSection[]);
+   const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1SectionName, setT1SectionName] = useState(null as string);
    const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
-   const [nonT1TableSections, setNonT1TableSections] = useState([] as QSection[]);
+   const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [searchParams] = useSearchParams();

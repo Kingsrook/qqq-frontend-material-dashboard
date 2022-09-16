@@ -19,10 +19,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const shipmentsByMonthLineChartData =
-   {
-      labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-      datasets: {label: "Mobile apps", data: [50, 40, 300, 320, 500, 350, 200, 230, 500]},
-   };
 
-export default shipmentsByMonthLineChartData;
+//////////////////////////////////////
+// structure of expected chart data //
+//////////////////////////////////////
+export interface GenericChartDataSingleDataset
+{
+   labels: string[];
+   dataset: {
+      label: string;
+      color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+      data: number[];
+   };
+}

@@ -26,16 +26,18 @@ import {ReactNode} from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-interface Props {
-  color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-  title: string;
-  percentage?: {
-    color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark" | "white";
-    amount: string | number;
-    label: string;
-  };
-  icon: ReactNode;
-  [key: string]: any;
+interface Props
+{
+   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+   title: string;
+   percentage?: {
+      color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark" | "white";
+      amount: string | number;
+      label: string;
+   };
+   icon: ReactNode;
+
+   [key: string]: any;
 }
 
 function ProcessLinkCard({
@@ -44,7 +46,7 @@ function ProcessLinkCard({
 {
    return (
       <Card>
-         <MDBox display="flex" justifyContent="space-between" pt={1} px={2}>
+         <MDBox display="flex" justifyContent="space-between" pt={3} px={2}>
             <MDBox
                variant="gradient"
                bgColor={color}

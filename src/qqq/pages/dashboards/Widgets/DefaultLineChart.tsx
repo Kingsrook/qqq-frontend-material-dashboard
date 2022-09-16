@@ -21,25 +21,41 @@
 
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
-import {ReactNode, useMemo} from "react";
-import {Bar} from "react-chartjs-2";
-import colors from "qqq/components/Temporary/colors";
+import React, {ReactNode, useMemo} from "react";
+import {Line} from "react-chartjs-2";
+import colors from "assets/theme/base/colors";
+import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import {GenericChartData} from "qqq/pages/dashboards/Widgets/Data/GenericChartData";
 
+//////////////////////////////////////////
+// structure of default line chart data //
+//////////////////////////////////////////
+export interface DefaultLineChartData
+{
+   labels: string[];
+   lineLabels?: string[];
+   datasets: {
+      label: string;
+      color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+      data: number[];
+   }[];
+};
 
-//////////////////
-// configuation //
-//////////////////
+/////////////////////
+// display options //
+/////////////////////
 const options = {
-   indexAxis: "y",
    responsive: true,
    maintainAspectRatio: false,
    plugins: {
       legend: {
          display: false,
       },
+   },
+   interaction: {
+      intersect: false,
+      mode: "index",
    },
    scales: {
       y: {
@@ -67,9 +83,10 @@ const options = {
       x: {
          grid: {
             drawBorder: false,
-            display: false,
+            display: true,
             drawOnChartArea: true,
             drawTicks: true,
+            borderDash: [5, 5],
             color: "#c1c4ce5c",
          },
          ticks: {
@@ -88,7 +105,6 @@ const options = {
    },
 };
 
-
 /////////////////////////
 // inputs and defaults //
 /////////////////////////
@@ -99,26 +115,46 @@ interface Props
       component: ReactNode;
    };
    title?: string;
-   description?: string | ReactNode;
    height?: string | number;
-   data: GenericChartData;
+   data: DefaultLineChartData;
 
    [key: string]: any;
 }
 
-function HorizontalBarChart({icon, title, description, height, data}: Props): JSX.Element
+DefaultLineChart.defaultProps = {
+   icon: {color: "info", component: ""},
+   title: "",
+   height: "19.125rem",
+};
+
+
+function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
 {
-   const chartDatasets = data.datasets
+   const allBackgroundColors = ["info", "warning", "primary", "success", "error", "secondary", "dark"];
+   if (data && data.datasets)
+   {
+      data.datasets.forEach((ds, index) =>
+      {
+         // @ts-ignore
+         ds.color = allBackgroundColors[index];
+      });
+   }
+
+   const chartDatasets = data && data.datasets
       ? data.datasets.map((dataset) => ({
          ...dataset,
-         weight: 5,
-         borderWidth: 0,
-         borderRadius: 4,
-         backgroundColor: colors[dataset.color]
+         tension: 0,
+         pointRadius: 3,
+         borderWidth: 4,
+         backgroundColor: "transparent",
+         fill: true,
+         pointBackgroundColor: colors[dataset.color]
             ? colors[dataset.color || "dark"].main
             : colors.dark.main,
-         fill: false,
-         maxBarThickness: 35,
+         borderColor: colors[dataset.color]
+            ? colors[dataset.color || "dark"].main
+            : colors.dark.main,
+         maxBarThickness: 6,
       }))
       : [];
 
@@ -133,8 +169,8 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
 
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
-         {title || description ? (
-            <MDBox display="flex" px={description ? 1 : 0} pt={description ? 1 : 0}>
+         {title ? (
+            <MDBox display="flex" px={0} pt={0}>
                {icon.component && (
                   <MDBox
                      width="4rem"
@@ -157,7 +193,20 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
                   {title && <MDTypography variant="h6">{title}</MDTypography>}
                   <MDBox mb={2}>
                      <MDTypography component="div" variant="button" color="text">
-                        {description}
+                        <MDBox display="flex" justifyContent="space-between">
+                           <MDBox display="flex" ml={-1}>
+                              {
+                                 data && data.lineLabels ? (
+                                    (data.lineLabels.map((label: string, index: number) => (
+
+                                       <MDBox key={index}>
+                                          <MDBadgeDot color={allBackgroundColors[index]} size="sm" badgeContent={label} />
+                                       </MDBox>
+                                    )
+                                    ))) : null
+                              }
+                           </MDBox>
+                        </MDBox>
                      </MDTypography>
                   </MDBox>
                </MDBox>
@@ -166,22 +215,16 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
          {useMemo(
             () => (
                <MDBox height={height}>
-                  <Bar data={fullData} options={options} />
+                  <Line data={fullData} options={options} />
                </MDBox>
             ),
+
             [data, height]
          )}
       </MDBox>
    );
 
-   return title || description ? <Card>{renderChart}</Card> : renderChart;
+   return title ? <Card>{renderChart}</Card> : renderChart;
 }
 
-HorizontalBarChart.defaultProps = {
-   icon: {color: "info", component: ""},
-   title: "",
-   description: "",
-   height: "19.125rem",
-};
-
-export default HorizontalBarChart;
+export default DefaultLineChart;
