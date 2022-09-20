@@ -21,6 +21,7 @@
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Processes
@@ -42,6 +43,22 @@ class QProcessUtils
       });
       return matchingProcesses;
    }
+
+   public static getReportsForTable(metaData: QInstance, tableName: string, includeHidden = false): QReportMetaData[]
+   {
+      const matchingReports: QReportMetaData[] = [];
+      const reportKeys = [...metaData.reports.keys()];
+      reportKeys.forEach((key) =>
+      {
+         const process = metaData.reports.get(key);
+         if (process.tableName === tableName)
+         {
+            matchingReports.push(process);
+         }
+      });
+      return matchingReports;
+   }
+
 }
 
 export default QProcessUtils;

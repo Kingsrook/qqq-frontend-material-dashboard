@@ -29,6 +29,7 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props
 {
    color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
+   isReport?: boolean;
    title: string;
    percentage?: {
       color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark" | "white";
@@ -41,7 +42,7 @@ interface Props
 }
 
 function ProcessLinkCard({
-   color, title, percentage, icon,
+   color, isReport, title, percentage, icon,
 }: Props): JSX.Element
 {
    return (
@@ -81,10 +82,11 @@ function ProcessLinkCard({
                >
                   {percentage.amount}
                </MDTypography>
-               Click here to run the process called
-               {" "}
-               {title}
-               .
+               {
+                  isReport
+                     ? `Click here to run the process called ${title}.`
+                     : `Click here to access the ${title} report.`
+               }
                {percentage.label}
             </MDTypography>
          </MDBox>
@@ -94,6 +96,7 @@ function ProcessLinkCard({
 
 ProcessLinkCard.defaultProps = {
    color: "info",
+   isReport: false,
    percentage: {
       color: "success",
       text: "",

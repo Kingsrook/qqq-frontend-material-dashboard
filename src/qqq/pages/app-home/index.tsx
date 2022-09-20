@@ -22,6 +22,7 @@ import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QApp
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {Icon} from "@mui/material";
 import Card from "@mui/material/Card";
@@ -53,6 +54,7 @@ function AppHome({app}: Props): JSX.Element
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [tables, setTables] = useState([] as QTableMetaData[]);
    const [processes, setProcesses] = useState([] as QProcessMetaData[]);
+   const [reports, setReports] = useState([] as QReportMetaData[]);
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
    const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number }>());
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
@@ -78,6 +80,7 @@ function AppHome({app}: Props): JSX.Element
 
       const newTables: QTableMetaData[] = [];
       const newProcesses: QProcessMetaData[] = [];
+      const newReports: QReportMetaData[] = [];
       const newChildApps: QAppMetaData[] = [];
 
       app.children.forEach((child) =>
@@ -91,6 +94,9 @@ function AppHome({app}: Props): JSX.Element
             case QAppNodeType.PROCESS:
                newProcesses.push(qInstance.processes.get(child.name));
                break;
+            case QAppNodeType.REPORT:
+               newReports.push(qInstance.reports.get(child.name));
+               break;
             case QAppNodeType.APP:
                newChildApps.push(qInstance.apps.get(child.name));
                break;
@@ -101,6 +107,7 @@ function AppHome({app}: Props): JSX.Element
 
       setTables(newTables);
       setProcesses(newProcesses);
+      setReports(newReports);
       setChildApps(newChildApps);
 
       const tableCounts = new Map<string, { isLoading: boolean, value: number }>();
@@ -231,7 +238,6 @@ function AppHome({app}: Props): JSX.Element
                {
                   app.sections ? (
                      <Grid item xs={12} lg={widgetCount === 0 ? 12 : widgetCount === 1 ? 9 : 6}>
-
                         {app.sections.map((section) => (
                            <MDBox key={section.name} mb={3}>
                               <Card sx={{overflow: "visible"}}>
@@ -268,7 +274,42 @@ function AppHome({app}: Props): JSX.Element
                                     ) : null
                                  }
                                  {
-                                    section.processes && section.tables ? (
+                                    section.processes && section.reports ? (
+                                       <Divider />
+                                    ) : null
+                                 }
+                                 {
+                                    section.reports ? (
+                                       <MDBox p={3} pl={5} pt={0}>
+                                          <MDTypography variant="h6">Reports</MDTypography>
+                                       </MDBox>
+                                    ) : null
+                                 }
+                                 {
+                                    section.reports ? (
+                                       <Grid container spacing={3} padding={3} paddingTop={0}>
+                                          {
+                                             section.reports.map((reportName) =>
+                                             {
+                                                let report = app.childMap.get(reportName);
+                                                return (
+                                                   <Grid key={report.name} item xs={12} md={12} lg={tileSizeLg}>
+                                                      <Link to={report.name}>
+                                                         <ProcessLinkCard
+                                                            icon={report.iconName || app.iconName}
+                                                            title={report.label}
+                                                            isReport={true}
+                                                         />
+                                                      </Link>
+                                                   </Grid>
+                                                );
+                                             })
+                                          }
+                                       </Grid>
+                                    ) : null
+                                 }
+                                 {
+                                    section.reports && section.tables ? (
                                        <Divider />
                                     ) : null
                                  }

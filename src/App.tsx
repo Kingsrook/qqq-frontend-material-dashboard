@@ -49,6 +49,7 @@ import EntityEdit from "qqq/pages/entity-edit";
 import EntityList from "qqq/pages/entity-list";
 import EntityView from "qqq/pages/entity-view";
 import ProcessRun from "qqq/pages/process-run";
+import ReportRun from "qqq/pages/process-run/ReportRun";
 import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
 
@@ -270,6 +271,17 @@ export default function App()
                      component: <ProcessRun process={process} />,
                   });
                });
+
+               const reportsForTable = QProcessUtils.getReportsForTable(metaData, table.name, true);
+               reportsForTable.forEach((report) =>
+               {
+                  routeList.push({
+                     name: report.label,
+                     key: report.name,
+                     route: `${path}/${report.name}`,
+                     component: <ReportRun report={report} />,
+                  });
+               });
             }
             else if (app.type === QAppNodeType.PROCESS)
             {
@@ -279,6 +291,16 @@ export default function App()
                   key: app.name,
                   route: path,
                   component: <ProcessRun process={process} />,
+               });
+            }
+            else if (app.type === QAppNodeType.REPORT)
+            {
+               const report = metaData.reports.get(app.name);
+               routeList.push({
+                  name: `${app.label}`,
+                  key: app.name,
+                  route: path,
+                  component: <ReportRun report={report} />,
                });
             }
          }

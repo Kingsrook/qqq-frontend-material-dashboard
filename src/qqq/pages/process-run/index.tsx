@@ -35,6 +35,7 @@ import {Button, Icon, CircularProgress, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
@@ -42,7 +43,7 @@ import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
-import React, {Fragment, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useLocation, useParams, useNavigate} from "react-router-dom";
 import * as Yup from "yup";
 import BaseLayout from "qqq/components/BaseLayout";
@@ -61,13 +62,14 @@ import QProcessSummaryResults from "./components/QProcessSummaryResults";
 interface Props
 {
    process?: QProcessMetaData;
+   defaultProcessValues?: any;
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process}: Props): JSX.Element
+function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -340,6 +342,29 @@ function ProcessRun({process}: Props): JSX.Element
                         )
                      }
                      {
+                        component.type === QComponentType.DOWNLOAD_FORM && (
+                           <Grid container display="flex" justifyContent="center">
+                              <Grid item xs={12} sm={12} xl={8} m={3} p={3} sx={{border: "1px solid gray", borderRadius: "1rem"}}>
+                                 <MDBox mt={-5} mb={1} p={1} sx={{width: "fit-content"}} bgColor="success" borderRadius=".25em" width="initial" color="white">
+                                    <MDBox display="flex" alignItems="center" color="white">
+                                       Download
+                                    </MDBox>
+                                 </MDBox>
+                                 <MDBox display="flex" py={1} pr={2}>
+                                    <MDTypography variant="button" fontWeight="bold">
+                                       <Link target="_blank" download href={`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`} display="flex" alignItems="center">
+                                          <Icon fontSize="large">download_for_offline</Icon>
+                                          <Box pl={1}>
+                                             {processValues.downloadFileName}
+                                          </Box>
+                                       </Link>
+                                    </MDTypography>
+                                 </MDBox>
+                              </Grid>
+                           </Grid>
+                        )
+                     }
+                     {
                         component.type === QComponentType.VALIDATION_REVIEW_SCREEN && (
                            <QValidationReview
                               qInstance={qInstance}
@@ -431,6 +456,30 @@ function ProcessRun({process}: Props): JSX.Element
       return (newRecordConfig);
    }
 
+   const getFullFieldList = (activeStep: QFrontendStepMetaData, processValues: any) =>
+   {
+      let rs: QFieldMetaData[] = [];
+
+      if(activeStep && activeStep.formFields)
+      {
+         for(let i = 0; i<activeStep.formFields.length; i++)
+         {
+            rs.push(activeStep.formFields[i]);
+         }
+      }
+
+      if(processValues.inputFieldList)
+      {
+         for(let i = 0; i<processValues.inputFieldList.length; i++)
+         {
+            let inputField = new QFieldMetaData(processValues.inputFieldList[i]);
+            rs.push(inputField);
+         }
+      }
+
+      return (rs);
+   }
+
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle moving to another step in the process - e.g., after the backend told us what screen to show next. //
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -474,14 +523,13 @@ function ProcessRun({process}: Props): JSX.Element
          ///////////////////////////////////////////////////
          // if this step has form fields, set up the form //
          ///////////////////////////////////////////////////
-         if (activeStep.formFields)
+         if (activeStep.formFields || processValues.inputFieldList)
          {
-            const {dynamicFormFields, formValidations} = DynamicFormUtils.getFormData(
-               activeStep.formFields,
-            );
+            let fullFieldList = getFullFieldList(activeStep, processValues);
+            const {dynamicFormFields, formValidations} = DynamicFormUtils.getFormData(fullFieldList);
 
             const initialValues: any = {};
-            activeStep.formFields.forEach((field) =>
+            fullFieldList.forEach((field) =>
             {
                initialValues[field.name] = processValues[field.name];
             });
@@ -492,7 +540,7 @@ function ProcessRun({process}: Props): JSX.Element
             if (doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM))
             {
                const newDisabledBulkEditFields: any = {};
-               activeStep.formFields.forEach((field) =>
+               fullFieldList.forEach((field) =>
                {
                   newDisabledBulkEditFields[field.name] = true;
                   dynamicFormFields[field.name].isRequired = false;
@@ -562,11 +610,12 @@ function ProcessRun({process}: Props): JSX.Element
    /////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if (activeStep && activeStep.formFields)
+      if (activeStep && (activeStep.formFields || processValues.inputFieldList))
       {
+         let fullFieldList = getFullFieldList(activeStep, processValues);
          const newDynamicFormFields: any = {};
          const newFormValidations: any = {};
-         activeStep.formFields.forEach((field) =>
+         fullFieldList.forEach((field) =>
          {
             const fieldName = field.name;
             const isDisabled = disabledBulkEditFields[fieldName];
@@ -738,22 +787,21 @@ function ProcessRun({process}: Props): JSX.Element
       (async () =>
       {
          const urlSearchParams = new URLSearchParams(location.search);
-         let queryStringForInit = null;
+         let queryStringPairsForInit = [];
          if (urlSearchParams.get("recordIds"))
          {
-            queryStringForInit = `recordsParam=recordIds&recordIds=${urlSearchParams.get(
-               "recordIds",
-            )}`;
+            queryStringPairsForInit.push("recordsParam=recordIds");
+            queryStringPairsForInit.push(`recordIds=${urlSearchParams.get("recordIds")}`);
          }
          else if (urlSearchParams.get("filterJSON"))
          {
-            queryStringForInit = `recordsParam=filterJSON&filterJSON=${urlSearchParams.get(
-               "filterJSON",
-            )}`;
+            queryStringPairsForInit.push("recordsParam=filterJSON");
+            queryStringPairsForInit.push(`filterJSON=${urlSearchParams.get("filterJSON")}`);
          }
          // todo once saved filters exist
          //else if(urlSearchParams.get("filterId")) {
-         //   queryStringForInit = `recordsParam=filterId&filterId=${urlSearchParams.get("filterId")}`
+         //   queryStringPairsForInit.push("recordsParam=filterId");
+         //   queryStringPairsForInit.push(`filterId=${urlSearchParams.get("filterId")}`);
          // }
 
          try
@@ -792,9 +840,17 @@ function ProcessRun({process}: Props): JSX.Element
             return;
          }
 
+         if(defaultProcessValues)
+         {
+            for(let key in defaultProcessValues)
+            {
+               queryStringPairsForInit.push(`${key}=${encodeURIComponent(defaultProcessValues[key])}`);
+            }
+         }
+
          try
          {
-            const processResponse = await QClient.getInstance().processInit(processName, queryStringForInit);
+            const processResponse = await QClient.getInstance().processInit(processName, queryStringPairsForInit.join("&"));
             setProcessUUID(processResponse.processUUID);
             setLastProcessResponse(processResponse);
          }
@@ -830,7 +886,8 @@ function ProcessRun({process}: Props): JSX.Element
       if (doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM))
       {
          const bulkEditEnabledFields: string[] = [];
-         activeStep.formFields.forEach((field) =>
+         let fullFieldList = getFullFieldList(activeStep, processValues);
+         fullFieldList.forEach((field) =>
          {
             if (!disabledBulkEditFields[field.name])
             {
@@ -904,7 +961,7 @@ function ProcessRun({process}: Props): JSX.Element
       <BaseLayout>
          <MDBox py={3} mb={20}>
             <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
-               <Grid item xs={12} lg={8}>
+               <Grid item xs={12} lg={10} xl={8}>
                   <Formik
                      enableReinitialize
                      initialValues={initialValues}
@@ -995,6 +1052,7 @@ function ProcessRun({process}: Props): JSX.Element
 
 ProcessRun.defaultProps = {
    process: null,
+   defaultProcessValues: {}
 };
 
 export default ProcessRun;
