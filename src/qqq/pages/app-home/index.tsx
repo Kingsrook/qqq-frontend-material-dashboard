@@ -31,16 +31,12 @@ import Grid from "@mui/material/Grid";
 import React, {useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
 import BaseLayout from "qqq/components/BaseLayout";
+import DashboardWidgets from "qqq/components/DashboardWidgets";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
-import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import MiniStatisticsCard from "qqq/components/Temporary/MiniStatisticsCard";
-import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
-import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
-import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
 import QClient from "qqq/utils/QClient";
-import LineChart from "../dashboards/Widgets/LineChart";
 
 const qController = QClient.getInstance();
 
@@ -160,81 +156,12 @@ function AppHome({app}: Props): JSX.Element
    return (
       <BaseLayout>
          <MDBox mt={4}>
+            {app.widgets && (
+               <Grid container spacing={3}>
+                  <DashboardWidgets widgetNameList={app.widgets} />
+               </Grid>
+            )}
             <Grid container spacing={3}>
-               {
-                  widgetCount > 0 ? (
-                     <Grid item xs={12} lg={12}>
-                        <Grid container spacing={3}>
-                           {
-                              widgets.map((chart, i) => (
-                                 <Grid key={`${i}`} item xs={12} lg={12}>
-                                    <MDBox mb={3}>
-                                       {
-                                          chart.type === "table" && (
-                                             <TableCard
-                                                color="info"
-                                                title={chart.title}
-                                                data={chart}
-                                                dropdownOptions={chart.dropdownOptions}
-                                                dropdownOnChange={handleDropdownOnChange}
-                                                widgetIndex={i}
-                                             />
-                                          )
-                                       }
-                                    </MDBox>
-                                 </Grid>
-                              ))
-                           }
-                        </Grid>
-                        <Grid item xs={12} lg={widgetCount === 1 ? 3 : 6}>
-                           {
-                              widgets.map((chart, i) => (
-                                 <Grid key={`${i}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
-                                    <MDBox mb={3}>
-                                       {
-                                          chart.type === "quickSightChart" && (
-                                             <QuickSightChart url={chart.url} label={chart.label} />
-                                          )
-                                       }
-                                       {
-                                          chart.type === "barChart" && (
-                                             <BarChart
-                                                color="info"
-                                                title={chart.title}
-                                                date={`As of ${new Date().toDateString()}`}
-                                                data={chart.chartData}
-                                             />
-                                          )
-                                       }
-                                       {
-                                          chart.type === "lineChart" && (
-                                             <LineChart
-                                                title={chart.title}
-                                                description={(
-                                                   <MDBox display="flex" justifyContent="space-between">
-                                                      <MDBox display="flex" ml={-1}>
-                                                         {
-                                                            chart.lineChartData.datasets.map((dataSet: any) => (
-                                                               <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
-                                                            ))
-                                                         }
-                                                      </MDBox>
-                                                      <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
-                                                   </MDBox>
-                                                )}
-                                                chart={chart.lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
-                                             />
-                                          )
-                                       }
-                                    </MDBox>
-                                 </Grid>
-                              ))
-                           }
-                        </Grid>
-                     </Grid>
-                  ) : null
-               }
-
                {
                   app.sections ? (
                      <Grid item xs={12} lg={widgetCount === 0 ? 12 : widgetCount === 1 ? 9 : 6}>

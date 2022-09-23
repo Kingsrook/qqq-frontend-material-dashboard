@@ -37,6 +37,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import React, {useReducer, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
+import DashboardWidgets from "qqq/components/DashboardWidgets";
 import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
 import colors from "qqq/components/Temporary/colors";
@@ -66,7 +67,6 @@ function ViewContents({id, table}: Props): JSX.Element
    const tableName = table ? table.name : pathParts[pathParts.length - 2];
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
-   const [nameValues, setNameValues] = useState([] as JSX.Element[]);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
@@ -77,6 +77,7 @@ function ViewContents({id, table}: Props): JSX.Element
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
+   const [widgets, setWidgets] = useState([] as string[]);
    const [searchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -106,6 +107,7 @@ function ViewContents({id, table}: Props): JSX.Element
          /////////////////////
          const record = await qController.get(tableName, id);
          setRecord(record);
+         setWidgets(tableMetaData.widgets);
 
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //
@@ -237,7 +239,7 @@ function ViewContents({id, table}: Props): JSX.Element
 
          <Grid container spacing={3}>
             <Grid item xs={12} lg={3}>
-               <QRecordSidebar tableSections={tableSections} />
+               <QRecordSidebar tableSections={tableSections} widgetNames={widgets} />
             </Grid>
             <Grid item xs={12} lg={9}>
 
@@ -264,6 +266,9 @@ function ViewContents({id, table}: Props): JSX.Element
                      </Card>
                   </Grid>
                </Grid>
+               {tableMetaData && tableMetaData.widgets && record && (
+                  <DashboardWidgets widgetNameList={tableMetaData.widgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
+               )}
                {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
                   iconName, label, name, fieldNames, tier,
                }: any) => (

@@ -18,12 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {tooltipClasses, TooltipProps} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Icon from "@mui/material/Icon";
+import {styled} from "@mui/material/styles";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import {useEffect, useMemo, useState} from "react";
 import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
@@ -61,6 +64,15 @@ interface Props
    isSorted?: boolean;
    noEndBorder?: boolean;
 }
+
+const NoMaxWidthTooltip = styled(({className, ...props}: TooltipProps) => (
+   <Tooltip {...props} classes={{popper: className}} />
+))({
+   [`& .${tooltipClasses.tooltip}`]: {
+      maxWidth: "none",
+      textAlign: "left"
+   },
+});
 
 function DataTable({
    entriesPerPage,
@@ -270,6 +282,18 @@ function DataTable({
                                        cell.value && "number" === typeof cell.value ? (
                                           <DefaultCell>{cell.value.toLocaleString()}</DefaultCell>
                                        ) : (<DefaultCell>{cell.render("Cell")}</DefaultCell>)
+                                    )
+                                 }
+                                 {
+                                    cell.column.type === "htmlAndTooltip" && (
+                                       <DefaultCell>
+
+                                          <NoMaxWidthTooltip title={parse(row.values["tooltip"])}>
+                                             <MDBox>
+                                                {parse(cell.value)}
+                                             </MDBox>
+                                          </NoMaxWidthTooltip>
+                                       </DefaultCell>
                                     )
                                  }
                                  {

@@ -37,7 +37,10 @@ interface Props
 {
    title: string;
    data: TableDataInput;
-   dropdownOptions?: string[];
+   dropdownOptions?: {
+      id: string,
+      name: string
+   }[];
    dropdownOnChange?: (selectedValue: string, widgetIndex: number) => void;
    widgetIndex?: number;
 
@@ -49,7 +52,8 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
    const openArrowIcon = "arrow_drop_down";
    const closeArrowIcon = "arrow_drop_up";
    const [dropdown, setDropdown] = useState<string | null>(null);
-   const [dropdownValue, setDropdownValue] = useState<string>("");
+   const [dropdownValue, setDropdownValue] = useState("");
+   const [dropdownLabel, setDropdownLabel] = useState<string>("");
    const [dropdownIcon, setDropdownIcon] = useState<string>(openArrowIcon);
 
    const openDropdown = ({currentTarget}: any) =>
@@ -79,8 +83,8 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
                disableAutoFocusItem
             >
                {
-                  dropdownOptions.map((option) =>
-                     <MenuItem key={option} onClick={close}>{option}</MenuItem>
+                  dropdownOptions.map((optionMap, index: number) =>
+                     <MenuItem id={optionMap["id"]} key={index} onClick={close}>{optionMap["name"]}</MenuItem>
                   )
                }
             </Menu>
@@ -93,7 +97,8 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
       console.log(dropdownOptions);
       if (dropdownOptions)
       {
-         setDropdownValue(dropdownOptions[0]);
+         setDropdownValue(dropdownOptions[0]["id"]);
+         setDropdownLabel(dropdownOptions[0]["name"]);
       }
    }, [dropdownOptions]);
 
@@ -103,7 +108,7 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
          <Grid container>
             <Grid item xs={7}>
                <MDBox pt={3} px={3}>
-                  <MDTypography variant="h6" fontWeight="medium">
+                  <MDTypography variant="h5" fontWeight="medium">
                      {title}
                   </MDTypography>
                </MDBox>
@@ -115,10 +120,17 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
                         variant="caption"
                         color="secondary"
                         fontWeight="regular"
+                     >
+                        <strong>Billing Period: </strong>
+                     </MDTypography>
+                     <MDTypography
+                        variant="caption"
+                        color="secondary"
+                        fontWeight="regular"
                         sx={{cursor: "pointer"}}
                         onClick={openDropdown}
                      >
-                        {dropdownValue}
+                        {dropdownLabel}
                      </MDTypography>
                      {renderMenu(dropdown, openDropdown, closeDropdown, dropdownIcon)}
                   </MDBox>

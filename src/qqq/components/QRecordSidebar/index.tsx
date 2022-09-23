@@ -30,20 +30,46 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props
 {
    tableSections: QTableSection[];
+   widgetNames?: string[];
    light?: boolean;
 }
 
-function QRecordSidebar({tableSections, light}: Props): JSX.Element
+interface SidebarEntry
 {
+   iconName: string;
+   name: string;
+   label: string;
+}
+
+function QRecordSidebar({tableSections, widgetNames, light}: Props): JSX.Element
+{
+   /////////////////////////////////////////////////////////
+   // insert widgets after identity (first) table section //
+   /////////////////////////////////////////////////////////
+   const sidebarEntries = [] as SidebarEntry[];
+   tableSections.forEach((section, index) =>
+   {
+      if (index === 1 && widgetNames)
+      {
+         widgetNames.forEach((name) =>
+         {
+            sidebarEntries.push({iconName: "troubleshoot", name: name, label: name});
+         });
+      }
+      sidebarEntries.push({iconName: section.iconName, name: section.name, label: section.label});
+   });
+
+
    return (
       <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "1%"}}>
          <MDBox component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
-               tableSections ? tableSections.map((section: QTableSection, key: number) => (
-                  <MDBox key={`section-${section.name}`} component="li" pt={key === 0 ? 0 : 1}>
+               sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
+
+                  <MDBox key={`section-${entry.name}`} component="li" pt={key === 0 ? 0 : 1}>
                      <MDTypography
                         component="a"
-                        href={`#${section.name}`}
+                        href={`#${entry.name}`}
                         variant="button"
                         fontWeight="regular"
                         sx={({
@@ -64,9 +90,9 @@ function QRecordSidebar({tableSections, light}: Props): JSX.Element
                         })}
                      >
                         <MDBox mr={1.5} lineHeight={1} color="black">
-                           <Icon fontSize="small">{section.iconName}</Icon>
+                           <Icon fontSize="small">{entry.iconName}</Icon>
                         </MDBox>
-                        {section.label}
+                        {entry.label}
                      </MDTypography>
                   </MDBox>
                )) : null
