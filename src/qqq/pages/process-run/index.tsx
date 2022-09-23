@@ -54,6 +54,7 @@ import MDBox from "qqq/components/Temporary/MDBox";
 import MDButton from "qqq/components/Temporary/MDButton";
 import MDProgress from "qqq/components/Temporary/MDProgress";
 import MDTypography from "qqq/components/Temporary/MDTypography";
+import {QGoogleDriveFolderPicker} from "qqq/pages/process-run/components/QGoogleDriveFolderPicker";
 import QValidationReview from "qqq/pages/process-run/components/QValidationReview";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
@@ -394,6 +395,11 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                         )
                      }
                      {
+                        component.type === QComponentType.GOOGLE_DRIVE_SELECT_FOLDER && (
+                           <QGoogleDriveFolderPicker />
+                        )
+                     }
+                     {
                         component.type === QComponentType.RECORD_LIST && step.recordListFields && recordConfig.columns && (
                            <div>
                               <MDTypography variant="button" fontWeight="bold">Records</MDTypography>
@@ -510,6 +516,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
       if (newIndex === null)
       {
          setProcessError(`Unknown process step ${newStep}.`);
+         return;
       }
       setActiveStepIndex(newIndex);
       setOverrideOnLastStep(null);
@@ -520,15 +527,20 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
          setActiveStep(activeStep);
          setFormId(activeStep.name);
 
+         let dynamicFormFields: any = {};
+         let formValidations: any = {};
+         let initialValues: any = {};
+
          ///////////////////////////////////////////////////
          // if this step has form fields, set up the form //
          ///////////////////////////////////////////////////
          if (activeStep.formFields || processValues.inputFieldList)
          {
             let fullFieldList = getFullFieldList(activeStep, processValues);
-            const {dynamicFormFields, formValidations} = DynamicFormUtils.getFormData(fullFieldList);
+            const formData = DynamicFormUtils.getFormData(fullFieldList);
+            dynamicFormFields = formData.dynamicFormFields;
+            formValidations = formData.formValidations;
 
-            const initialValues: any = {};
             fullFieldList.forEach((field) =>
             {
                initialValues[field.name] = processValues[field.name];
@@ -548,27 +560,36 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                });
                setDisabledBulkEditFields(newDisabledBulkEditFields);
             }
-
-            setFormFields(dynamicFormFields);
-            setInitialValues(initialValues);
-            setValidationScheme(Yup.object().shape(formValidations));
-            setValidationFunction(null);
          }
-         else if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
+
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // define an inner function here, for adding more fields to the form, if any components have form fields built into them //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const addField = (fieldName: string, dynamicFormValue: any, initialValue: any, validation: any) =>
          {
-            ////////////////////////////////////////
-            // this component requires this field //
-            ////////////////////////////////////////
-            const dynamicFormFields: any = {};
-            dynamicFormFields.doFullValidation = {type: "radio"};
+            dynamicFormFields[fieldName] = dynamicFormValue;
+            initialValues[fieldName] = initialValue;
+            formValidations[fieldName] = validation;
+         }
 
-            const initialValues: any = {};
-            initialValues.doFullValidation = "true";
+         if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
+         {
+            addField("doFullValidation", {type: "radio"}, "true", null);
             setOverrideOnLastStep(false);
+         }
 
-            const formValidations: any = {};
-            formValidations.doFullValidation = null;
+         if (doesStepHaveComponent(activeStep, QComponentType.GOOGLE_DRIVE_SELECT_FOLDER))
+         {
+            addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, null, null);
+            addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, null, null);
+            addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, null, null);
+         }
 
+         if(Object.keys(dynamicFormFields).length > 0)
+         {
+            ///////////////////////////////////////////
+            // if there are form fields, set them up //
+            ///////////////////////////////////////////
             setFormFields(dynamicFormFields);
             setInitialValues(initialValues);
             setValidationScheme(Yup.object().shape(formValidations));

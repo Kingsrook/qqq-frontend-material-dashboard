@@ -84,8 +84,8 @@ function ProcessLinkCard({
                </MDTypography>
                {
                   isReport
-                     ? `Click here to run the process called ${title}.`
-                     : `Click here to access the ${title} report.`
+                     ? `Click here to access the ${title} report.`
+                     : `Click here to run the process called ${title}.`
                }
                {percentage.label}
             </MDTypography>

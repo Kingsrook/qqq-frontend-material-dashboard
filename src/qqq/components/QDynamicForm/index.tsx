@@ -87,6 +87,11 @@ function QDynamicForm(props: Props): JSX.Element
                         values[fieldName] = "";
                      }
 
+                     if (field.omitFromQDynamicForm)
+                     {
+                        return null;
+                     }
+
                      if (field.type === "file")
                      {
                         return (
@@ -95,7 +100,7 @@ function QDynamicForm(props: Props): JSX.Element
 
                                  <Box display="flex" alignItems="center">
                                     <Button variant="outlined" component="label">
-                                       <span style={{color: "#606060"}}>Choose file to upload</span>
+                                       <span style={{color: colors.lightBlue[500]}}>Choose file to upload</span>
                                        <input
                                           id={fieldName}
                                           name={fieldName}
