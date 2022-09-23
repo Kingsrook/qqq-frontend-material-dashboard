@@ -19,11 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
+import {Chip, Icon} from "@mui/material";
 import React, {Fragment} from "react";
+import {Link} from "react-router-dom";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -31,7 +34,38 @@ import React, {Fragment} from "react";
  *******************************************************************************/
 class QValueUtils
 {
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord): string
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord): string | JSX.Element
+   {
+      const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
+      const rawValue = record.values ? record.values.get(field.name) : undefined;
+
+      if (field.hasAdornment(AdornmentType.LINK))
+      {
+         const adornment = field.getAdornment(AdornmentType.LINK);
+         return (<a target={adornment.getValue("target") ?? "_self"} href={rawValue} onClick={(e) => 
+         {
+            e.stopPropagation();
+         }}>{rawValue}</a>)
+      }
+
+      if (field.hasAdornment(AdornmentType.CHIP))
+      {
+         if(!displayValue)
+         {
+            return (<span/>);
+         }
+
+         const adornment = field.getAdornment(AdornmentType.CHIP);
+         const color = adornment.getValue("color." + rawValue) ?? "default"
+         const iconName = adornment.getValue("icon." + rawValue) ?? null;
+         const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
+         return (<Chip label={displayValue} color={color} icon={iconElement}  size="small" variant="outlined" sx={{fontWeight: 500}} />);
+      }
+
+      return (QValueUtils._getDisplayValueString(field, record));
+   }
+
+   private static _getDisplayValueString(field: QFieldMetaData, record: QRecord): string
    {
       const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
       const rawValue = record.values ? record.values.get(field.name) : undefined;
@@ -68,7 +102,7 @@ class QValueUtils
    {
       try
       {
-         if(n !== null && n !== undefined)
+         if (n !== null && n !== undefined)
          {
             return (n.toLocaleString());
          }
@@ -77,12 +111,11 @@ class QValueUtils
             return ("");
          }
       }
-      catch(e)
+      catch (e)
       {
          return (String(n));
       }
    }
-
 
 
    public static breakTextIntoLines(value: string): JSX.Element

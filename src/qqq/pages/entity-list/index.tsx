@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -33,7 +34,27 @@ import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridFilterModel, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, GridExportMenuItemProps, MuiEvent} from "@mui/x-data-grid-pro";
+import {
+   DataGridPro,
+   GridCallbackDetails,
+   GridColDef,
+   GridColumnOrderChangeParams,
+   GridColumnVisibilityModel,
+   GridExportMenuItemProps,
+   GridFilterModel,
+   GridRowId,
+   GridRowParams,
+   GridRowsProp,
+   GridSelectionModel,
+   GridSortItem,
+   GridSortModel,
+   GridToolbarColumnsButton,
+   GridToolbarContainer,
+   GridToolbarDensitySelector,
+   GridToolbarExportContainer,
+   GridToolbarFilterButton,
+   MuiEvent
+} from "@mui/x-data-grid-pro";
 import React, {useCallback, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import DashboardLayout from "qqq/components/DashboardLayout";
@@ -324,12 +345,18 @@ function EntityList({table}: Props): JSX.Element
 
       const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
+      const columnsToRender = {} as any;
       results.forEach((record: QRecord) =>
       {
          const row: any = {};
          fields.forEach((field) =>
          {
-            row[field.name] = QValueUtils.getDisplayValue(field, record);
+            const value = QValueUtils.getDisplayValue(field, record)
+            if(typeof value !== "string")
+            {
+               columnsToRender[field.name] = true;
+            }
+            row[field.name] = value;
          });
 
          rows.push(row);
@@ -386,6 +413,39 @@ function EntityList({table}: Props): JSX.Element
             }
          }
 
+         if(field.hasAdornment(AdornmentType.SIZE))
+         {
+            const sizeAdornment = field.getAdornment(AdornmentType.SIZE)
+            const width = sizeAdornment.getValue("width")
+            switch(width)
+            {
+               case "small":
+               {
+                  columnWidth = 100;
+                  break;
+               }
+               case "medium":
+               {
+                  columnWidth = 200;
+                  break;
+               }
+               case "large":
+               {
+                  columnWidth = 400;
+                  break;
+               }
+               case "xlarge":
+               {
+                  columnWidth = 600;
+                  break;
+               }
+               default:
+               {
+                  console.log("Unrecognized size.width adornment value: " + width)
+               }
+            }
+         }
+
          const column = {
             field: field.name,
             type: columnType,
@@ -393,6 +453,13 @@ function EntityList({table}: Props): JSX.Element
             width: columnWidth,
             renderCell: null as any,
          };
+
+         if(columnsToRender[field.name])
+         {
+            column.renderCell = (cellValues: any) => (
+               (cellValues.value)
+            );
+         }
 
          if (key === tableMetaData.primaryKeyField)
          {
@@ -705,7 +772,7 @@ function EntityList({table}: Props): JSX.Element
       {
          if(count === 0)
          {
-            return ("No rows");
+            return (loading ? "Counting records..." : "No rows");
          }
          return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${count !== -1 ? `${count.toLocaleString()} records` : `more than ${to.toLocaleString()} records`}`);
       }
@@ -720,7 +787,7 @@ function EntityList({table}: Props): JSX.Element
       return (
          <TablePagination
             component="div"
-            count={totalRecords}
+            count={totalRecords === null ? 0 : totalRecords}
             page={pageNumber}
             rowsPerPageOptions={[10, 25, 50, 100, 250]}
             rowsPerPage={rowsPerPage}
@@ -895,7 +962,7 @@ function EntityList({table}: Props): JSX.Element
                      rows={rows}
                      columns={columns}
                      rowBuffer={10}
-                     rowCount={totalRecords}
+                     rowCount={totalRecords === null ? 0 : totalRecords}
                      onPageSizeChange={handleRowsPerPageChange}
                      onRowClick={handleRowClick}
                      density="standard"
