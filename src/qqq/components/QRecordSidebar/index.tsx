@@ -47,7 +47,7 @@ function QRecordSidebar({tableSections, widgetNames, light}: Props): JSX.Element
    // insert widgets after identity (first) table section //
    /////////////////////////////////////////////////////////
    const sidebarEntries = [] as SidebarEntry[];
-   tableSections.forEach((section, index) =>
+   tableSections && tableSections.forEach((section, index) =>
    {
       if (index === 1 && widgetNames)
       {

@@ -22,7 +22,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useReducer, useState} from "react";
 import {useLocation} from "react-router-dom";
 import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
@@ -53,6 +53,7 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
    const [widgets, setWidgets] = useState([] as any[]);
    const [widgetNames, setWidgetNames] = useState([] as any[]);
    const [widgetCounter, setWidgetCounter] = useState(0);
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    useEffect(() =>
    {
@@ -77,6 +78,7 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
          {
             widgets[i] = await qController.widget(widgetNameList[i], `id=${entityPrimaryKey}`);
             setWidgetCounter(widgetCounter + 1);
+            forceUpdate();
          })();
       }
       setWidgets(widgets);
@@ -105,20 +107,34 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                {
                   widgets.map((widget, i) => (
                      <Grid key={`${i}`} item xs={12} lg={12}>
-                        <MDBox mb={3}>
-                           {
-                              widget.type === "table" && (
-                                 <TableCard
-                                    color="info"
-                                    title={widget.title}
-                                    data={widget}
-                                    dropdownOptions={widget.dropdownOptions}
-                                    dropdownOnChange={handleDropdownOnChange}
-                                    widgetIndex={i}
-                                 />
-                              )
-                           }
-                        </MDBox>
+                        {
+                           widget.type === "table" && (
+                              <TableCard
+                                 color="info"
+                                 title={widget.title}
+                                 data={widget}
+                                 dropdownOptions={widget.dropdownOptions}
+                                 dropdownOnChange={handleDropdownOnChange}
+                                 widgetIndex={i}
+                              />
+                           )
+                        }
+                        {
+                           widget.type === "html" && (
+                              <MDBox pb={3}>
+                                 <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
+                                    <MDBox padding="1rem">
+                                       <MDTypography variant="h5" textTransform="capitalize">
+                                          {widget.title}
+                                       </MDTypography>
+                                       <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                                          {parse(widget.html)}
+                                       </MDTypography>
+                                    </MDBox>
+                                 </Card>
+                              </MDBox>
+                           )
+                        }
                      </Grid>
                   ))
                }
@@ -143,22 +159,6 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                                     date={`As of ${new Date().toDateString()}`}
                                     data={widget.chartData}
                                  />
-                              </MDBox>
-                           )
-                        }
-                        {
-                           widget.type === "html" && (
-                              <MDBox mb={3}>
-                                 <Card>
-                                    <MDBox padding="1rem">
-                                       <MDTypography variant="h6" textTransform="capitalize">
-                                          {widget.title}
-                                       </MDTypography>
-                                       <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                                          {parse(widget.html)}
-                                       </MDTypography>
-                                    </MDBox>
-                                 </Card>
                               </MDBox>
                            )
                         }
