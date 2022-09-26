@@ -19,10 +19,14 @@
  */
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
+import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
+import {useLocation} from "react-router-dom";
 import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
@@ -44,6 +48,7 @@ DashboardWidgets.defaultProps = {
 
 function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Element
 {
+   const location = useLocation();
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [widgets, setWidgets] = useState([] as any[]);
    const [widgetNames, setWidgetNames] = useState([] as any[]);
@@ -77,7 +82,11 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
       setWidgets(widgets);
    }, [qInstance, widgetNames]);
 
-   const widgetCount = widgets ? widgets.length : 0;
+   useEffect(() =>
+   {
+      setWidgets([] as any[]);
+      setWidgetNames([] as any[]);
+   }, [location]);
 
    const handleDropdownOnChange = (value: string, index: number) =>
    {
@@ -87,8 +96,7 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
       }, 1);
    };
 
-   console.log(`primarkey ${entityPrimaryKey}`);
-   console.log(`widgets: ${JSON.stringify(widgets)}`);
+   const widgetCount = widgets ? widgets.length : 0;
 
    return (
       widgetCount > 0 ? (
@@ -135,6 +143,22 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                                     date={`As of ${new Date().toDateString()}`}
                                     data={widget.chartData}
                                  />
+                              </MDBox>
+                           )
+                        }
+                        {
+                           widget.type === "html" && (
+                              <MDBox mb={3}>
+                                 <Card>
+                                    <MDBox padding="1rem">
+                                       <MDTypography variant="h6" textTransform="capitalize">
+                                          {widget.title}
+                                       </MDTypography>
+                                       <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                                          {parse(widget.html)}
+                                       </MDTypography>
+                                    </MDBox>
+                                 </Card>
                               </MDBox>
                            )
                         }
