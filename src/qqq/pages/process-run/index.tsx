@@ -41,6 +41,7 @@ import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
+import {GoogleOAuthProvider} from "@react-oauth/google";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
 import React, {useEffect, useState} from "react";
@@ -54,7 +55,7 @@ import MDBox from "qqq/components/Temporary/MDBox";
 import MDButton from "qqq/components/Temporary/MDButton";
 import MDProgress from "qqq/components/Temporary/MDProgress";
 import MDTypography from "qqq/components/Temporary/MDTypography";
-import {QGoogleDriveFolderPicker} from "qqq/pages/process-run/components/QGoogleDriveFolderPicker";
+import {QGoogleDriveFolderPickerWrapper} from "qqq/pages/process-run/components/QGoogleDriveFolderPickerWrapper";
 import QValidationReview from "qqq/pages/process-run/components/QValidationReview";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
@@ -179,21 +180,6 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
       const newDisabledBulkEditFields = JSON.parse(JSON.stringify(disabledBulkEditFields));
       newDisabledBulkEditFields[name] = !switchValue;
       setDisabledBulkEditFields(newDisabledBulkEditFields);
-   };
-
-   const formatViewValue = (value: any): JSX.Element =>
-   {
-      if (value === null || value === undefined)
-      {
-         return <span>&nbsp;</span>;
-      }
-
-      if (typeof value === "string")
-      {
-         return QValueUtils.breakTextIntoLines(value);
-      }
-
-      return (<span>{value}</span>);
    };
 
    const toggleShowErrorDetail = () =>
@@ -335,7 +321,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                                        : &nbsp;
                                     </MDTypography>
                                     <MDTypography variant="button" fontWeight="regular" color="text">
-                                       {formatViewValue(processValues[field.name])}
+                                       {QValueUtils.getValueForDisplay(field, processValues[field.name])}
                                     </MDTypography>
                                  </MDBox>
                               ))}
@@ -396,7 +382,8 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                      }
                      {
                         component.type === QComponentType.GOOGLE_DRIVE_SELECT_FOLDER && (
-                           <QGoogleDriveFolderPicker />
+                           // todo - make these booleans configurable (values on the component)
+                           <QGoogleDriveFolderPickerWrapper showSharedDrivesView={true} showDefaultFoldersView={false} />
                         )
                      }
                      {

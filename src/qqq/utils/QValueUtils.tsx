@@ -26,7 +26,6 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
 import {Chip, Icon} from "@mui/material";
 import React, {Fragment} from "react";
-import {Link} from "react-router-dom";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -34,15 +33,29 @@ import {Link} from "react-router-dom";
  *******************************************************************************/
 class QValueUtils
 {
+
+   /*******************************************************************************
+    ** When you have a field, and a record - call this method to get a string or
+    ** element back to display the field's value.
+    *******************************************************************************/
    public static getDisplayValue(field: QFieldMetaData, record: QRecord): string | JSX.Element
    {
       const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
       const rawValue = record.values ? record.values.get(field.name) : undefined;
 
+      return QValueUtils.getValueForDisplay(field, rawValue, displayValue);
+   }
+
+   /*******************************************************************************
+    ** When you have a field and a value (either just a raw value, or a raw and
+    ** display value), call this method to get a string Element to display.
+    *******************************************************************************/
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue): string | JSX.Element
+   {
       if (field.hasAdornment(AdornmentType.LINK))
       {
          const adornment = field.getAdornment(AdornmentType.LINK);
-         return (<a target={adornment.getValue("target") ?? "_self"} href={rawValue} onClick={(e) => 
+         return (<a target={adornment.getValue("target") ?? "_self"} href={rawValue} onClick={(e) =>
          {
             e.stopPropagation();
          }}>{rawValue}</a>)
@@ -62,14 +75,15 @@ class QValueUtils
          return (<Chip label={displayValue} color={color} icon={iconElement}  size="small" variant="outlined" sx={{fontWeight: 500}} />);
       }
 
-      return (QValueUtils._getDisplayValueString(field, record));
+      return (QValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }
 
-   private static _getDisplayValueString(field: QFieldMetaData, record: QRecord): string
+   /*******************************************************************************
+    ** After we know there's no element to be returned (e.g., because no adornment),
+    ** this method does the string formatting.
+    *******************************************************************************/
+   private static getUnadornedValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any): string | JSX.Element
    {
-      const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
-      const rawValue = record.values ? record.values.get(field.name) : undefined;
-
       if (field.type === QFieldType.DATE_TIME)
       {
          if (!rawValue)
@@ -90,12 +104,18 @@ class QValueUtils
          return (displayValue);
       }
 
+      let returnValue = displayValue;
       if (displayValue === undefined && rawValue !== undefined)
       {
-         return (rawValue);
+         returnValue = rawValue;
       }
 
-      return (displayValue);
+      if (typeof returnValue === "string" && returnValue.indexOf("\n") > -1)
+      {
+         return QValueUtils.breakTextIntoLines(returnValue);
+      }
+
+      return (returnValue);
    }
 
    public static getFormattedNumber(n: number): string
@@ -116,7 +136,6 @@ class QValueUtils
          return (String(n));
       }
    }
-
 
    public static breakTextIntoLines(value: string): JSX.Element
    {

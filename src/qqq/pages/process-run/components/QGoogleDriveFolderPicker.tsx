@@ -23,12 +23,19 @@ import {colors} from "@mui/material"
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
+import {useGoogleLogin} from "@react-oauth/google";
 import {useFormikContext} from "formik";
 import React, {useEffect, useState} from "react";
 import useDrivePicker from "react-google-drive-picker";
-import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
-export function QGoogleDriveFolderPicker(): JSX.Element
+interface Props
+{
+   showDefaultFoldersView: boolean;
+   showSharedDrivesView: boolean;
+}
+
+export function QGoogleDriveFolderPicker({showDefaultFoldersView, showSharedDrivesView}: Props): JSX.Element
 {
    const clientId = process.env.REACT_APP_GOOGLE_APP_CLIENT_ID;
    const appApiKey = process.env.REACT_APP_GOOGLE_APP_API_KEY;
@@ -36,24 +43,71 @@ export function QGoogleDriveFolderPicker(): JSX.Element
    const [ selectedGoogleFolderName, setSelectedGoogleFolderName ] = useState(null as string);
    const [ selectedGoogleFolderId, setSelectedGoogleFolderId ] = useState(null as string);
    const [ googleToken, setGoogleToken ] = useState(null as string); // maybe get from cookie/local-storage
+   const [ errorMessage, setErrorMessage ] = useState(null as string);
 
    const [ openPicker, authResponse ] = useDrivePicker();
 
    const formikProps = useFormikContext();
 
+   const loginOrOpenPicker = (token: string) =>
+   {
+      if(token)
+      {
+         handleOpenPicker(token);
+      }
+      else
+      {
+         login();
+      }
+   };
+
+   const login = useGoogleLogin({
+      scope: "https://www.googleapis.com/auth/drive",
+      onSuccess: tokenResponse =>
+      {
+         console.log("Token response");
+         console.log(tokenResponse);
+         setGoogleToken(tokenResponse.access_token)
+         handleOpenPicker(tokenResponse.access_token);
+      }
+   });
+
    const handleOpenPicker = (token: string) =>
    {
+      // @ts-ignore
+      const google = window.google
+      const customViewsArray: any[] = [];
+
+      if(showDefaultFoldersView)
+      {
+         customViewsArray.push(new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+            .setIncludeFolders(true)
+            .setMode(google.picker.DocsViewMode.LIST)
+            .setSelectFolderEnabled(true));
+      }
+
+      if(showSharedDrivesView)
+      {
+         customViewsArray.push(new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+            .setEnableDrives(true)
+            .setIncludeFolders(true)
+            .setMode(google.picker.DocsViewMode.LIST)
+            .setSelectFolderEnabled(true));
+      }
+
       openPicker({
          clientId: clientId,
          developerKey: appApiKey,
          viewId: "FOLDERS",
          token: token, // pass oauth token in case you already have one
+         disableDefaultView: (customViewsArray.length > 0), // if we have any custom views, then disable the default.
          showUploadView: false,
          showUploadFolders: false,
          supportDrives: true,
          multiselect: false,
          setSelectFolderEnabled: true,
          setIncludeFolders: true,
+         customViews: customViewsArray,
          callbackFunction: (data) =>
          {
             if (data.action === "cancel")
@@ -62,49 +116,61 @@ export function QGoogleDriveFolderPicker(): JSX.Element
                setSelectedGoogleFolderId(null);
                setSelectedGoogleFolderName(null);
             }
-            else
+            else if (data.action === "picked")
             {
                console.log(data);
-               setSelectedGoogleFolderId(data.docs[0].id);
-               setSelectedGoogleFolderName(data.docs[0].name);
+               const mimeType = data.docs[0].mimeType;
+               if(mimeType === "application/vnd.google-apps.folder")
+               {
+                  setSelectedGoogleFolderId(data.docs[0].id);
+                  setSelectedGoogleFolderName(data.docs[0].name);
+                  setErrorMessage(null)
+               }
+               else
+               {
+                  setSelectedGoogleFolderId(null);
+                  setSelectedGoogleFolderName(null);
+                  setErrorMessage("You selected a file, but a folder is required.")
+               }
+            }
+            else
+            {
+               console.log("Called with un-recognized action:");
+               console.log(data);
             }
          },
       });
    };
 
-   if(authResponse && authResponse.access_token && authResponse.access_token !== googleToken)
-   {
-      setGoogleToken(authResponse.access_token);
-   }
-
    useEffect(() =>
    {
-      formikProps.setFieldValue("googleDriveAccessToken", authResponse?.access_token);
+      formikProps.setFieldValue("googleDriveAccessToken", googleToken);
       formikProps.setFieldValue("googleDriveFolderId", selectedGoogleFolderId);
       formikProps.setFieldValue("googleDriveFolderName", selectedGoogleFolderName);
    }, [selectedGoogleFolderId, selectedGoogleFolderName])
 
    return (
       <Grid item xs={12} sm={6}>
-         <MDBox mb={1.5}>
-
+         <Box mb={1.5}>
             <Box display="flex" alignItems="center">
-               <Button variant="outlined" onClick={() => handleOpenPicker(googleToken)}>
+               <Button variant="outlined" onClick={() => loginOrOpenPicker(googleToken)}>
                   <span style={{color: colors.lightBlue[500]}}>Select Google Drive Folder</span>
                </Button>
                <Box ml={1} fontSize={"1rem"}>
                   {selectedGoogleFolderName}
                </Box>
             </Box>
-
-            {/*
-            <MDBox mt={0.75}>
+            <Box mt={0.75}>
                <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                  {errors[fieldName] && <span>You must select a file to proceed</span>}
+                  <div className="fieldErrorMessage">{errorMessage}</div>
                </MDTypography>
-            </MDBox>
-            */}
-         </MDBox>
+            </Box>
+         </Box>
       </Grid>
    );
 }
+
+QGoogleDriveFolderPicker.defaultProps = {
+   showDefaultFoldersView: true,
+   showSharedDrivesView: true
+};
