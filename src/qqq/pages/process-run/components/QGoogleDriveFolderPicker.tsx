@@ -61,12 +61,23 @@ export function QGoogleDriveFolderPicker({showDefaultFoldersView, showSharedDriv
       }
    };
 
+   const driveScope = "https://www.googleapis.com/auth/drive"
    const login = useGoogleLogin({
-      scope: "https://www.googleapis.com/auth/drive",
+      scope: driveScope,
       onSuccess: tokenResponse =>
       {
          console.log("Token response");
          console.log(tokenResponse);
+         if(tokenResponse.scope.indexOf(driveScope) == -1)
+         {
+            setErrorMessage("You must allow access to Google Drive after you sign in.  Please try again.")
+            return;
+         }
+         else
+         {
+            setErrorMessage(null)
+         }
+
          setGoogleToken(tokenResponse.access_token)
          handleOpenPicker(tokenResponse.access_token);
       }
