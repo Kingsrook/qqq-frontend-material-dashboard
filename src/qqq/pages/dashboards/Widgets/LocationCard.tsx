@@ -27,9 +27,9 @@ import {ReactNode} from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
-//////////////////////////////////////////
+/////////////////////////////////////
 // structure of location card data //
-//////////////////////////////////////////
+/////////////////////////////////////
 export interface LocationCardData
 {
    imageUrl: string;

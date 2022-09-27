@@ -20,7 +20,6 @@
  */
 
 // Declaring props types for ProductCell
-import MDAvatar from "qqq/components/Temporary/MDAvatar";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
@@ -37,7 +36,7 @@ function ImageCell({imageUrl, label, total, totalType}: Props): JSX.Element
    return (
       <MDBox display="flex" alignItems="center" pr={2}>
          <MDBox mr={2}>
-            <MDAvatar src={imageUrl} alt={label} />
+            <img src={imageUrl} alt={label} />
          </MDBox>
          <MDBox display="flex" flexDirection="column">
             <MDTypography variant="button" fontWeight="medium">

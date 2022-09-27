@@ -37,6 +37,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
       <MDBox
          component="td"
          textAlign={align}
+         verticalAlign="top"
          py={1.5}
          px={3}
          sx={({palette: {light}, typography: {size}, borders: {borderWidth}}: Theme) => ({
@@ -48,7 +49,6 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
             display="inline-block"
             width="max-content"
             color="text"
-            sx={{verticalAlign: "middle"}}
          >
             {children}
          </MDBox>

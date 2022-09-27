@@ -51,10 +51,10 @@ function QDynamicForm(props: Props): JSX.Element
 
    const fileChanged = (event: React.FormEvent<HTMLInputElement>, field: any) =>
    {
-      setFileName(null)
-      if(event.currentTarget.files && event.currentTarget.files[0])
+      setFileName(null);
+      if (event.currentTarget.files && event.currentTarget.files[0])
       {
-         setFileName(event.currentTarget.files[0].name)
+         setFileName(event.currentTarget.files[0].name);
       }
 
       formikProps.setFieldValue(field.name, event.currentTarget.files[0]);

@@ -29,6 +29,7 @@ import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
+import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
 import QClient from "qqq/utils/QClient";
@@ -100,6 +101,8 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
 
    const widgetCount = widgets ? widgets.length : 0;
 
+   console.log(widgets);
+
    return (
       widgetCount > 0 ? (
          <Grid item xs={12} lg={12}>
@@ -112,6 +115,7 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                               <TableCard
                                  color="info"
                                  title={widget.title}
+                                 noRowsFoundHTML={widget.noRowsFoundHTML}
                                  data={widget}
                                  dropdownOptions={widget.dropdownOptions}
                                  dropdownOnChange={handleDropdownOnChange}
@@ -133,6 +137,15 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                                     </MDBox>
                                  </Card>
                               </MDBox>
+                           )
+                        }
+                        {
+                           widget.type === "multiStatistics" && (
+                              <MultiStatisticsCard
+                                 color="info"
+                                 title={widget.title}
+                                 data={widget}
+                              />
                            )
                         }
                      </Grid>

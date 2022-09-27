@@ -24,6 +24,7 @@ import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import DataTable, {TableDataInput} from "qqq/components/Temporary/DataTable";
 import MDBox from "qqq/components/Temporary/MDBox";
@@ -36,6 +37,7 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props
 {
    title: string;
+   noRowsFoundHTML?: string;
    data: TableDataInput;
    dropdownOptions?: {
       id: string,
@@ -47,7 +49,7 @@ interface Props
    [key: string]: any;
 }
 
-function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}: Props): JSX.Element
+function TableCard({title, noRowsFoundHTML, data, dropdownOptions, dropdownOnChange, widgetIndex}: Props): JSX.Element
 {
    const openArrowIcon = "arrow_drop_down";
    const closeArrowIcon = "arrow_drop_up";
@@ -102,7 +104,6 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
       }
    }, [dropdownOptions]);
 
-
    return (
       <Card>
          <Grid container>
@@ -139,13 +140,31 @@ function TableCard({title, data, dropdownOptions, dropdownOnChange, widgetIndex}
             </Grid>
          </Grid>
          <MDBox py={1}>
-            <DataTable
-               table={data}
-               entriesPerPage={false}
-               showTotalEntries={false}
-               isSorted={false}
-               noEndBorder
-            />
+            {
+               data && data.rows ? (
+                  <DataTable
+                     table={data}
+                     entriesPerPage={false}
+                     showTotalEntries={false}
+                     isSorted={false}
+                     noEndBorder
+                  />
+               )
+                  :
+                  <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
+                     <MDTypography
+                        variant="subtitle2"
+                        color="secondary"
+                        fontWeight="regular"
+                     >
+                        {
+                           noRowsFoundHTML ? (
+                              parse(noRowsFoundHTML)
+                           ) : "No rows found"
+                        }
+                     </MDTypography>
+                  </MDBox>
+            }
          </MDBox>
       </Card>
    );

@@ -268,7 +268,7 @@ function DataTable({
                {
                   prepareRow(row);
                   return (
-                     <TableRow key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top"}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
