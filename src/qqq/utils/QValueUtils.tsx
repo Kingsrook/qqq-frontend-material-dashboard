@@ -22,10 +22,14 @@
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
 import {Chip, Icon} from "@mui/material";
+import {queryByTestId} from "@testing-library/react";
 import React, {Fragment} from "react";
+import {Link} from "react-router-dom";
+import QClient from "qqq/utils/QClient";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -33,6 +37,31 @@ import React, {Fragment} from "react";
  *******************************************************************************/
 class QValueUtils
 {
+   public static qInstance: QInstance = null;
+   public static loadingQInstance = false;
+
+   private static getQInstance(): QInstance
+   {
+      if(QValueUtils.qInstance == null)
+      {
+         if(QValueUtils.loadingQInstance)
+         {
+            return (null);
+         }
+
+         QValueUtils.loadingQInstance = true;
+         const qController = QClient.getInstance();
+         (async () =>
+         {
+            QValueUtils.qInstance = await qController.loadMetaData();
+         })();
+
+         return (null);
+      }
+
+      return QValueUtils.qInstance;
+   }
+
 
    /*******************************************************************************
     ** When you have a field, and a record - call this method to get a string or
@@ -55,10 +84,48 @@ class QValueUtils
       if (field.hasAdornment(AdornmentType.LINK))
       {
          const adornment = field.getAdornment(AdornmentType.LINK);
-         return (<a target={adornment.getValue("target") ?? "_self"} href={rawValue} onClick={(e) =>
+         let href = rawValue;
+
+         const toRecordFromTable = adornment.getValue("toRecordFromTable");
+         if(toRecordFromTable)
          {
-            e.stopPropagation();
-         }}>{rawValue}</a>)
+            if(QValueUtils.getQInstance())
+            {
+               let tablePath = QValueUtils.getQInstance().getTablePathByName(toRecordFromTable);
+               if(!tablePath)
+               {
+                  console.log("Couldn't find path for table: " + tablePath);
+                  return ("");
+               }
+
+               if(!tablePath.endsWith("/"))
+               {
+                  tablePath += "/"
+               }
+               href = tablePath + rawValue;
+            }
+            else
+            {
+               //////////////////////////////////////////////////////////////////////////////////
+               // if no instance, we can't get the table path, so we can't do a to-record link //
+               //////////////////////////////////////////////////////////////////////////////////
+               return (QValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+            }
+         }
+
+         if(!href)
+         {
+            return ("");
+         }
+
+         if(href.startsWith("http"))
+         {
+            return (<a target={adornment.getValue("target") ?? "_self"} href={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</a>)
+         }
+         else
+         {
+            return (<Link target={adornment.getValue("target") ?? "_self"} to={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</Link>)
+         }
       }
 
       if (field.hasAdornment(AdornmentType.CHIP))

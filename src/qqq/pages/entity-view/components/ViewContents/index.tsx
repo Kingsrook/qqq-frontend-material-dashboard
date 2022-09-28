@@ -35,7 +35,7 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import React, {useReducer, useState} from "react";
+import React, {useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
 import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
@@ -45,9 +45,9 @@ import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import QClient from "qqq/utils/QClient";
+import QProcessUtils from "qqq/utils/QProcessUtils";
 import QTableUtils from "qqq/utils/QTableUtils";
 import QValueUtils from "qqq/utils/QValueUtils";
-import QProcessUtils from "../../../../utils/QProcessUtils";
 
 const qController = QClient.getInstance();
 
@@ -84,6 +84,11 @@ function ViewContents({id, table}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
+   useEffect(() =>
+   {
+      setAsyncLoadInited(false);
+   }, [location]);
+
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -100,6 +105,7 @@ function ViewContents({id, table}: Props): JSX.Element
          // load top-level meta-data (e.g., to find processes for table) //
          //////////////////////////////////////////////////////////////////
          const metaData = await qController.loadMetaData();
+         QValueUtils.qInstance = metaData;
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 
          /////////////////////

@@ -623,6 +623,7 @@ function EntityList({table}: Props): JSX.Element
          setTableState(tableName);
          setFiltersMenu(null);
          const metaData = await qController.loadMetaData();
+         QValueUtils.qInstance = metaData;
 
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
 

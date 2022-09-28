@@ -93,13 +93,23 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
    const [tableMetaData, setTableMetaData] = useState(null);
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [processValues, setProcessValues] = useState({} as any);
-   const [processError, setProcessError] = useState(null as string);
+   const [processError, _setProcessError] = useState(null as string);
+   const [isUserFacingError, setIsUserFacingError] = useState(false);
    const [needToCheckJobStatus, setNeedToCheckJobStatus] = useState(false);
    const [lastProcessResponse, setLastProcessResponse] = useState(
       null as QJobStarted | QJobComplete | QJobError | QJobRunning,
    );
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // for setting the processError state - call this function, which will also set the isUserFacingError state //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const setProcessError = (message: string, isUserFacing: boolean = false) =>
+   {
+      _setProcessError(message);
+      setIsUserFacingError(isUserFacing);
+   };
 
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // the validation screen - it can change whether next is actually the final step or not... so, use this state field to track that. //
@@ -216,17 +226,25 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                   An error occurred while running the process:
                   {" "}
                   {process.label}
-                  <MDBox mt={3} display="flex" justifyContent="center">
-                     <MDBox display="flex" flexDirection="column" alignItems="center">
-                        <Button onClick={toggleShowErrorDetail} startIcon={<Icon>{showErrorDetail ? "expand_less" : "expand_more"}</Icon>}>
-                           {showErrorDetail ? "Hide " : "Show "}
-                           detailed error message
-                        </Button>
-                        <MDBox mt={1} style={{display: showErrorDetail ? "block" : "none"}}>
-                           {processError}
+                  {
+                     isUserFacingError ? (
+                        <MDBox mt={1}>
+                           <b>{processError}</b>
                         </MDBox>
-                     </MDBox>
-                  </MDBox>
+                     ) : (
+                        <MDBox mt={3} display="flex" justifyContent="center">
+                           <MDBox display="flex" flexDirection="column" alignItems="center">
+                              <Button onClick={toggleShowErrorDetail} startIcon={<Icon>{showErrorDetail ? "expand_less" : "expand_more"}</Icon>}>
+                                 {showErrorDetail ? "Hide " : "Show "}
+                                 detailed error message
+                              </Button>
+                              <MDBox mt={1} style={{display: showErrorDetail ? "block" : "none"}}>
+                                 {processError}
+                              </MDBox>
+                           </MDBox>
+                        </MDBox>
+                     )
+                  }
                </MDTypography>
             </>
          );
@@ -723,9 +741,16 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
          else if (lastProcessResponse instanceof QJobError)
          {
             const qJobError = lastProcessResponse as QJobError;
-            console.log(`Got an error from the backend... ${qJobError.error}`);
+            console.log(`Got an error from the backend... ${qJobError.error} : ${qJobError.userFacingError}`);
             setJobUUID(null);
-            setProcessError(qJobError.error);
+            if(qJobError.userFacingError)
+            {
+               setProcessError(qJobError.userFacingError, true);
+            }
+            else
+            {
+               setProcessError(qJobError.error);
+            }
             setQJobRunning(null);
          }
       }
@@ -815,6 +840,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
          try
          {
             const qInstance = await QClient.getInstance().loadMetaData();
+            QValueUtils.qInstance = qInstance;
             setQInstance(qInstance);
          }
          catch (e)
