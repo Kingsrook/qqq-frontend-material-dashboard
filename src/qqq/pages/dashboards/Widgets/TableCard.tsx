@@ -26,6 +26,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
+import {NavLink} from "react-router-dom";
 import DataTable, {TableDataInput} from "qqq/components/Temporary/DataTable";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
@@ -37,6 +38,8 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props
 {
    title: string;
+   linkText?: string;
+   linkURL?: string;
    noRowsFoundHTML?: string;
    data: TableDataInput;
    dropdownOptions?: {
@@ -49,7 +52,7 @@ interface Props
    [key: string]: any;
 }
 
-function TableCard({title, noRowsFoundHTML, data, dropdownOptions, dropdownOnChange, widgetIndex}: Props): JSX.Element
+function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOptions, dropdownOnChange, widgetIndex}: Props): JSX.Element
 {
    const openArrowIcon = "arrow_drop_down";
    const closeArrowIcon = "arrow_drop_up";
@@ -96,7 +99,6 @@ function TableCard({title, noRowsFoundHTML, data, dropdownOptions, dropdownOnCha
 
    useEffect(() =>
    {
-      console.log(dropdownOptions);
       if (dropdownOptions)
       {
          setDropdownValue(dropdownOptions[0]["id"]);
@@ -107,12 +109,21 @@ function TableCard({title, noRowsFoundHTML, data, dropdownOptions, dropdownOnCha
    return (
       <Card>
          <Grid container>
-            <Grid item xs={7}>
+            <Grid item xs={6}>
                <MDBox pt={3} px={3}>
                   <MDTypography variant="h5" fontWeight="medium">
                      {title}
                   </MDTypography>
                </MDBox>
+            </Grid>
+            <Grid item xs={6}>
+               {
+                  linkText && (
+                     <MDBox sx={{textAlign: "right", fontSize: "14px"}} pt={3} px={3}>
+                        <NavLink to={linkURL}>{linkText}</NavLink>
+                     </MDBox>
+                  )
+               }
             </Grid>
             <Grid item xs={5}>
                {dropdownOptions && (

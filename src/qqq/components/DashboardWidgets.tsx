@@ -31,6 +31,7 @@ import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
+import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
 import QClient from "qqq/utils/QClient";
 
@@ -100,7 +101,6 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
    };
 
    const widgetCount = widgets ? widgets.length : 0;
-
    console.log(widgets);
 
    return (
@@ -115,12 +115,32 @@ function DashboardWidgets({widgetNameList, entityPrimaryKey}: Props): JSX.Elemen
                               <TableCard
                                  color="info"
                                  title={widget.title}
+                                 linkText={widget.linkText}
+                                 linkURL={widget.linkURL}
                                  noRowsFoundHTML={widget.noRowsFoundHTML}
                                  data={widget}
                                  dropdownOptions={widget.dropdownOptions}
                                  dropdownOnChange={handleDropdownOnChange}
                                  widgetIndex={i}
                               />
+                           )
+                        }
+                        {
+                           widget.type === "stepper" && (
+                              <MDBox>
+                                 <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
+                                    <MDBox padding="1rem">
+                                       {
+                                          widget.title && (
+                                             <MDTypography variant="h5" textTransform="capitalize">
+                                                {widget.title}
+                                             </MDTypography>
+                                          )
+                                       }
+                                       <StepperCard data={widget} />
+                                    </MDBox>
+                                 </Card>
+                              </MDBox>
                            )
                         }
                         {

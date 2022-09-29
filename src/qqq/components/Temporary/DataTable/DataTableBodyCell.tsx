@@ -37,7 +37,6 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
       <MDBox
          component="td"
          textAlign={align}
-         verticalAlign="top"
          py={1.5}
          px={3}
          sx={({palette: {light}, typography: {size}, borders: {borderWidth}}: Theme) => ({
