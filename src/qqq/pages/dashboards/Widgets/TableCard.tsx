@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Icon} from "@mui/material";
+import {Icon, Skeleton} from "@mui/material";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Menu from "@mui/material/Menu";
@@ -152,7 +152,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
          </Grid>
          <MDBox py={1}>
             {
-               data && data.rows ? (
+               data && data.rows && data.rows.length > 0 ? (
                   <DataTable
                      table={data}
                      entriesPerPage={false}
@@ -160,8 +160,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                      isSorted={false}
                      noEndBorder
                   />
-               )
-                  :
+               ) : data && data.rows && data.rows.length == 0 ? (
                   <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
                      <MDTypography
                         variant="subtitle2"
@@ -175,6 +174,19 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                         }
                      </MDTypography>
                   </MDBox>
+               ) : (
+                  <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
+                     <MDTypography
+                        variant="subtitle2"
+                        color="secondary"
+                        fontWeight="regular"
+                     >
+                        <Skeleton />
+                        <Skeleton />
+                        <Skeleton />
+                     </MDTypography>
+                  </MDBox>
+               )
             }
          </MDBox>
       </Card>
