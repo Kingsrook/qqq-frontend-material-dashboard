@@ -24,6 +24,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Icon} from "@mui/material";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
@@ -123,17 +124,16 @@ function AppHome({app}: Props): JSX.Element
 
       if (app.widgets)
       {
-         const widgets: any[] = [];
-         for (let i = 0; i < app.widgets.length; i++)
+         ///////////////////////////
+         // load widget meta data //
+         ///////////////////////////
+         const matchingWidgets: QWidgetMetaData[] = [];
+         app.widgets.forEach((widgetName) =>
          {
-            widgets[i] = {};
-            setTimeout(async () =>
-            {
-               widgets[i] = await qController.widget(app.widgets[i]);
-               setUpdatedTableCounts(new Date());
-            }, 1);
-         }
-         setWidgets(widgets);
+            const widget = qInstance.widgets.get(widgetName);
+            matchingWidgets.push(widget);
+         });
+         setWidgets(matchingWidgets);
       }
    }, [qInstance, location]);
 
@@ -144,8 +144,6 @@ function AppHome({app}: Props): JSX.Element
 
    const handleDropdownOnChange = (value: string, index: number) =>
    {
-      alert(value);
-
       setTimeout(async () =>
       {
          widgets[index] = await qController.widget(app.widgets[index]);
@@ -158,7 +156,7 @@ function AppHome({app}: Props): JSX.Element
          <MDBox mt={4}>
             {app.widgets && (
                <Grid container spacing={3}>
-                  <DashboardWidgets widgetNameList={app.widgets} />
+                  <DashboardWidgets widgetMetaDataList={widgets} />
                </Grid>
             )}
             <Grid container spacing={3}>

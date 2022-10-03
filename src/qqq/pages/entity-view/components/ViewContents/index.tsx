@@ -22,6 +22,7 @@
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
@@ -77,7 +78,7 @@ function ViewContents({id, table}: Props): JSX.Element
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
-   const [widgets, setWidgets] = useState([] as string[]);
+   const [tableWidgets, setTableWidgets] = useState([] as QWidgetMetaData[]);
    const [searchParams] = useSearchParams();
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -113,7 +114,17 @@ function ViewContents({id, table}: Props): JSX.Element
          /////////////////////
          const record = await qController.get(tableName, id);
          setRecord(record);
-         setWidgets(tableMetaData.widgets);
+
+         ///////////////////////////
+         // load widget meta data //
+         ///////////////////////////
+         const matchingWidgets: QWidgetMetaData[] = [];
+         tableMetaData.widgets && tableMetaData.widgets.forEach((widgetName) =>
+         {
+            const widget = metaData.widgets.get(widgetName);
+            matchingWidgets.push(widget);
+         });
+         setTableWidgets(matchingWidgets);
 
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //
@@ -245,7 +256,7 @@ function ViewContents({id, table}: Props): JSX.Element
 
          <Grid container spacing={3}>
             <Grid item xs={12} lg={3}>
-               <QRecordSidebar tableSections={tableSections} widgetNames={widgets} />
+               <QRecordSidebar tableSections={tableSections} widgetMetaDataList={tableWidgets} />
             </Grid>
             <Grid item xs={12} lg={9}>
 
@@ -273,7 +284,7 @@ function ViewContents({id, table}: Props): JSX.Element
                   </Grid>
                </Grid>
                {tableMetaData && tableMetaData.widgets && record && (
-                  <DashboardWidgets widgetNameList={tableMetaData.widgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
+                  <DashboardWidgets widgetMetaDataList={tableWidgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
                )}
                {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
                   iconName, label, name, fieldNames, tier,

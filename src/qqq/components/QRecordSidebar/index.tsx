@@ -19,7 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
@@ -30,7 +32,8 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 interface Props
 {
    tableSections: QTableSection[];
-   widgetNames?: string[];
+   metaData?: QTableMetaData;
+   widgetMetaDataList?: QWidgetMetaData[];
    light?: boolean;
 }
 
@@ -41,7 +44,7 @@ interface SidebarEntry
    label: string;
 }
 
-function QRecordSidebar({tableSections, widgetNames, light}: Props): JSX.Element
+function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.Element
 {
    /////////////////////////////////////////////////////////
    // insert widgets after identity (first) table section //
@@ -49,11 +52,11 @@ function QRecordSidebar({tableSections, widgetNames, light}: Props): JSX.Element
    const sidebarEntries = [] as SidebarEntry[];
    tableSections && tableSections.forEach((section, index) =>
    {
-      if (index === 1 && widgetNames)
+      if (index === 1 && widgetMetaDataList)
       {
-         widgetNames.forEach((name) =>
+         widgetMetaDataList.forEach((widget) =>
          {
-            sidebarEntries.push({iconName: "troubleshoot", name: name, label: name});
+            sidebarEntries.push({iconName: widget.icon, name: widget.name, label: widget.label});
          });
       }
       sidebarEntries.push({iconName: section.iconName, name: section.name, label: section.label});

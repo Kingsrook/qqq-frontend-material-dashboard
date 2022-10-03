@@ -20,11 +20,12 @@
  */
 
 import {Check, Pending, RocketLaunch} from "@mui/icons-material";
-import {StepConnector} from "@mui/material";
+import {Skeleton, StepConnector} from "@mui/material";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import {withStyles} from "@mui/styles";
+import React from "react";
 import {NavLink} from "react-router-dom";
 import MDBox from "qqq/components/Temporary/MDBox";
 
@@ -71,12 +72,14 @@ function StepperCard({data}: Props): JSX.Element
          }
    })(StepConnector);
 
+   console.log(`data ${JSON.stringify(data)}`);
+
    return (
       <Stepper connector={<CustomizedConnector />} activeStep={activeStep} alternativeLabel sx={{paddingBottom: "0px", boxShadow: "none", background: "white"}}>
          {
-            data && (
+            data && data.steps ? (
                data.steps.map((step, index) => (
-                  <Step key={step.label} sx={{color: "red"}}>
+                  <Step key={step.label}>
                      {
                         index < activeStep && (
                            <MDBox>
@@ -128,6 +131,8 @@ function StepperCard({data}: Props): JSX.Element
                      }
                   </Step>
                ))
+            ) : (
+               <Skeleton width="100%" height="80px" />
             )
          }
       </Stepper>
