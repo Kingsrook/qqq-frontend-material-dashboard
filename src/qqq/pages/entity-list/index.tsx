@@ -103,7 +103,7 @@ function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearch
                const fieldType = tableMetaData.fields.get(criteria.fieldName).type;
                defaultFilter.items.push({
                   columnField: criteria.fieldName,
-                  operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, fieldType),
+                  operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, fieldType, criteria.values),
                   value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values),
                   id: id++, // not sure what this id is!!
                });
