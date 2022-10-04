@@ -78,7 +78,7 @@ class QFilterUtils
    /*******************************************************************************
     ** Convert a qqq criteria operator to one expected by the grid.
     *******************************************************************************/
-   public static qqqCriteriaOperatorToGrid = (operator: QCriteriaOperator, fieldType: QFieldType = QFieldType.STRING): string =>
+   public static qqqCriteriaOperatorToGrid = (operator: QCriteriaOperator, fieldType: QFieldType = QFieldType.STRING, criteriaValues: any[]): string =>
    {
       switch (operator)
       {
@@ -93,6 +93,15 @@ class QFilterUtils
                case QFieldType.DATE_TIME:
                   return ("equals");
                case QFieldType.BOOLEAN:
+                  if (criteriaValues && criteriaValues[0] === true)
+                  {
+                     return "isTrue";
+                  }
+                  else if (criteriaValues && criteriaValues[0] === false)
+                  {
+                     return "isFalse";
+                  }
+                  return "is";
                case QFieldType.STRING:
                case QFieldType.TEXT:
                case QFieldType.HTML:
