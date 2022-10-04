@@ -189,8 +189,7 @@ function QValidationReview({
                <ListItem sx={{my: 2}}>
                   <ListItemText primaryTypographyProps={{fontSize: 16}}>
                      Validation complete on
-                     {` ${QValueUtils.getFormattedNumber(processValues.recordCount)} ${sourceTableMetaData?.label} `}
-                     records.
+                     {` ${QValueUtils.getFormattedNumber(processValues.recordCount)} ${sourceTableMetaData?.label} ${processValues.recordCount === 1 ? "record." : "records."}`}
                   </ListItemText>
                </ListItem>
             )

@@ -44,10 +44,14 @@ export class ProcessSummaryLine
    status: "OK" | "INFO" | "WARNING" | "ERROR";
 
    count: number;
-
    message: string;
-
    primaryKeys: any[];
+
+   tableName: string;
+   recordId: any;
+   linkPreText: string;
+   linkText: string;
+   linkPostText: string;
 
    constructor(processSummaryLine: any)
    {
@@ -55,9 +59,43 @@ export class ProcessSummaryLine
       this.count = processSummaryLine.count;
       this.message = processSummaryLine.message;
       this.primaryKeys = processSummaryLine.primaryKeys;
+
+      this.tableName = processSummaryLine.tableName;
+      this.recordId = processSummaryLine.recordId;
+      this.linkPreText = processSummaryLine.linkPreText;
+      this.linkText = processSummaryLine.linkText;
+      this.linkPostText = processSummaryLine.linkPostText;
    }
 
    getProcessSummaryListItem(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
+   {
+      if (this.tableName != undefined && this.recordId != undefined)
+      {
+         return (this.getProcessSummaryListItemForTableRecordLink(i, table, qInstance, isResultScreen));
+      }
+
+      return (this.getProcessSummaryListItemForCountAndMessage(i, table, qInstance, isResultScreen));
+   }
+
+   private getProcessSummaryListItemForTableRecordLink(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
+   {
+      const tablePath = qInstance.getTablePathByName(this.tableName);
+
+      return (
+         <ListItem key={i} sx={{pl: 4, my: 2}}>
+            <MDBox display="flex" alignItems="top">
+               <Icon fontSize="medium" sx={{mr: 1}} color={this.getColor()}>{this.getIcon(isResultScreen)}</Icon>
+               <ListItemText primaryTypographyProps={{fontSize: 16}}>
+                  {this.linkPreText ?? ""}
+                  <Link to={`${tablePath}/${this.recordId}`}>{this.linkText}</Link>
+                  {this.linkPostText ?? ""}
+               </ListItemText>
+            </MDBox>
+         </ListItem>
+      );
+   }
+
+   private getProcessSummaryListItemForCountAndMessage(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
    {
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // split up the message into words - then we'll display the last word by itself with a non-breaking space, no-wrap-glued to the button. //

@@ -44,6 +44,8 @@ class QFilterUtils
          case "is":
          case "equals":
          case "=":
+         case "isTrue":
+         case "isFalse":
             return QCriteriaOperator.EQUALS;
          case "isNot":
          case "!=":
@@ -194,8 +196,17 @@ class QFilterUtils
     ** for non-values (e.g., blank), set it to null.
     ** for list-values, it's already in an array, so don't wrap it.
     *******************************************************************************/
-   public static gridCriteriaValueToQQQ = (operator: QCriteriaOperator, value: any): any[] =>
+   public static gridCriteriaValueToQQQ = (operator: QCriteriaOperator, value: any, gridOperatorValue: string): any[] =>
    {
+      if(gridOperatorValue === "isTrue")
+      {
+         return [true];
+      }
+      else if(gridOperatorValue === "isFalse")
+      {
+         return [false];
+      }
+
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
          return (null);

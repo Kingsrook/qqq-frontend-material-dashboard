@@ -117,3 +117,15 @@
    display: flex;
    align-items: flex-start;
 }
+
+/* let long field names in filter dropdown wrap instead of get cut off */
+.MuiDataGrid-filterForm .MuiDataGrid-filterFormColumnInput .MuiNativeSelect-select.MuiNativeSelect-standard
+{
+   white-space: normal;
+   height: auto;
+}
+
+.MuiDataGrid-filterForm
+{
+   align-items: flex-end;
+}

@@ -88,6 +88,13 @@ function ViewContents({id, table}: Props): JSX.Element
    useEffect(() =>
    {
       setAsyncLoadInited(false);
+      setTableMetaData(null)
+      setRecord(null)
+      setT1SectionElement(null)
+      setNonT1TableSections([])
+      setTableProcesses([])
+      setTableSections(null)
+      setWidgets(null)
    }, [location]);
 
    if (!asyncLoadInited)

@@ -70,8 +70,7 @@ function QProcessSummaryResults({
                      {QValueUtils.getFormattedNumber(processValues.recordCount)}
                      {" "}
                      {sourceTableMetaData.label}
-                     {" "}
-                     records were processed.
+                     {processValues.recordCount === 1 ? " record was" : " records were"} processed.
                   </ListItemText>
                </ListItem>
             )

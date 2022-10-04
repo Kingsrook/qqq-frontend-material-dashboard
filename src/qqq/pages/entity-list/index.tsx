@@ -35,12 +35,13 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import {
-   DataGridPro,
+   DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators,
    GridCallbackDetails,
    GridColDef,
    GridColumnOrderChangeParams,
    GridColumnVisibilityModel,
    GridExportMenuItemProps,
+   GridFilterItem,
    GridFilterModel,
    GridRowId,
    GridRowParams,
@@ -55,6 +56,7 @@ import {
    GridToolbarFilterButton,
    MuiEvent
 } from "@mui/x-data-grid-pro";
+import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React, {useCallback, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import DashboardLayout from "qqq/components/DashboardLayout";
@@ -216,7 +218,7 @@ function EntityList({table}: Props): JSX.Element
          filterModel.items.forEach((item) =>
          {
             const operator = QFilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
-            const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value);
+            const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
          });
       }
@@ -324,6 +326,35 @@ function EntityList({table}: Props): JSX.Element
       delete countResults[latestQueryId];
    }, [receivedCountTimestamp]);
 
+   const booleanTrueOperator: GridFilterOperator = {
+      label: "is yes",
+      value: "isTrue",
+      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+   };
+
+   const booleanFalseOperator: GridFilterOperator = {
+      label: "is no",
+      value: "isFalse",
+      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+   };
+
+   const booleanEmptyOperator: GridFilterOperator = {
+      label: "is empty",
+      value: "isEmpty",
+      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+   };
+
+   const booleanNotEmptyOperator: GridFilterOperator = {
+      label: "is not empty",
+      value: "isNotEmpty",
+      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+   };
+
+   const getCustomGridBooleanOperators = (): GridFilterOperator[] =>
+   {
+      return [booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator];
+   }
+
    ///////////////////////////
    // display query results //
    ///////////////////////////
@@ -380,8 +411,13 @@ function EntityList({table}: Props): JSX.Element
 
          let columnType = "string";
          let columnWidth = 200;
+         let filterOperators: GridFilterOperator<any>[] = getGridStringOperators();
 
-         if (!field.possibleValueSourceName)
+         if (field.possibleValueSourceName)
+         {
+            filterOperators = getGridNumericOperators();
+         }
+         else
          {
             switch (field.type)
             {
@@ -395,18 +431,23 @@ function EntityList({table}: Props): JSX.Element
                      columnWidth = 75;
                   }
 
+                  // @ts-ignore
+                  filterOperators = getGridNumericOperators();
                   break;
                case QFieldType.DATE:
                   columnType = "date";
                   columnWidth = 100;
+                  filterOperators = getGridDateOperators();
                   break;
                case QFieldType.DATE_TIME:
                   columnType = "dateTime";
                   columnWidth = 200;
+                  filterOperators = getGridDateOperators(true);
                   break;
                case QFieldType.BOOLEAN:
-                  columnType = "boolean";
+                  columnType = "string"; // using boolean gives an odd 'no' for nulls.
                   columnWidth = 75;
+                  filterOperators = getCustomGridBooleanOperators();
                   break;
                default:
                   // noop - leave as string
@@ -452,6 +493,7 @@ function EntityList({table}: Props): JSX.Element
             headerName: field.label,
             width: columnWidth,
             renderCell: null as any,
+            filterOperators: filterOperators,
          };
 
          if(columnsToRender[field.name])
@@ -835,7 +877,7 @@ function EntityList({table}: Props): JSX.Element
                         records on this page are selected.
                         <Button onClick={() => setSelectFullFilterState("filter")}>
                            Select all
-                           {` ${totalRecords.toLocaleString()} `}
+                           {` ${totalRecords ? totalRecords.toLocaleString() : ""} `}
                            records matching this query
                         </Button>
                      </div>
@@ -845,7 +887,7 @@ function EntityList({table}: Props): JSX.Element
                   selectFullFilterState === "filter" && (
                      <div className="selectionTool">
                         All
-                        <strong>{` ${totalRecords.toLocaleString()} `}</strong>
+                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : "All"} `}</strong>
                         records matching this query are selected.
                         <Button onClick={() => setSelectFullFilterState("checked")}>
                            Select the
