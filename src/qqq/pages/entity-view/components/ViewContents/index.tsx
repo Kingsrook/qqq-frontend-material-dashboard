@@ -85,16 +85,21 @@ function ViewContents({id, table}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   useEffect(() =>
+   const reload = () =>
    {
       setAsyncLoadInited(false);
-      setTableMetaData(null)
-      setRecord(null)
-      setT1SectionElement(null)
-      setNonT1TableSections([])
-      setTableProcesses([])
-      setTableSections(null)
-      setWidgets(null)
+      setTableMetaData(null);
+      setRecord(null);
+      setT1SectionElement(null);
+      setNonT1TableSections([]);
+      setTableProcesses([]);
+      setTableSections(null);
+      setTableWidgets(null);
+   };
+
+   useEffect(() =>
+   {
+      reload();
    }, [location]);
 
    if (!asyncLoadInited)
