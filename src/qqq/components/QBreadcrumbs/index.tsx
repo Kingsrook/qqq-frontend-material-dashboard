@@ -21,8 +21,9 @@
 
 import {Breadcrumbs as MuiBreadcrumbs} from "@mui/material";
 import Icon from "@mui/material/Icon";
-import {ReactNode} from "react";
+import {ReactNode, useContext} from "react";
 import {Link} from "react-router-dom";
+import QContext from "QContext";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
@@ -56,11 +57,10 @@ export const routeToLabel = (route: string): string =>
    return (label);
 };
 
-function QBreadcrumbs({
-   icon, title, route, light,
-}: Props): JSX.Element
+function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
 {
    const routes: string[] | any = route.slice(0, -1);
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
    let pageTitle = "Nutrifresh One";
    const fullRoutes: string[] = [];
@@ -118,7 +118,7 @@ function QBreadcrumbs({
             color={light ? "white" : "dark"}
             noWrap
          >
-            {routeToLabel(title)}
+            {pageHeader}
          </MDTypography>
       </MDBox>
    );

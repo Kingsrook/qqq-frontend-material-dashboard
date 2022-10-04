@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Skeleton} from "@mui/material";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
@@ -76,7 +77,7 @@ function MultiStatisticsCard({title, data}: Props): JSX.Element
          </Grid>
          <Grid container>
             {
-               data && data.statisticsGroupData && (
+               data && data.statisticsGroupData ? (
                   data.statisticsGroupData.map((statisticsGroup, i1) =>
                      <Grid key={`statgroup-${i1}`} item xs={3} lg={3} sx={{textAlign: "center"}}>
                         <MDBox p={3} pt={3} sx={{alignItems: "center"}}>
@@ -108,6 +109,34 @@ function MultiStatisticsCard({title, data}: Props): JSX.Element
                                     </MDBox>
                                  )
                               }
+                           </MDBox>
+                        </MDBox>
+                     </Grid>
+                  )
+               ) : (
+                  Array(4).fill(0).map((_, i) =>
+                     <Grid key={`item-${i}`} item xs={3} lg={3} sx={{textAlign: "center"}}>
+                        <MDBox p={3} pt={3} sx={{alignItems: "center"}}>
+                           <MDBox>
+                              <MDTypography variant="h6">
+                                 <Icon sx={{fontSize: "30px", margin: "5px", color: "grey"}} fontSize="medium">pending</Icon>
+                              </MDTypography>
+                           </MDBox>
+                           <MDBox>
+                              <MDTypography variant="h6">
+                                 <Skeleton />
+                              </MDTypography>
+                              <MDTypography variant="subtitle2">
+                                 <Skeleton />
+                              </MDTypography>
+                           </MDBox>
+                           <Divider sx={{margin: "10px"}}></Divider>
+                           <MDBox sx={{alignItems: "center"}}>
+                              <MDBox key={`stat-${i}`}>
+                                 <MDTypography variant="subtitle2">
+                                    <Skeleton />
+                                 </MDTypography>
+                              </MDBox>
                            </MDBox>
                         </MDBox>
                      </Grid>

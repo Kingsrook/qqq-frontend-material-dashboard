@@ -29,8 +29,9 @@ import {Icon} from "@mui/material";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
+import QContext from "QContext";
 import BaseLayout from "qqq/components/BaseLayout";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
@@ -57,6 +58,8 @@ function AppHome({app}: Props): JSX.Element
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
+   const {pageHeader, setPageHeader} = useContext(QContext);
+
    const location = useLocation();
 
    useEffect(() =>
@@ -70,6 +73,8 @@ function AppHome({app}: Props): JSX.Element
 
    useEffect(() =>
    {
+      setPageHeader(app.label);
+
       if (!qInstance)
       {
          return;
@@ -153,11 +158,9 @@ function AppHome({app}: Props): JSX.Element
 
    return (
       <BaseLayout>
-         <MDBox mt={4}>
+         <MDBox mt={4} mb={4}>
             {app.widgets && (
-               <Grid container spacing={3}>
-                  <DashboardWidgets widgetMetaDataList={widgets} />
-               </Grid>
+               <DashboardWidgets widgetMetaDataList={widgets} />
             )}
             <Grid container spacing={3}>
                {

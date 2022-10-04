@@ -24,10 +24,17 @@ import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import {NavLink} from "react-router-dom";
+import DefaultCell from "layouts/dashboards/sales/components/DefaultCell";
 import DataTable, {TableDataInput} from "qqq/components/Temporary/DataTable";
+import DataTableBodyCell from "qqq/components/Temporary/DataTable/DataTableBodyCell";
+import DataTableHeadCell from "qqq/components/Temporary/DataTable/DataTableHeadCell";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
@@ -175,17 +182,30 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                      </MDTypography>
                   </MDBox>
                ) : (
-                  <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
-                     <MDTypography
-                        variant="subtitle2"
-                        color="secondary"
-                        fontWeight="regular"
-                     >
-                        <Skeleton />
-                        <Skeleton />
-                        <Skeleton />
-                     </MDTypography>
-                  </MDBox>
+                  <TableContainer sx={{boxShadow: "none"}}>
+                     <Table>
+                        <MDBox component="thead">
+                           <TableRow key="header">
+                              {Array(8).fill(0).map((_, i) =>
+                                 <DataTableHeadCell key={`head-${i}`} sorted={false} width="auto" align="center">
+                                    <Skeleton width="100%" />
+                                 </DataTableHeadCell>
+                              )}
+                           </TableRow>
+                        </MDBox>
+                        <TableBody>
+                           {Array(5).fill(0).map((_, i) =>
+                              <TableRow sx={{verticalAlign: "top"}} key={`row-${i}`}>
+                                 {Array(8).fill(0).map((_, j) =>
+                                    <DataTableBodyCell key={`cell-${i}-${j}`} align="center">
+                                       <DefaultCell><Skeleton /></DefaultCell>
+                                    </DataTableBodyCell>
+                                 )}
+                              </TableRow>
+                           )}
+                        </TableBody>
+                     </Table>
+                  </TableContainer>
                )
             }
          </MDBox>

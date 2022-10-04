@@ -38,9 +38,11 @@ interface Props
    value: any;
    type: string;
    isEditable?: boolean;
+
    [key: string]: any;
+
    bulkEditMode?: boolean;
-   bulkEditSwitchChangeHandler?: any
+   bulkEditSwitchChangeHandler?: any;
 }
 
 function QDynamicFormField({
@@ -71,11 +73,21 @@ function QDynamicFormField({
       inputProps.endAdornment = <InputAdornment position="end">%</InputAdornment>;
    }
 
+   // @ts-ignore
+   const handleOnWheel = (e) =>
+   {
+      if (type.toLowerCase().match("number"))
+      {
+         e.target.blur();
+      }
+   };
+
+
    const field = () =>
       (type == "checkbox" ?
          <QBooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} /> :
          <>
-            <Field {...rest} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled} />
+            <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled} />
             <MDBox mt={0.75}>
                <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
                   {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} /></div>}

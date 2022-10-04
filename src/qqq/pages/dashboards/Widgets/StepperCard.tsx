@@ -65,11 +65,7 @@ function StepperCard({data}: Props): JSX.Element
          marginTop: "9px",
          marginRight: "30px",
          marginLeft: "30px",
-      },
-      "& .MuiStepConnector-completed":
-         {
-            color: "red !important"
-         }
+      }
    })(StepConnector);
 
    console.log(`data ${JSON.stringify(data)}`);
@@ -132,7 +128,21 @@ function StepperCard({data}: Props): JSX.Element
                   </Step>
                ))
             ) : (
-               <Skeleton width="100%" height="80px" />
+
+               Array(5).fill(0).map((_, i) =>
+                  <Step key={`step-${i}`}>
+                     <MDBox>
+                        <StepLabel icon={<Pending />} sx={{
+                           color: "#ced4da",
+                           fontSize: "35px",
+                           "& .MuiStepLabel-label.MuiStepLabel-alternativeLabel":
+                              {
+                                 color: "#ced4da !important",
+                              }
+                        }}><Skeleton /></StepLabel>
+                     </MDBox>
+                  </Step>
+               )
             )
          }
       </Stepper>

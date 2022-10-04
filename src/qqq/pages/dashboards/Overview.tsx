@@ -23,7 +23,8 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
+import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
@@ -66,6 +67,7 @@ function Overview(): JSX.Element
    const [warehouseData, setWarehouseData] = useState([] as LocationCardData[]);
 
    const [qInstance, setQInstance] = useState(null as QInstance);
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
 
    //////////////////////////
@@ -73,6 +75,8 @@ function Overview(): JSX.Element
    //////////////////////////
    useEffect(() =>
    {
+      setPageHeader("Overview");
+
       (async () =>
       {
          const newQInstance = await qController.loadMetaData();

@@ -20,6 +20,7 @@
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {Skeleton} from "@mui/material";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
@@ -73,6 +74,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
          return;
       }
 
+      forceUpdate();
       for (let i = 0; i < widgetMetaDataList.length; i++)
       {
          widgetData[i] = {};
@@ -100,17 +102,19 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
    };
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
+   console.log(JSON.stringify(widgetMetaDataList));
+   console.log(widgetCount);
 
    return (
       widgetCount > 0 ? (
-         <Grid item xs={12} lg={12}>
-            <Grid container spacing={3}>
-               {
-                  widgetMetaDataList.map((widgetMetaData, i) => (
-                     <Grid key={`${i}`} item xs={12} lg={12}>
-                        {
-                           widgetMetaData.type === "table" && (
-                              widgetData && widgetData[i] ? (
+         <Grid container spacing={3} pb={4}>
+            {
+               widgetMetaDataList.map((widgetMetaData, i) => (
+                  <Grid key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12}>
+                     {
+                        widgetMetaData.type === "table" && (
+                           widgetData && widgetData[i] ? (
+                              <MDBox>
                                  <TableCard
                                     color="info"
                                     title={widgetMetaData.label}
@@ -122,117 +126,107 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
                                     dropdownOnChange={handleDropdownOnChange}
                                     widgetIndex={i}
                                  />
-                              ) : null
-                           )
-                        }
-                        {
-                           widgetMetaData.type === "stepper" && (
-                              <MDBox>
-                                 <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
-                                    <MDBox padding="1rem">
+                              </MDBox>
+                           ) : null
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "stepper" && (
+                           <MDBox>
+                              <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
+                                 <MDBox padding="1rem">
+                                    {
+                                       widgetMetaData.label && (
+                                          <MDTypography variant="h5" textTransform="capitalize">
+                                             {widgetMetaData.label}
+                                          </MDTypography>
+                                       )
+                                    }
+                                    <StepperCard data={widgetData[i]} />
+                                 </MDBox>
+                              </Card>
+                           </MDBox>
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "html" && (
+                           <MDBox>
+                              <Card sx={{alignContents: "stretch", marginTop: "0px", paddingTop: "0px"}}>
+                                 <MDBox padding="1rem">
+                                    <MDTypography variant="h5" textTransform="capitalize">
+                                       {widgetMetaData.label}
+                                    </MDTypography>
+                                    <MDTypography component="div" variant="button" color="text" fontWeight="light">
                                        {
-                                          widgetMetaData.label && (
-                                             <MDTypography variant="h5" textTransform="capitalize">
-                                                {widgetMetaData.label}
-                                             </MDTypography>
-                                          )
+                                          widgetData && widgetData[i] && widgetData[i].html ? (
+                                             parse(widgetData[i].html)
+                                          ) : <Skeleton />
                                        }
-                                       <StepperCard data={widgetData[i]} />
-                                    </MDBox>
-                                 </Card>
+                                    </MDTypography>
+                                 </MDBox>
+                              </Card>
+                           </MDBox>
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "multiStatistics" && (
+                           <MultiStatisticsCard
+                              color="info"
+                              title={widgetMetaData.label}
+                              data={widgetData[i]}
+                           />
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "quickSightChart" && (
+                           widgetData && widgetData[i] ? (
+                              <MDBox mb={3}>
+                                 <QuickSightChart url={widgetData[i].url} label={widgetData[i].label} />
                               </MDBox>
-                           )
-                        }
-                        {
-                           widgetMetaData.type === "html" && (
-                              <MDBox pb={3}>
-                                 <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
-                                    <MDBox padding="1rem">
-                                       <MDTypography variant="h5" textTransform="capitalize">
-                                          {widgetMetaData.label}
-                                       </MDTypography>
-                                       <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                                          {
-                                             widgetData && widgetData[i] && widgetData[i].html && (
-                                                parse(widgetData[i].html)
-                                             )
-                                          }
-                                       </MDTypography>
-                                    </MDBox>
-                                 </Card>
-                              </MDBox>
-                           )
-                        }
-                        {
-                           widgetMetaData.type === "multiStatistics" && (
-                              widgetData && widgetData[i] ? (
-                                 <MultiStatisticsCard
+                           ) : null
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "barChart" && (
+                           widgetData && widgetData[i] ? (
+                              <MDBox mb={3}>
+                                 <BarChart
                                     color="info"
                                     title={widgetData[i].title}
-                                    data={widgetData[i]}
+                                    date={`As of ${new Date().toDateString()}`}
+                                    data={widgetData[i].chartData}
                                  />
-                              ) : null
-                           )
-                        }
-                     </Grid>
-                  ))
-               }
-            </Grid>
-            <Grid item xs={12} lg={widgetCount === 1 ? 3 : 6}>
-               {
-                  widgetMetaDataList.map((widgetMetaData, i) => (
-                     <Grid key={`${i}`} item xs={12} lg={widgetCount === 1 ? 12 : 6}>
-                        {
-                           widgetMetaData.type === "quickSightChart" && (
-                              widgetData && widgetData[i] ? (
-                                 <MDBox mb={3}>
-                                    <QuickSightChart url={widgetData[i].url} label={widgetData[i].label} />
-                                 </MDBox>
-                              ) : null
-                           )
-                        }
-                        {
-                           widgetMetaData.type === "barChart" && (
-                              widgetData && widgetData[i] ? (
-                                 <MDBox mb={3}>
-                                    <BarChart
-                                       color="info"
-                                       title={widgetData[i].title}
-                                       date={`As of ${new Date().toDateString()}`}
-                                       data={widgetData[i].chartData}
-                                    />
-                                 </MDBox>
-                              ) : null
-                           )
-                        }
-                        {
-                           widgetMetaData.type === "lineChart" && (
-                              widgetData && widgetData[i] ? (
-                                 <MDBox mb={3}>
-                                    <LineChart
-                                       title={widgetData[i].title}
-                                       description={(
-                                          <MDBox display="flex" justifyContent="space-between">
-                                             <MDBox display="flex" ml={-1}>
-                                                {
-                                                   widgetData[i].lineChartData.datasets.map((dataSet: any) => (
-                                                      <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
-                                                   ))
-                                                }
-                                             </MDBox>
-                                             <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                              </MDBox>
+                           ) : null
+                        )
+                     }
+                     {
+                        widgetMetaData.type === "lineChart" && (
+                           widgetData && widgetData[i] ? (
+                              <MDBox mb={3}>
+                                 <LineChart
+                                    title={widgetData[i].title}
+                                    description={(
+                                       <MDBox display="flex" justifyContent="space-between">
+                                          <MDBox display="flex" ml={-1}>
+                                             {
+                                                widgetData[i].lineChartData.datasets.map((dataSet: any) => (
+                                                   <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
+                                                ))
+                                             }
                                           </MDBox>
-                                       )}
-                                       chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
-                                    />
-                                 </MDBox>
-                              ) : null
-                           )
-                        }
-                     </Grid>
-                  ))
-               }
-            </Grid>
+                                          <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                                       </MDBox>
+                                    )}
+                                    chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                                 />
+                              </MDBox>
+                           ) : null
+                        )
+                     }
+                  </Grid>
+               ))
+            }
          </Grid>
       ) : null
    );

@@ -31,7 +31,7 @@ import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobEr
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Button, Icon, CircularProgress, TablePagination} from "@mui/material";
+import {Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
@@ -41,12 +41,12 @@ import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
-import {GoogleOAuthProvider} from "@react-oauth/google";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
-import React, {useEffect, useState} from "react";
-import {useLocation, useParams, useNavigate} from "react-router-dom";
+import React, {useContext, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
+import QContext from "QContext";
 import BaseLayout from "qqq/components/BaseLayout";
 import {QCancelButton, QSubmitButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
@@ -101,6 +101,8 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
    );
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
+
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for setting the processError state - call this function, which will also set the isUserFacingError state //
@@ -302,7 +304,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                            component.values.previewText ?
                               <>
                                  <Box mt={1}>
-                                    <Button onClick={toggleShowFullHelpText} startIcon={<Icon>{showFullHelpText ? "expand_less" : "expand_more"}</Icon>} sx={{pl: 1}} >
+                                    <Button onClick={toggleShowFullHelpText} startIcon={<Icon>{showFullHelpText ? "expand_less" : "expand_more"}</Icon>} sx={{pl: 1}}>
                                        {showFullHelpText ? "Hide " : "Show "}
                                        {component.values.previewText}
                                     </Button>
@@ -471,17 +473,17 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
    {
       let rs: QFieldMetaData[] = [];
 
-      if(activeStep && activeStep.formFields)
+      if (activeStep && activeStep.formFields)
       {
-         for(let i = 0; i<activeStep.formFields.length; i++)
+         for (let i = 0; i < activeStep.formFields.length; i++)
          {
             rs.push(activeStep.formFields[i]);
          }
       }
 
-      if(processValues.inputFieldList)
+      if (processValues.inputFieldList)
       {
-         for(let i = 0; i<processValues.inputFieldList.length; i++)
+         for (let i = 0; i < processValues.inputFieldList.length; i++)
          {
             let inputField = new QFieldMetaData(processValues.inputFieldList[i]);
             rs.push(inputField);
@@ -501,6 +503,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
          console.log("No process meta data yet, so returning early");
          return;
       }
+      setPageHeader(processMetaData.label)
 
       let newIndex = null;
       if (typeof newStep === "number")
@@ -590,7 +593,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
             addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, null, null);
          }
 
-         if(Object.keys(dynamicFormFields).length > 0)
+         if (Object.keys(dynamicFormFields).length > 0)
          {
             ///////////////////////////////////////////
             // if there are form fields, set them up //
@@ -743,7 +746,7 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
             const qJobError = lastProcessResponse as QJobError;
             console.log(`Got an error from the backend... ${qJobError.error} : ${qJobError.userFacingError}`);
             setJobUUID(null);
-            if(qJobError.userFacingError)
+            if (qJobError.userFacingError)
             {
                setProcessError(qJobError.userFacingError, true);
             }
@@ -874,9 +877,9 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
             return;
          }
 
-         if(defaultProcessValues)
+         if (defaultProcessValues)
          {
-            for(let key in defaultProcessValues)
+            for (let key in defaultProcessValues)
             {
                queryStringPairsForInit.push(`${key}=${encodeURIComponent(defaultProcessValues[key])}`);
             }

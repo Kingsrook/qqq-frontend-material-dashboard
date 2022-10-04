@@ -36,8 +36,9 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import React, {useEffect, useReducer, useState} from "react";
+import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
+import QContext from "QContext";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
 import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
@@ -80,6 +81,7 @@ function ViewContents({id, table}: Props): JSX.Element
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableWidgets, setTableWidgets] = useState([] as QWidgetMetaData[]);
    const [searchParams] = useSearchParams();
+   const {pageHeader, setPageHeader} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -126,6 +128,7 @@ function ViewContents({id, table}: Props): JSX.Element
          /////////////////////
          const record = await qController.get(tableName, id);
          setRecord(record);
+         setPageHeader(record.recordLabel);
 
          ///////////////////////////
          // load widget meta data //

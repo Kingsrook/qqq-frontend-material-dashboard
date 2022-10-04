@@ -57,8 +57,9 @@ import {
    MuiEvent
 } from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
-import React, {useCallback, useEffect, useReducer, useRef, useState} from "react";
+import React, {useCallback, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
+import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
@@ -197,6 +198,7 @@ function EntityList({table}: Props): JSX.Element
    const [queryErrors, setQueryErrors] = useState({} as any);
    const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
 
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -233,6 +235,7 @@ function EntityList({table}: Props): JSX.Element
       (async () =>
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
+         setPageHeader(tableMetaData.label);
 
          ////////////////////////////////////////////////////////////////////////////////////////////////
          // we need the table meta data to look up the default filter (if it comes from query string), //
@@ -263,7 +266,7 @@ function EntityList({table}: Props): JSX.Element
          // assign a new query id to the query being issued here.  then run both the count & query async //
          // and when they load, store their results associated with this id.                             //
          //////////////////////////////////////////////////////////////////////////////////////////////////
-         const thisQueryId = latestQueryId + 1
+         const thisQueryId = latestQueryId + 1;
          setLatestQueryId(thisQueryId);
 
          console.log(`Issuing query: ${thisQueryId}`);
@@ -291,7 +294,7 @@ function EntityList({table}: Props): JSX.Element
                {
                   errorMessage = error.message;
                }
-               else if(error && error.response && error.response.data && error.response.data.error)
+               else if (error && error.response && error.response.data && error.response.data.error)
                {
                   errorMessage = error.response.data.error;
                }
@@ -307,7 +310,7 @@ function EntityList({table}: Props): JSX.Element
                throw error;
             });
       })();
-   }
+   };
 
    ///////////////////////////
    // display count results //
@@ -358,9 +361,9 @@ function EntityList({table}: Props): JSX.Element
    ///////////////////////////
    // display query results //
    ///////////////////////////
-   useEffect(() => 
+   useEffect(() =>
    {
-      if(!queryResults[latestQueryId])
+      if (!queryResults[latestQueryId])
       {
          ///////////////////////////////////////////////////////////////////////////////////////////
          // to avoid showing results from an "older" query (e.g., one that was slow, and returned //
@@ -382,8 +385,8 @@ function EntityList({table}: Props): JSX.Element
          const row: any = {};
          fields.forEach((field) =>
          {
-            const value = QValueUtils.getDisplayValue(field, record)
-            if(typeof value !== "string")
+            const value = QValueUtils.getDisplayValue(field, record);
+            if (typeof value !== "string")
             {
                columnsToRender[field.name] = true;
             }
@@ -450,15 +453,15 @@ function EntityList({table}: Props): JSX.Element
                   filterOperators = getCustomGridBooleanOperators();
                   break;
                default:
-                  // noop - leave as string
+               // noop - leave as string
             }
          }
 
-         if(field.hasAdornment(AdornmentType.SIZE))
+         if (field.hasAdornment(AdornmentType.SIZE))
          {
-            const sizeAdornment = field.getAdornment(AdornmentType.SIZE)
-            const width = sizeAdornment.getValue("width")
-            switch(width)
+            const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
+            const width = sizeAdornment.getValue("width");
+            switch (width)
             {
                case "small":
                {
@@ -482,7 +485,7 @@ function EntityList({table}: Props): JSX.Element
                }
                default:
                {
-                  console.log("Unrecognized size.width adornment value: " + width)
+                  console.log("Unrecognized size.width adornment value: " + width);
                }
             }
          }
@@ -496,7 +499,7 @@ function EntityList({table}: Props): JSX.Element
             filterOperators: filterOperators,
          };
 
-         if(columnsToRender[field.name])
+         if (columnsToRender[field.name])
          {
             column.renderCell = (cellValues: any) => (
                (cellValues.value)
@@ -811,9 +814,9 @@ function EntityList({table}: Props): JSX.Element
    // @ts-ignore
    const defaultLabelDisplayedRows = ({from, to, count}) =>
    {
-      if(count !== null && count !== undefined)
+      if (count !== null && count !== undefined)
       {
-         if(count === 0)
+         if (count === 0)
          {
             return (loading ? "Counting records..." : "No rows");
          }
@@ -823,7 +826,7 @@ function EntityList({table}: Props): JSX.Element
       {
          return ("Counting records...");
       }
-   }
+   };
 
    function CustomPagination()
    {

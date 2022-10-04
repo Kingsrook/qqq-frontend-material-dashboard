@@ -24,7 +24,8 @@ import {Icon} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
+import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
@@ -115,12 +116,15 @@ function CarrierPerformance(): JSX.Element
 
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [dataLoaded, setDataLoaded] = useState(false);
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
    //////////////////////////
    // load meta data first //
    //////////////////////////
    useEffect(() =>
    {
+      setPageHeader("Carrier Performance");
+
       (async () =>
       {
          const newQInstance = await qController.loadMetaData();

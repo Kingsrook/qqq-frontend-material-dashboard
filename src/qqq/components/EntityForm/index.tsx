@@ -29,9 +29,10 @@ import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import {Form, Formik} from "formik";
-import React, {useReducer, useState} from "react";
+import React, {useContext, useReducer, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
+import QContext from "QContext";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
@@ -54,6 +55,7 @@ function EntityForm({table, id}: Props): JSX.Element
    const tableNameParam = useParams().tableName;
    const tableName = table === null ? tableNameParam : table.name;
 
+   const [formTitle, setFormTitle] = useState("");
    const [validations, setValidations] = useState({});
    const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
    const [formFields, setFormFields] = useState(null as Map<string, any>);
@@ -69,6 +71,8 @@ function EntityForm({table, id}: Props): JSX.Element
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+   const {pageHeader, setPageHeader} = useContext(QContext);
+
    const navigate = useNavigate();
    const location = useLocation();
 
@@ -79,7 +83,6 @@ function EntityForm({table, id}: Props): JSX.Element
       formData.touched = touched;
       formData.errors = errors;
       formData.formFields = {};
-      console.log(formFields);
       for (let i = 0; i < formFields.length; i++)
       {
          formData.formFields[formFields[i].name] = formFields[i];
@@ -121,6 +124,8 @@ function EntityForm({table, id}: Props): JSX.Element
          {
             const record = await qController.get(tableName, id);
             setRecord(record);
+            setFormTitle(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
+            setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
 
             tableMetaData.fields.forEach((fieldMetaData, key) =>
             {
@@ -128,6 +133,11 @@ function EntityForm({table, id}: Props): JSX.Element
             });
 
             setFormValues(formValues);
+         }
+         else
+         {
+            setFormTitle(`Creating New ${tableMetaData?.label}`);
+            setPageHeader(`Creating New ${tableMetaData?.label}`);
          }
          setInitialValues(initialValues);
 
@@ -254,19 +264,6 @@ function EntityForm({table, id}: Props): JSX.Element
          }
       })();
    };
-
-   let formTitle = "";
-   if (tableMetaData)
-   {
-      if (id == null)
-      {
-         formTitle = `Create new ${tableMetaData?.label}`;
-      }
-      else if (record != null)
-      {
-         formTitle = `Edit ${tableMetaData?.label}: ${record?.recordLabel}`;
-      }
-   }
 
    const formId = id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 

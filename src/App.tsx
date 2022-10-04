@@ -36,6 +36,7 @@ import {Md5} from "ts-md5/dist/md5";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
 import Settings from "layouts/pages/account/settings";
 import ProfileOverview from "layouts/pages/profile/profile-overview";
+import QContext from "QContext";
 import Sidenav from "qqq/components/Sidenav";
 import Configurator from "qqq/components/Temporary/Configurator";
 import MDAvatar from "qqq/components/Temporary/MDAvatar";
@@ -469,31 +470,39 @@ export default function App()
       </MDBox>
    );
 
+   const [pageHeader, setPageHeader] = useState("");
+
    return (
+
       appRoutes && (
-         <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {layout === "dashboard" && (
-               <>
-                  <Sidenav
-                     color={sidenavColor}
-                     icon={branding.icon}
-                     logo={branding.logo}
-                     companyName={branding.companyName}
-                     routes={sideNavRoutes}
-                     onMouseEnter={handleOnMouseEnter}
-                     onMouseLeave={handleOnMouseLeave}
-                  />
-                  <Configurator />
-               </>
-            )}
-            <Routes>
-               <Route path="*" element={<Navigate to="/dashboards/overview" />} />
-               {appRoutes && getRoutes(appRoutes)}
-               {getRoutes(getStaticRoutes())}
-               {profileRoutes && getRoutes([profileRoutes])}
-            </Routes>
-         </ThemeProvider>
+         <QContext.Provider value={{
+            pageHeader: pageHeader,
+            setPageHeader: (header: string) => setPageHeader(header)
+         }}>
+            <ThemeProvider theme={theme}>
+               <CssBaseline />
+               {layout === "dashboard" && (
+                  <>
+                     <Sidenav
+                        color={sidenavColor}
+                        icon={branding.icon}
+                        logo={branding.logo}
+                        companyName={branding.companyName}
+                        routes={sideNavRoutes}
+                        onMouseEnter={handleOnMouseEnter}
+                        onMouseLeave={handleOnMouseLeave}
+                     />
+                     <Configurator />
+                  </>
+               )}
+               <Routes>
+                  <Route path="*" element={<Navigate to="/dashboards/overview" />} />
+                  {appRoutes && getRoutes(appRoutes)}
+                  {getRoutes(getStaticRoutes())}
+                  {profileRoutes && getRoutes([profileRoutes])}
+               </Routes>
+            </ThemeProvider>
+         </QContext.Provider>
       )
    );
 }

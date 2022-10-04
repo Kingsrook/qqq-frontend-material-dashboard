@@ -20,9 +20,9 @@
  */
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
+import QContext from "QContext";
 import ProcessRun from "qqq/pages/process-run/index";
 import QClient from "qqq/utils/QClient";
 
@@ -36,10 +36,11 @@ function ReportRun({report}: Props): JSX.Element
    // const reportNameParam = useParams().reportName;
    // const processName = process === null ? processNameParam : process.name;
    const [metaData, setMetaData] = useState(null as QInstance);
+   const {pageHeader, setPageHeader} = useContext(QContext);
 
    useEffect(() =>
    {
-      if(!metaData)
+      if (!metaData)
       {
          (async () =>
          {
@@ -49,18 +50,20 @@ function ReportRun({report}: Props): JSX.Element
       }
    });
 
-   if(metaData)
+   if (metaData)
    {
-      console.log(`Report Process name is ${report.processName}`)
-      const process = metaData.processes.get(report.processName)
-      console.log(`Process is ${process.name}`)
-      const defaultProcessValues = {reportName: report.name}
+      setPageHeader(report.label);
+
+      console.log(`Report Process name is ${report.processName}`);
+      const process = metaData.processes.get(report.processName);
+      console.log(`Process is ${process.name}`);
+      const defaultProcessValues = {reportName: report.name};
       return (<ProcessRun process={process} defaultProcessValues={defaultProcessValues} />);
    }
    else
    {
       // todo - loading?
-      return (<div/>);
+      return (<div />);
    }
 }
 
