@@ -50,7 +50,7 @@ function PieChartCard({title, description, data}: Props): JSX.Element
    return (
       <Card sx={{height: "100%"}}>
          <MDBox display="flex" justifyContent="space-between" alignItems="center" pt={2} px={2}>
-            <MDTypography variant="h6">{title}</MDTypography>
+            <MDTypography variant="h5">{title}</MDTypography>
          </MDBox>
          <MDBox mt={3}>
             <Grid container alignItems="center">

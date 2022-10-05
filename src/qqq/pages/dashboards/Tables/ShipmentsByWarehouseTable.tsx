@@ -77,7 +77,7 @@ function ShipmentsByWarehouseTable({title, rows, shadow}: Props): JSX.Element
             {title ? (
                <TableHead>
                   <MDBox component="tr" width="max-content" display="block" mb={1.5}>
-                     <MDTypography variant="h6" component="td">
+                     <MDTypography variant="h5" component="td">
                         {title}
                      </MDTypography>
                   </MDBox>

@@ -110,30 +110,28 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
          <Grid container spacing={3} pb={4}>
             {
                widgetMetaDataList.map((widgetMetaData, i) => (
-                  <Grid key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12}>
+                  <Grid key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch"}}>
                      {
                         widgetMetaData.type === "table" && (
-                           widgetData && widgetData[i] ? (
-                              <MDBox>
-                                 <TableCard
-                                    color="info"
-                                    title={widgetMetaData.label}
-                                    linkText={widgetData[i].linkText}
-                                    linkURL={widgetData[i].linkURL}
-                                    noRowsFoundHTML={widgetData[i].noRowsFoundHTML}
-                                    data={widgetData[i]}
-                                    dropdownOptions={widgetData[i].dropdownOptions}
-                                    dropdownOnChange={handleDropdownOnChange}
-                                    widgetIndex={i}
-                                 />
-                              </MDBox>
-                           ) : null
+                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                              <TableCard
+                                 color="info"
+                                 title={widgetMetaData.label}
+                                 linkText={widgetData[i]?.linkText}
+                                 linkURL={widgetData[i]?.linkURL}
+                                 noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
+                                 data={widgetData[i]}
+                                 dropdownOptions={widgetData[i]?.dropdownOptions}
+                                 dropdownOnChange={handleDropdownOnChange}
+                                 widgetIndex={i}
+                              />
+                           </MDBox>
                         )
                      }
                      {
                         widgetMetaData.type === "stepper" && (
-                           <MDBox>
-                              <Card sx={{marginTop: "0px", paddingTop: "0px"}}>
+                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                              <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                                  <MDBox padding="1rem">
                                     {
                                        widgetMetaData.label && (
@@ -150,8 +148,8 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
                      }
                      {
                         widgetMetaData.type === "html" && (
-                           <MDBox>
-                              <Card sx={{alignContents: "stretch", marginTop: "0px", paddingTop: "0px"}}>
+                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                              <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                                  <MDBox padding="1rem">
                                     <MDTypography variant="h5" textTransform="capitalize">
                                        {widgetMetaData.label}
@@ -170,34 +168,32 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
                      }
                      {
                         widgetMetaData.type === "multiStatistics" && (
-                           <MultiStatisticsCard
-                              color="info"
-                              title={widgetMetaData.label}
-                              data={widgetData[i]}
-                           />
+                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                              <MultiStatisticsCard
+                                 color="info"
+                                 title={widgetMetaData.label}
+                                 data={widgetData[i]}
+                              />
+                           </MDBox>
                         )
                      }
                      {
                         widgetMetaData.type === "quickSightChart" && (
-                           widgetData && widgetData[i] ? (
-                              <MDBox mb={3}>
-                                 <QuickSightChart url={widgetData[i].url} label={widgetData[i].label} />
-                              </MDBox>
-                           ) : null
+                           <MDBox sx={{display: "flex"}}>
+                              <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
+                           </MDBox>
                         )
                      }
                      {
                         widgetMetaData.type === "barChart" && (
-                           widgetData && widgetData[i] ? (
-                              <MDBox mb={3}>
-                                 <BarChart
-                                    color="info"
-                                    title={widgetData[i].title}
-                                    date={`As of ${new Date().toDateString()}`}
-                                    data={widgetData[i].chartData}
-                                 />
-                              </MDBox>
-                           ) : null
+                           <MDBox mb={3} sx={{display: "flex"}}>
+                              <BarChart
+                                 color="info"
+                                 title={widgetMetaData.label}
+                                 date={`As of ${new Date().toDateString()}`}
+                                 data={widgetData[i]?.chartData}
+                              />
+                           </MDBox>
                         )
                      }
                      {

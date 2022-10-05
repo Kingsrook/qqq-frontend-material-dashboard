@@ -28,6 +28,7 @@ import {StatisticsCardData} from "qqq/pages/dashboards/Widgets/StatisticsCard";
 
 interface Props
 {
+   title: string;
    data: StatisticsCardData;
    increaseIsGood: boolean;
    dropdown?: {
@@ -39,9 +40,9 @@ interface Props
    [key: string]: any;
 }
 
-function SimpleStatisticsCard({data, increaseIsGood, dropdown}: Props): JSX.Element
+function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): JSX.Element
 {
-   const {title, count, percentageAmount, percentageLabel} = data;
+   const {count, percentageAmount, percentageLabel} = data;
 
    let percentageString = "";
    if (percentageAmount)

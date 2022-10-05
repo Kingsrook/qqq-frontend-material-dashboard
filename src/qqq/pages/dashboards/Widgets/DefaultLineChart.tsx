@@ -190,7 +190,7 @@ function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
                   </MDBox>
                )}
                <MDBox mt={icon.component ? -2 : 0}>
-                  {title && <MDTypography variant="h6">{title}</MDTypography>}
+                  {title && <MDTypography variant="h5">{title}</MDTypography>}
                   <MDBox mb={2}>
                      <MDTypography component="div" variant="button" color="text">
                         <MDBox display="flex" justifyContent="space-between">

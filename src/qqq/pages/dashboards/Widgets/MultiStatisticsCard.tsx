@@ -65,7 +65,8 @@ interface Props
 function MultiStatisticsCard({title, data}: Props): JSX.Element
 {
    return (
-      <Card>
+      <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+
          <Grid container>
             <Grid item xs={12}>
                <MDBox pt={3} px={3}>

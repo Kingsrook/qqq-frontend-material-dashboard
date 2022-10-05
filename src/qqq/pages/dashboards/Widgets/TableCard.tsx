@@ -68,6 +68,10 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
    const [dropdownLabel, setDropdownLabel] = useState<string>("");
    const [dropdownIcon, setDropdownIcon] = useState<string>(openArrowIcon);
 
+   console.log(`data: ${JSON.stringify(data?.rows)}`);
+   console.log(`bool: ${data && data?.columns && !data?.rows}`);
+   console.log(`norowsfound: ${noRowsFoundHTML}`);
+
    const openDropdown = ({currentTarget}: any) =>
    {
       setDropdown(currentTarget);
@@ -78,7 +82,6 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
       setDropdown(null);
       setDropdownValue(currentTarget.innerText || dropdownValue);
       setDropdownIcon(openArrowIcon);
-      alert(widgetIndex);
       dropdownOnChange(currentTarget.innerText || dropdownValue, widgetIndex);
    };
 
@@ -114,7 +117,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
    }, [dropdownOptions]);
 
    return (
-      <Card>
+      <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
          <Grid container>
             <Grid item xs={6}>
                <MDBox pt={3} px={3}>
@@ -159,7 +162,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
          </Grid>
          <MDBox py={1}>
             {
-               data && data.rows && data.rows.length > 0 ? (
+               data && data.columns && !noRowsFoundHTML ? (
                   <DataTable
                      table={data}
                      entriesPerPage={false}
@@ -167,7 +170,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                      isSorted={false}
                      noEndBorder
                   />
-               ) : data && data.rows && data.rows.length == 0 ? (
+               ) : noRowsFoundHTML ? (
                   <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
                      <MDTypography
                         variant="subtitle2"

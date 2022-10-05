@@ -52,7 +52,7 @@ function ShipmentsByWarehouseData(): JSX.Element
                   warehouse
                </Icon>
             </MDBox>
-            <MDTypography variant="h6" sx={{mt: 2, mb: 1, ml: 2}}>
+            <MDTypography variant="h5" sx={{mt: 2, mb: 1, ml: 2}}>
                Shipments by Warehouse
             </MDTypography>
          </MDBox>
