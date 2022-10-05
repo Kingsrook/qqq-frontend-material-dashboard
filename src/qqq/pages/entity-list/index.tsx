@@ -105,7 +105,7 @@ function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearch
                defaultFilter.items.push({
                   columnField: criteria.fieldName,
                   operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, fieldType, criteria.values),
-                  value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values),
+                  value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, fieldType),
                   id: id++, // not sure what this id is!!
                });
             });

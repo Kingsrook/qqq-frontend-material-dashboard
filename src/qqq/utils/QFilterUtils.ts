@@ -231,7 +231,7 @@ class QFilterUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[]): any | any[] =>
+   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], fieldType: QFieldType): any | any[] =>
    {
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
@@ -240,6 +240,31 @@ class QFilterUtils
       else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN)
       {
          return (values);
+      }
+
+      if(values.length > 0)
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         // make sure dates are formatted for the grid the way it expects - not the way we pass it in. //
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         if (fieldType === QFieldType.DATE_TIME)
+         {
+            const inputValue = values[0];
+            if(inputValue.match(/^\d{4}-\d{2}-\d{2}$/))
+            {
+               //////////////////////////////////////////////////////////////////
+               // if we just passed in a date (w/o time), attach T00:00 to it. //
+               //////////////////////////////////////////////////////////////////
+               values[0] = inputValue + "T00:00";
+            }
+            else if(inputValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
+            {
+               ///////////////////////////////////////////////////////////////////////////////////
+               // if we passed in something too long (e.g., w/ seconds and fractions), trim it. //
+               ///////////////////////////////////////////////////////////////////////////////////
+               values[0] = inputValue.substring(0, 16);
+            }
+         }
       }
 
       return (values[0]);
