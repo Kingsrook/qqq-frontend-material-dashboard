@@ -63,7 +63,7 @@ interface Props
 {
    id: string;
    table?: QTableMetaData;
-   launchProcess?: QProcessMetaData
+   launchProcess?: QProcessMetaData;
 }
 
 ViewContents.defaultProps = {
@@ -95,7 +95,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
-   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData)
+   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
@@ -128,11 +128,11 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
          // the path for a process looks like: .../table/id/process     //
          // so if our tableName is in the -3 index, try to open process //
          /////////////////////////////////////////////////////////////////
-         if(pathParts[pathParts.length - 3] === tableName)
+         if (pathParts[pathParts.length - 3] === tableName)
          {
             const processName = pathParts[pathParts.length - 1];
             const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
-            if(processList.length > 0)
+            if (processList.length > 0)
             {
                setActiveModalProcess(processList[0]);
                return;
@@ -143,7 +143,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
             }
          }
       }
-      catch(e)
+      catch (e)
       {
          console.log(e);
       }
@@ -154,7 +154,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
       reload();
 
       setActiveModalProcess(null);
-   }, [location]);
+   }, [location.pathname]);
 
    if (!asyncLoadInited)
    {
@@ -177,7 +177,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
          setTableProcesses(processesForTable);
          setAllTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
 
-         if(launchingProcess)
+         if (launchingProcess)
          {
             setLaunchingProcess(null);
             setActiveModalProcess(launchingProcess);
@@ -237,12 +237,10 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
                   {
                      section.fieldNames.map((fieldName: string) => (
                         <MDBox key={fieldName} flexDirection="row" pr={2}>
-                           <MDTypography variant="button" fontWeight="bold">
-                              {tableMetaData.fields.get(fieldName).label}
-                              : &nbsp;
+                           <MDTypography variant="button" fontWeight="bold" pr={1}>
+                              {tableMetaData.fields.get(fieldName).label}:
                            </MDTypography>
                            <MDTypography variant="button" fontWeight="regular" color="text">
-                              &nbsp;
                               {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record)}
                            </MDTypography>
                         </MDBox>
@@ -343,7 +341,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
 
    const closeModalProcess = (event: object, reason: string) =>
    {
-      if(reason === "backdropClick")
+      if (reason === "backdropClick")
       {
          return;
       }
@@ -354,7 +352,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
       const newPath = location.pathname.split("/");
       newPath.pop();
       navigate(newPath.join("/"));
-   }
+   };
 
    return (
       notFoundMessage
@@ -411,7 +409,7 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
                      iconName, label, name, fieldNames, tier,
                   }: any) => (
                      <MDBox mb={3} key={name}>
-                        <Card key={name} id={name} sx={{overflow: "visible"}}>
+                        <Card key={name} id={name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
                            <MDTypography variant="h5" p={3} pb={1}>
                               {label}
                            </MDTypography>

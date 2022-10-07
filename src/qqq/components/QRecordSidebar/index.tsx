@@ -26,6 +26,7 @@ import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
 import React from "react";
+import {HashLink} from "react-router-hash-link";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
@@ -69,35 +70,38 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
 
-                  <MDBox key={`section-${entry.name}`} component="li" pt={key === 0 ? 0 : 1}>
-                     <MDTypography
-                        component="a"
-                        href={`#${entry.name}`}
-                        variant="button"
-                        fontWeight="regular"
-                        sx={({
-                           borders: {borderRadius}, functions: {pxToRem}, palette: {light}, transitions,
-                        }: Theme) => ({
-                           display: "flex",
-                           alignItems: "center",
-                           borderRadius: borderRadius.md,
-                           padding: `${pxToRem(10)} ${pxToRem(16)}`,
-                           transition: transitions.create("background-color", {
-                              easing: transitions.easing.easeInOut,
-                              duration: transitions.duration.shorter,
-                           }),
+                  <HashLink key={`section-link-${entry.name}`} to={`#${entry.name}`}>
+                     <MDBox key={`section-${entry.name}`} component="li" pt={key === 0 ? 0 : 1}>
+                        <MDTypography
+                           variant="button"
+                           fontWeight="regular"
+                           sx={({
+                              borders: {borderRadius}, functions: {pxToRem}, palette: {light}, transitions,
+                           }: Theme) => ({
+                              display: "flex",
+                              alignItems: "center",
+                              borderRadius: borderRadius.md,
+                              padding: `${pxToRem(10)} ${pxToRem(16)}`,
+                              transition: transitions.create("background-color", {
+                                 easing: transitions.easing.easeInOut,
+                                 duration: transitions.duration.shorter,
+                              }),
 
-                           "&:hover": {
-                              backgroundColor: light.main,
-                           },
-                        })}
-                     >
-                        <MDBox mr={1.5} lineHeight={1} color="black">
-                           <Icon fontSize="small">{entry.iconName}</Icon>
-                        </MDBox>
-                        {entry.label}
-                     </MDTypography>
-                  </MDBox>
+                              "&:hover": {
+                                 backgroundColor: light.main,
+                              },
+                           })}
+                        >
+                           <MDBox mr={1.5} lineHeight={1} color="black">
+                              <Icon fontSize="small">{entry.iconName}</Icon>
+                           </MDBox>
+                           <MDBox mr={1.5} lineHeight={1} color="black">
+                              {entry.label}
+                           </MDBox>
+
+                        </MDTypography>
+                     </MDBox>
+                  </HashLink>
                )) : null
             }
          </MDBox>

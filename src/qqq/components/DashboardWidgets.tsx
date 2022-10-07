@@ -91,7 +91,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
    useEffect(() =>
    {
       setWidgetData([] as any[]);
-   }, [location]);
+   }, [location.pathname]);
 
    const handleDropdownOnChange = (value: string, index: number) =>
    {
@@ -110,7 +110,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
          <Grid container spacing={3} pb={4}>
             {
                widgetMetaDataList.map((widgetMetaData, i) => (
-                  <Grid key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch"}}>
+                  <Grid id={widgetMetaData.name} key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                      {
                         widgetMetaData.type === "table" && (
                            <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
