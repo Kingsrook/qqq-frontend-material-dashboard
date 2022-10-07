@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Grid from "@mui/material/Grid";
 import {useParams} from "react-router-dom";
@@ -29,9 +30,10 @@ import ViewContents from "./components/ViewContents";
 interface Props
 {
    table?: QTableMetaData;
+   launchProcess?: QProcessMetaData;
 }
 
-function EntityView({table}: Props): JSX.Element
+function EntityView({table, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
 
@@ -41,7 +43,7 @@ function EntityView({table}: Props): JSX.Element
             <Grid container>
                <Grid item xs={12}>
                   <MDBox mb={3}>
-                     <ViewContents id={id} />
+                     <ViewContents table={table} id={id} launchProcess={launchProcess}/>
                   </MDBox>
                </Grid>
             </Grid>
@@ -52,6 +54,7 @@ function EntityView({table}: Props): JSX.Element
 
 EntityView.defaultProps = {
    table: null,
+   launchProcess: null
 };
 
 export default EntityView;

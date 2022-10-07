@@ -21,6 +21,7 @@
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
@@ -30,14 +31,38 @@ import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryF
 import {Alert, TablePagination} from "@mui/material";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
+import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import {DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridExportMenuItemProps, GridFilterItem, GridFilterModel, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent} from "@mui/x-data-grid-pro";
+import Modal from "@mui/material/Modal";
+import {
+   DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators,
+   GridCallbackDetails,
+   GridColDef,
+   GridColumnOrderChangeParams,
+   GridColumnVisibilityModel,
+   GridExportMenuItemProps,
+   GridFilterItem,
+   GridFilterModel,
+   GridRowId,
+   GridRowParams,
+   GridRowsProp,
+   GridSelectionModel,
+   GridSortItem,
+   GridSortModel,
+   GridToolbarColumnsButton,
+   GridToolbarContainer,
+   GridToolbarDensitySelector,
+   GridToolbarExportContainer,
+   GridToolbarFilterButton,
+   MuiEvent
+} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React, {useCallback, useContext, useEffect, useReducer, useRef, useState} from "react";
-import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
+import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
@@ -45,6 +70,7 @@ import Navbar from "qqq/components/Navbar";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
 import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
+import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 import QFilterUtils from "qqq/utils/QFilterUtils";
 import QProcessUtils from "qqq/utils/QProcessUtils";
@@ -58,7 +84,13 @@ const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 interface Props
 {
    table?: QTableMetaData;
+   launchProcess?: QProcessMetaData;
 }
+
+EntityList.defaultProps = {
+   table: null,
+   launchProcess: null
+};
 
 /*******************************************************************************
  ** Get the default filter to use on the page - either from query string, or
@@ -109,12 +141,16 @@ function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearch
    return ({items: []});
 }
 
-function EntityList({table}: Props): JSX.Element
+function EntityList({table, launchProcess}: Props): JSX.Element
 {
-   const tableNameParam = useParams().tableName;
-   const tableName = table === null ? tableNameParam : table.name;
+   const tableName = table.name;
    const [searchParams] = useSearchParams();
    const qController = QClient.getInstance();
+
+   const location = useLocation();
+   const navigate = useNavigate();
+
+   const pathParts = location.pathname.split("/");
 
    ////////////////////////////////////////////
    // look for defaults in the local storage //
@@ -159,6 +195,7 @@ function EntityList({table}: Props): JSX.Element
    const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
+   const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
    const [totalRecords, setTotalRecords] = useState(0);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
@@ -171,6 +208,10 @@ function EntityList({table}: Props): JSX.Element
    const [gridMouseDownX, setGridMouseDownX] = useState(0);
    const [gridMouseDownY, setGridMouseDownY] = useState(0);
    const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
+
+   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData)
+   const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
+
    const instance = useRef({timer: null});
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +231,44 @@ function EntityList({table}: Props): JSX.Element
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
+
+   /////////////////////////////////////////////////////////////////////////////////////////
+   // monitor location changes - if our url looks like a process, then open that process. //
+   /////////////////////////////////////////////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      try
+      {
+         /////////////////////////////////////////////////////////////////
+         // the path for a process looks like: .../table/process        //
+         // so if our tableName is in the -2 index, try to open process //
+         /////////////////////////////////////////////////////////////////
+         if(pathParts[pathParts.length - 2] === tableName)
+         {
+            const processName = pathParts[pathParts.length - 1];
+            const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
+            if(processList.length > 0)
+            {
+               setActiveModalProcess(processList[0]);
+               return;
+            }
+            else
+            {
+               console.log(`Couldn't find process named ${processName}`);
+            }
+         }
+      }
+      catch(e)
+      {
+         console.log(e);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////////
+      // if we didn't open a process... not sure what we do in the table/query use-case //
+      ////////////////////////////////////////////////////////////////////////////////////
+
+      setActiveModalProcess(null);
+   }, [location]);
 
    const buildQFilter = () =>
    {
@@ -314,6 +393,30 @@ function EntityList({table}: Props): JSX.Element
       setTotalRecords(countResults[latestQueryId]);
       delete countResults[latestQueryId];
    }, [receivedCountTimestamp]);
+
+   const betweenOperator =
+      {
+         label: "Between",
+         value: "between",
+         getApplyFilterFn: (filterItem: GridFilterItem) =>
+         {
+            if (!Array.isArray(filterItem.value) || filterItem.value.length !== 2) 
+            {
+               return null;
+            }
+            if (filterItem.value[0] == null || filterItem.value[1] == null) 
+            {
+               return null;
+            }
+
+            // @ts-ignore
+            return ({value}) =>
+            {
+               return (value !== null && filterItem.value[0] <= value && value <= filterItem.value[1]);
+            };
+         },
+         // InputComponent: InputNumberInterval,
+      };
 
    const booleanTrueOperator: GridFilterOperator = {
       label: "is yes",
@@ -546,7 +649,6 @@ function EntityList({table}: Props): JSX.Element
       localStorage.setItem(rowsPerPageLocalStorageKey, JSON.stringify(size));
    };
 
-   const navigate = useNavigate();
    const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -657,7 +759,14 @@ function EntityList({table}: Props): JSX.Element
          const metaData = await qController.loadMetaData();
          QValueUtils.qInstance = metaData;
 
-         setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
+         setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
+         setAllTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
+
+         if(launchingProcess)
+         {
+            setLaunchingProcess(null);
+            setActiveModalProcess(launchingProcess);
+         }
 
          // reset rows to trigger rerender
          setRows([]);
@@ -766,36 +875,90 @@ function EntityList({table}: Props): JSX.Element
       return "";
    }
 
+   function getRecordIdsForProcess() : string | QQueryFilter
+   {
+      if (selectFullFilterState === "filter")
+      {
+         return (buildQFilter());
+      }
+
+      if (selectedIds.length > 0)
+      {
+         return (selectedIds.join(","));
+      }
+
+      return "";
+   }
+
+   const openModalProcess = (process: QProcessMetaData = null) =>
+   {
+      navigate(`${process.name}${getRecordsQueryString()}`);
+      closeActionsMenu();
+   };
+
+   const closeModalProcess = (event: object, reason: string) =>
+   {
+      if(reason === "backdropClick")
+      {
+         return;
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      // when closing a modal process, navigate up to the table being viewed //
+      /////////////////////////////////////////////////////////////////////////
+      const newPath = location.pathname.split("/");
+      newPath.pop();
+      navigate(newPath.join("/"));
+
+      updateTable();
+   }
+
+   const openBulkProcess = (processNamePart: "Insert" | "Edit" | "Delete", processLabelPart: "Load" | "Edit" | "Delete") =>
+   {
+      const processList = allTableProcesses.filter(p => p.name.endsWith(`.bulk${processNamePart}`));
+      if(processList.length > 0)
+      {
+         openModalProcess(processList[0]);
+      }
+      else
+      {
+         setAlertContent(`Could not find Bulk ${processLabelPart} process for this table.`);
+      }
+   }
+
    const bulkLoadClicked = () =>
    {
-      navigate(`${tableName}.bulkInsert`);
+      closeActionsMenu();
+      openBulkProcess("Insert", "Load");
    };
 
    const bulkEditClicked = () =>
    {
+      closeActionsMenu();
       if (getNoOfSelectedRecords() === 0)
       {
          setAlertContent("No records were selected to Bulk Edit.");
          return;
       }
-      navigate(`${tableName}.bulkEdit${getRecordsQueryString()}`);
+      openBulkProcess("Edit", "Edit");
    };
 
    const bulkDeleteClicked = () =>
    {
+      closeActionsMenu();
       if (getNoOfSelectedRecords() === 0)
       {
          setAlertContent("No records were selected to Bulk Delete.");
          return;
       }
-      navigate(`${tableName}.bulkDelete${getRecordsQueryString()}`);
+      openBulkProcess("Delete", "Delete");
    };
 
    const processClicked = (process: QProcessMetaData) =>
    {
       // todo - let the process specify that it needs initial rows - err if none selected.
       //  alternatively, let a process itself have an initial screen to select rows...
-      navigate(`${process.name}${getRecordsQueryString()}`);
+      openModalProcess(process);
    };
 
    // @ts-ignore
@@ -910,12 +1073,24 @@ function EntityList({table}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         <MenuItem onClick={bulkLoadClicked}>Bulk Load</MenuItem>
-         <MenuItem onClick={bulkEditClicked}>Bulk Edit</MenuItem>
-         <MenuItem onClick={bulkDeleteClicked}>Bulk Delete</MenuItem>
-         {tableProcesses.length > 0 && <MenuItem divider />}
+         <MenuItem onClick={bulkLoadClicked}>
+            <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
+            Bulk Load
+         </MenuItem>
+         <MenuItem onClick={bulkEditClicked}>
+            <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+            Bulk Edit
+         </MenuItem>
+         <MenuItem onClick={bulkDeleteClicked}>
+            <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+            Bulk Delete
+         </MenuItem>
+         {tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
-            <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
+            <MenuItem key={process.name} onClick={() => processClicked(process)}>
+               <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
+               {process.label}
+            </MenuItem>
          ))}
       </Menu>
    );
@@ -1017,13 +1192,17 @@ function EntityList({table}: Props): JSX.Element
                </MDBox>
             </Card>
          </MDBox>
+
+         {
+            activeModalProcess &&
+            <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
+               <ProcessRun process={activeModalProcess} isModal={true} recordIds={getRecordIdsForProcess()} closeModalHandler={closeModalProcess} />
+            </Modal>
+         }
+
          <Footer />
       </DashboardLayout>
    );
 }
-
-EntityList.defaultProps = {
-   table: null,
-};
 
 export default EntityList;

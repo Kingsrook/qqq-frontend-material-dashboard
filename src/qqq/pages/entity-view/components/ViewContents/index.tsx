@@ -33,10 +33,13 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
+import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Modal from "@mui/material/Modal";
 import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
@@ -47,6 +50,7 @@ import colors from "qqq/components/Temporary/colors";
 import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
+import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
 import QTableUtils from "qqq/utils/QTableUtils";
@@ -59,15 +63,21 @@ interface Props
 {
    id: string;
    table?: QTableMetaData;
+   launchProcess?: QProcessMetaData
 }
 
-function ViewContents({id, table}: Props): JSX.Element
+ViewContents.defaultProps = {
+   table: null,
+   launchProcess: null
+};
+
+function ViewContents({id, table, launchProcess}: Props): JSX.Element
 {
    const location = useLocation();
    const navigate = useNavigate();
 
    const pathParts = location.pathname.split("/");
-   const tableName = table ? table.name : pathParts[pathParts.length - 2];
+   const tableName = table.name;
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
@@ -79,12 +89,16 @@ function ViewContents({id, table}: Props): JSX.Element
    const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
+   const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableWidgets, setTableWidgets] = useState([] as QWidgetMetaData[]);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
+   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData)
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+   const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -101,9 +115,45 @@ function ViewContents({id, table}: Props): JSX.Element
       setTableWidgets(null);
    };
 
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
+   // monitor location changes - if we've clicked a link from viewing one record to viewing another, //
+   // we'll stay in this component, but we'll need to reload all data for the new record.            //
+   // if, however, our url looks like a process, then open that process.                             //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
+      try
+      {
+         /////////////////////////////////////////////////////////////////
+         // the path for a process looks like: .../table/id/process     //
+         // so if our tableName is in the -3 index, try to open process //
+         /////////////////////////////////////////////////////////////////
+         if(pathParts[pathParts.length - 3] === tableName)
+         {
+            const processName = pathParts[pathParts.length - 1];
+            const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
+            if(processList.length > 0)
+            {
+               setActiveModalProcess(processList[0]);
+               return;
+            }
+            else
+            {
+               console.log(`Couldn't find process named ${processName}`);
+            }
+         }
+      }
+      catch(e)
+      {
+         console.log(e);
+      }
+
+      /////////////////////////////////////////////////////////////
+      // if we didn't open a process, assume we need to (re)load //
+      /////////////////////////////////////////////////////////////
       reload();
+
+      setActiveModalProcess(null);
    }, [location]);
 
    if (!asyncLoadInited)
@@ -112,10 +162,10 @@ function ViewContents({id, table}: Props): JSX.Element
 
       (async () =>
       {
-         //////////////////////////////////////////
-         // load the table meta-data (if needed) //
-         //////////////////////////////////////////
-         const tableMetaData = table || await qController.loadTableMetaData(tableName);
+         /////////////////////////////////////////////////////////////////////
+         // load the full table meta-data (the one we took in is a partial) //
+         /////////////////////////////////////////////////////////////////////
+         const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
 
          //////////////////////////////////////////////////////////////////
@@ -123,7 +173,15 @@ function ViewContents({id, table}: Props): JSX.Element
          //////////////////////////////////////////////////////////////////
          const metaData = await qController.loadMetaData();
          QValueUtils.qInstance = metaData;
-         setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName));
+         const processesForTable = QProcessUtils.getProcessesForTable(metaData, tableName);
+         setTableProcesses(processesForTable);
+         setAllTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
+
+         if(launchingProcess)
+         {
+            setLaunchingProcess(null);
+            setActiveModalProcess(launchingProcess);
+         }
 
          /////////////////////
          // load the record //
@@ -236,8 +294,7 @@ function ViewContents({id, table}: Props): JSX.Element
 
    function processClicked(process: QProcessMetaData)
    {
-      const path = `${pathParts.slice(0, -1).join("/")}/${process.name}?recordIds=${id}`;
-      navigate(path);
+      openModalProcess(process);
    }
 
    const renderActionsMenu = (
@@ -255,21 +312,49 @@ function ViewContents({id, table}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         <MenuItem onClick={() => navigate("edit")}>Edit</MenuItem>
+         <MenuItem onClick={() => navigate("edit")}>
+            <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+            Edit
+         </MenuItem>
          <MenuItem onClick={() =>
          {
             setActionsMenu(null);
             handleClickDeleteButton();
          }}
          >
+            <ListItemIcon><Icon>delete</Icon></ListItemIcon>
             Delete
          </MenuItem>
-         {tableProcesses.length > 0 && <MenuItem divider />}
+         {tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
-            <MenuItem key={process.name} onClick={() => processClicked(process)}>{process.label}</MenuItem>
+            <MenuItem key={process.name} onClick={() => processClicked(process)}>
+               <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
+               {process.label}
+            </MenuItem>
          ))}
       </Menu>
    );
+
+   const openModalProcess = (process: QProcessMetaData = null) =>
+   {
+      navigate(process.name);
+      closeActionsMenu();
+   };
+
+   const closeModalProcess = (event: object, reason: string) =>
+   {
+      if(reason === "backdropClick")
+      {
+         return;
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      // when closing a modal process, navigate up to the record being viewed //
+      //////////////////////////////////////////////////////////////////////////
+      const newPath = location.pathname.split("/");
+      newPath.pop();
+      navigate(newPath.join("/"));
+   }
 
    return (
       notFoundMessage
@@ -364,13 +449,17 @@ function ViewContents({id, table}: Props): JSX.Element
                   </Button>
                </DialogActions>
             </Dialog>
+
+            {
+               activeModalProcess &&
+               <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
+                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+               </Modal>
+            }
+
          </MDBox>
 
    );
 }
-
-ViewContents.defaultProps = {
-   table: null,
-};
 
 export default ViewContents;

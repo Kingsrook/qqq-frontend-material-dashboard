@@ -31,6 +31,7 @@ import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobEr
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -65,13 +66,16 @@ interface Props
 {
    process?: QProcessMetaData;
    defaultProcessValues?: any;
+   isModal?: boolean
+   recordIds?: string | QQueryFilter
+   closeModalHandler?: (event: object, reason: string) => void
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
+function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeModalHandler}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -248,6 +252,13 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
                      )
                   }
                </MDTypography>
+               <MDBox component="div" py={3}>
+                  <Grid container justifyContent="flex-end" spacing={3}>
+                     {isModal ? <QCancelButton onClickHandler={handleCancelClicked} disabled={false} label="Close" />
+                        : <QCancelButton onClickHandler={handleCancelClicked} disabled={false} />
+                     }
+                  </Grid>
+               </MDBox>
             </>
          );
       }
@@ -294,7 +305,10 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
 
       return (
          <>
-            <MDTypography variation="h5" component="div" fontWeight="bold">{step?.label}</MDTypography>
+            <MDTypography variation="h5" component="div" fontWeight="bold">
+               {isModal ? `${process.label}: ` : ""}
+               {step?.label}
+            </MDTypography>
             {step.components && (
                step.components.map((component: QFrontendComponent, index: number) => (
                   // eslint-disable-next-line react/no-array-index-key
@@ -839,6 +853,19 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
          //   queryStringPairsForInit.push("recordsParam=filterId");
          //   queryStringPairsForInit.push(`filterId=${urlSearchParams.get("filterId")}`);
          // }
+         else if(recordIds)
+         {
+            if(typeof recordIds === "string")
+            {
+               queryStringPairsForInit.push("recordsParam=recordIds");
+               queryStringPairsForInit.push(`recordIds=${recordIds}`);
+            }
+            else if (recordIds instanceof QQueryFilter)
+            {
+               queryStringPairsForInit.push("recordsParam=filterJSON");
+               queryStringPairsForInit.push(`filterJSON=${JSON.stringify(recordIds)}`);
+            }
+         }
 
          try
          {
@@ -964,6 +991,12 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
 
    const handleCancelClicked = () =>
    {
+      if(isModal && closeModalHandler)
+      {
+         closeModalHandler(null, "cancelClicked");
+         return;
+      }
+
       const pathParts = location.pathname.split(/\//);
       pathParts.pop();
       const path = pathParts.join("/");
@@ -971,8 +1004,8 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
    };
 
    const mainCardStyles: any = {};
-   mainCardStyles.minHeight = "calc(100vh - 400px)";
-   if (!processError && (qJobRunning || activeStep === null))
+   mainCardStyles.minHeight = `calc(100vh - ${isModal ? 150 : 400}px)`;
+   if (!processError && (qJobRunning || activeStep === null) && !isModal)
    {
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";
@@ -994,102 +1027,124 @@ function ProcessRun({process, defaultProcessValues}: Props): JSX.Element
       nextButtonIcon = "check";
    }
 
-   return (
-      <BaseLayout>
-         <MDBox py={3} mb={20}>
-            <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
-               <Grid item xs={12} lg={10} xl={8}>
-                  <Formik
-                     enableReinitialize
-                     initialValues={initialValues}
-                     validationSchema={validationScheme}
-                     validation={validationFunction}
-                     onSubmit={handleSubmit}
-                  >
-                     {({
-                        values, errors, touched, isSubmitting, setFieldValue,
-                     }) => (
-                        <Form id={formId} autoComplete="off">
-                           <Card sx={mainCardStyles}>
-                              <MDBox mx={2} mt={-3}>
-                                 <Stepper activeStep={activeStepIndex} alternativeLabel>
-                                    {steps.map((step) => (
-                                       <Step key={step.name}>
-                                          <StepLabel>{step.label}</StepLabel>
-                                       </Step>
-                                    ))}
-                                 </Stepper>
-                              </MDBox>
+   const body = (
+      <MDBox py={3} mb={20}>
+         <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
+            <Grid item xs={12} lg={10} xl={8}>
+               <Formik
+                  enableReinitialize
+                  initialValues={initialValues}
+                  validationSchema={validationScheme}
+                  validation={validationFunction}
+                  onSubmit={handleSubmit}
+               >
+                  {({
+                     values, errors, touched, isSubmitting, setFieldValue,
+                  }) => (
+                     <Form id={formId} autoComplete="off">
+                        <Card sx={mainCardStyles}>
+                           <MDBox mx={2} mt={-3}>
+                              <Stepper activeStep={activeStepIndex} alternativeLabel>
+                                 {steps.map((step) => (
+                                    <Step key={step.name}>
+                                       <StepLabel>{step.label}</StepLabel>
+                                    </Step>
+                                 ))}
+                              </Stepper>
+                           </MDBox>
 
-                              <MDBox p={3}>
-                                 <MDBox>
-                                    {/***************************************************************************
+                           <MDBox p={3}>
+                              <MDBox>
+                                 {/***************************************************************************
                                      ** step content - e.g., the appropriate form or other screen for the step **
                                      ***************************************************************************/}
-                                    {getDynamicStepContent(
-                                       activeStepIndex,
-                                       activeStep,
-                                       {
-                                          values,
-                                          touched,
-                                          formFields,
-                                          errors,
-                                       },
-                                       processError,
-                                       processValues,
-                                       recordConfig,
-                                       setFieldValue,
-                                    )}
-                                    {/********************************
+                                 {getDynamicStepContent(
+                                    activeStepIndex,
+                                    activeStep,
+                                    {
+                                       values,
+                                       touched,
+                                       formFields,
+                                       errors,
+                                    },
+                                    processError,
+                                    processValues,
+                                    recordConfig,
+                                    setFieldValue,
+                                 )}
+                                 {/********************************
                                      ** back &| next/submit buttons **
                                      ********************************/}
-                                    <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
-                                       {true || activeStepIndex === 0 ? (
-                                          <MDBox />
-                                       ) : (
-                                          <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
-                                       )}
-                                       {processError || qJobRunning || !activeStep ? (
-                                          <MDBox />
-                                       ) : (
-                                          <>
-                                             {formError && (
-                                                <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
-                                                   {formError}
-                                                </MDTypography>
-                                             )}
-                                             {
-                                                noMoreSteps && <QCancelButton onClickHandler={handleCancelClicked} label="Return" iconName="arrow_back" disabled={isSubmitting} />
-                                             }
-                                             {
-                                                !noMoreSteps && (
-                                                   <MDBox component="div" py={3}>
-                                                      <Grid container justifyContent="flex-end" spacing={3}>
-                                                         <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
-                                                         <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
-                                                      </Grid>
-                                                   </MDBox>
-                                                )
-                                             }
-                                          </>
-                                       )}
-                                    </MDBox>
+                                 <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
+                                    {true || activeStepIndex === 0 ? (
+                                       <MDBox />
+                                    ) : (
+                                       <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
+                                    )}
+                                    {processError || qJobRunning || !activeStep ? (
+                                       <MDBox />
+                                    ) : (
+                                       <>
+                                          {formError && (
+                                             <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
+                                                {formError}
+                                             </MDTypography>
+                                          )}
+                                          {
+                                             noMoreSteps && <QCancelButton
+                                                onClickHandler={handleCancelClicked}
+                                                label={isModal ? "Close" : "Return"}
+                                                iconName={isModal ? "cancel" : "arrow_back"}
+                                                disabled={isSubmitting} />
+                                          }
+                                          {
+                                             !noMoreSteps && (
+                                                <MDBox component="div" py={3}>
+                                                   <Grid container justifyContent="flex-end" spacing={3}>
+                                                      <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                                                      <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
+                                                   </Grid>
+                                                </MDBox>
+                                             )
+                                          }
+                                       </>
+                                    )}
                                  </MDBox>
                               </MDBox>
-                           </Card>
-                        </Form>
-                     )}
-                  </Formik>
-               </Grid>
+                           </MDBox>
+                        </Card>
+                     </Form>
+                  )}
+               </Formik>
             </Grid>
-         </MDBox>
-      </BaseLayout>
+         </Grid>
+      </MDBox>
    );
+
+   if(isModal)
+   {
+      return (
+         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+            {body}
+         </Box>
+      );
+   }
+   else
+   {
+      return (
+         <BaseLayout>
+            {body}
+         </BaseLayout>
+      );
+   }
 }
 
 ProcessRun.defaultProps = {
    process: null,
-   defaultProcessValues: {}
+   defaultProcessValues: {},
+   isModal: false,
+   recordIds: null,
+   closeModalHandler: null
 };
 
 export default ProcessRun;

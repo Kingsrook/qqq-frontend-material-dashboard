@@ -68,9 +68,9 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
    const [dropdownLabel, setDropdownLabel] = useState<string>("");
    const [dropdownIcon, setDropdownIcon] = useState<string>(openArrowIcon);
 
-   console.log(`data: ${JSON.stringify(data?.rows)}`);
-   console.log(`bool: ${data && data?.columns && !data?.rows}`);
-   console.log(`norowsfound: ${noRowsFoundHTML}`);
+   // console.log(`data: ${JSON.stringify(data?.rows)}`);
+   // console.log(`bool: ${data && data?.columns && !data?.rows}`);
+   // console.log(`norowsfound: ${noRowsFoundHTML}`);
 
    const openDropdown = ({currentTarget}: any) =>
    {

@@ -269,13 +269,21 @@ export default function App()
                      name: process.label,
                      key: process.name,
                      route: `${path}/${process.name}`,
-                     component: <ProcessRun process={process} />,
+                     component: <EntityList table={table} launchProcess={process} />,
+                  });
+
+                  routeList.push({
+                     name: process.label,
+                     key: `${app.name}/${process.name}`,
+                     route: `${path}/:id/${process.name}`,
+                     component: <EntityView table={table} launchProcess={process} />,
                   });
                });
 
                const reportsForTable = QProcessUtils.getReportsForTable(metaData, table.name, true);
                reportsForTable.forEach((report) =>
                {
+                  // todo - do we need some table/report routes here, that would go to EntityList and/or EntityView
                   routeList.push({
                      name: report.label,
                      key: report.name,

@@ -102,8 +102,8 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
    };
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
-   console.log(JSON.stringify(widgetMetaDataList));
-   console.log(widgetCount);
+   // console.log(JSON.stringify(widgetMetaDataList));
+   // console.log(widgetCount);
 
    return (
       widgetCount > 0 ? (

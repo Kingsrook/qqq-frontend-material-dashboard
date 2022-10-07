@@ -136,3 +136,11 @@
 {
    align-items: flex-end;
 }
+
+/* google drive picker - make it be above our modal */
+.picker,
+.picker.picker-dialog-bg,
+.picker.picker-dialog
+{
+   z-index: 99999;
+}
