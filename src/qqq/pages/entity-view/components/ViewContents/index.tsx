@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
@@ -80,8 +81,9 @@ function ViewContents({id, table}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableWidgets, setTableWidgets] = useState([] as QWidgetMetaData[]);
+   const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [searchParams] = useSearchParams();
-   const {pageHeader, setPageHeader} = useContext(QContext);
+   const {setPageHeader} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -126,8 +128,24 @@ function ViewContents({id, table}: Props): JSX.Element
          /////////////////////
          // load the record //
          /////////////////////
-         const record = await qController.get(tableName, id);
-         setRecord(record);
+         let record: QRecord;
+         try
+         {
+            record = await qController.get(tableName, id);
+            setRecord(record);
+         }
+         catch (e)
+         {
+            if (e instanceof QException)
+            {
+               if ((e as QException).status === "404")
+               {
+                  setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
+                  return;
+               }
+            }
+         }
+
          setPageHeader(record.recordLabel);
 
          ///////////////////////////
@@ -254,96 +272,99 @@ function ViewContents({id, table}: Props): JSX.Element
    );
 
    return (
+      notFoundMessage
+         ?
+         <MDBox>{notFoundMessage}</MDBox>
+         :
+         <MDBox pb={3}>
+            {
+               (searchParams.get("createSuccess") || searchParams.get("updateSuccess")) ? (
+                  <MDAlert color="success" dismissible>
+                     {tableMetaData?.label}
+                     {" "}
+                     successfully
+                     {" "}
+                     {searchParams.get("createSuccess") ? "created" : "updated"}
 
-      <MDBox pb={3}>
-         {
-            (searchParams.get("createSuccess") || searchParams.get("updateSuccess")) ? (
-               <MDAlert color="success" dismissible>
-                  {tableMetaData?.label}
-                  {" "}
-                  successfully
-                  {" "}
-                  {searchParams.get("createSuccess") ? "created" : "updated"}
+                  </MDAlert>
+               ) : ("")
+            }
 
-               </MDAlert>
-            ) : ("")
-         }
-
-         <Grid container spacing={3}>
-            <Grid item xs={12} lg={3}>
-               <QRecordSidebar tableSections={tableSections} widgetMetaDataList={tableWidgets} />
-            </Grid>
-            <Grid item xs={12} lg={9}>
-
-               <Grid container spacing={3}>
-                  <Grid item xs={12} mb={3}>
-                     <Card id={t1SectionName}>
-                        <MDBox display="flex" p={3} pb={1}>
-                           <MDBox mr={1.5}>
-                              <Avatar sx={{bgcolor: colors.info.main}}>
-                                 <Icon>
-                                    {tableMetaData?.iconName}
-                                 </Icon>
-                              </Avatar>
-                           </MDBox>
-                           <MDBox display="flex" justifyContent="space-between" width="100%" alignItems="center">
-                              <MDTypography variant="h5">
-                                 {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel}` : ""}
-                              </MDTypography>
-                              <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
-                              {renderActionsMenu}
-                           </MDBox>
-                        </MDBox>
-                        {t1SectionElement ? (<MDBox p={3} pt={0}>{t1SectionElement}</MDBox>) : null}
-                     </Card>
-                  </Grid>
+            <Grid container spacing={3}>
+               <Grid item xs={12} lg={3}>
+                  <QRecordSidebar tableSections={tableSections} widgetMetaDataList={tableWidgets} />
                </Grid>
-               {tableMetaData && tableMetaData.widgets && record && (
-                  <DashboardWidgets widgetMetaDataList={tableWidgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
-               )}
-               {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
-                  iconName, label, name, fieldNames, tier,
-               }: any) => (
-                  <MDBox mb={3} key={name}>
-                     <Card key={name} id={name} sx={{overflow: "visible"}}>
-                        <MDTypography variant="h5" p={3} pb={1}>
-                           {label}
-                        </MDTypography>
-                        <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
-                     </Card>
-                  </MDBox>
-               )) : null}
-               <MDBox component="form" p={3}>
-                  <Grid container justifyContent="flex-end" spacing={3}>
-                     <QDeleteButton onClickHandler={handleClickDeleteButton} />
-                     <QEditButton />
+               <Grid item xs={12} lg={9}>
+
+                  <Grid container spacing={3}>
+                     <Grid item xs={12} mb={3}>
+                        <Card id={t1SectionName}>
+                           <MDBox display="flex" p={3} pb={1}>
+                              <MDBox mr={1.5}>
+                                 <Avatar sx={{bgcolor: colors.info.main}}>
+                                    <Icon>
+                                       {tableMetaData?.iconName}
+                                    </Icon>
+                                 </Avatar>
+                              </MDBox>
+                              <MDBox display="flex" justifyContent="space-between" width="100%" alignItems="center">
+                                 <MDTypography variant="h5">
+                                    {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel}` : ""}
+                                 </MDTypography>
+                                 <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
+                                 {renderActionsMenu}
+                              </MDBox>
+                           </MDBox>
+                           {t1SectionElement ? (<MDBox p={3} pt={0}>{t1SectionElement}</MDBox>) : null}
+                        </Card>
+                     </Grid>
                   </Grid>
-               </MDBox>
+                  {tableMetaData && tableMetaData.widgets && record && (
+                     <DashboardWidgets widgetMetaDataList={tableWidgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
+                  )}
+                  {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
+                     iconName, label, name, fieldNames, tier,
+                  }: any) => (
+                     <MDBox mb={3} key={name}>
+                        <Card key={name} id={name} sx={{overflow: "visible"}}>
+                           <MDTypography variant="h5" p={3} pb={1}>
+                              {label}
+                           </MDTypography>
+                           <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
+                        </Card>
+                     </MDBox>
+                  )) : null}
+                  <MDBox component="form" p={3}>
+                     <Grid container justifyContent="flex-end" spacing={3}>
+                        <QDeleteButton onClickHandler={handleClickDeleteButton} />
+                        <QEditButton />
+                     </Grid>
+                  </MDBox>
 
+               </Grid>
             </Grid>
-         </Grid>
 
-         {/* Delete confirmation Dialog */}
-         <Dialog
-            open={deleteConfirmationOpen}
-            onClose={handleDeleteConfirmClose}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-         >
-            <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
-            <DialogContent>
-               <DialogContentText id="alert-dialog-description">
-                  Are you sure you want to delete this record?
-               </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-               <Button onClick={handleDeleteConfirmClose}>No</Button>
-               <Button onClick={handleDelete} autoFocus>
-                  Yes
-               </Button>
-            </DialogActions>
-         </Dialog>
-      </MDBox>
+            {/* Delete confirmation Dialog */}
+            <Dialog
+               open={deleteConfirmationOpen}
+               onClose={handleDeleteConfirmClose}
+               aria-labelledby="alert-dialog-title"
+               aria-describedby="alert-dialog-description"
+            >
+               <DialogTitle id="alert-dialog-title">Confirm Deletion</DialogTitle>
+               <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                     Are you sure you want to delete this record?
+                  </DialogContentText>
+               </DialogContent>
+               <DialogActions>
+                  <Button onClick={handleDeleteConfirmClose}>No</Button>
+                  <Button onClick={handleDelete} autoFocus>
+                     Yes
+                  </Button>
+               </DialogActions>
+            </Dialog>
+         </MDBox>
 
    );
 }

@@ -34,28 +34,7 @@ import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import {
-   DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators,
-   GridCallbackDetails,
-   GridColDef,
-   GridColumnOrderChangeParams,
-   GridColumnVisibilityModel,
-   GridExportMenuItemProps,
-   GridFilterItem,
-   GridFilterModel,
-   GridRowId,
-   GridRowParams,
-   GridRowsProp,
-   GridSelectionModel,
-   GridSortItem,
-   GridSortModel,
-   GridToolbarColumnsButton,
-   GridToolbarContainer,
-   GridToolbarDensitySelector,
-   GridToolbarExportContainer,
-   GridToolbarFilterButton,
-   MuiEvent
-} from "@mui/x-data-grid-pro";
+import {DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridExportMenuItemProps, GridFilterItem, GridFilterModel, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React, {useCallback, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
@@ -74,6 +53,7 @@ import QValueUtils from "qqq/utils/QValueUtils";
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
+const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 
 interface Props
 {
@@ -140,10 +120,12 @@ function EntityList({table}: Props): JSX.Element
    // look for defaults in the local storage //
    ////////////////////////////////////////////
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const rowsPerPageLocalStorageKey = `${ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
+   let defaultRowsPerPage = 10;
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -153,10 +135,15 @@ function EntityList({table}: Props): JSX.Element
    {
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
    }
+   if (localStorage.getItem(rowsPerPageLocalStorageKey))
+   {
+      defaultRowsPerPage = JSON.parse(localStorage.getItem(rowsPerPageLocalStorageKey));
+   }
 
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
+   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
    // for some reason, if we set the filterModel to what is in local storage, an onChange event //
@@ -174,7 +161,6 @@ function EntityList({table}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
    const [totalRecords, setTotalRecords] = useState(0);
-   const [rowsPerPage, setRowsPerPage] = useState(10);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
    const [columns, setColumns] = useState([] as GridColDef[]);
@@ -356,7 +342,7 @@ function EntityList({table}: Props): JSX.Element
    const getCustomGridBooleanOperators = (): GridFilterOperator[] =>
    {
       return [booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator];
-   }
+   };
 
    ///////////////////////////
    // display query results //
@@ -557,6 +543,7 @@ function EntityList({table}: Props): JSX.Element
    const handleRowsPerPageChange = (size: number) =>
    {
       setRowsPerPage(size);
+      localStorage.setItem(rowsPerPageLocalStorageKey, JSON.stringify(size));
    };
 
    const navigate = useNavigate();
@@ -900,6 +887,9 @@ function EntityList({table}: Props): JSX.Element
                      </div>
                   )
                }
+            </div>
+            <div className="pagination">
+               <CustomPagination />
             </div>
          </GridToolbarContainer>
       );

@@ -111,6 +111,13 @@
    font-size: 14px;
 }
 
+.MuiDataGrid-toolbarContainer .pagination
+{
+   display: flex;
+   flex-grow: 1;
+   justify-content: flex-end;
+}
+
 /* Help make the radio, text, and icon wrap in a good way */
 .doFullValidationRadios label
 {
