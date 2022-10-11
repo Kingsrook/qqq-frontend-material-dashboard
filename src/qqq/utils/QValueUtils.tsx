@@ -218,6 +218,40 @@ class QValueUtils
          </Fragment>
       );
    }
+
+   /*******************************************************************************
+    ** Take a date-time value, and format it the way the ui's date-times want it
+    ** to be.  
+    *******************************************************************************/
+   public static formatDateTimeValueForForm(value: string): string
+   {
+      if(value === null || value === undefined)
+      {
+         return (value);
+      }
+
+      if(value.match(/^\d{4}-\d{2}-\d{2}$/))
+      {
+         //////////////////////////////////////////////////////////////////
+         // if we just passed in a date (w/o time), attach T00:00 to it. //
+         //////////////////////////////////////////////////////////////////
+         return(value + "T00:00");
+      }
+      else if(value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
+      {
+         ///////////////////////////////////////////////////////////////////////////////////
+         // if we passed in something too long (e.g., w/ seconds and fractions), trim it. //
+         ///////////////////////////////////////////////////////////////////////////////////
+         return(value.substring(0, 16));
+      }
+      else
+      {
+         ////////////////////////////////////////
+         // by default, return the input value //
+         ////////////////////////////////////////
+         return (value);
+      }
+   }
 }
 
 export default QValueUtils;

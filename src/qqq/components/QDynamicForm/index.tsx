@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {colors} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import {useFormikContext} from "formik";
 import React, {useState} from "react";
 import QDynamicFormField from "qqq/components/QDynamicFormField";
+import QDynamicSelect from "qqq/components/QDynamicSelect/QDynamicSelect";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 
@@ -120,6 +120,22 @@ function QDynamicForm(props: Props): JSX.Element
                                     </MDTypography>
                                  </MDBox>
                               </MDBox>
+                           </Grid>
+                        );
+                     }
+
+                     // possible values!!
+                     if (field.possibleValueProps)
+                     {
+                        return (
+                           <Grid item xs={12} sm={6} key={fieldName}>
+                              <QDynamicSelect
+                                 tableName={field.possibleValueProps.tableName}
+                                 fieldName={fieldName}
+                                 fieldLabel={field.label}
+                                 initialValue={values[fieldName]}
+                                 initialDisplayValue={field.possibleValueProps.initialDisplayValue}
+                              />
                            </Grid>
                         );
                      }

@@ -20,6 +20,7 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
@@ -42,6 +43,7 @@ import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import QClient from "qqq/utils/QClient";
 import QTableUtils from "qqq/utils/QTableUtils";
+import QValueUtils from "qqq/utils/QValueUtils";
 
 interface Props
 {
@@ -120,9 +122,10 @@ function EntityForm({table, id}: Props): JSX.Element
          /////////////////////////////////////////////////////////////////////////////////
          // if doing an edit, fetch the record and pre-populate the form values from it //
          /////////////////////////////////////////////////////////////////////////////////
+         let record: QRecord = null;
          if (id !== null)
          {
-            const record = await qController.get(tableName, id);
+            record = await qController.get(tableName, id);
             setRecord(record);
             setFormTitle(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
             setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
@@ -130,6 +133,10 @@ function EntityForm({table, id}: Props): JSX.Element
             tableMetaData.fields.forEach((fieldMetaData, key) =>
             {
                initialValues[key] = record.values.get(key);
+               if(fieldMetaData.type == QFieldType.DATE_TIME)
+               {
+                  initialValues[key] = QValueUtils.formatDateTimeValueForForm(record.values.get(key));
+               }
             });
 
             setFormValues(formValues);
@@ -172,6 +179,24 @@ function EntityForm({table, id}: Props): JSX.Element
                if (id !== null || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
+               }
+
+               /////////////////////////////////////////
+               // add props for possible value fields //
+               /////////////////////////////////////////
+               if(field.possibleValueSourceName)
+               {
+                  let initialDisplayValue = null;
+                  if(record && record.displayValues)
+                  {
+                     initialDisplayValue = record.displayValues.get(field.name);
+                  }
+                  dynamicFormFields[fieldName].possibleValueProps =
+                     {
+                        isPossibleValue: true,
+                        tableName: tableName,
+                        initialDisplayValue: initialDisplayValue,
+                     };
                }
             }
 
@@ -245,7 +270,9 @@ function EntityForm({table, id}: Props): JSX.Element
                })
                .catch((error) =>
                {
-                  setAlertContent(error.response.data.error);
+                  console.log("Caught:");
+                  console.log(error);
+                  setAlertContent(error.message);
                });
          }
          else
@@ -259,7 +286,7 @@ function EntityForm({table, id}: Props): JSX.Element
                })
                .catch((error) =>
                {
-                  setAlertContent(error.response.data.error);
+                  setAlertContent(error.message);
                });
          }
       })();
@@ -298,7 +325,7 @@ function EntityForm({table, id}: Props): JSX.Element
                      <Form id={formId} autoComplete="off">
 
                         <MDBox pb={3} pt={0}>
-                           <Card id={`${t1sectionName}`} sx={{overflow: "visible"}}>
+                           <Card id={`${t1sectionName}`} sx={{overflow: "visible", pb: 2, scrollMarginTop: "100px"}}>
                               <MDBox display="flex" p={3} pb={1}>
                                  <MDBox mr={1.5}>
                                     <Avatar sx={{bgcolor: colors.info.main}}>
@@ -313,7 +340,7 @@ function EntityForm({table, id}: Props): JSX.Element
                               </MDBox>
                               {
                                  t1sectionName && formFields ? (
-                                    <MDBox pb={3} px={3}>
+                                    <MDBox pb={1} px={3}>
                                        <MDBox p={3} width="100%">
                                           {getFormSection(values, touched, formFields.get(t1sectionName), errors)}
                                        </MDBox>
@@ -324,11 +351,11 @@ function EntityForm({table, id}: Props): JSX.Element
                         </MDBox>
                         {formFields && nonT1Sections.length ? nonT1Sections.map((section: QTableSection) => (
                            <MDBox key={`edit-card-${section.name}`} pb={3}>
-                              <Card id={section.name} sx={{overflow: "visible"}}>
+                              <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
                                  <MDTypography variant="h5" p={3} pb={1}>
                                     {section.label}
                                  </MDTypography>
-                                 <MDBox pb={3} px={3}>
+                                 <MDBox pb={1} px={3}>
                                     <MDBox p={3} width="100%">
                                        {
                                           getFormSection(values, touched, formFields.get(section.name), errors)

@@ -19,8 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import QValueUtils from "qqq/utils/QValueUtils";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Filters
@@ -37,10 +40,16 @@ class QFilterUtils
       {
          case "contains":
             return QCriteriaOperator.CONTAINS;
+         case "notContains":
+            return QCriteriaOperator.NOT_CONTAINS;
          case "startsWith":
             return QCriteriaOperator.STARTS_WITH;
+         case "notStartsWith":
+            return QCriteriaOperator.NOT_STARTS_WITH;
          case "endsWith":
             return QCriteriaOperator.ENDS_WITH;
+         case "notEndsWith":
+            return QCriteriaOperator.NOT_ENDS_WITH;
          case "is":
          case "equals":
          case "=":
@@ -68,8 +77,12 @@ class QFilterUtils
             return QCriteriaOperator.IS_NOT_BLANK;
          case "isAnyOf":
             return QCriteriaOperator.IN;
-         case "isNone": // todo - verify - not seen in UI
+         case "isNone":
             return QCriteriaOperator.NOT_IN;
+         case "between":
+            return QCriteriaOperator.BETWEEN;
+         case "notBetween":
+            return QCriteriaOperator.NOT_BETWEEN;
          default:
             return QCriteriaOperator.EQUALS;
       }
@@ -78,11 +91,18 @@ class QFilterUtils
    /*******************************************************************************
     ** Convert a qqq criteria operator to one expected by the grid.
     *******************************************************************************/
-   public static qqqCriteriaOperatorToGrid = (operator: QCriteriaOperator, fieldType: QFieldType = QFieldType.STRING, criteriaValues: any[]): string =>
+   public static qqqCriteriaOperatorToGrid = (operator: QCriteriaOperator, field: QFieldMetaData, criteriaValues: any[]): string =>
    {
+      const fieldType = field.type;
       switch (operator)
       {
          case QCriteriaOperator.EQUALS:
+
+            if(field.possibleValueSourceName)
+            {
+               return ("is");
+            }
+
             switch (fieldType)
             {
                case QFieldType.INTEGER:
@@ -95,13 +115,13 @@ class QFilterUtils
                case QFieldType.BOOLEAN:
                   if (criteriaValues && criteriaValues[0] === true)
                   {
-                     return "isTrue";
+                     return ("isTrue");
                   }
                   else if (criteriaValues && criteriaValues[0] === false)
                   {
-                     return "isFalse";
+                     return ("isFalse");
                   }
-                  return "is";
+                  return ("is");
                case QFieldType.STRING:
                case QFieldType.TEXT:
                case QFieldType.HTML:
@@ -111,6 +131,12 @@ class QFilterUtils
                   return ("is");
             }
          case QCriteriaOperator.NOT_EQUALS:
+
+            if(field.possibleValueSourceName)
+            {
+               return ("isNot");
+            }
+
             switch (fieldType)
             {
                case QFieldType.INTEGER:
@@ -131,7 +157,7 @@ class QFilterUtils
          case QCriteriaOperator.IN:
             return ("isAnyOf");
          case QCriteriaOperator.NOT_IN:
-            return ("isNone"); // todo verify - not seen in UI
+            return ("isNone");
          case QCriteriaOperator.STARTS_WITH:
             return ("startsWith");
          case QCriteriaOperator.ENDS_WITH:
@@ -139,11 +165,11 @@ class QFilterUtils
          case QCriteriaOperator.CONTAINS:
             return ("contains");
          case QCriteriaOperator.NOT_STARTS_WITH:
-            return (""); // todo - not supported in grid?
+            return ("notStartsWith");
          case QCriteriaOperator.NOT_ENDS_WITH:
-            return (""); // todo - not supported in grid?
+            return ("notEndsWith");
          case QCriteriaOperator.NOT_CONTAINS:
-            return (""); // todo - not supported in grid?
+            return ("notContains");
          case QCriteriaOperator.LESS_THAN:
             switch (fieldType)
             {
@@ -189,9 +215,9 @@ class QFilterUtils
          case QCriteriaOperator.IS_NOT_BLANK:
             return ("isNotEmpty");
          case QCriteriaOperator.BETWEEN:
-            return (""); // todo - not supported in grid?
+            return ("between");
          case QCriteriaOperator.NOT_BETWEEN:
-            return (""); // todo - not supported in grid?
+            return ("notBetween");
          default:
             console.warn(`Unhandled criteria operator: ${operator}`);
             return ("=");
@@ -220,24 +246,65 @@ class QFilterUtils
       {
          return (null);
       }
-      else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN)
+      else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN || operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN)
       {
-         return (value);
+         if(value == null && (operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN))
+         {
+            /////////////////////////////////////////////////////////////////////////////////////////////////
+            // if we send back null, we get a 500 - bad look every time you try to set up a BETWEEN filter //
+            // but array of 2 nulls?  comes up sunshine.                                                   //
+            /////////////////////////////////////////////////////////////////////////////////////////////////
+            return ([null, null]);
+         }
+         return (QFilterUtils.extractIdsFromPossibleValueList(value));
       }
 
-      return ([value]);
+      return (QFilterUtils.extractIdsFromPossibleValueList([value]));
    };
 
    /*******************************************************************************
-    **
+    ** Helper method - take a list of values, which may be possible values, and
+    ** either return the original list, or a new list that is just the ids of the
+    ** possible values (if it was a list of possible values)
     *******************************************************************************/
-   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], fieldType: QFieldType): any | any[] =>
+   private static extractIdsFromPossibleValueList = (param: any[]): number[] | string[] =>
    {
+      if(param === null || param === undefined)
+      {
+         return (param);
+      }
+
+      let rs = [];
+      for(let i = 0; i < param.length; i++)
+      {
+         console.log(param[i]);
+         if(param[i] && param[i].id && param[i].label)
+         {
+            /////////////////////////////////////////////////////////////
+            // if the param looks like a possible value, return its id //
+            /////////////////////////////////////////////////////////////
+            rs.push(param[i].id);
+         }
+         else
+         {
+            rs.push(param[i]);
+         }
+      }
+      return (rs);
+   }
+
+   /*******************************************************************************
+    ** Convert a filter field's value from the style that qqq uses, to the style that
+    ** the grid uses.
+    *******************************************************************************/
+   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], field: QFieldMetaData): any | any[] =>
+   {
+      const fieldType = field.type;
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
-         return (null); // todo - verify
+         return (null);
       }
-      else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN)
+      else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN || operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN)
       {
          return (values);
       }
@@ -249,21 +316,7 @@ class QFilterUtils
          ////////////////////////////////////////////////////////////////////////////////////////////////
          if (fieldType === QFieldType.DATE_TIME)
          {
-            const inputValue = values[0];
-            if(inputValue.match(/^\d{4}-\d{2}-\d{2}$/))
-            {
-               //////////////////////////////////////////////////////////////////
-               // if we just passed in a date (w/o time), attach T00:00 to it. //
-               //////////////////////////////////////////////////////////////////
-               values[0] = inputValue + "T00:00";
-            }
-            else if(inputValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
-            {
-               ///////////////////////////////////////////////////////////////////////////////////
-               // if we passed in something too long (e.g., w/ seconds and fractions), trim it. //
-               ///////////////////////////////////////////////////////////////////////////////////
-               values[0] = inputValue.substring(0, 16);
-            }
+            values[0] = QValueUtils.formatDateTimeValueForForm(values[0]);
          }
       }
 

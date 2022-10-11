@@ -65,7 +65,7 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.
 
 
    return (
-      <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "1%"}}>
+      <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "100px"}}>
          <MDBox component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (

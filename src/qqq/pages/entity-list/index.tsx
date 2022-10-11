@@ -21,7 +21,6 @@
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
@@ -39,14 +38,16 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import {
-   DataGridPro, getGridDateOperators, getGridNumericOperators, getGridStringOperators,
+   DataGridPro,
+   getGridDateOperators,
+   getGridNumericOperators,
    GridCallbackDetails,
    GridColDef,
    GridColumnOrderChangeParams,
    GridColumnVisibilityModel,
    GridExportMenuItemProps,
-   GridFilterItem,
    GridFilterModel,
+   GridLinkOperator,
    GridRowId,
    GridRowParams,
    GridRowsProp,
@@ -70,6 +71,7 @@ import Navbar from "qqq/components/Navbar";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
 import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
+import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/entity-list/QGridFilterOperators";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 import QFilterUtils from "qqq/utils/QFilterUtils";
@@ -92,11 +94,13 @@ EntityList.defaultProps = {
    launchProcess: null
 };
 
+const qController = QClient.getInstance();
+
 /*******************************************************************************
  ** Get the default filter to use on the page - either from query string, or
  ** local storage, or a default (empty).
  *******************************************************************************/
-function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearchParams, filterLocalStorageKey: string): GridFilterModel
+async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearchParams, filterLocalStorageKey: string): Promise<GridFilterModel>
 {
    if (tableMetaData.fields !== undefined)
    {
@@ -111,16 +115,39 @@ function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearch
             //////////////////////////////////////////////////////////////////
             const defaultFilter = {items: []} as GridFilterModel;
             let id = 1;
-            qQueryFilter.criteria.forEach((criteria) =>
+
+            for(let i = 0; i < qQueryFilter.criteria.length; i++)
             {
-               const fieldType = tableMetaData.fields.get(criteria.fieldName).type;
+               const criteria = qQueryFilter.criteria[i];
+               const field = tableMetaData.fields.get(criteria.fieldName);
+               let values = criteria.values;
+               if(field.possibleValueSourceName)
+               {
+                  //////////////////////////////////////////////////////////////////////////////////
+                  // possible-values in query-string are expected to only be their id values.     //
+                  // e.g., ...values=[1]...                                                       //
+                  // but we need them to be possibleValue objects (w/ id & label) so the label    //
+                  // can be shown in the filter dropdown.  So, make backend call to look them up. //
+                  //////////////////////////////////////////////////////////////////////////////////
+                  if(values && values.length > 0)
+                  {
+                     values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
+                  }
+               }
+
                defaultFilter.items.push({
                   columnField: criteria.fieldName,
-                  operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, fieldType, criteria.values),
-                  value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, fieldType),
+                  operatorValue: QFilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
+                  value: QFilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
                   id: id++, // not sure what this id is!!
                });
-            });
+            }
+
+            defaultFilter.linkOperator = GridLinkOperator.And;
+            if(qQueryFilter.booleanOperator === "OR")
+            {
+               defaultFilter.linkOperator = GridLinkOperator.Or;
+            }
 
             return (defaultFilter);
          }
@@ -145,7 +172,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
-   const qController = QClient.getInstance();
 
    const location = useLocation();
    const navigate = useNavigate();
@@ -270,8 +296,11 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       setActiveModalProcess(null);
    }, [location]);
 
-   const buildQFilter = () =>
+   const buildQFilter = (filterModel: GridFilterModel) =>
    {
+      console.log("Building q filter with model:");
+      console.log(filterModel);
+
       const qFilter = new QQueryFilter();
       if (columnSortModel)
       {
@@ -280,6 +309,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
          });
       }
+
       if (filterModel)
       {
          filterModel.items.forEach((item) =>
@@ -288,6 +318,15 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
          });
+
+         qFilter.booleanOperator = "AND";
+         if(filterModel.linkOperator == "or")
+         {
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            // by default qFilter uses AND - so only  if we see linkOperator=or do we need to set it //
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            qFilter.booleanOperator = "OR";
+         }
       }
 
       return qFilter;
@@ -307,10 +346,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          // because we need to know field types to translate qqq filter to material filter             //
          // return here ane wait for the next 'turn' to allow doing the actual query                   //
          ////////////////////////////////////////////////////////////////////////////////////////////////
+         let localFilterModel = filterModel;
          if (!defaultFilterLoaded)
          {
             setDefaultFilterLoaded(true);
-            setFilterModel(getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey));
+            localFilterModel = await getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey)
+            setFilterModel(localFilterModel);
             return;
          }
          setTableMetaData(tableMetaData);
@@ -325,7 +366,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          }
          setPinnedColumns({left: ["__check__", tableMetaData.primaryKeyField]});
 
-         const qFilter = buildQFilter();
+         const qFilter = buildQFilter(localFilterModel);
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
          // assign a new query id to the query being issued here.  then run both the count & query async //
@@ -394,58 +435,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       delete countResults[latestQueryId];
    }, [receivedCountTimestamp]);
 
-   const betweenOperator =
-      {
-         label: "Between",
-         value: "between",
-         getApplyFilterFn: (filterItem: GridFilterItem) =>
-         {
-            if (!Array.isArray(filterItem.value) || filterItem.value.length !== 2) 
-            {
-               return null;
-            }
-            if (filterItem.value[0] == null || filterItem.value[1] == null) 
-            {
-               return null;
-            }
-
-            // @ts-ignore
-            return ({value}) =>
-            {
-               return (value !== null && filterItem.value[0] <= value && value <= filterItem.value[1]);
-            };
-         },
-         // InputComponent: InputNumberInterval,
-      };
-
-   const booleanTrueOperator: GridFilterOperator = {
-      label: "is yes",
-      value: "isTrue",
-      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
-   };
-
-   const booleanFalseOperator: GridFilterOperator = {
-      label: "is no",
-      value: "isFalse",
-      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
-   };
-
-   const booleanEmptyOperator: GridFilterOperator = {
-      label: "is empty",
-      value: "isEmpty",
-      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
-   };
-
-   const booleanNotEmptyOperator: GridFilterOperator = {
-      label: "is not empty",
-      value: "isNotEmpty",
-      getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
-   };
-
-   const getCustomGridBooleanOperators = (): GridFilterOperator[] =>
-   {
-      return [booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator];
-   };
 
    ///////////////////////////
    // display query results //
@@ -503,11 +492,11 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
          let columnType = "string";
          let columnWidth = 200;
-         let filterOperators: GridFilterOperator<any>[] = getGridStringOperators();
+         let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
 
          if (field.possibleValueSourceName)
          {
-            filterOperators = getGridNumericOperators();
+            filterOperators = buildQGridPvsOperators(tableName, field);
          }
          else
          {
@@ -523,8 +512,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      columnWidth = 75;
                   }
 
-                  // @ts-ignore
-                  filterOperators = getGridNumericOperators();
+                  filterOperators = QGridNumericOperators;
                   break;
                case QFieldType.DATE:
                   columnType = "date";
@@ -539,7 +527,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                case QFieldType.BOOLEAN:
                   columnType = "string"; // using boolean gives an odd 'no' for nulls.
                   columnWidth = 75;
-                  filterOperators = getCustomGridBooleanOperators();
+                  filterOperators = QGridBooleanOperators;
                   break;
                default:
                // noop - leave as string
@@ -549,33 +537,20 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          if (field.hasAdornment(AdornmentType.SIZE))
          {
             const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
-            const width = sizeAdornment.getValue("width");
-            switch (width)
+            const width: string = sizeAdornment.getValue("width");
+            const widths: Map<string, number> = new Map<string, number>([
+               ["small", 100],
+               ["medium", 200],
+               ["large", 400],
+               ["xlarge", 600]
+            ]);
+            if(widths.has(width))
             {
-               case "small":
-               {
-                  columnWidth = 100;
-                  break;
-               }
-               case "medium":
-               {
-                  columnWidth = 200;
-                  break;
-               }
-               case "large":
-               {
-                  columnWidth = 400;
-                  break;
-               }
-               case "xlarge":
-               {
-                  columnWidth = 600;
-                  break;
-               }
-               default:
-               {
-                  console.log("Unrecognized size.width adornment value: " + width);
-               }
+               columnWidth = widths.get(width);
+            }
+            else
+            {
+               console.log("Unrecognized size.width adornment value: " + width);
             }
          }
 
@@ -814,7 +789,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                const d = new Date();
                const dateString = `${d.getFullYear()}-${zp(d.getMonth())}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter()))}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(filterModel)))}&fields=${visibleFields.join(",")}`;
 
                //////////////////////////////////////////////////////////////////////////////////////
                // open a window (tab) with a little page that says the file is being generated.    //
@@ -864,7 +839,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter())}`;
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(filterModel))}`;
       }
 
       if (selectedIds.length > 0)
@@ -879,7 +854,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return (buildQFilter());
+         return (buildQFilter(filterModel));
       }
 
       if (selectedIds.length > 0)
