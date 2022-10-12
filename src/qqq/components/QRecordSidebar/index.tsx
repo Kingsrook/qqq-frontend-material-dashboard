@@ -36,7 +36,13 @@ interface Props
    metaData?: QTableMetaData;
    widgetMetaDataList?: QWidgetMetaData[];
    light?: boolean;
+   stickyTop?: string;
 }
+
+QRecordSidebar.defaultProps = {
+   light: false,
+   stickyTop: "100px",
+};
 
 interface SidebarEntry
 {
@@ -45,7 +51,7 @@ interface SidebarEntry
    label: string;
 }
 
-function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.Element
+function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: Props): JSX.Element
 {
    /////////////////////////////////////////////////////////
    // insert widgets after identity (first) table section //
@@ -65,7 +71,7 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.
 
 
    return (
-      <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: "100px"}}>
+      <Card sx={{borderRadius: ({borders: {borderRadius}}) => borderRadius.lg, position: "sticky", top: stickyTop}}>
          <MDBox component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
@@ -108,9 +114,5 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light}: Props): JSX.
       </Card>
    );
 }
-
-QRecordSidebar.defaultProps = {
-   light: false,
-};
 
 export default QRecordSidebar;

@@ -26,6 +26,7 @@ import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaDat
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
@@ -52,6 +53,7 @@ import BaseLayout from "qqq/components/BaseLayout";
 import {QCancelButton, QSubmitButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
+import QRecordSidebar from "qqq/components/QRecordSidebar";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDButton from "qqq/components/Temporary/MDButton";
 import MDProgress from "qqq/components/Temporary/MDProgress";
@@ -59,6 +61,7 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 import {QGoogleDriveFolderPickerWrapper} from "qqq/pages/process-run/components/QGoogleDriveFolderPickerWrapper";
 import QValidationReview from "qqq/pages/process-run/components/QValidationReview";
 import QClient from "qqq/utils/QClient";
+import QTableUtils from "qqq/utils/QTableUtils";
 import QValueUtils from "qqq/utils/QValueUtils";
 import QProcessSummaryResults from "./components/QProcessSummaryResults";
 
@@ -66,9 +69,9 @@ interface Props
 {
    process?: QProcessMetaData;
    defaultProcessValues?: any;
-   isModal?: boolean
-   recordIds?: string | QQueryFilter
-   closeModalHandler?: (event: object, reason: string) => void
+   isModal?: boolean;
+   recordIds?: string | QQueryFilter;
+   closeModalHandler?: (event: object, reason: string) => void;
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
@@ -95,6 +98,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [processMetaData, setProcessMetaData] = useState(null);
    const [tableMetaData, setTableMetaData] = useState(null);
+   const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [processValues, setProcessValues] = useState({} as any);
    const [processError, _setProcessError] = useState(null as string);
@@ -303,6 +307,17 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          );
       }
 
+      const {formFields, values, errors, touched} = formData;
+      let localTableSections = tableSections;
+      if(localTableSections == null)
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if the table sections (ones that actually have fields to edit) haven't been built yet, do so now //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////
+         localTableSections = tableMetaData ? QTableUtils.getSectionsForRecordSidebar(tableMetaData, Object.keys(formFields)) : null;
+         setTableSections(localTableSections);
+      }
+
       return (
          <>
             <MDTypography variation="h5" component="div" fontWeight="bold">
@@ -337,7 +352,61 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                      }
                      {
                         component.type === QComponentType.BULK_EDIT_FORM && (
-                           <QDynamicForm formData={formData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
+                           tableMetaData && localTableSections ?
+                              <Grid container spacing={3} mt={2}>
+                                 <Grid item xs={12} lg={3}>
+                                    <QRecordSidebar tableSections={localTableSections} stickyTop="20px" />
+                                 </Grid>
+                                 <Grid item xs={12} lg={9}>
+
+                                    {localTableSections.map((section: QTableSection, index: number) =>
+                                    {
+                                       const name = section.name
+                                       console.log(formData);
+                                       console.log(section.fieldNames);
+
+                                       const sectionFormFields = {};
+                                       for(let i = 0; i<section.fieldNames.length; i++)
+                                       {
+                                          const fieldName = section.fieldNames[i];
+                                          if(formFields[fieldName])
+                                          {
+                                             // @ts-ignore
+                                             sectionFormFields[fieldName] = formFields[fieldName];
+                                          }
+                                       }
+
+                                       if(Object.keys(sectionFormFields).length > 0)
+                                       {
+                                          const sectionFormData = {
+                                             formFields: sectionFormFields,
+                                             values: values,
+                                             errors: errors,
+                                             touched: touched
+                                          };
+
+                                          return (
+                                             <Box key={name} pb={3}>
+                                                <Card id={name} sx={{scrollMarginTop: "20px"}} elevation={5}>
+                                                   <MDTypography variant="h5" p={3} pb={1}>
+                                                      {section.label}
+                                                   </MDTypography>
+                                                   <Box px={2}>
+                                                      <QDynamicForm formData={sectionFormData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
+                                                   </Box>
+                                                </Card>
+                                             </Box>
+                                          );
+                                       }
+                                       else
+                                       {
+                                          return (<br />);
+                                       }
+                                    }
+                                    )}
+                                 </Grid>
+                              </Grid>
+                              : <QDynamicForm formData={formData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
                         )
                      }
                      {
@@ -505,7 +574,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
       }
 
       return (rs);
-   }
+   };
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle moving to another step in the process - e.g., after the backend told us what screen to show next. //
@@ -517,7 +586,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          console.log("No process meta data yet, so returning early");
          return;
       }
-      setPageHeader(processMetaData.label)
+      setPageHeader(processMetaData.label);
 
       let newIndex = null;
       if (typeof newStep === "number")
@@ -560,6 +629,8 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          {
             let fullFieldList = getFullFieldList(activeStep, processValues);
             const formData = DynamicFormUtils.getFormData(fullFieldList);
+            DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData.name, null);
+
             dynamicFormFields = formData.dynamicFormFields;
             formValidations = formData.formValidations;
 
@@ -592,7 +663,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
             dynamicFormFields[fieldName] = dynamicFormValue;
             initialValues[fieldName] = initialValue;
             formValidations[fieldName] = validation;
-         }
+         };
 
          if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
          {
@@ -602,9 +673,9 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
 
          if (doesStepHaveComponent(activeStep, QComponentType.GOOGLE_DRIVE_SELECT_FOLDER))
          {
-            addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, null, null);
-            addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, null, null);
-            addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, null, null);
+            addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+            addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+            addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, "", null);
          }
 
          if (Object.keys(dynamicFormFields).length > 0)
@@ -672,6 +743,8 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                newFormValidations[field.name] = null;
             }
          });
+
+         DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, fullFieldList, tableMetaData.name, null);
 
          setFormFields(newDynamicFormFields);
          setValidationScheme(Yup.object().shape(newFormValidations));
@@ -853,9 +926,9 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          //   queryStringPairsForInit.push("recordsParam=filterId");
          //   queryStringPairsForInit.push(`filterId=${urlSearchParams.get("filterId")}`);
          // }
-         else if(recordIds)
+         else if (recordIds)
          {
-            if(typeof recordIds === "string")
+            if (typeof recordIds === "string")
             {
                queryStringPairsForInit.push("recordsParam=recordIds");
                queryStringPairsForInit.push(`recordIds=${recordIds}`);
@@ -991,7 +1064,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
 
    const handleCancelClicked = () =>
    {
-      if(isModal && closeModalHandler)
+      if (isModal && closeModalHandler)
       {
          closeModalHandler(null, "cancelClicked");
          return;
@@ -1056,8 +1129,8 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                            <MDBox p={3}>
                               <MDBox>
                                  {/***************************************************************************
-                                     ** step content - e.g., the appropriate form or other screen for the step **
-                                     ***************************************************************************/}
+                                  ** step content - e.g., the appropriate form or other screen for the step **
+                                  ***************************************************************************/}
                                  {getDynamicStepContent(
                                     activeStepIndex,
                                     activeStep,
@@ -1073,8 +1146,8 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                                     setFieldValue,
                                  )}
                                  {/********************************
-                                     ** back &| next/submit buttons **
-                                     ********************************/}
+                                  ** back &| next/submit buttons **
+                                  ********************************/}
                                  <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
                                     {true || activeStepIndex === 0 ? (
                                        <MDBox />
@@ -1121,7 +1194,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
       </MDBox>
    );
 
-   if(isModal)
+   if (isModal)
    {
       return (
          <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>

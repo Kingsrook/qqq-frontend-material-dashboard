@@ -28,16 +28,60 @@ import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTa
  *******************************************************************************/
 class QTableUtils
 {
-   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData): QTableSection[]
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData, allowedKeys: any = null): QTableSection[]
    {
       if (tableMetaData.sections)
       {
-         return (tableMetaData.sections);
+         if (allowedKeys)
+         {
+            const allowedKeySet = new Set<string>();
+            allowedKeys.forEach((k: string) => allowedKeySet.add(k));
+
+            const allowedSections: QTableSection[] = [];
+
+            for (let i = 0; i < tableMetaData.sections.length; i++)
+            {
+               const section = tableMetaData.sections[i];
+               if (section.fieldNames)
+               {
+                  for (let j = 0; j < section.fieldNames.length; j++)
+                  {
+                     if (allowedKeySet.has(section.fieldNames[j]))
+                     {
+                        allowedSections.push(section);
+                        break;
+                     }
+                  }
+               }
+            }
+
+            return (allowedSections);
+         }
+         else
+         {
+            return (tableMetaData.sections);
+         }
       }
       else
       {
+         let fieldNames = [...tableMetaData.fields.keys()];
+         if (allowedKeys)
+         {
+            fieldNames = [];
+            for (const fieldName in tableMetaData.fields.keys())
+            {
+               if (allowedKeys[fieldName])
+               {
+                  fieldNames.push(fieldName);
+               }
+            }
+         }
          return ([new QTableSection({
-            iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...tableMetaData.fields.keys()],
+            iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...fieldNames],
          })]);
       }
    }

@@ -155,6 +155,7 @@ function EntityForm({table, id}: Props): JSX.Element
             dynamicFormFields,
             formValidations,
          } = DynamicFormUtils.getFormData(fieldArray);
+         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, record?.displayValues);
 
          /////////////////////////////////////
          // group the formFields by section //
@@ -179,24 +180,6 @@ function EntityForm({table, id}: Props): JSX.Element
                if (id !== null || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
-               }
-
-               /////////////////////////////////////////
-               // add props for possible value fields //
-               /////////////////////////////////////////
-               if(field.possibleValueSourceName)
-               {
-                  let initialDisplayValue = null;
-                  if(record && record.displayValues)
-                  {
-                     initialDisplayValue = record.displayValues.get(field.name);
-                  }
-                  dynamicFormFields[fieldName].possibleValueProps =
-                     {
-                        isPossibleValue: true,
-                        tableName: tableName,
-                        initialDisplayValue: initialDisplayValue,
-                     };
                }
             }
 

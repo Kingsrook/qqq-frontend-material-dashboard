@@ -40,7 +40,6 @@ import Modal from "@mui/material/Modal";
 import {
    DataGridPro,
    getGridDateOperators,
-   getGridNumericOperators,
    GridCallbackDetails,
    GridColDef,
    GridColumnOrderChangeParams,
@@ -116,12 +115,12 @@ async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URL
             const defaultFilter = {items: []} as GridFilterModel;
             let id = 1;
 
-            for(let i = 0; i < qQueryFilter.criteria.length; i++)
+            for (let i = 0; i < qQueryFilter.criteria.length; i++)
             {
                const criteria = qQueryFilter.criteria[i];
                const field = tableMetaData.fields.get(criteria.fieldName);
                let values = criteria.values;
-               if(field.possibleValueSourceName)
+               if (field.possibleValueSourceName)
                {
                   //////////////////////////////////////////////////////////////////////////////////
                   // possible-values in query-string are expected to only be their id values.     //
@@ -129,7 +128,7 @@ async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URL
                   // but we need them to be possibleValue objects (w/ id & label) so the label    //
                   // can be shown in the filter dropdown.  So, make backend call to look them up. //
                   //////////////////////////////////////////////////////////////////////////////////
-                  if(values && values.length > 0)
+                  if (values && values.length > 0)
                   {
                      values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
                   }
@@ -144,7 +143,7 @@ async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URL
             }
 
             defaultFilter.linkOperator = GridLinkOperator.And;
-            if(qQueryFilter.booleanOperator === "OR")
+            if (qQueryFilter.booleanOperator === "OR")
             {
                defaultFilter.linkOperator = GridLinkOperator.Or;
             }
@@ -171,7 +170,7 @@ async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URL
 function EntityList({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
-   const [searchParams] = useSearchParams();
+   const [ searchParams ] = useSearchParams();
 
    const location = useLocation();
    const navigate = useNavigate();
@@ -202,10 +201,10 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       defaultRowsPerPage = JSON.parse(localStorage.getItem(rowsPerPageLocalStorageKey));
    }
 
-   const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
-   const [columnSortModel, setColumnSortModel] = useState(defaultSort);
-   const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
-   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
+   const [ filterModel, setFilterModel ] = useState({items: []} as GridFilterModel);
+   const [ columnSortModel, setColumnSortModel ] = useState(defaultSort);
+   const [ columnVisibilityModel, setColumnVisibilityModel ] = useState(defaultVisibility);
+   const [ rowsPerPage, setRowsPerPage ] = useState(defaultRowsPerPage);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
    // for some reason, if we set the filterModel to what is in local storage, an onChange event //
@@ -213,47 +212,47 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    // when that happens put the default back - it needs to be in state                          //
    // const [defaultFilter1] = useState(defaultFilter);                                         //
    ///////////////////////////////////////////////////////////////////////////////////////////////
-   const [defaultFilter] = useState({items: []} as GridFilterModel);
+   const [ defaultFilter ] = useState({items: []} as GridFilterModel);
 
-   const [tableState, setTableState] = useState("");
-   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
-   const [defaultFilterLoaded, setDefaultFilterLoaded] = useState(false);
-   const [, setFiltersMenu] = useState(null);
-   const [actionsMenu, setActionsMenu] = useState(null);
-   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
-   const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
-   const [pageNumber, setPageNumber] = useState(0);
-   const [totalRecords, setTotalRecords] = useState(0);
-   const [selectedIds, setSelectedIds] = useState([] as string[]);
-   const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
-   const [columns, setColumns] = useState([] as GridColDef[]);
-   const [rows, setRows] = useState([] as GridRowsProp[]);
-   const [loading, setLoading] = useState(true);
-   const [alertContent, setAlertContent] = useState("");
-   const [tableLabel, setTableLabel] = useState("");
-   const [gridMouseDownX, setGridMouseDownX] = useState(0);
-   const [gridMouseDownY, setGridMouseDownY] = useState(0);
-   const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
+   const [ tableState, setTableState ] = useState("");
+   const [ tableMetaData, setTableMetaData ] = useState(null as QTableMetaData);
+   const [ defaultFilterLoaded, setDefaultFilterLoaded ] = useState(false);
+   const [ , setFiltersMenu ] = useState(null);
+   const [ actionsMenu, setActionsMenu ] = useState(null);
+   const [ tableProcesses, setTableProcesses ] = useState([] as QProcessMetaData[]);
+   const [ allTableProcesses, setAllTableProcesses ] = useState([] as QProcessMetaData[]);
+   const [ pageNumber, setPageNumber ] = useState(0);
+   const [ totalRecords, setTotalRecords ] = useState(0);
+   const [ selectedIds, setSelectedIds ] = useState([] as string[]);
+   const [ selectFullFilterState, setSelectFullFilterState ] = useState("n/a" as "n/a" | "checked" | "filter");
+   const [ columns, setColumns ] = useState([] as GridColDef[]);
+   const [ rows, setRows ] = useState([] as GridRowsProp[]);
+   const [ loading, setLoading ] = useState(true);
+   const [ alertContent, setAlertContent ] = useState("");
+   const [ tableLabel, setTableLabel ] = useState("");
+   const [ gridMouseDownX, setGridMouseDownX ] = useState(0);
+   const [ gridMouseDownY, setGridMouseDownY ] = useState(0);
+   const [ pinnedColumns, setPinnedColumns ] = useState({left: [ "__check__", "id" ]});
 
-   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData)
-   const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
+   const [ activeModalProcess, setActiveModalProcess ] = useState(null as QProcessMetaData);
+   const [ launchingProcess, setLaunchingProcess ] = useState(launchProcess);
 
    const instance = useRef({timer: null});
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // use all these states to avoid showing results from an "old" query, that finishes loading after a newer one //
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   const [latestQueryId, setLatestQueryId] = useState(0);
-   const [countResults, setCountResults] = useState({} as any);
-   const [receivedCountTimestamp, setReceivedCountTimestamp] = useState(new Date());
-   const [queryResults, setQueryResults] = useState({} as any);
-   const [receivedQueryTimestamp, setReceivedQueryTimestamp] = useState(new Date());
-   const [queryErrors, setQueryErrors] = useState({} as any);
-   const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
+   const [ latestQueryId, setLatestQueryId ] = useState(0);
+   const [ countResults, setCountResults ] = useState({} as any);
+   const [ receivedCountTimestamp, setReceivedCountTimestamp ] = useState(new Date());
+   const [ queryResults, setQueryResults ] = useState({} as any);
+   const [ receivedQueryTimestamp, setReceivedQueryTimestamp ] = useState(new Date());
+   const [ queryErrors, setQueryErrors ] = useState({} as any);
+   const [ receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp ] = useState(new Date());
 
    const {pageHeader, setPageHeader} = useContext(QContext);
 
-   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const [ , forceUpdate ] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -269,11 +268,11 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          // the path for a process looks like: .../table/process        //
          // so if our tableName is in the -2 index, try to open process //
          /////////////////////////////////////////////////////////////////
-         if(pathParts[pathParts.length - 2] === tableName)
+         if (pathParts[pathParts.length - 2] === tableName)
          {
             const processName = pathParts[pathParts.length - 1];
             const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
-            if(processList.length > 0)
+            if (processList.length > 0)
             {
                setActiveModalProcess(processList[0]);
                return;
@@ -284,7 +283,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             }
          }
       }
-      catch(e)
+      catch (e)
       {
          console.log(e);
       }
@@ -294,7 +293,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       ////////////////////////////////////////////////////////////////////////////////////
 
       setActiveModalProcess(null);
-   }, [location]);
+   }, [ location ]);
 
    const buildQFilter = (filterModel: GridFilterModel) =>
    {
@@ -320,7 +319,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          });
 
          qFilter.booleanOperator = "AND";
-         if(filterModel.linkOperator == "or")
+         if (filterModel.linkOperator == "or")
          {
             ///////////////////////////////////////////////////////////////////////////////////////////
             // by default qFilter uses AND - so only  if we see linkOperator=or do we need to set it //
@@ -350,7 +349,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          if (!defaultFilterLoaded)
          {
             setDefaultFilterLoaded(true);
-            localFilterModel = await getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey)
+            localFilterModel = await getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey);
             setFilterModel(localFilterModel);
             return;
          }
@@ -364,7 +363,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             });
             setColumnSortModel(columnSortModel);
          }
-         setPinnedColumns({left: ["__check__", tableMetaData.primaryKeyField]});
+         setPinnedColumns({left: [ "__check__", tableMetaData.primaryKeyField ]});
 
          const qFilter = buildQFilter(localFilterModel);
 
@@ -433,7 +432,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       }
       setTotalRecords(countResults[latestQueryId]);
       delete countResults[latestQueryId];
-   }, [receivedCountTimestamp]);
+   }, [ receivedCountTimestamp ]);
 
 
    ///////////////////////////
@@ -455,7 +454,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       const results = queryResults[latestQueryId];
       delete queryResults[latestQueryId];
 
-      const fields = [...tableMetaData.fields.values()];
+      const fields = [ ...tableMetaData.fields.values() ];
       const rows = [] as any[];
       const columnsToRender = {} as any;
       results.forEach((record: QRecord) =>
@@ -539,12 +538,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
             const width: string = sizeAdornment.getValue("width");
             const widths: Map<string, number> = new Map<string, number>([
-               ["small", 100],
-               ["medium", 200],
-               ["large", 400],
-               ["xlarge", 600]
+               [ "small", 100 ],
+               [ "medium", 200 ],
+               [ "large", 400 ],
+               [ "xlarge", 600 ]
             ]);
-            if(widths.has(width))
+            if (widths.has(width))
             {
                columnWidth = widths.get(width);
             }
@@ -588,7 +587,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       setLoading(false);
       setAlertContent(null);
       forceUpdate();
-   }, [receivedQueryTimestamp]);
+   }, [ receivedQueryTimestamp ]);
 
    /////////////////////////
    // display query error //
@@ -610,7 +609,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       setLoading(false);
       setAlertContent(errorMessage);
 
-   }, [receivedQueryErrorTimestamp]);
+   }, [ receivedQueryErrorTimestamp ]);
 
 
    const handlePageChange = (page: number) =>
@@ -737,7 +736,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          setTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
          setAllTableProcesses(QProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
 
-         if(launchingProcess)
+         if (launchingProcess)
          {
             setLaunchingProcess(null);
             setActiveModalProcess(launchingProcess);
@@ -850,7 +849,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       return "";
    }
 
-   function getRecordIdsForProcess() : string | QQueryFilter
+   function getRecordIdsForProcess(): string | QQueryFilter
    {
       if (selectFullFilterState === "filter")
       {
@@ -873,7 +872,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const closeModalProcess = (event: object, reason: string) =>
    {
-      if(reason === "backdropClick")
+      if (reason === "backdropClick")
       {
          return;
       }
@@ -886,12 +885,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       navigate(newPath.join("/"));
 
       updateTable();
-   }
+   };
 
    const openBulkProcess = (processNamePart: "Insert" | "Edit" | "Delete", processLabelPart: "Load" | "Edit" | "Delete") =>
    {
       const processList = allTableProcesses.filter(p => p.name.endsWith(`.bulk${processNamePart}`));
-      if(processList.length > 0)
+      if (processList.length > 0)
       {
          openModalProcess(processList[0]);
       }
@@ -899,7 +898,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       {
          setAlertContent(`Could not find Bulk ${processLabelPart} process for this table.`);
       }
-   }
+   };
 
    const bulkLoadClicked = () =>
    {
@@ -960,7 +959,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             component="div"
             count={totalRecords === null ? 0 : totalRecords}
             page={pageNumber}
-            rowsPerPageOptions={[10, 25, 50, 100, 250]}
+            rowsPerPageOptions={[ 10, 25, 50, 100, 250 ]}
             rowsPerPage={rowsPerPage}
             onPageChange={(event, value) => handlePageChange(value)}
             onRowsPerPageChange={(event) => handleRowsPerPageChange(Number(event.target.value))}
@@ -1077,7 +1076,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    useEffect(() =>
    {
       updateTable();
-   }, [pageNumber, rowsPerPage, columnSortModel]);
+   }, [ pageNumber, rowsPerPage, columnSortModel ]);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for state changes that DO change the filter, call to update the table - and DO clear out the totalRecords //
@@ -1086,13 +1085,13 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       setTotalRecords(null);
       updateTable();
-   }, [tableState, filterModel]);
+   }, [ tableState, filterModel ]);
 
    useEffect(() =>
    {
       document.documentElement.scrollTop = 0;
       document.scrollingElement.scrollTop = 0;
-   }, [pageNumber, rowsPerPage]);
+   }, [ pageNumber, rowsPerPage ]);
 
    return (
       <DashboardLayout>
@@ -1160,7 +1159,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      onColumnOrderChange={handleColumnOrderChange}
                      onSelectionModelChange={selectionChanged}
                      onSortModelChange={handleSortChange}
-                     sortingOrder={["asc", "desc"]}
+                     sortingOrder={[ "asc", "desc" ]}
                      sortModel={columnSortModel}
                      getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                   />
@@ -1171,7 +1170,9 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          {
             activeModalProcess &&
             <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
-               <ProcessRun process={activeModalProcess} isModal={true} recordIds={getRecordIdsForProcess()} closeModalHandler={closeModalProcess} />
+               <div className="modalProcess">
+                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={getRecordIdsForProcess()} closeModalHandler={closeModalProcess} />
+               </div>
             </Modal>
          }
 

@@ -136,6 +136,8 @@ function QDynamicForm(props: Props): JSX.Element
                                  fieldLabel={field.label}
                                  initialValue={values[fieldName]}
                                  initialDisplayValue={field.possibleValueProps.initialDisplayValue}
+                                 bulkEditMode={bulkEditMode}
+                                 bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                               />
                            </Grid>
                         );

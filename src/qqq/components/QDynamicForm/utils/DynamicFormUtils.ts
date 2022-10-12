@@ -95,6 +95,33 @@ class DynamicFormUtils
       }
       return (null);
    }
+
+   public static addPossibleValueProps(dynamicFormFields: any, qFields: QFieldMetaData[], tableName: string, displayValues: Map<string, string>)
+   {
+      for (let i = 0; i < qFields.length; i++)
+      {
+         const field = qFields[i];
+
+         /////////////////////////////////////////
+         // add props for possible value fields //
+         /////////////////////////////////////////
+         if (field.possibleValueSourceName && dynamicFormFields[field.name])
+         {
+            let initialDisplayValue = null;
+            if (displayValues)
+            {
+               initialDisplayValue = displayValues.get(field.name);
+            }
+
+            dynamicFormFields[field.name].possibleValueProps =
+               {
+                  isPossibleValue: true,
+                  tableName: tableName,
+                  initialDisplayValue: initialDisplayValue,
+               };
+         }
+      }
+   }
 }
 
 export default DynamicFormUtils;

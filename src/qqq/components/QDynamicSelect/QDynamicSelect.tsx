@@ -22,9 +22,12 @@
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {CircularProgress, FilterOptionsState} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import {useFormikContext} from "formik";
 import React, {useEffect, useState} from "react";
+import MDBox from "qqq/components/Temporary/MDBox";
 import QClient from "qqq/utils/QClient";
 
 interface Props
@@ -35,7 +38,10 @@ interface Props
    inForm: boolean;
    initialValue?: any;
    initialDisplayValue?: string;
-   onChange?: any
+   onChange?: any;
+   isEditable?: boolean;
+   bulkEditMode?: boolean;
+   bulkEditSwitchChangeHandler?: any;
 }
 
 QDynamicSelect.defaultProps = {
@@ -43,11 +49,16 @@ QDynamicSelect.defaultProps = {
    initialValue: null,
    initialDisplayValue: null,
    onChange: null,
+   isEditable: true,
+   bulkEditMode: false,
+   bulkEditSwitchChangeHandler: () =>
+   {
+   },
 };
 
 const qController = QClient.getInstance();
 
-function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, onChange}: Props)
+function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, onChange, isEditable, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
 {
    const [ open, setOpen ] = useState(false);
    const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
@@ -56,6 +67,8 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
    const [defaultValue, _] = useState(initialValue && initialDisplayValue ? {id: initialValue, label: initialDisplayValue} : null);
    // const loading = open && options.length === 0;
    const [loading, setLoading] = useState(false);
+   const [ switchChecked, setSwitchChecked ] = useState(false);
+   const [ isDisabled, setIsDisabled ] = useState(!isEditable || bulkEditMode);
 
    let setFieldValueRef: (field: string, value: any, shouldValidate?: boolean) => void = null;
    if(inForm)
@@ -152,9 +165,18 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
       );
    }
 
-   return (
+   const bulkEditSwitchChanged = () =>
+   {
+      const newSwitchValue = !switchChecked;
+      setSwitchChecked(newSwitchValue);
+      setIsDisabled(!newSwitchValue);
+      bulkEditSwitchChangeHandler(fieldName, newSwitchValue);
+   };
+
+   const autocomplete = (
       <Autocomplete
          id={fieldName}
+         sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
          open={open}
          fullWidth
          onOpen={() =>
@@ -190,6 +212,7 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
          }}
          renderOption={renderOption}
          filterOptions={filterOptions}
+         disabled={isDisabled}
          renderInput={(params) => (
             <TextField
                {...params}
@@ -210,6 +233,35 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
          )}
       />
    );
+
+
+   if (bulkEditMode)
+   {
+      return (
+         <Box mb={1.5} display="flex" flexDirection="row">
+            <Box alignItems="baseline" pt={1}>
+               <Switch
+                  id={`bulkEditSwitch-${fieldName}`}
+                  checked={switchChecked}
+                  onClick={bulkEditSwitchChanged}
+               />
+            </Box>
+            <Box width="100%">
+               {autocomplete}
+            </Box>
+         </Box>
+      );
+   }
+   else
+   {
+      return (
+         <MDBox mb={1.5}>
+            {autocomplete}
+         </MDBox>
+      );
+   }
+
+
 }
 
 export default QDynamicSelect;

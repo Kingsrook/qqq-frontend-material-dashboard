@@ -451,7 +451,9 @@ function ViewContents({id, table, launchProcess}: Props): JSX.Element
             {
                activeModalProcess &&
                <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
-                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+                  <div className="modalProcess">
+                     <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+                  </div>
                </Modal>
             }
 

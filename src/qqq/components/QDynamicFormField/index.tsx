@@ -123,7 +123,7 @@ function QDynamicFormField({
                   onClick={bulkEditSwitchChanged}
                />
             </Box>
-            <Box width="100%">
+            <Box width="100%" sx={{background: (type == "checkbox" && isDisabled) ? "#f0f2f5!important" : "initial"}}>
                {/* for checkboxes, if we put the whole thing in a label, we get bad overly aggressive toggling of the outer switch... */}
                {(type == "checkbox" ?
                   field() :
