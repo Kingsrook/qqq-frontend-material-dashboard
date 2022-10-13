@@ -212,3 +212,16 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    padding-bottom: 0px;
    margin-top: 10px;
 }
+
+.MuiDataGrid-toolbarContainer .MuiBadge-badge
+{
+   right: 7px;
+   top: 5px;
+   background: orange;
+}
+
+.MuiTablePagination-root .MuiSvgIcon-root
+{
+   display: inline;
+   color: gray;
+}

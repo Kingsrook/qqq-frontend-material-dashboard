@@ -284,7 +284,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                ///////////////////////////////////////////////////////////
                // if numeric, check that first before pushing as a chip //
                ///////////////////////////////////////////////////////////
-               if(type === "number" || Number.isNaN(Number(part)))
+               if(type === "number" && Number.isNaN(Number(part)))
                {
                   setErrorText("Some values are not numbers");
                }

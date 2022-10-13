@@ -30,6 +30,11 @@ import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryF
 import {Alert, TablePagination} from "@mui/material";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -37,7 +42,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
-import {DataGridPro, getGridDateOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import Tooltip from "@mui/material/Tooltip";
+import {DataGridPro, getGridDateOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React, {useContext, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
@@ -59,6 +65,7 @@ const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
+const PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT = "qqq.pinnedColumns";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 
 interface Props
@@ -161,12 +168,14 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    ////////////////////////////////////////////
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const rowsPerPageLocalStorageKey = `${ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const pinnedColumnsLocalStorageKey = `${PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
    let defaultRowsPerPage = 10;
-   let defaultDensity = "standard";
+   let defaultDensity = "standard" as GridDensity;
+   let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
 
    ////////////////////////////////////////////////////////////////////////////////////
    // set the to be not per table (do as above if we want per table) at a later port //
@@ -181,6 +190,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
    }
+   if (localStorage.getItem(pinnedColumnsLocalStorageKey))
+   {
+      defaultPinnedColumns = JSON.parse(localStorage.getItem(pinnedColumnsLocalStorageKey));
+   }
+
+
    if (localStorage.getItem(rowsPerPageLocalStorageKey))
    {
       defaultRowsPerPage = JSON.parse(localStorage.getItem(rowsPerPageLocalStorageKey));
@@ -194,20 +209,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
    const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
-   const [density, setDensity] = useState(defaultDensity as GridDensity);
-
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   // for some reason, if we set the filterModel to what is in local storage, an onChange event //
-   // fires on the grid anyway with an empty filter, so be aware of the first onchange, and     //
-   // when that happens put the default back - it needs to be in state                          //
-   // const [defaultFilter1] = useState(defaultFilter);                                         //
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   const [ defaultFilter ] = useState({items: []} as GridFilterModel);
+   const [density, setDensity] = useState(defaultDensity);
+   const [pinnedColumns, setPinnedColumns] = useState(defaultPinnedColumns);
 
    const [tableState, setTableState] = useState("");
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [defaultFilterLoaded, setDefaultFilterLoaded] = useState(false);
-   const [, setFiltersMenu] = useState(null);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
@@ -222,8 +229,9 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [tableLabel, setTableLabel] = useState("");
    const [gridMouseDownX, setGridMouseDownX] = useState(0);
    const [gridMouseDownY, setGridMouseDownY] = useState(0);
-   const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
    const [gridPreferencesWindow, setGridPreferencesWindow] = useState(undefined);
+   const [showClearFiltersWarning, setShowClearFiltersWarning] = useState(false);
+   const [hasValidFilters, setHasValidFilters] = useState(false);
 
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
@@ -241,8 +249,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [ queryErrors, setQueryErrors ] = useState({} as any);
    const [ receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp ] = useState(new Date());
 
-   const {pageHeader, setPageHeader} = useContext(QContext);
-
+   const {setPageHeader} = useContext(QContext);
    const [ , forceUpdate ] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
@@ -302,12 +309,13 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
       if (filterModel)
       {
+         let foundFilter = false;
          filterModel.items.forEach((item) =>
          {
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
-            if(! item.value && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            if((! item.value || item.value.length == 0) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
             {
                return;
             }
@@ -315,7 +323,9 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             const operator = QFilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
+            foundFilter = true;
          });
+         setHasValidFilters(foundFilter);
 
          qFilter.booleanOperator = "AND";
          if (filterModel.linkOperator == "or")
@@ -362,7 +372,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             });
             setColumnSortModel(columnSortModel);
          }
-         setPinnedColumns({left: [ "__check__", tableMetaData.primaryKeyField ]});
 
          const qFilter = buildQFilter(localFilterModel);
 
@@ -621,6 +630,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       localStorage.setItem(rowsPerPageLocalStorageKey, JSON.stringify(size));
    };
 
+   const handlePinnedColumnsChange = (pinnedColumns: GridPinnedColumns) =>
+   {
+      setPinnedColumns(pinnedColumns)
+      localStorage.setItem(pinnedColumnsLocalStorageKey, JSON.stringify(pinnedColumns));
+   };
+
    const handleStateChange = (state: GridState, event: MuiEvent, details: GridCallbackDetails) =>
    {
       if (state && state.density && state.density.value !== density)
@@ -710,26 +725,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const handleFilterChange = (filterModel: GridFilterModel) =>
    {
-      ////////////////////////////////////////////////////////
-      // remove any items in the filter that are incomplete //
-      ////////////////////////////////////////////////////////
-      /*
-      if(filterModel && filterModel.items)
-      {
-         filterModel.items.forEach((item: GridFilterItem, index: number, arr: GridFilterItem[]) =>
-         {
-            if(! item.value)
-            {
-               if( item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
-               {
-                  arr.splice(index, 1);
-               }
-            }
-         })
-      }
-
-       */
-
       setFilterModel(filterModel);
       if (filterLocalStorageKey)
       {
@@ -754,7 +749,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       (async () =>
       {
          setTableState(tableName);
-         setFiltersMenu(null);
          const metaData = await qController.loadMetaData();
          QValueUtils.qInstance = metaData;
 
@@ -1044,12 +1038,38 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                </Button>
             </div>
             <GridToolbarColumnsButton />
-            <GridToolbarFilterButton />
-            <GridToolbarDensitySelector />
-            <GridToolbarExportContainer>
-               <ExportMenuItem format="csv" />
-               <ExportMenuItem format="xlsx" />
-            </GridToolbarExportContainer>
+            <div style={{position: "relative"}}>
+               <GridToolbarFilterButton />
+               {
+                  hasValidFilters && (
+
+                     <div id="clearFiltersButton" style={{position: "absolute", left: "84px", top: "6px"}}>
+                        <Tooltip title="Clear All Filters">
+                           <Icon sx={{cursor: "pointer"}} onClick={() => setShowClearFiltersWarning(true)}>clear</Icon>
+                        </Tooltip>
+                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)}>
+                           <DialogTitle id="alert-dialog-title">Confirm </DialogTitle>
+                           <DialogContent>
+                              <DialogContentText>Are you sure you want to clear all filters?</DialogContentText>
+                           </DialogContent>
+                           <DialogActions>
+                              <Button onClick={() => setShowClearFiltersWarning(false)}>No</Button>
+                              <Button onClick={() =>
+                              {
+                                 setShowClearFiltersWarning(false);
+                                 handleFilterChange({items: []} as GridFilterModel);
+                              }}>Yes</Button>
+                           </DialogActions>
+                        </Dialog>
+                     </div>
+                  )
+               }
+               <GridToolbarDensitySelector />
+               <GridToolbarExportContainer>
+                  <ExportMenuItem format="csv" />
+                  <ExportMenuItem format="xlsx" />
+               </GridToolbarExportContainer>
+            </div>
             <div>
                {
                   selectFullFilterState === "checked" && (
@@ -1140,7 +1160,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       setTotalRecords(null);
       updateTable();
-   }, [ tableState, filterModel ]);
+   }, [ tableState, filterModel]);
 
    useEffect(() =>
    {
@@ -1189,7 +1209,8 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                <MDBox height="100%">
                   <DataGridPro
                      components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
-                     initialState={{pinnedColumns: pinnedColumns}}
+                     pinnedColumns={pinnedColumns}
+                     onPinnedColumnsChange={handlePinnedColumnsChange}
                      pagination
                      paginationMode="server"
                      sortingMode="server"
