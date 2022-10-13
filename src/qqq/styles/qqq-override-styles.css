@@ -183,3 +183,32 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    margin-bottom: 24px;
 }
+
+#chip-text-field-container > div > div
+{
+   background: #F8F8F8;
+   height: 330px;
+   padding: 10px;
+   display: flex;
+   flex-wrap: wrap;
+}
+
+#chip-text-field-container > div > div > textarea
+{
+   display: none;
+}
+
+#chip-text-field-container > div > div > div
+{
+   height: 100%;
+   overflow: scroll;
+}
+
+#outlined-multiline-static
+{
+   padding-left: 10px;
+   padding-top: 0px;
+   padding-right: 10px;
+   padding-bottom: 0px;
+   margin-top: 10px;
+}

@@ -44,15 +44,20 @@ export function QCreateNewButton(): JSX.Element
 
 interface QSaveButtonProps
 {
+   label?: string;
+   onClickHandler?: any,
    disabled: boolean
 }
+QSaveButton.defaultProps = {
+   label: "Save"
+};
 
-export function QSaveButton({disabled}: QSaveButtonProps): JSX.Element
+export function QSaveButton({label, onClickHandler, disabled}: QSaveButtonProps): JSX.Element
 {
    return (
       <MDBox ml={3} width={standardWidth}>
-         <MDButton type="submit" variant="gradient" color="info" size="small" fullWidth startIcon={<Icon>save</Icon>} disabled={disabled}>
-            Save
+         <MDButton type="submit" variant="gradient" color="info" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>save</Icon>} disabled={disabled}>
+            {label}
          </MDButton>
       </MDBox>
    );

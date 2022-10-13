@@ -37,31 +37,9 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
-import {
-   DataGridPro,
-   getGridDateOperators,
-   GridCallbackDetails,
-   GridColDef,
-   GridColumnOrderChangeParams,
-   GridColumnVisibilityModel,
-   GridExportMenuItemProps,
-   GridFilterModel,
-   GridLinkOperator,
-   GridRowId,
-   GridRowParams,
-   GridRowsProp,
-   GridSelectionModel,
-   GridSortItem,
-   GridSortModel,
-   GridToolbarColumnsButton,
-   GridToolbarContainer,
-   GridToolbarDensitySelector,
-   GridToolbarExportContainer,
-   GridToolbarFilterButton,
-   MuiEvent
-} from "@mui/x-data-grid-pro";
+import {DataGridPro, getGridDateOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
-import React, {useCallback, useContext, useEffect, useReducer, useRef, useState} from "react";
+import React, {useContext, useEffect, useReducer, useRef, useState} from "react";
 import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
@@ -81,6 +59,7 @@ const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
+const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 
 interface Props
 {
@@ -187,6 +166,12 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {};
    let defaultRowsPerPage = 10;
+   let defaultDensity = "standard";
+
+   ////////////////////////////////////////////////////////////////////////////////////
+   // set the to be not per table (do as above if we want per table) at a later port //
+   ////////////////////////////////////////////////////////////////////////////////////
+   const densityLocalStorageKey = `${DENSITY_LOCAL_STORAGE_KEY_ROOT}`;
 
    if (localStorage.getItem(sortLocalStorageKey))
    {
@@ -200,11 +185,16 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    {
       defaultRowsPerPage = JSON.parse(localStorage.getItem(rowsPerPageLocalStorageKey));
    }
+   if (localStorage.getItem(densityLocalStorageKey))
+   {
+      defaultDensity = JSON.parse(localStorage.getItem(densityLocalStorageKey));
+   }
 
-   const [ filterModel, setFilterModel ] = useState({items: []} as GridFilterModel);
-   const [ columnSortModel, setColumnSortModel ] = useState(defaultSort);
-   const [ columnVisibilityModel, setColumnVisibilityModel ] = useState(defaultVisibility);
-   const [ rowsPerPage, setRowsPerPage ] = useState(defaultRowsPerPage);
+   const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
+   const [columnSortModel, setColumnSortModel] = useState(defaultSort);
+   const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
+   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
+   const [density, setDensity] = useState(defaultDensity as GridDensity);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
    // for some reason, if we set the filterModel to what is in local storage, an onChange event //
@@ -214,28 +204,29 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////////
    const [ defaultFilter ] = useState({items: []} as GridFilterModel);
 
-   const [ tableState, setTableState ] = useState("");
-   const [ tableMetaData, setTableMetaData ] = useState(null as QTableMetaData);
-   const [ defaultFilterLoaded, setDefaultFilterLoaded ] = useState(false);
-   const [ , setFiltersMenu ] = useState(null);
-   const [ actionsMenu, setActionsMenu ] = useState(null);
-   const [ tableProcesses, setTableProcesses ] = useState([] as QProcessMetaData[]);
-   const [ allTableProcesses, setAllTableProcesses ] = useState([] as QProcessMetaData[]);
-   const [ pageNumber, setPageNumber ] = useState(0);
-   const [ totalRecords, setTotalRecords ] = useState(0);
-   const [ selectedIds, setSelectedIds ] = useState([] as string[]);
-   const [ selectFullFilterState, setSelectFullFilterState ] = useState("n/a" as "n/a" | "checked" | "filter");
-   const [ columns, setColumns ] = useState([] as GridColDef[]);
-   const [ rows, setRows ] = useState([] as GridRowsProp[]);
-   const [ loading, setLoading ] = useState(true);
-   const [ alertContent, setAlertContent ] = useState("");
-   const [ tableLabel, setTableLabel ] = useState("");
-   const [ gridMouseDownX, setGridMouseDownX ] = useState(0);
-   const [ gridMouseDownY, setGridMouseDownY ] = useState(0);
-   const [ pinnedColumns, setPinnedColumns ] = useState({left: [ "__check__", "id" ]});
+   const [tableState, setTableState] = useState("");
+   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+   const [defaultFilterLoaded, setDefaultFilterLoaded] = useState(false);
+   const [, setFiltersMenu] = useState(null);
+   const [actionsMenu, setActionsMenu] = useState(null);
+   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
+   const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
+   const [pageNumber, setPageNumber] = useState(0);
+   const [totalRecords, setTotalRecords] = useState(0);
+   const [selectedIds, setSelectedIds] = useState([] as string[]);
+   const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
+   const [columns, setColumns] = useState([] as GridColDef[]);
+   const [rows, setRows] = useState([] as GridRowsProp[]);
+   const [loading, setLoading] = useState(true);
+   const [alertContent, setAlertContent] = useState("");
+   const [tableLabel, setTableLabel] = useState("");
+   const [gridMouseDownX, setGridMouseDownX] = useState(0);
+   const [gridMouseDownY, setGridMouseDownY] = useState(0);
+   const [pinnedColumns, setPinnedColumns] = useState({left: ["__check__", "id"]});
+   const [gridPreferencesWindow, setGridPreferencesWindow] = useState(undefined);
 
-   const [ activeModalProcess, setActiveModalProcess ] = useState(null as QProcessMetaData);
-   const [ launchingProcess, setLaunchingProcess ] = useState(launchProcess);
+   const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
+   const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
 
    const instance = useRef({timer: null});
 
@@ -313,6 +304,14 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       {
          filterModel.items.forEach((item) =>
          {
+            ////////////////////////////////////////////////////////////////////////////////
+            // if no value set and not 'empty' or 'not empty' operators, skip this filter //
+            ////////////////////////////////////////////////////////////////////////////////
+            if(! item.value && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            {
+               return;
+            }
+
             const operator = QFilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = QFilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
@@ -433,7 +432,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       setTotalRecords(countResults[latestQueryId]);
       delete countResults[latestQueryId];
    }, [ receivedCountTimestamp ]);
-
 
    ///////////////////////////
    // display query results //
@@ -623,8 +621,28 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       localStorage.setItem(rowsPerPageLocalStorageKey, JSON.stringify(size));
    };
 
+   const handleStateChange = (state: GridState, event: MuiEvent, details: GridCallbackDetails) =>
+   {
+      if (state && state.density && state.density.value !== density)
+      {
+         setDensity(state.density.value);
+         localStorage.setItem(densityLocalStorageKey, JSON.stringify(state.density.value));
+
+      }
+   };
+
    const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
+      /////////////////////////////////////////////////////////////////
+      // if a grid preference window is open, ignore and reset timer //
+      /////////////////////////////////////////////////////////////////
+      console.log(gridPreferencesWindow);
+      if (gridPreferencesWindow !== undefined)
+      {
+         clearTimeout(instance.current.timer);
+         return;
+      }
+
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // strategy for when to trigger or not trigger a row click:                                                      //
       // To avoid a drag-event that highlighted text in a cell:                                                        //
@@ -635,35 +653,22 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       // - also avoid a click, then click-again-and-start-dragging, by always cancelling the timer in mouse-down.      //
       // All in, these seem to have good results - the only downside being the half-second delay...                    //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      navigate(`${params.id}`);
-      /*
       const diff = Math.max(Math.abs(event.clientX - gridMouseDownX), Math.abs(event.clientY - gridMouseDownY));
       if (diff < 5)
       {
+         console.log("clearing timeout");
          clearTimeout(instance.current.timer);
          instance.current.timer = setTimeout(() =>
          {
             navigate(`${params.id}`);
-         }, 500);
+         }, 100);
       }
       else
       {
          console.log(`row-click mouse-up happened ${diff} x or y pixels away from the mouse-down - so not considering it a click.`);
       }
-      */
    };
 
-   const handleGridMouseDown = useCallback((event: any) =>
-   {
-      setGridMouseDownX(event.clientX);
-      setGridMouseDownY(event.clientY);
-      clearTimeout(instance.current.timer);
-   }, []);
-
-   const handleGridDoubleClick = useCallback((event: any) =>
-   {
-      clearTimeout(instance.current.timer);
-   }, []);
 
    const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) =>
    {
@@ -705,6 +710,26 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const handleFilterChange = (filterModel: GridFilterModel) =>
    {
+      ////////////////////////////////////////////////////////
+      // remove any items in the filter that are incomplete //
+      ////////////////////////////////////////////////////////
+      /*
+      if(filterModel && filterModel.items)
+      {
+         filterModel.items.forEach((item: GridFilterItem, index: number, arr: GridFilterItem[]) =>
+         {
+            if(! item.value)
+            {
+               if( item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+               {
+                  arr.splice(index, 1);
+               }
+            }
+         })
+      }
+
+       */
+
       setFilterModel(filterModel);
       if (filterLocalStorageKey)
       {
@@ -803,7 +828,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      </style>
                      <title>${filename}</title>
                      <script>
-                        setTimeout(() => 
+                        setTimeout(() =>
                         {
                            window.location.href="${url}";
                         }, 1);
@@ -977,6 +1002,36 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    function CustomToolbar()
    {
+      const handleMouseDown: GridEventListener<"cellMouseDown"> = (
+         params, // GridRowParams
+         event, // MuiEvent<React.MouseEvent<HTMLElement>>
+         details, // GridCallbackDetails
+      ) =>
+      {
+         setGridMouseDownX(event.clientX);
+         setGridMouseDownY(event.clientY);
+         clearTimeout(instance.current.timer);
+      };
+
+      const handleDoubleClick: GridEventListener<"rowDoubleClick"> = (event: any) =>
+      {
+         clearTimeout(instance.current.timer);
+      };
+
+
+      const apiRef = useGridApiContext();
+      useGridApiEventHandler(apiRef, "cellMouseDown", handleMouseDown);
+      useGridApiEventHandler(apiRef, "rowDoubleClick", handleDoubleClick);
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // keep track of any preference windows that are opened in the toolbar, to allow ignoring clicks away from the window //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      useEffect(() =>
+      {
+         const preferencePanelState = useGridSelector(apiRef, gridPreferencePanelStateSelector);
+         setGridPreferencesWindow(preferencePanelState.openedPanelValue);
+      });
+
       return (
          <GridToolbarContainer>
             <div>
@@ -1093,6 +1148,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       document.scrollingElement.scrollTop = 0;
    }, [ pageNumber, rowsPerPage ]);
 
+
    return (
       <DashboardLayout>
          <Navbar />
@@ -1130,8 +1186,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
             </MDBox>
             <Card>
-               {/* with these turned on, the toolbar & pagination controls become very flaky...
-               onMouseDown={(e) => handleGridMouseDown(e)} onDoubleClick={(e) => handleGridDoubleClick(e)} */}
                <MDBox height="100%">
                   <DataGridPro
                      components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
@@ -1150,7 +1204,8 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      rowCount={totalRecords === null ? 0 : totalRecords}
                      onPageSizeChange={handleRowsPerPageChange}
                      onRowClick={handleRowClick}
-                     density="standard"
+                     onStateChange={handleStateChange}
+                     density={density}
                      loading={loading}
                      filterModel={filterModel}
                      onFilterModelChange={handleFilterChange}
