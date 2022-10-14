@@ -161,6 +161,13 @@
    height: 0.625em;
 }
 
+/* fix strange size bug on filter autocompletes */
+.MuiDataGrid-filterForm .MuiDataGrid-filterFormValueInput>.MuiBox-root>.MuiBox-root:has(>.MuiAutocomplete-root)
+{
+   margin-bottom: 0;
+   width: 100%;
+}
+
 /* google drive picker - make it be above our modal */
 .picker,
 .picker.picker-dialog-bg,
@@ -220,8 +227,14 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    background: orange;
 }
 
+.MuiTablePagination-root .MuiTablePagination-toolbar .MuiTablePagination-select
+{
+   padding-right: 1.125rem !important;
+}
+
 .MuiTablePagination-root .MuiSvgIcon-root
 {
    display: inline;
    color: gray;
+   right: 0.125rem;
 }
