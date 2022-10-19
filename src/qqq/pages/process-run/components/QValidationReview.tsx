@@ -24,7 +24,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Button, FormControlLabel, ListItem, Radio, RadioGroup, tooltipClasses, TooltipProps} from "@mui/material";
+import {Box, Button, FormControlLabel, ListItem, Radio, RadioGroup, tooltipClasses, TooltipProps} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
@@ -252,17 +252,21 @@ function QValidationReview({
                </MDBox>
             </MDTypography>
             <MDTypography color="body" variant="body2" component="div">
-               {
-                  previewRecords && previewRecords[previewRecordIndex] && step.recordListFields.map((field) => (
-                     <MDBox key={field.name} style={{marginBottom: "12px"}}>
-                        <b>{`${field.label}:`}</b>
-                        {" "}
-                        &nbsp;
-                        {" "}
-                        {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex])}
-                     </MDBox>
-                  ))
-               }
+               <Box sx={{maxHeight: "calc(100vh - 640px)", overflow: "auto", minHeight: "300px", marginRight: "-40px"}}>
+                  <Box sx={{paddingRight: "40px"}}>
+                     {
+                        previewRecords && previewRecords[previewRecordIndex] && step.recordListFields.map((field) => (
+                           <MDBox key={field.name} style={{marginBottom: "12px"}}>
+                              <b>{`${field.label}:`}</b>
+                              {" "}
+                           &nbsp;
+                              {" "}
+                              {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex])}
+                           </MDBox>
+                        ))
+                     }
+                  </Box>
+               </Box>
                {
                   previewRecords && previewRecords.length > 0 && (
                      <MDBox display="flex" justifyContent="space-between" alignItems="center">
