@@ -19,8 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {CircularProgress, FilterOptionsState} from "@mui/material";
+import {Chip, CircularProgress, FilterOptionsState, Icon} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
@@ -69,6 +71,7 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
    const [loading, setLoading] = useState(false);
    const [ switchChecked, setSwitchChecked ] = useState(false);
    const [ isDisabled, setIsDisabled ] = useState(!isEditable || bulkEditMode);
+   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    let setFieldValueRef: (field: string, value: any, shouldValidate?: boolean) => void = null;
    if(inForm)
@@ -94,6 +97,13 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
       {
          // console.log(`doing a search with ${searchTerm}`);
          const results: QPossibleValue[] = await qController.possibleValues(tableName, fieldName, searchTerm ?? "");
+
+         if(tableMetaData == null)
+         {
+            let tableMetaData: QTableMetaData = await qController.loadTableMetaData(tableName);
+            setTableMetaData(tableMetaData);
+         }
+
          setLoading(false);
          // console.log("Results:")
          // console.log(`${results}`);
@@ -151,6 +161,26 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
 
    const renderOption = (props: Object, option: any) =>
    {
+      let content = (<>{option.label}</>);
+
+      try
+      {
+         const field = tableMetaData.fields.get(fieldName)
+         if(field)
+         {
+            const adornment = field.getAdornment(AdornmentType.CHIP);
+            if(adornment)
+            {
+               const color = adornment.getValue("color." + option.id) ?? "default"
+               const iconName = adornment.getValue("icon." + option.id) ?? "circle";
+               const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
+               content = (<Chip label={option.label} color={color} icon={iconElement} size="small" variant="outlined" sx={{fontWeight: 500}} />);
+            }
+         }
+      }
+      catch(e)
+      { }
+
       ///////////////////////////////////////////////////////////////////////////////////////////////
       // we provide a custom renderOption method, to prevent a bug we saw during development,      //
       // where if multiple options had an identical label, then the widget would ... i don't know, //
@@ -160,7 +190,7 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
       ///////////////////////////////////////////////////////////////////////////////////////////////
       return (
          <li {...props} key={option.id}>
-            {option.label}
+            {content}
          </li>
       );
    }
