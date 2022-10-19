@@ -755,7 +755,7 @@ export const buildQGridPvsOperators = (tableName: string, field: QFieldMetaData)
          getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
       },
       {
-         label: "is not Empty",
+         label: "is not empty",
          value: "isNotEmpty",
          getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
       }
