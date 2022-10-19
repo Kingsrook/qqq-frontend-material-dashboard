@@ -31,10 +31,10 @@ import TableRow from "@mui/material/TableRow";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import {NavLink} from "react-router-dom";
-import DefaultCell from "layouts/dashboards/sales/components/DefaultCell";
 import DataTable, {TableDataInput} from "qqq/components/Temporary/DataTable";
 import DataTableBodyCell from "qqq/components/Temporary/DataTable/DataTableBodyCell";
 import DataTableHeadCell from "qqq/components/Temporary/DataTable/DataTableHeadCell";
+import DefaultCell from "qqq/components/Temporary/DefaultCell";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 

@@ -30,9 +30,9 @@ import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import {useEffect, useMemo, useState} from "react";
 import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
-import DefaultCell from "layouts/dashboards/sales/components/DefaultCell";
 import DataTableBodyCell from "qqq/components/Temporary/DataTable/DataTableBodyCell";
 import DataTableHeadCell from "qqq/components/Temporary/DataTable/DataTableHeadCell";
+import DefaultCell from "qqq/components/Temporary/DefaultCell";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDInput from "qqq/components/Temporary/MDInput";
 import MDPagination from "qqq/components/Temporary/MDPagination";
@@ -45,7 +45,6 @@ export interface TableDataInput
    rows: { [key: string]: any }[];
 }
 
-// Declaring props types for DataTable
 interface Props
 {
    entriesPerPage?:

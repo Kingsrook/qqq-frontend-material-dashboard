@@ -13,17 +13,16 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-// Material Dashboard 2 PRO React TS components
-import MDInput from "components/MDInput";
+import {ReactNode} from "react";
+import MDTypography from "components/MDTypography";
 
-// Declaring props types for FormField
-interface Props {
-  label: string;
-  [key: string]: any;
+function DefaultCell({children}: { children: ReactNode }): JSX.Element
+{
+   return (
+      <MDTypography variant="button" fontWeight="regular" color="text">
+         {children}
+      </MDTypography>
+   );
 }
 
-function FormField({ label, ...rest }: Props): JSX.Element {
-  return <MDInput {...rest} label={label} variant="standard" fullWidth />;
-}
-
-export default FormField;
+export default DefaultCell;
