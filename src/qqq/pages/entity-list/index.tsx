@@ -222,7 +222,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [totalRecords, setTotalRecords] = useState(0);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
-   const [columns, setColumns] = useState([] as GridColDef[]);
+   const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
    const [rows, setRows] = useState([] as GridRowsProp[]);
    const [loading, setLoading] = useState(true);
    const [alertContent, setAlertContent] = useState("");
@@ -425,61 +425,8 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       })();
    };
 
-   ///////////////////////////
-   // display count results //
-   ///////////////////////////
-   useEffect(() =>
+   const setupGridColumns = (columnsToRender: any) =>
    {
-      if (countResults[latestQueryId] === null)
-      {
-         ///////////////////////////////////////////////
-         // see same idea in displaying query results //
-         ///////////////////////////////////////////////
-         console.log(`No count results for id ${latestQueryId}...`);
-         return;
-      }
-      setTotalRecords(countResults[latestQueryId]);
-      delete countResults[latestQueryId];
-   }, [ receivedCountTimestamp ]);
-
-   ///////////////////////////
-   // display query results //
-   ///////////////////////////
-   useEffect(() =>
-   {
-      if (!queryResults[latestQueryId])
-      {
-         ///////////////////////////////////////////////////////////////////////////////////////////
-         // to avoid showing results from an "older" query (e.g., one that was slow, and returned //
-         // AFTER a newer one) only ever show results here for the latestQueryId that was issued. //
-         ///////////////////////////////////////////////////////////////////////////////////////////
-         console.log(`No query results for id ${latestQueryId}...`);
-         return;
-      }
-
-      console.log(`Outputting results for query ${latestQueryId}...`);
-      const results = queryResults[latestQueryId];
-      delete queryResults[latestQueryId];
-
-      const fields = [ ...tableMetaData.fields.values() ];
-      const rows = [] as any[];
-      const columnsToRender = {} as any;
-      results.forEach((record: QRecord) =>
-      {
-         const row: any = {};
-         fields.forEach((field) =>
-         {
-            const value = QValueUtils.getDisplayValue(field, record);
-            if (typeof value !== "string")
-            {
-               columnsToRender[field.name] = true;
-            }
-            row[field.name] = value;
-         });
-
-         rows.push(row);
-      });
-
       const sortedKeys: string[] = [];
 
       for (let i = 0; i < tableMetaData.sections.length; i++)
@@ -589,7 +536,68 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          }
       });
 
-      setColumns(columns);
+      setColumnsModel(columns);
+   };
+
+   ///////////////////////////
+   // display count results //
+   ///////////////////////////
+   useEffect(() =>
+   {
+      if (countResults[latestQueryId] === null)
+      {
+         ///////////////////////////////////////////////
+         // see same idea in displaying query results //
+         ///////////////////////////////////////////////
+         console.log(`No count results for id ${latestQueryId}...`);
+         return;
+      }
+      setTotalRecords(countResults[latestQueryId]);
+      delete countResults[latestQueryId];
+   }, [ receivedCountTimestamp ]);
+
+   ///////////////////////////
+   // display query results //
+   ///////////////////////////
+   useEffect(() =>
+   {
+      if (!queryResults[latestQueryId])
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         // to avoid showing results from an "older" query (e.g., one that was slow, and returned //
+         // AFTER a newer one) only ever show results here for the latestQueryId that was issued. //
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         console.log(`No query results for id ${latestQueryId}...`);
+         return;
+      }
+
+      console.log(`Outputting results for query ${latestQueryId}...`);
+      const results = queryResults[latestQueryId];
+      delete queryResults[latestQueryId];
+
+      const fields = [ ...tableMetaData.fields.values() ];
+      const rows = [] as any[];
+      const columnsToRender = {} as any;
+      results.forEach((record: QRecord) =>
+      {
+         const row: any = {};
+         fields.forEach((field) =>
+         {
+            const value = QValueUtils.getDisplayValue(field, record);
+            if (typeof value !== "string")
+            {
+               columnsToRender[field.name] = true;
+            }
+            row[field.name] = value;
+         });
+
+         rows.push(row);
+      });
+
+      if(columnsModel.length == 0)
+      {
+         setupGridColumns(columnsToRender);
+      }
       setRows(rows);
       setLoading(false);
       setAlertContent(null);
@@ -719,7 +727,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const handleColumnOrderChange = (columnOrderChangeParams: GridColumnOrderChangeParams) =>
    {
       // TODO: make local storaged
-      console.log(JSON.stringify(columns));
+      console.log(JSON.stringify(columnsModel));
       console.log(columnOrderChangeParams);
    };
 
@@ -786,7 +794,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                // so just doing them to match columns (which were pKey, then sorted)        //
                ///////////////////////////////////////////////////////////////////////////////
                const visibleFields: string[] = [];
-               columns.forEach((gridColumn) =>
+               columnsModel.forEach((gridColumn) =>
                {
                   const fieldName = gridColumn.field;
                   // @ts-ignore
@@ -1220,7 +1228,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      disableSelectionOnClick
                      autoHeight
                      rows={rows}
-                     columns={columns}
+                     columns={columnsModel}
                      rowBuffer={10}
                      rowCount={totalRecords === null ? 0 : totalRecords}
                      onPageSizeChange={handleRowsPerPageChange}
