@@ -629,7 +629,10 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          {
             let fullFieldList = getFullFieldList(activeStep, processValues);
             const formData = DynamicFormUtils.getFormData(fullFieldList);
-            DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData.name, null);
+            if(tableMetaData)
+            {
+               DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData.name, null);
+            }
 
             dynamicFormFields = formData.dynamicFormFields;
             formValidations = formData.formValidations;
