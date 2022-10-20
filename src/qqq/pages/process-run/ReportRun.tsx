@@ -33,8 +33,6 @@ interface Props
 
 function ReportRun({report}: Props): JSX.Element
 {
-   // const reportNameParam = useParams().reportName;
-   // const processName = process === null ? processNameParam : process.name;
    const [metaData, setMetaData] = useState(null as QInstance);
    const {pageHeader, setPageHeader} = useContext(QContext);
 
@@ -53,10 +51,7 @@ function ReportRun({report}: Props): JSX.Element
    if (metaData)
    {
       setPageHeader(report.label);
-
-      console.log(`Report Process name is ${report.processName}`);
       const process = metaData.processes.get(report.processName);
-      console.log(`Process is ${process.name}`);
       const defaultProcessValues = {reportName: report.name};
       return (<ProcessRun process={process} defaultProcessValues={defaultProcessValues} />);
    }

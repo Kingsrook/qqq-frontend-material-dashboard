@@ -235,6 +235,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
+   const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter)
 
    const instance = useRef({timer: null});
 
@@ -893,6 +894,19 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const openModalProcess = (process: QProcessMetaData = null) =>
    {
+      if (selectFullFilterState === "filter")
+      {
+         setRecordIdsForProcess(buildQFilter(filterModel));
+      }
+      else if (selectedIds.length > 0)
+      {
+         setRecordIdsForProcess(selectedIds.join(","));
+      }
+      else
+      {
+         setRecordIdsForProcess("");
+      }
+
       navigate(`${process.name}${getRecordsQueryString()}`);
       closeActionsMenu();
    };
@@ -1255,7 +1269,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             activeModalProcess &&
             <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                <div className="modalProcess">
-                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={getRecordIdsForProcess()} closeModalHandler={closeModalProcess} />
+                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
                </div>
             </Modal>
          }
