@@ -592,7 +592,24 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             row[field.name] = value;
          });
 
+         if(!row["id"])
+         {
+            row["id"] = row[tableMetaData.primaryKeyField];
+         }
+
          rows.push(row);
+      });
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // do this secondary check for columnsToRender - in case we didn't have any rows above, and our check for string isn't enough. //
+      // ... shouldn't this be just based on the field definition anyway... ?  plus adornments?                                      //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      fields.forEach((field) =>
+      {
+         if(field.possibleValueSourceName)
+         {
+            columnsToRender[field.name] = true;
+         }
       });
 
       if(columnsModel.length == 0)
@@ -872,21 +889,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       if (selectedIds.length > 0)
       {
          return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
-      }
-
-      return "";
-   }
-
-   function getRecordIdsForProcess(): string | QQueryFilter
-   {
-      if (selectFullFilterState === "filter")
-      {
-         return (buildQFilter(filterModel));
-      }
-
-      if (selectedIds.length > 0)
-      {
-         return (selectedIds.join(","));
       }
 
       return "";

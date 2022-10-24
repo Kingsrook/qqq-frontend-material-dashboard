@@ -55,6 +55,8 @@ function AppHome({app}: Props): JSX.Element
    const [reports, setReports] = useState([] as QReportMetaData[]);
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
    const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number }>());
+   const [tableCountNumbers, setTableCountNumbers] = useState(new Map<string, string>());
+   const [tableCountTexts, setTableCountTexts] = useState(new Map<string, string>());
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
@@ -113,6 +115,8 @@ function AppHome({app}: Props): JSX.Element
       setChildApps(newChildApps);
 
       const tableCounts = new Map<string, { isLoading: boolean, value: number }>();
+      const tableCountNumbers = new Map<string, string>();
+      const tableCountTexts = new Map<string, string>();
       newTables.forEach((table) =>
       {
          tableCounts.set(table.name, {isLoading: true, value: null});
@@ -122,6 +126,20 @@ function AppHome({app}: Props): JSX.Element
             const count = await qController.count(table.name);
             tableCounts.set(table.name, {isLoading: false, value: count});
             setTableCounts(tableCounts);
+
+            if(count !== null && count !== undefined)
+            {
+               tableCountNumbers.set(table.name, count.toLocaleString());
+               tableCountTexts.set(table.name, count === 1 ? "total record" : "total records");
+            }
+            else
+            {
+               tableCountNumbers.set(table.name, "--");
+               tableCountTexts.set(table.name, " ");
+            }
+            setTableCountNumbers(tableCountNumbers);
+            setTableCountTexts(tableCountTexts);
+
             setUpdatedTableCounts(new Date());
          }, 1);
       });
@@ -261,8 +279,8 @@ function AppHome({app}: Props): JSX.Element
                                                          <MDBox mb={3}>
                                                             <MiniStatisticsCard
                                                                title={{fontWeight: "bold", text: table.label}}
-                                                               count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : tableCounts.get(table.name).value.toLocaleString()}
-                                                               percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCounts.get(table.name).value === 1 ? "total record" : "total records"))}}
+                                                               count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
+                                                               percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
                                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
                                                                direction="right"
                                                             />
