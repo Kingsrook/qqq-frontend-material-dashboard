@@ -1113,7 +1113,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                   selectFullFilterState === "filter" && (
                      <div className="selectionTool">
                         All
-                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : "All"} `}</strong>
+                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : ""} `}</strong>
                         records matching this query are selected.
                         <Button onClick={() => setSelectFullFilterState("checked")}>
                            Select the

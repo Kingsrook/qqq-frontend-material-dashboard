@@ -25,7 +25,7 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Icon} from "@mui/material";
+import {Box, Icon, Typography} from "@mui/material";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
@@ -127,7 +127,7 @@ function AppHome({app}: Props): JSX.Element
             tableCounts.set(table.name, {isLoading: false, value: count});
             setTableCounts(tableCounts);
 
-            if(count !== null && count !== undefined)
+            if (count !== null && count !== undefined)
             {
                tableCountNumbers.set(table.name, count.toLocaleString());
                tableCountTexts.set(table.name, count === 1 ? "total record" : "total records");
@@ -187,9 +187,17 @@ function AppHome({app}: Props): JSX.Element
                         {app.sections.map((section) => (
                            <MDBox key={section.name} mb={3}>
                               <Card sx={{overflow: "visible"}}>
-                                 <MDBox p={3}>
-                                    <MDTypography variant="h5">{section.label}</MDTypography>
-                                 </MDBox>
+                                 <Box p={3} display="flex" alignItems="center" gap=".5rem">
+                                    {
+                                       section.icon &&
+                                       (
+                                          section.icon.path && <img src={section.icon.path} alt={section.label} />
+                                       )
+                                    }
+                                    <Typography variant="h5">
+                                       {section.label}
+                                    </Typography>
+                                 </Box>
                                  {
                                     section.processes ? (
                                        <MDBox p={3} pl={5} pt={0}>
