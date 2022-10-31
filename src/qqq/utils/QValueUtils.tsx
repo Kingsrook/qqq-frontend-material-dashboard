@@ -26,7 +26,6 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
 import {Chip, Icon} from "@mui/material";
-import {queryByTestId} from "@testing-library/react";
 import React, {Fragment} from "react";
 import {Link} from "react-router-dom";
 import QClient from "qqq/utils/QClient";
@@ -42,9 +41,9 @@ class QValueUtils
 
    private static getQInstance(): QInstance
    {
-      if(QValueUtils.qInstance == null)
+      if (QValueUtils.qInstance == null)
       {
-         if(QValueUtils.loadingQInstance)
+         if (QValueUtils.loadingQInstance)
          {
             return (null);
          }
@@ -87,20 +86,20 @@ class QValueUtils
          let href = rawValue;
 
          const toRecordFromTable = adornment.getValue("toRecordFromTable");
-         if(toRecordFromTable)
+         if (toRecordFromTable)
          {
-            if(QValueUtils.getQInstance())
+            if (QValueUtils.getQInstance())
             {
                let tablePath = QValueUtils.getQInstance().getTablePathByName(toRecordFromTable);
-               if(!tablePath)
+               if (!tablePath)
                {
                   console.log("Couldn't find path for table: " + tablePath);
                   return ("");
                }
 
-               if(!tablePath.endsWith("/"))
+               if (!tablePath.endsWith("/"))
                {
-                  tablePath += "/"
+                  tablePath += "/";
                }
                href = tablePath + rawValue;
             }
@@ -113,33 +112,33 @@ class QValueUtils
             }
          }
 
-         if(!href)
+         if (!href)
          {
             return ("");
          }
 
-         if(href.startsWith("http"))
+         if (href.startsWith("http"))
          {
-            return (<a target={adornment.getValue("target") ?? "_self"} href={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</a>)
+            return (<a target={adornment.getValue("target") ?? "_self"} href={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</a>);
          }
          else
          {
-            return (<Link target={adornment.getValue("target") ?? "_self"} to={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</Link>)
+            return (<Link target={adornment.getValue("target") ?? "_self"} to={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</Link>);
          }
       }
 
       if (field.hasAdornment(AdornmentType.CHIP))
       {
-         if(!displayValue)
+         if (!displayValue)
          {
-            return (<span/>);
+            return (<span />);
          }
 
          const adornment = field.getAdornment(AdornmentType.CHIP);
-         const color = adornment.getValue("color." + rawValue) ?? "default"
+         const color = adornment.getValue("color." + rawValue) ?? "default";
          const iconName = adornment.getValue("icon." + rawValue) ?? null;
          const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
-         return (<Chip label={displayValue} color={color} icon={iconElement}  size="small" variant="outlined" sx={{fontWeight: 500}} />);
+         return (<Chip label={displayValue} color={color} icon={iconElement} size="small" variant="outlined" sx={{fontWeight: 500}} />);
       }
 
       return (QValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
@@ -158,8 +157,7 @@ class QValueUtils
             return ("");
          }
          const date = new Date(rawValue);
-         // @ts-ignore
-         return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
+         return this.formatDateTime(date);
       }
       else if (field.type === QFieldType.DATE)
       {
@@ -183,6 +181,29 @@ class QValueUtils
       }
 
       return (returnValue);
+   }
+
+   public static formatDateTime(date: Date)
+   {
+      if(!(date instanceof Date))
+      {
+         date = new Date(date)
+      }
+      // @ts-ignore
+      return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
+   }
+
+   public static formatBoolean(value: any)
+   {
+      if(value === true)
+      {
+         return ("Yes");
+      }
+      else if(value === false)
+      {
+         return ("No");
+      }
+      return (null);
    }
 
    public static getFormattedNumber(n: number): string
@@ -221,28 +242,28 @@ class QValueUtils
 
    /*******************************************************************************
     ** Take a date-time value, and format it the way the ui's date-times want it
-    ** to be.  
+    ** to be.
     *******************************************************************************/
    public static formatDateTimeValueForForm(value: string): string
    {
-      if(value === null || value === undefined)
+      if (value === null || value === undefined)
       {
          return (value);
       }
 
-      if(value.match(/^\d{4}-\d{2}-\d{2}$/))
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/))
       {
          //////////////////////////////////////////////////////////////////
          // if we just passed in a date (w/o time), attach T00:00 to it. //
          //////////////////////////////////////////////////////////////////
-         return(value + "T00:00");
+         return (value + "T00:00");
       }
-      else if(value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
+      else if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
       {
          ///////////////////////////////////////////////////////////////////////////////////
          // if we passed in something too long (e.g., w/ seconds and fractions), trim it. //
          ///////////////////////////////////////////////////////////////////////////////////
-         return(value.substring(0, 16));
+         return (value.substring(0, 16));
       }
       else
       {
