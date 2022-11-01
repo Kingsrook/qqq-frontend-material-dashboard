@@ -20,6 +20,7 @@
  */
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -584,9 +585,10 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          const row: any = {};
          fields.forEach((field) =>
          {
-            const value = QValueUtils.getDisplayValue(field, record);
+            const value = QValueUtils.getDisplayValue(field, record, "query");
             if (typeof value !== "string")
             {
+               console.log(`Need to render [${field.name}]`);
                columnsToRender[field.name] = true;
             }
             row[field.name] = value;
@@ -1146,18 +1148,27 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         <MenuItem onClick={bulkLoadClicked}>
-            <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
-            Bulk Load
-         </MenuItem>
-         <MenuItem onClick={bulkEditClicked}>
-            <ListItemIcon><Icon>edit</Icon></ListItemIcon>
-            Bulk Edit
-         </MenuItem>
-         <MenuItem onClick={bulkDeleteClicked}>
-            <ListItemIcon><Icon>delete</Icon></ListItemIcon>
-            Bulk Delete
-         </MenuItem>
+         {
+            table.capabilities.has(Capability.TABLE_INSERT) &&
+            <MenuItem onClick={bulkLoadClicked}>
+               <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
+               Bulk Load
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_UPDATE) &&
+            <MenuItem onClick={bulkEditClicked}>
+               <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+               Bulk Edit
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_DELETE) &&
+            <MenuItem onClick={bulkDeleteClicked}>
+               <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+               Bulk Delete
+            </MenuItem>
+         }
          {tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
@@ -1165,6 +1176,13 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                {process.label}
             </MenuItem>
          ))}
+         {
+            tableProcesses.length == 0 && !table.capabilities.has(Capability.TABLE_INSERT) && !table.capabilities.has(Capability.TABLE_UPDATE) && !table.capabilities.has(Capability.TABLE_DELETE) &&
+            <MenuItem disabled>
+               <ListItemIcon><Icon>block</Icon></ListItemIcon>
+               <i>No actions available</i>
+            </MenuItem>
+         }
       </Menu>
    );
 
@@ -1226,7 +1244,10 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                   {renderActionsMenu}
                </MDBox>
 
-               <QCreateNewButton />
+               {
+                  table.capabilities.has(Capability.TABLE_INSERT) &&
+                  <QCreateNewButton />
+               }
 
             </MDBox>
             <Card>
@@ -1244,6 +1265,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      disableSelectionOnClick
                      autoHeight
                      rows={rows}
+                     // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                      columns={columnsModel}
                      rowBuffer={10}
                      rowCount={totalRecords === null ? 0 : totalRecords}

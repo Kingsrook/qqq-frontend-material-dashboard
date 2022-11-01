@@ -13,7 +13,7 @@
       "@fullcalendar/interaction": "5.10.0",
       "@fullcalendar/react": "5.10.0",
       "@fullcalendar/timegrid": "5.10.0",
-      "@kingsrook/qqq-frontend-core": "1.0.30",
+      "@kingsrook/qqq-frontend-core": "1.0.31",
       "@mui/icons-material": "5.4.1",
       "@mui/material": "5.4.1",
       "@mui/styled-engine": "5.4.1",
@@ -75,7 +75,7 @@
       "geff-ham": "rm -rf node_modules/ && rm -rf package-lock.json && npm install --legacy-peer-deps && npm start",
       "install-legacy-peer-deps": "npm install --legacy-peer-deps",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
-      "start": "react-scripts start",
+      "start": "BROWSER=none react-scripts start",
       "test": "react-scripts test",
       "cypress:open": "cypress open"
    },

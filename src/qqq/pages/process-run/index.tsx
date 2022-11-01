@@ -362,8 +362,11 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                                     {localTableSections.map((section: QTableSection, index: number) =>
                                     {
                                        const name = section.name
-                                       console.log(formData);
-                                       console.log(section.fieldNames);
+
+                                       if(section.isHidden)
+                                       {
+                                          return ;
+                                       }
 
                                        const sectionFormFields = {};
                                        for(let i = 0; i<section.fieldNames.length; i++)
@@ -424,7 +427,7 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                                        : &nbsp;
                                     </MDTypography>
                                     <MDTypography variant="button" fontWeight="regular" color="text">
-                                       {QValueUtils.getValueForDisplay(field, processValues[field.name])}
+                                       {QValueUtils.getValueForDisplay(field, processValues[field.name], "view")}
                                     </MDTypography>
                                  </MDBox>
                               ))}

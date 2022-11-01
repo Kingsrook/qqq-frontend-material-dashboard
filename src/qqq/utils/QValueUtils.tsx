@@ -25,8 +25,9 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
-import {Chip, Icon} from "@mui/material";
+import {Chip, Icon, Typography} from "@mui/material";
 import React, {Fragment} from "react";
+import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
 import QClient from "qqq/utils/QClient";
 
@@ -66,19 +67,19 @@ class QValueUtils
     ** When you have a field, and a record - call this method to get a string or
     ** element back to display the field's value.
     *******************************************************************************/
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord): string | JSX.Element
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view"): string | JSX.Element
    {
       const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
       const rawValue = record.values ? record.values.get(field.name) : undefined;
 
-      return QValueUtils.getValueForDisplay(field, rawValue, displayValue);
+      return QValueUtils.getValueForDisplay(field, rawValue, displayValue, usage);
    }
 
    /*******************************************************************************
     ** When you have a field and a value (either just a raw value, or a raw and
     ** display value), call this method to get a string Element to display.
     *******************************************************************************/
-   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue): string | JSX.Element
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view"): string | JSX.Element
    {
       if (field.hasAdornment(AdornmentType.LINK))
       {
@@ -139,6 +140,28 @@ class QValueUtils
          const iconName = adornment.getValue("icon." + rawValue) ?? null;
          const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
          return (<Chip label={displayValue} color={color} icon={iconElement} size="small" variant="outlined" sx={{fontWeight: 500}} />);
+      }
+
+      if (field.hasAdornment(AdornmentType.CODE_EDITOR))
+      {
+         if(usage === "view")
+         {
+            return (<AceEditor
+               mode="javascript"
+               theme="github"
+               name={field.name}
+               editorProps={{$blockScrolling: true}}
+               value={rawValue}
+               readOnly
+               width="100%"
+               showPrintMargin={false}
+               height="200px"
+            />);
+         }
+         else
+         {
+            return rawValue;
+         }
       }
 
       return (QValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
@@ -227,6 +250,11 @@ class QValueUtils
 
    public static breakTextIntoLines(value: string): JSX.Element
    {
+      if(!value)
+      {
+         return <Fragment />;
+      }
+
       return (
          <Fragment>
             {value.split(/\n/).map((value: string, index: number) => (

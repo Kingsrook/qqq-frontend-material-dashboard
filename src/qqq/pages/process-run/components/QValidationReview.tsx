@@ -253,7 +253,7 @@ function QValidationReview({
                               {" "}
                            &nbsp;
                               {" "}
-                              {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex])}
+                              {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex], "view")}
                            </MDBox>
                         ))
                      }

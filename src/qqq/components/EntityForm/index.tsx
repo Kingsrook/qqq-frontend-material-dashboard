@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -72,6 +73,8 @@ function EntityForm({table, id}: Props): JSX.Element
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+   const [noCapabilityError, setNoCapabilityError] = useState(null as string);
 
    const {pageHeader, setPageHeader} = useContext(QContext);
 
@@ -140,11 +143,21 @@ function EntityForm({table, id}: Props): JSX.Element
             });
 
             setFormValues(formValues);
+
+            if(!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+            {
+               setNoCapabilityError("You may not edit records in this table");
+            }
          }
          else
          {
             setFormTitle(`Creating New ${tableMetaData?.label}`);
             setPageHeader(`Creating New ${tableMetaData?.label}`);
+
+            if(!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
+            {
+               setNoCapabilityError("You may not create records in this table");
+            }
          }
          setInitialValues(initialValues);
 
@@ -167,6 +180,11 @@ function EntityForm({table, id}: Props): JSX.Element
          {
             const section = tableSections[i];
             const sectionDynamicFormFields: any[] = [];
+
+            if(section.isHidden)
+            {
+               continue;
+            }
 
             for (let j = 0; j < section.fieldNames.length; j++)
             {
@@ -276,6 +294,19 @@ function EntityForm({table, id}: Props): JSX.Element
    };
 
    const formId = id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
+
+   if(noCapabilityError)
+   {
+      return <MDBox mb={3}>
+         <Grid container spacing={3}>
+            <Grid item xs={12}>
+               <MDBox mb={3}>
+                  <Alert severity="error">{noCapabilityError}</Alert>
+               </MDBox>
+            </Grid>
+         </Grid>
+      </MDBox>;
+   }
 
    return (
       <MDBox mb={3}>

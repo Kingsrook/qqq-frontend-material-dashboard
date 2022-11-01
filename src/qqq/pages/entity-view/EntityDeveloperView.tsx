@@ -423,7 +423,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                     </Card>
 
                                     {
-                                       associatedScripts.map((object) =>
+                                       associatedScripts && associatedScripts.map((object) =>
                                        {
                                           let fieldName = object.associatedScript?.fieldName;
                                           let field = tableMetaData.fields.get(fieldName);

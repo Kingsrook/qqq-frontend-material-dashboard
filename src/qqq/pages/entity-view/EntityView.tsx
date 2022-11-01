@@ -20,6 +20,7 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
@@ -234,6 +235,11 @@ function EntityView({table, launchProcess}: Props): JSX.Element
          for (let i = 0; i < tableSections.length; i++)
          {
             const section = tableSections[i];
+            if(section.isHidden)
+            {
+               continue;
+            }
+
             sectionFieldElements.set(
                section.name,
                <MDBox key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
@@ -244,7 +250,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                               {tableMetaData.fields.get(fieldName).label}:
                            </MDTypography>
                            <MDTypography variant="button" fontWeight="regular" color="text">
-                              {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record)}
+                              {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
                            </MDTypography>
                         </MDBox>
                      ))
@@ -313,27 +319,33 @@ function EntityView({table, launchProcess}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         <MenuItem onClick={() => navigate("edit")}>
-            <ListItemIcon><Icon>edit</Icon></ListItemIcon>
-            Edit
-         </MenuItem>
-         <MenuItem onClick={() =>
          {
-            setActionsMenu(null);
-            handleClickDeleteButton();
-         }}
-         >
-            <ListItemIcon><Icon>delete</Icon></ListItemIcon>
-            Delete
-         </MenuItem>
-         {tableProcesses.length > 0 && <Divider />}
+            table.capabilities.has(Capability.TABLE_UPDATE) &&
+            <MenuItem onClick={() => navigate("edit")}>
+               <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+               Edit
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_DELETE) &&
+            <MenuItem onClick={() =>
+            {
+               setActionsMenu(null);
+               handleClickDeleteButton();
+            }}
+            >
+               <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+               Delete
+            </MenuItem>
+         }
+         {tableProcesses.length > 0 && (table.capabilities.has(Capability.TABLE_UPDATE) || table.capabilities.has(Capability.TABLE_DELETE)) && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
                {process.label}
             </MenuItem>
          ))}
-         <Divider />
+         {tableProcesses.length > 0 && <Divider />}
          <MenuItem onClick={() => navigate("dev")}>
             <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
             Developer Mode
@@ -433,8 +445,12 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                                     )) : null}
                                     <MDBox component="form" p={3}>
                                        <Grid container justifyContent="flex-end" spacing={3}>
-                                          <QDeleteButton onClickHandler={handleClickDeleteButton} />
-                                          <QEditButton />
+                                          {
+                                             table.capabilities.has(Capability.TABLE_DELETE) && <QDeleteButton onClickHandler={handleClickDeleteButton} />
+                                          }
+                                          {
+                                             table.capabilities.has(Capability.TABLE_UPDATE) && <QEditButton />
+                                          }
                                        </Grid>
                                     </MDBox>
 

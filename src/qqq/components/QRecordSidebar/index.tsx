@@ -59,6 +59,11 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
    const sidebarEntries = [] as SidebarEntry[];
    tableSections && tableSections.forEach((section, index) =>
    {
+      if(section.isHidden)
+      {
+         return;
+      }
+
       if (index === 1 && widgetMetaDataList)
       {
          widgetMetaDataList.forEach((widget) =>
