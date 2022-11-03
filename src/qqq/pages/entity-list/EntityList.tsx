@@ -985,7 +985,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    // @ts-ignore
    const defaultLabelDisplayedRows = ({from, to, count}) =>
    {
-      console.log(`In defaultLabelDisplayedRows with ${from} ${to} ${count}`);
       if(tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
       {
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1190,7 +1189,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                Bulk Delete
             </MenuItem>
          }
-         {tableProcesses.length > 0 && <Divider />}
+         {(table.capabilities.has(Capability.TABLE_INSERT) || table.capabilities.has(Capability.TABLE_UPDATE) ||  table.capabilities.has(Capability.TABLE_DELETE)) && tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
