@@ -35,6 +35,7 @@ import Tooltip from "@mui/material/Tooltip";
 import React, {useState} from "react";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
+import CustomWidthTooltip from "qqq/components/CustomWidthTooltip/CustomWidthTooltip";
 import {ProcessSummaryLine} from "qqq/pages/process-run/model/ProcessSummaryLine";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
@@ -86,15 +87,6 @@ function QValidationReview({
 
       setPreviewRecordIndex(newIndex);
    };
-
-   const CustomWidthTooltip = styled(({className, ...props}: TooltipProps) => (
-      <Tooltip {...props} classes={{popper: className}} />
-   ))({
-      [`& .${tooltipClasses.tooltip}`]: {
-         maxWidth: 500,
-         textAlign: "left",
-      },
-   });
 
    const buildDoFullValidationRadioListItem = (value: "true" | "false", labelText: string, tooltipHTML: JSX.Element): JSX.Element =>
    {
@@ -261,7 +253,7 @@ function QValidationReview({
                               {" "}
                            &nbsp;
                               {" "}
-                              {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex])}
+                              {QValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex], "view")}
                            </MDBox>
                         ))
                      }

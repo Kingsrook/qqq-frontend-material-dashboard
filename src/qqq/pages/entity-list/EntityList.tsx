@@ -20,6 +20,7 @@
  */
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -219,7 +220,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
-   const [totalRecords, setTotalRecords] = useState(0);
+   const [totalRecords, setTotalRecords] = useState(null);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
    const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
@@ -384,12 +385,15 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          setLatestQueryId(thisQueryId);
 
          console.log(`Issuing query: ${thisQueryId}`);
-         qController.count(tableName, qFilter).then((count) =>
+         if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
-            countResults[thisQueryId] = count;
-            setCountResults(countResults);
-            setReceivedCountTimestamp(new Date());
-         });
+            qController.count(tableName, qFilter).then((count) =>
+            {
+               countResults[thisQueryId] = count;
+               setCountResults(countResults);
+               setReceivedCountTimestamp(new Date());
+            });
+         }
 
          qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage).then((results) =>
          {
@@ -584,7 +588,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          const row: any = {};
          fields.forEach((field) =>
          {
-            const value = QValueUtils.getDisplayValue(field, record);
+            const value = QValueUtils.getDisplayValue(field, record, "query");
             if (typeof value !== "string")
             {
                columnsToRender[field.name] = true;
@@ -592,7 +596,24 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             row[field.name] = value;
          });
 
+         if(!row["id"])
+         {
+            row["id"] = row[tableMetaData.primaryKeyField];
+         }
+
          rows.push(row);
+      });
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // do this secondary check for columnsToRender - in case we didn't have any rows above, and our check for string isn't enough. //
+      // ... shouldn't this be just based on the field definition anyway... ?  plus adornments?                                      //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      fields.forEach((field) =>
+      {
+         if(field.possibleValueSourceName)
+         {
+            columnsToRender[field.name] = true;
+         }
       });
 
       if(columnsModel.length == 0)
@@ -877,21 +898,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       return "";
    }
 
-   function getRecordIdsForProcess(): string | QQueryFilter
-   {
-      if (selectFullFilterState === "filter")
-      {
-         return (buildQFilter(filterModel));
-      }
-
-      if (selectedIds.length > 0)
-      {
-         return (selectedIds.join(","));
-      }
-
-      return "";
-   }
-
    const openModalProcess = (process: QProcessMetaData = null) =>
    {
       if (selectFullFilterState === "filter")
@@ -979,7 +985,23 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    // @ts-ignore
    const defaultLabelDisplayedRows = ({from, to, count}) =>
    {
-      if (count !== null && count !== undefined)
+      if(tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // to avoid a non-countable table showing (this is what data-grid did) 91-100 even if there were only 95 records, //
+         // we'll do this... not quite good enough, but better than the original                                           //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(rows.length > 0 && rows.length < to - from)
+         {
+            to = from + rows.length;
+         }
+         return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()}`);
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // treat -1 as the sentinel that it's set as below -- remember, we did that so that 'to' would have a value in here when there's no count. //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      if (count !== null && count !== undefined && count !== -1)
       {
          if (count === 0)
          {
@@ -998,7 +1020,9 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       return (
          <TablePagination
             component="div"
-            count={totalRecords === null ? 0 : totalRecords}
+            // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
+            // so pass some sentinel value...
+            count={totalRecords === null ? -1 : totalRecords}
             page={pageNumber}
             rowsPerPageOptions={[ 10, 25, 50, 100, 250 ]}
             rowsPerPage={rowsPerPage}
@@ -1111,7 +1135,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                   selectFullFilterState === "filter" && (
                      <div className="selectionTool">
                         All
-                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : "All"} `}</strong>
+                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : ""} `}</strong>
                         records matching this query are selected.
                         <Button onClick={() => setSelectFullFilterState("checked")}>
                            Select the
@@ -1144,25 +1168,41 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         <MenuItem onClick={bulkLoadClicked}>
-            <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
-            Bulk Load
-         </MenuItem>
-         <MenuItem onClick={bulkEditClicked}>
-            <ListItemIcon><Icon>edit</Icon></ListItemIcon>
-            Bulk Edit
-         </MenuItem>
-         <MenuItem onClick={bulkDeleteClicked}>
-            <ListItemIcon><Icon>delete</Icon></ListItemIcon>
-            Bulk Delete
-         </MenuItem>
-         {tableProcesses.length > 0 && <Divider />}
+         {
+            table.capabilities.has(Capability.TABLE_INSERT) &&
+            <MenuItem onClick={bulkLoadClicked}>
+               <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
+               Bulk Load
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_UPDATE) &&
+            <MenuItem onClick={bulkEditClicked}>
+               <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+               Bulk Edit
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_DELETE) &&
+            <MenuItem onClick={bulkDeleteClicked}>
+               <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+               Bulk Delete
+            </MenuItem>
+         }
+         {(table.capabilities.has(Capability.TABLE_INSERT) || table.capabilities.has(Capability.TABLE_UPDATE) ||  table.capabilities.has(Capability.TABLE_DELETE)) && tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
                {process.label}
             </MenuItem>
          ))}
+         {
+            tableProcesses.length == 0 && !table.capabilities.has(Capability.TABLE_INSERT) && !table.capabilities.has(Capability.TABLE_UPDATE) && !table.capabilities.has(Capability.TABLE_DELETE) &&
+            <MenuItem disabled>
+               <ListItemIcon><Icon>block</Icon></ListItemIcon>
+               <i>No actions available</i>
+            </MenuItem>
+         }
       </Menu>
    );
 
@@ -1224,7 +1264,10 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                   {renderActionsMenu}
                </MDBox>
 
-               <QCreateNewButton />
+               {
+                  table.capabilities.has(Capability.TABLE_INSERT) &&
+                  <QCreateNewButton />
+               }
 
             </MDBox>
             <Card>
@@ -1242,6 +1285,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                      disableSelectionOnClick
                      autoHeight
                      rows={rows}
+                     // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                      columns={columnsModel}
                      rowBuffer={10}
                      rowCount={totalRecords === null ? 0 : totalRecords}

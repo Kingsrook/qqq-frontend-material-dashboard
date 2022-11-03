@@ -48,7 +48,8 @@ import Overview from "qqq/pages/dashboards/Overview";
 import EntityCreate from "qqq/pages/entity-create";
 import EntityEdit from "qqq/pages/entity-edit";
 import EntityList from "qqq/pages/entity-list";
-import EntityView from "qqq/pages/entity-view";
+import EntityDeveloperView from "qqq/pages/entity-view/EntityDeveloperView";
+import EntityView from "qqq/pages/entity-view/EntityView";
 import ProcessRun from "qqq/pages/process-run";
 import ReportRun from "qqq/pages/process-run/ReportRun";
 import QClient from "qqq/utils/QClient";
@@ -260,6 +261,13 @@ export default function App()
                   key: `${app.name}.edit`,
                   route: `${path}/:id/edit`,
                   component: <EntityEdit table={table} />,
+               });
+
+               routeList.push({
+                  name: `${app.label}`,
+                  key: `${app.name}.dev`,
+                  route: `${path}/:id/dev`,
+                  component: <EntityDeveloperView table={table} />,
                });
 
                const processesForTable = QProcessUtils.getProcessesForTable(metaData, table.name, true);

@@ -18,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
@@ -25,7 +26,7 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Icon} from "@mui/material";
+import {Box, Icon, Typography} from "@mui/material";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
@@ -55,6 +56,8 @@ function AppHome({app}: Props): JSX.Element
    const [reports, setReports] = useState([] as QReportMetaData[]);
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
    const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number }>());
+   const [tableCountNumbers, setTableCountNumbers] = useState(new Map<string, string>());
+   const [tableCountTexts, setTableCountTexts] = useState(new Map<string, string>());
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
@@ -113,15 +116,41 @@ function AppHome({app}: Props): JSX.Element
       setChildApps(newChildApps);
 
       const tableCounts = new Map<string, { isLoading: boolean, value: number }>();
+      const tableCountNumbers = new Map<string, string>();
+      const tableCountTexts = new Map<string, string>();
       newTables.forEach((table) =>
       {
          tableCounts.set(table.name, {isLoading: true, value: null});
 
          setTimeout(async () =>
          {
-            const count = await qController.count(table.name);
-            tableCounts.set(table.name, {isLoading: false, value: count});
+            const tableMetaData = await qController.loadTableMetaData(table.name);
+            let countResult = null;
+            if(tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+            {
+               countResult = await qController.count(table.name);
+
+               if (countResult !== null && countResult !== undefined)
+               {
+                  tableCountNumbers.set(table.name, countResult.toLocaleString());
+                  tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+               }
+               else
+               {
+                  tableCountNumbers.set(table.name, "--");
+                  tableCountTexts.set(table.name, " ");
+               }
+            }
+            else
+            {
+               tableCountNumbers.set(table.name, "–");
+               tableCountTexts.set(table.name, " ");
+            }
+
+            tableCounts.set(table.name, {isLoading: false, value: countResult});
             setTableCounts(tableCounts);
+            setTableCountNumbers(tableCountNumbers);
+            setTableCountTexts(tableCountTexts);
             setUpdatedTableCounts(new Date());
          }, 1);
       });
@@ -169,9 +198,17 @@ function AppHome({app}: Props): JSX.Element
                         {app.sections.map((section) => (
                            <MDBox key={section.name} mb={3}>
                               <Card sx={{overflow: "visible"}}>
-                                 <MDBox p={3}>
-                                    <MDTypography variant="h5">{section.label}</MDTypography>
-                                 </MDBox>
+                                 <Box p={3} display="flex" alignItems="center" gap=".5rem">
+                                    {
+                                       section.icon &&
+                                       (
+                                          section.icon.path && <img src={section.icon.path} alt={section.label} />
+                                       )
+                                    }
+                                    <Typography variant="h5">
+                                       {section.label}
+                                    </Typography>
+                                 </Box>
                                  {
                                     section.processes ? (
                                        <MDBox p={3} pl={5} pt={0}>
@@ -261,8 +298,8 @@ function AppHome({app}: Props): JSX.Element
                                                          <MDBox mb={3}>
                                                             <MiniStatisticsCard
                                                                title={{fontWeight: "bold", text: table.label}}
-                                                               count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : tableCounts.get(table.name).value.toLocaleString()}
-                                                               percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCounts.get(table.name).value === 1 ? "total record" : "total records"))}}
+                                                               count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
+                                                               percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
                                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
                                                                direction="right"
                                                             />
