@@ -220,7 +220,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
-   const [totalRecords, setTotalRecords] = useState(0);
+   const [totalRecords, setTotalRecords] = useState(null);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
    const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
@@ -385,12 +385,15 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          setLatestQueryId(thisQueryId);
 
          console.log(`Issuing query: ${thisQueryId}`);
-         qController.count(tableName, qFilter).then((count) =>
+         if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
-            countResults[thisQueryId] = count;
-            setCountResults(countResults);
-            setReceivedCountTimestamp(new Date());
-         });
+            qController.count(tableName, qFilter).then((count) =>
+            {
+               countResults[thisQueryId] = count;
+               setCountResults(countResults);
+               setReceivedCountTimestamp(new Date());
+            });
+         }
 
          qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage).then((results) =>
          {
@@ -588,7 +591,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
             const value = QValueUtils.getDisplayValue(field, record, "query");
             if (typeof value !== "string")
             {
-               console.log(`Need to render [${field.name}]`);
                columnsToRender[field.name] = true;
             }
             row[field.name] = value;
@@ -983,7 +985,24 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    // @ts-ignore
    const defaultLabelDisplayedRows = ({from, to, count}) =>
    {
-      if (count !== null && count !== undefined)
+      console.log(`In defaultLabelDisplayedRows with ${from} ${to} ${count}`);
+      if(tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // to avoid a non-countable table showing (this is what data-grid did) 91-100 even if there were only 95 records, //
+         // we'll do this... not quite good enough, but better than the original                                           //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(rows.length > 0 && rows.length < to - from)
+         {
+            to = from + rows.length;
+         }
+         return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()}`);
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // treat -1 as the sentinel that it's set as below -- remember, we did that so that 'to' would have a value in here when there's no count. //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      if (count !== null && count !== undefined && count !== -1)
       {
          if (count === 0)
          {
@@ -1002,7 +1021,9 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       return (
          <TablePagination
             component="div"
-            count={totalRecords === null ? 0 : totalRecords}
+            // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
+            // so pass some sentinel value...
+            count={totalRecords === null ? -1 : totalRecords}
             page={pageNumber}
             rowsPerPageOptions={[ 10, 25, 50, 100, 250 ]}
             rowsPerPage={rowsPerPage}

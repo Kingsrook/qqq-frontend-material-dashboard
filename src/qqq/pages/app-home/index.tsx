@@ -18,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
@@ -123,23 +124,33 @@ function AppHome({app}: Props): JSX.Element
 
          setTimeout(async () =>
          {
-            const count = await qController.count(table.name);
-            tableCounts.set(table.name, {isLoading: false, value: count});
-            setTableCounts(tableCounts);
-
-            if (count !== null && count !== undefined)
+            const tableMetaData = await qController.loadTableMetaData(table.name);
+            let countResult = null;
+            if(tableMetaData.capabilities.has(Capability.TABLE_COUNT))
             {
-               tableCountNumbers.set(table.name, count.toLocaleString());
-               tableCountTexts.set(table.name, count === 1 ? "total record" : "total records");
+               countResult = await qController.count(table.name);
+
+               if (countResult !== null && countResult !== undefined)
+               {
+                  tableCountNumbers.set(table.name, countResult.toLocaleString());
+                  tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+               }
+               else
+               {
+                  tableCountNumbers.set(table.name, "--");
+                  tableCountTexts.set(table.name, " ");
+               }
             }
             else
             {
-               tableCountNumbers.set(table.name, "--");
+               tableCountNumbers.set(table.name, "–");
                tableCountTexts.set(table.name, " ");
             }
+
+            tableCounts.set(table.name, {isLoading: false, value: countResult});
+            setTableCounts(tableCounts);
             setTableCountNumbers(tableCountNumbers);
             setTableCountTexts(tableCountTexts);
-
             setUpdatedTableCounts(new Date());
          }, 1);
       });
