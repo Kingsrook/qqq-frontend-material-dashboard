@@ -314,6 +314,18 @@ function EntityList({table, launchProcess}: Props): JSX.Element
          let foundFilter = false;
          filterModel.items.forEach((item) =>
          {
+            /////////////////////////////////////////////////////////////////////////
+            // set the values for these operators that otherwise don't have values //
+            /////////////////////////////////////////////////////////////////////////
+            if(item.operatorValue === "isTrue")
+            {
+               item.value = [true];
+            }
+            else if(item.operatorValue === "isFalse")
+            {
+               item.value = [false];
+            }
+
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
@@ -858,7 +870,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                         }, 1);
                      </script>
                   </head>
-                  <body>Generating file <u>${filename}</u> with ${totalRecords.toLocaleString()} records...</body>
+                  <body>Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + "records" : ""}...</body>
                </html>`);
 
                ///////////////////////////////////////////
