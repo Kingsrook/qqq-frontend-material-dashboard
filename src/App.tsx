@@ -47,7 +47,7 @@ import CarrierPerformance from "qqq/pages/dashboards/CarrierPerformance";
 import Overview from "qqq/pages/dashboards/Overview";
 import EntityCreate from "qqq/pages/entity-create";
 import EntityEdit from "qqq/pages/entity-edit";
-import EntityList from "qqq/pages/entity-list";
+import EntityList from "qqq/pages/entity-list/EntityList";
 import EntityDeveloperView from "qqq/pages/entity-view/EntityDeveloperView";
 import EntityView from "qqq/pages/entity-view/EntityView";
 import ProcessRun from "qqq/pages/process-run";
