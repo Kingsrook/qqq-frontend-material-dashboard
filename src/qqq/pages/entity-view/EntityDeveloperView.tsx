@@ -20,6 +20,7 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Chip, Icon, ListItem, ListItemAvatar, Typography} from "@mui/material";
@@ -35,31 +36,26 @@ import ListItemText from "@mui/material/ListItemText";
 import Modal from "@mui/material/Modal";
 import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
 import Tabs from "@mui/material/Tabs";
-import TextField from "@mui/material/TextField";
 import React, {useContext, useReducer, useState} from "react";
 import AceEditor from "react-ace";
 import {useParams} from "react-router-dom";
 import QContext from "QContext";
 import BaseLayout from "qqq/components/BaseLayout";
 import CustomWidthTooltip from "qqq/components/CustomWidthTooltip/CustomWidthTooltip";
-import DataTableBodyCell from "qqq/components/Temporary/DataTable/DataTableBodyCell";
-import DataTableHeadCell from "qqq/components/Temporary/DataTable/DataTableHeadCell";
 import MDBox from "qqq/components/Temporary/MDBox";
 import AssociatedScriptEditor from "qqq/pages/entity-view/AssociatedScriptEditor";
+import ScriptLogsView from "qqq/pages/entity-view/ScriptLogsView";
+import ScriptTestForm from "qqq/pages/entity-view/ScriptTestForm";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
+import ScriptDocsForm from "./ScriptDocsForm";
 
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
-
 
 const qController = QClient.getInstance();
 
@@ -119,6 +115,8 @@ function EntityDeveloperView({table}: Props): JSX.Element
    const [selectedTabs, setSelectedTabs] = useState({} as any);
    const [viewingRevisions, setViewingRevisions] = useState({} as any);
    const [scriptLogs, setScriptLogs] = useState({} as any);
+   const [testInputValues, setTestInputValues] = useState({} as any);
+   const [testOutputValues, setTestOutputValues] = useState({} as any);
 
    const [editingScript, setEditingScript] = useState(null as any);
    const [alertText, setAlertText] = useState(null as string);
@@ -156,6 +154,23 @@ function EntityDeveloperView({table}: Props): JSX.Element
             setRecord(record);
 
             setAssociatedScripts(developerModeData.associatedScripts);
+
+            const testInputValues = {};
+            const testOutputValues = {};
+            console.log("@dk - here");
+            console.log(developerModeData.associatedScripts);
+            developerModeData.associatedScripts.forEach((object: any) =>
+            {
+               const fieldName = object.associatedScript.fieldName;
+
+               // @ts-ignore
+               testInputValues[fieldName] = {};
+
+               // @ts-ignore
+               testOutputValues[fieldName] = {};
+            });
+            setTestInputValues(testInputValues);
+            setTestOutputValues(testOutputValues);
 
             const recordJSONObject = {} as any;
             for (let key of record.values.keys())
@@ -208,13 +223,42 @@ function EntityDeveloperView({table}: Props): JSX.Element
       return color;
    };
 
-   const editScript = (fieldName: string, code: string) =>
+   const editScript = (fieldName: string, code: string, object: any) =>
    {
       const editingScript = {} as any;
       editingScript.fieldName = fieldName;
       editingScript.titlePrefix = code ? "Editing Script" : "Creating New Script";
       editingScript.code = code;
+      editingScript.scriptDefinitionObject = object;
       setEditingScript(editingScript);
+   };
+
+   const testScript = (object: any, fieldName: string) =>
+   {
+      const viewingRevisionArray = object.scriptRevisions?.filter((rev: any) => rev?.values?.id === viewingRevisions[fieldName]);
+      const code = viewingRevisionArray?.length > 0 ? viewingRevisionArray[0].values.contents : "";
+
+      const inputValues = new Map<string, any>();
+      if (object.testInputFields)
+      {
+         object.testInputFields.forEach((field: QFieldMetaData) =>
+         {
+            console.log(`${field.name} = ${testInputValues[fieldName][field.name]}`)
+            inputValues.set(field.name, testInputValues[fieldName][field.name]);
+         });
+      }
+
+      const newTestOutputValues = JSON.parse(JSON.stringify(testOutputValues));
+      newTestOutputValues[fieldName] = {};
+      setTestOutputValues(newTestOutputValues);
+
+      (async () =>
+      {
+         const output = await qController.testScript(tableName, id, fieldName, code, inputValues);
+         const newTestOutputValues = JSON.parse(JSON.stringify(testOutputValues));
+         newTestOutputValues[fieldName] = output.outputValues;
+         setTestOutputValues(newTestOutputValues);
+      })();
    };
 
    const closeEditingScript = (event: object, reason: string, alert: string = null) =>
@@ -256,7 +300,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
       scriptLogs[revisionId] = null;
       setScriptLogs(scriptLogs);
 
-      loadRevisionLogs(fieldName, revisionId)
+      loadRevisionLogs(fieldName, revisionId);
 
       forceUpdate();
    };
@@ -276,7 +320,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
          setScriptLogs(scriptLogs);
          forceUpdate();
       })();
-   }
+   };
 
    function getRevisionsList(scriptRevisions: any, fieldName: any, currentScriptRevisionId: any)
    {
@@ -333,54 +377,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
          return <Typography variant="body2" p={3}>No logs available for this version.</Typography>;
       }
 
-      return (
-         <TableContainer sx={{boxShadow: "none"}}>
-            <Table>
-               <Box component="thead">
-                  <TableRow key="header">
-                     <DataTableHeadCell sorted={false}>Timestamp</DataTableHeadCell>
-                     <DataTableHeadCell sorted={false} align="right">Run Time (ms)</DataTableHeadCell>
-                     <DataTableHeadCell sorted={false}>Had Error?</DataTableHeadCell>
-                     <DataTableHeadCell sorted={false}>Input</DataTableHeadCell>
-                     <DataTableHeadCell sorted={false}>Output</DataTableHeadCell>
-                     <DataTableHeadCell sorted={false}>Logs</DataTableHeadCell>
-                  </TableRow>
-               </Box>
-               <TableBody>
-                  {
-                     logs.map((logRecord) =>
-                     {
-                        let logs = "";
-                        if (logRecord.values.scriptLogLine)
-                        {
-                           for (let i = 0; i < logRecord.values.scriptLogLine.length; i++)
-                           {
-                              console.log(" += " + i);
-                              logs += (logRecord.values.scriptLogLine[i].values.text + "\n");
-                           }
-                        }
-
-                        return (
-                           <TableRow key={logRecord.values.id}>
-                              <DataTableBodyCell>{QValueUtils.formatDateTime(logRecord.values.startTimestamp)}</DataTableBodyCell>
-                              <DataTableBodyCell align="right">{logRecord.values.runTimeMillis?.toLocaleString()}</DataTableBodyCell>
-                              <DataTableBodyCell>
-                                 <div style={{color: logRecord.values.hadError ? "red" : "auto"}}>{QValueUtils.formatBoolean(logRecord.values.hadError)}</div>
-                              </DataTableBodyCell>
-                              <DataTableBodyCell>{logRecord.values.input}</DataTableBodyCell>
-                              <DataTableBodyCell>
-                                 {logRecord.values.output}
-                                 {logRecord.values.error}
-                              </DataTableBodyCell>
-                              <DataTableBodyCell>{logs}</DataTableBodyCell>
-                           </TableRow>
-                        );
-                     })
-                  }
-               </TableBody>
-            </Table>
-         </TableContainer>
-      );
+      return (<ScriptLogsView logs={logs} />);
    }
 
    return (
@@ -440,7 +437,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                              console.log(`Defaulting revision for ${fieldName} to ${currentScriptRevisionId}`);
                                              viewingRevisions[fieldName] = currentScriptRevisionId;
 
-                                             if(!scriptLogs[currentScriptRevisionId])
+                                             if (!scriptLogs[currentScriptRevisionId])
                                              {
                                                 loadRevisionLogs(fieldName, currentScriptRevisionId);
                                              }
@@ -508,7 +505,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                                                </Typography>
                                                             }
                                                             <CustomWidthTooltip title={editButtonTooltip}>
-                                                               <Button sx={{py: 0}} onClick={() => editScript(fieldName, code)}>
+                                                               <Button sx={{py: 0}} onClick={() => editScript(fieldName, code, object)}>
                                                                   {editButtonText}
                                                                </Button>
                                                             </CustomWidthTooltip>
@@ -521,6 +518,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                                                      theme="github"
                                                                      name={`view-${fieldName}`}
                                                                      readOnly
+                                                                     highlightActiveLine={false}
                                                                      editorProps={{$blockScrolling: true}}
                                                                      width="100%"
                                                                      height="400px"
@@ -551,71 +549,15 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                                    </Grid>
                                                 </TabPanel>
                                                 <TabPanel index={2} value={selectedTabs[fieldName]}>
-                                                   <Grid container height="440px" spacing={2}>
-                                                      <Grid item xs={6}>
-                                                         <Box gap={2} pb={1} height="40px" px={2}>
-                                                            <Card sx={{width: "100%", height: "400px"}}>
-                                                               <Box width="100%">
-                                                                  <Typography variant="h6" p={2}>Test Input</Typography>
-                                                                  <Box px={2} pb={2}>
-                                                                     <TextField id="testInput1" label="Ship To Zip" variant="standard" fullWidth sx={{mb: 2}} />
-                                                                     <TextField id="testInput1" label="No of Cartons" variant="standard" fullWidth sx={{mb: 2}} />
-                                                                  </Box>
-                                                                  <div style={{float: "right"}}>
-                                                                     <Button>Submit</Button>
-                                                                  </div>
-                                                               </Box>
-                                                            </Card>
-                                                         </Box>
-                                                      </Grid>
-                                                      <Grid item xs={6}>
-                                                         <Box gap={2} pb={1} height="40px">
-                                                            <Card sx={{width: "100%", height: "400px"}}>
-                                                               <Typography variant="h6" pl={3}>Test Output</Typography>
-                                                            </Card>
-                                                         </Box>
-                                                      </Grid>
-                                                   </Grid>
+                                                   <Box sx={{height: "455px"}} px={2} pb={1}>
+                                                      <ScriptTestForm scriptDefinition={object} tableName={tableName} fieldName={fieldName} recordId={id} code={code} />
+                                                   </Box>
                                                 </TabPanel>
+
                                                 <TabPanel index={3} value={selectedTabs[fieldName]}>
-                                                   <Grid container height="440px">
-                                                      <Grid item xs={12}>
-                                                         <Box gap={2} pb={1} pl={3}>
-                                                            <Box pb={1}>
-                                                               <Typography variant="h6">Documentation</Typography>
-                                                            </Box>
-                                                            <Box sx={{overflow: "auto"}} className="devDocumentation">
-                                                               <Typography variant="body2" sx={{maxWidth: "1200px", margin: "auto"}}>
-                                                                  <p>A <b>Deposco Order Optimization Batch Name Script</b> is called when an order is being
-                                                                     optimized for shipping within Deposco. It is responsible for determining the order&apos;s&nbsp;
-                                                                  <b>Batch Name</b> - in other words, an indication of what day the order should be shipped,
-                                                                     and whether or not the order is a line haul.</p>
-
-                                                                  <p><b>Input</b></p>
-                                                                  <p>The input to this type of script is an object named <code>input</code>, with the following fields:</p>
-                                                                  <ul>
-                                                                     <li><code>warehouseId</code> The id of the warehouse that the order is shipping from. See the <b>Warehouse</b> table for mappings.</li>
-                                                                     <li><code>shipToZipCode</code> The zip code that the order is shipping to.</li>
-                                                                     <li><code>estimatedNoOfCartons</code> The estimated number of cartons that the order will ship in.</li>
-                                                                  </ul>
-
-                                                                  <p><b>Output</b></p>
-                                                                  <p>The script is responsible only for outputting a single value - a <code>string</code> which will be set as the order&apos;s&nbsp;
-                                                                     <b>Batch Name</b> in Deposco.</p>
-
-                                                                  <p><b>Example</b></p>
-                                                                  <code style={{whiteSpace: "pre-wrap"}}>
-                                                                     if(today.weekday == 1)
-                                                                     (
-                                                                     return &quot;TUE-Line-Haul&quot;
-                                                                     )
-                                                                  </code>
-
-                                                               </Typography>
-                                                            </Box>
-                                                         </Box>
-                                                      </Grid>
-                                                   </Grid>
+                                                   <Box sx={{height: "455px"}} px={2} pb={1}>
+                                                      <ScriptDocsForm helpText={object.scriptType.values.helpText} exampleCode={object.scriptType.values.sampleCode} />
+                                                   </Box>
                                                 </TabPanel>
                                              </Card>
                                           );
@@ -629,6 +571,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                                  editingScript &&
                                  <Modal open={editingScript as boolean} onClose={(event, reason) => closeEditingScript(event, reason)}>
                                     <AssociatedScriptEditor
+                                       scriptDefinition={editingScript.scriptDefinitionObject}
                                        tableName={tableName}
                                        primaryKey={id}
                                        fieldName={editingScript.fieldName}

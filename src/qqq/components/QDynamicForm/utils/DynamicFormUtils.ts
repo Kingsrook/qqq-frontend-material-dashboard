@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import * as Yup from "yup";
@@ -73,6 +74,17 @@ class DynamicFormUtils
             fieldType = "text";
       }
 
+      let more: any = {};
+      if (field.hasAdornment(AdornmentType.CODE_EDITOR))
+      {
+         fieldType = "ace";
+         const values = field.getAdornment(AdornmentType.CODE_EDITOR).values;
+         if (values.has("languageMode"))
+         {
+            more.languageMode = values.get("languageMode");
+         }
+      }
+
       let label = field.label ? field.label : field.name;
       label += field.isRequired ? " *" : "";
 
@@ -84,6 +96,7 @@ class DynamicFormUtils
          type: fieldType,
          displayFormat: field.displayFormat,
          // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
+         ...more
       });
    }
 

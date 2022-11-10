@@ -847,7 +847,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                // construct the url for the export //
                //////////////////////////////////////
                const d = new Date();
-               const dateString = `${d.getFullYear()}-${zp(d.getMonth())}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+               const dateString = `${d.getFullYear()}-${zp(d.getMonth()+1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
                const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(filterModel)))}&fields=${visibleFields.join(",")}`;
 
@@ -870,7 +870,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
                         }, 1);
                      </script>
                   </head>
-                  <body>Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + "records" : ""}...</body>
+                  <body>Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...</body>
                </html>`);
 
                ///////////////////////////////////////////

@@ -144,15 +144,23 @@ class QValueUtils
 
       if (field.hasAdornment(AdornmentType.CODE_EDITOR))
       {
+         let mode = "text";
+         const adornmentValues = field.getAdornment(AdornmentType.CODE_EDITOR).values;
+         if (adornmentValues.has("languageMode"))
+         {
+            mode = adornmentValues.get("languageMode");
+         }
+
          if(usage === "view")
          {
             return (<AceEditor
-               mode="javascript"
+               mode={mode}
                theme="github"
                name={field.name}
                editorProps={{$blockScrolling: true}}
                value={rawValue}
                readOnly
+               highlightActiveLine={false}
                width="100%"
                showPrintMargin={false}
                height="200px"
@@ -190,6 +198,10 @@ class QValueUtils
       else if (field.type === QFieldType.TIME)
       {
          return (displayValue);
+      }
+      else if (field.type === QFieldType.BOOLEAN && (typeof displayValue) === "boolean")
+      {
+         return displayValue ? "Yes" : "No";
       }
 
       let returnValue = displayValue;

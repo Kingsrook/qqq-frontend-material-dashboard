@@ -158,6 +158,7 @@ function QDynamicForm(props: Props): JSX.Element
                               bulkEditMode={bulkEditMode}
                               bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                               success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
+                              formFieldObject={field}
                            />
                         </Grid>
                      );

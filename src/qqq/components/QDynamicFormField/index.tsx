@@ -22,8 +22,9 @@
 import {InputAdornment, InputLabel} from "@mui/material";
 import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
-import {ErrorMessage, Field, useFormikContext} from "formik";
-import React, {SyntheticEvent, useState} from "react";
+import {ErrorMessage, Field, FieldProps, useFormikContext} from "formik";
+import React, {useState} from "react";
+import AceEditor from "react-ace";
 import QBooleanFieldSwitch from "qqq/components/QDynamicFormField/QBooleanFieldSwitch";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDInput from "qqq/components/Temporary/MDInput";
@@ -43,14 +44,15 @@ interface Props
 
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
+   formFieldObject: any; // is the type returned by DynamicFormUtils.getDynamicField
 }
 
 function QDynamicFormField({
-   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, ...rest
+   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, formFieldObject, ...rest
 }: Props): JSX.Element
 {
-   const [ switchChecked, setSwitchChecked ] = useState(false);
-   const [ isDisabled, setIsDisabled ] = useState(!isEditable || bulkEditMode);
+   const [switchChecked, setSwitchChecked] = useState(false);
+   const [isDisabled, setIsDisabled] = useState(!isEditable || bulkEditMode);
 
    const {setFieldValue} = useFormikContext();
 
@@ -82,15 +84,50 @@ function QDynamicFormField({
       }
    };
 
+   let field;
+   let getsBulkEditHtmlLabel = true;
+   if (type === "checkbox")
+   {
+      getsBulkEditHtmlLabel = false;
+      field = (<QBooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} />);
+   }
+   else if (type === "ace")
+   {
+      let mode = "text";
+      if(formFieldObject && formFieldObject.languageMode)
+      {
+         mode = formFieldObject.languageMode;
+      }
 
-   const field = () =>
-      (type == "checkbox" ?
-         <QBooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} /> :
+      getsBulkEditHtmlLabel = false;
+      field = (
+         <>
+            <InputLabel shrink={true}>{label}</InputLabel>
+            <AceEditor
+               mode={mode}
+               theme="github"
+               name="editor"
+               editorProps={{$blockScrolling: true}}
+               onChange={(value: string, event: any) =>
+               {
+                  setFieldValue(name, value, false);
+               }}
+               width="100%"
+               height="300px"
+               value={value}
+               style={{border: "1px solid gray"}}
+            />
+         </>
+      );
+   }
+   else
+   {
+      field = (
          <>
             <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
                onKeyPress={(e: any) =>
                {
-                  if(e.key === "Enter")
+                  if (e.key === "Enter")
                   {
                      e.preventDefault();
                   }
@@ -103,10 +140,16 @@ function QDynamicFormField({
             </MDBox>
          </>
       );
+   }
 
    const bulkEditSwitchChanged = () =>
    {
-      const newSwitchValue = !switchChecked;
+      setBulkEditSwitch(!switchChecked);
+   };
+
+   const setBulkEditSwitch = (value: boolean) =>
+   {
+      const newSwitchValue = value;
       setSwitchChecked(newSwitchValue);
       setIsDisabled(!newSwitchValue);
       bulkEditSwitchChangeHandler(name, newSwitchValue);
@@ -124,13 +167,13 @@ function QDynamicFormField({
                />
             </Box>
             <Box width="100%" sx={{background: (type == "checkbox" && isDisabled) ? "#f0f2f5!important" : "initial"}}>
-               {/* for checkboxes, if we put the whole thing in a label, we get bad overly aggressive toggling of the outer switch... */}
-               {(type == "checkbox" ?
-                  field() :
-                  <label htmlFor={`bulkEditSwitch-${name}`}>
-                     {field()}
-                  </label>
-               )}
+               {
+                  getsBulkEditHtmlLabel
+                     ? (<label htmlFor={`bulkEditSwitch-${name}`}>
+                        {field}
+                     </label>)
+                     : <div onClick={() => setBulkEditSwitch(true)}>{field}</div>
+               }
             </Box>
          </Box>
       );
@@ -139,7 +182,7 @@ function QDynamicFormField({
    {
       return (
          <MDBox mb={1.5}>
-            {field()}
+            {field}
          </MDBox>
       );
    }

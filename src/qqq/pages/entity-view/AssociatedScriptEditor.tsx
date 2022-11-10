@@ -20,7 +20,9 @@
  */
 
 
-import {Typography} from "@mui/material";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {Label} from "@mui/icons-material";
+import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -29,10 +31,20 @@ import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
 import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
+import ScriptDocsForm from "qqq/pages/entity-view/ScriptDocsForm";
+import ScriptTestForm from "qqq/pages/entity-view/ScriptTestForm";
 import QClient from "qqq/utils/QClient";
+
+interface AssociatedScriptDefinition
+{
+   testInputFields: QFieldMetaData[];
+   testOutputFields: QFieldMetaData[];
+   scriptType: any;
+}
 
 interface Props
 {
+   scriptDefinition: AssociatedScriptDefinition;
    tableName: string;
    primaryKey: any;
    fieldName: string;
@@ -46,11 +58,24 @@ interface Props
 
 const qController = QClient.getInstance();
 
-function AssociatedScriptEditor({tableName, primaryKey, fieldName, titlePrefix, recordLabel, scriptName, code, closeCallback}: Props): JSX.Element
+function AssociatedScriptEditor({scriptDefinition, tableName, primaryKey, fieldName, titlePrefix, recordLabel, scriptName, code, closeCallback}: Props): JSX.Element
 {
    const [closing, setClosing] = useState(false);
    const [updatedCode, setUpdatedCode] = useState(code)
    const [commitMessage, setCommitMessage] = useState("")
+   const [openTool, setOpenTool] = useState(null);
+
+   const changeOpenTool = (event: React.MouseEvent<HTMLElement>, newValue: string | null) =>
+   {
+      setOpenTool(newValue);
+
+      // need this to make Ace recognize new height.
+      setTimeout(() => 
+      {
+         window.dispatchEvent(new Event("resize")) 
+      }, 100);
+   };
+
 
    const saveClicked = () =>
    {
@@ -80,23 +105,56 @@ function AssociatedScriptEditor({tableName, primaryKey, fieldName, titlePrefix, 
    }
 
    return (
-      <Box sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={12}>
+      <Box sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={6}>
          <Card sx={{height: "100%", p: 3}}>
-            <Typography variant="h5" pb={1}>
-               {`${titlePrefix}: ${recordLabel} - ${scriptName}`}
-            </Typography>
 
-            <AceEditor
-               mode="javascript"
-               theme="github"
-               name="editor"
-               editorProps={{$blockScrolling: true}}
-               onChange={updateCode}
-               width="100%"
-               height="100%"
-               value={updatedCode}
-               style={{border: "1px solid gray"}}
-            />
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+               <Typography variant="h5" pb={1}>
+                  {`${titlePrefix}: ${recordLabel} - ${scriptName}`}
+               </Typography>
+
+               <Box>
+                  <Typography variant="body2" display="inline" pr={1}>
+                     Tools:
+                  </Typography>
+                  <ToggleButtonGroup
+                     value={openTool}
+                     exclusive
+                     onChange={changeOpenTool}
+                     size="small"
+                     sx={{pb: 1}}
+                  >
+                     <ToggleButton value="test">Test</ToggleButton>
+                     <ToggleButton value="docs">Docs</ToggleButton>
+                  </ToggleButtonGroup>
+               </Box>
+            </Box>
+
+            <Box sx={{height: openTool ? "45%" : "100%"}}>
+               <AceEditor
+                  mode="javascript"
+                  theme="github"
+                  name="editor"
+                  editorProps={{$blockScrolling: true}}
+                  onChange={updateCode}
+                  width="100%"
+                  height="100%"
+                  value={updatedCode}
+                  style={{border: "1px solid gray"}}
+               />
+            </Box>
+
+            {
+               openTool &&
+               <Box sx={{height: "45%"}} pt={2}>
+                  {
+                     openTool == "test" && <ScriptTestForm scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={primaryKey} code={updatedCode} />
+                  }
+                  {
+                     openTool == "docs" && <ScriptDocsForm helpText={scriptDefinition.scriptType.values.helpText} exampleCode={scriptDefinition.scriptType.values.sampleCode} aceEditorHeight="100%" />
+                  }
+               </Box>
+            }
 
             <Box pt={1}>
                <Grid container alignItems="flex-end">
