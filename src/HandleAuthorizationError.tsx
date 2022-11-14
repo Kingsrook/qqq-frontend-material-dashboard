@@ -19,26 +19,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Auth0Provider, useAuth0} from "@auth0/auth0-react";
 import React, {useEffect} from "react";
 import {useCookies} from "react-cookie";
 import {SESSION_ID_COOKIE_NAME} from "App";
+import {AUTH0_CLIENT_ID, AUTH0_DOMAIN} from "index";
 
 interface Props
 {
    errorMessage?: string;
 }
 
+
 function HandleAuthorizationError({errorMessage}: Props)
 {
+
    const [, , removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
+   const {logout} = useAuth0();
 
    useEffect(() =>
    {
+      logout();
       removeCookie(SESSION_ID_COOKIE_NAME, {path: "/"});
    });
 
    return (
-      <div>{errorMessage}</div>
+      <Auth0Provider domain={AUTH0_DOMAIN} clientId={AUTH0_CLIENT_ID}>
+         <div>
+            <div>{errorMessage}</div>
+         </div>
+      </Auth0Provider>
    );
 }
 

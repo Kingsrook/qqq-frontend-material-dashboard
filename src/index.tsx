@@ -29,8 +29,8 @@ import {MaterialUIControllerProvider} from "context";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/auth0/protected-route";
 
-const domain = process.env.REACT_APP_AUTH0_DOMAIN;
-const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+export const AUTH0_DOMAIN = process.env.REACT_APP_AUTH0_DOMAIN;
+export const AUTH0_CLIENT_ID = process.env.REACT_APP_AUTH0_CLIENT_ID;
 
 // @ts-ignore
 function Auth0ProviderWithRedirectCallback({children, ...props})
@@ -47,7 +47,9 @@ function Auth0ProviderWithRedirectCallback({children, ...props})
    {
       return (
          // @ts-ignore
-         <HandleAuthorizationError errorMessage={searchParams.get("error_description")} />
+         <Auth0Provider {...props}>
+            <HandleAuthorizationError errorMessage={searchParams.get("error_description")} />
+         </Auth0Provider>
       );
    }
    else
@@ -64,8 +66,8 @@ function Auth0ProviderWithRedirectCallback({children, ...props})
 render(
    <BrowserRouter>
       <Auth0ProviderWithRedirectCallback
-         domain={domain}
-         clientId={clientId}
+         domain={AUTH0_DOMAIN}
+         clientId={AUTH0_CLIENT_ID}
          redirectUri={`${window.location.origin}/dashboards/overview`}
       >
          <MaterialUIControllerProvider>
