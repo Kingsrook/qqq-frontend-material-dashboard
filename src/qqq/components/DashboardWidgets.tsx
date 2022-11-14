@@ -33,6 +33,7 @@ import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
+import RecordGridWidget from "qqq/pages/dashboards/Widgets/RecordGridWidget";
 import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
 import QClient from "qqq/utils/QClient";
@@ -43,14 +44,16 @@ interface Props
 {
    widgetMetaDataList: QWidgetMetaData[];
    entityPrimaryKey?: string;
+   omitWrappingGridContainer: boolean;
 }
 
 DashboardWidgets.defaultProps = {
    widgetMetaDataList: null,
-   entityPrimaryKey: null
+   entityPrimaryKey: null,
+   omitWrappingGridContainer: false
 };
 
-function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGridContainer}: Props): JSX.Element
 {
    const location = useLocation();
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -105,125 +108,158 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey}: Props): JSX.El
    // console.log(JSON.stringify(widgetMetaDataList));
    // console.log(widgetCount);
 
-   return (
-      widgetCount > 0 ? (
-         <Grid container spacing={3} pb={4}>
+   const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
+   {
+      return (
+         <>
+            {
+               widgetMetaData.type === "table" && (
+                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%"}}>
+                     <TableCard
+                        color="info"
+                        title={widgetMetaData.label}
+                        linkText={widgetData[i]?.linkText}
+                        linkURL={widgetData[i]?.linkURL}
+                        noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
+                        data={widgetData[i]}
+                        dropdownOptions={widgetData[i]?.dropdownOptions}
+                        dropdownOnChange={handleDropdownOnChange}
+                        widgetIndex={i}
+                     />
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "stepper" && (
+                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                     <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                        <MDBox padding="1rem">
+                           {
+                              widgetMetaData.label && (
+                                 <MDTypography variant="h5" textTransform="capitalize">
+                                    {widgetMetaData.label}
+                                 </MDTypography>
+                              )
+                           }
+                           <StepperCard data={widgetData[i]} />
+                        </MDBox>
+                     </Card>
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "html" && (
+                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                     <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                        <MDBox padding="1rem">
+                           <MDTypography variant="h5" textTransform="capitalize">
+                              {widgetMetaData.label}
+                           </MDTypography>
+                           <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                              {
+                                 widgetData && widgetData[i] && widgetData[i].html ? (
+                                    parse(widgetData[i].html)
+                                 ) : <Skeleton />
+                              }
+                           </MDTypography>
+                        </MDBox>
+                     </Card>
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "multiStatistics" && (
+                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                     <MultiStatisticsCard
+                        color="info"
+                        title={widgetMetaData.label}
+                        data={widgetData[i]}
+                     />
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "quickSightChart" && (
+                  <MDBox sx={{display: "flex"}}>
+                     <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "barChart" && (
+                  <MDBox mb={3} sx={{display: "flex"}}>
+                     <BarChart
+                        color="info"
+                        title={widgetMetaData.label}
+                        date={`As of ${new Date().toDateString()}`}
+                        data={widgetData[i]?.chartData}
+                     />
+                  </MDBox>
+               )
+            }
+            {
+               widgetMetaData.type === "lineChart" && (
+                  widgetData && widgetData[i] ? (
+                     <MDBox mb={3}>
+                        <LineChart
+                           title={widgetData[i].title}
+                           description={(
+                              <MDBox display="flex" justifyContent="space-between">
+                                 <MDBox display="flex" ml={-1}>
+                                    {
+                                       widgetData[i].lineChartData.datasets.map((dataSet: any) => (
+                                          <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
+                                       ))
+                                    }
+                                 </MDBox>
+                                 <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                              </MDBox>
+                           )}
+                           chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                        />
+                     </MDBox>
+                  ) : null
+               )
+            }
+            {
+               widgetMetaData.type === "childRecordList" && (
+                  widgetData && widgetData[i] &&
+                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%"}}>
+                     <RecordGridWidget
+                        title={widgetMetaData.label}
+                        data={widgetData[i]}
+                     />
+                  </MDBox>
+               )
+            }
+         </>
+      );
+   }
+
+   const body: JSX.Element =
+      (
+         <>
             {
                widgetMetaDataList.map((widgetMetaData, i) => (
-                  <Grid id={widgetMetaData.name} key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
-                     {
-                        widgetMetaData.type === "table" && (
-                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                              <TableCard
-                                 color="info"
-                                 title={widgetMetaData.label}
-                                 linkText={widgetData[i]?.linkText}
-                                 linkURL={widgetData[i]?.linkURL}
-                                 noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
-                                 data={widgetData[i]}
-                                 dropdownOptions={widgetData[i]?.dropdownOptions}
-                                 dropdownOnChange={handleDropdownOnChange}
-                                 widgetIndex={i}
-                              />
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "stepper" && (
-                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                              <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                                 <MDBox padding="1rem">
-                                    {
-                                       widgetMetaData.label && (
-                                          <MDTypography variant="h5" textTransform="capitalize">
-                                             {widgetMetaData.label}
-                                          </MDTypography>
-                                       )
-                                    }
-                                    <StepperCard data={widgetData[i]} />
-                                 </MDBox>
-                              </Card>
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "html" && (
-                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                              <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                                 <MDBox padding="1rem">
-                                    <MDTypography variant="h5" textTransform="capitalize">
-                                       {widgetMetaData.label}
-                                    </MDTypography>
-                                    <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                                       {
-                                          widgetData && widgetData[i] && widgetData[i].html ? (
-                                             parse(widgetData[i].html)
-                                          ) : <Skeleton />
-                                       }
-                                    </MDTypography>
-                                 </MDBox>
-                              </Card>
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "multiStatistics" && (
-                           <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                              <MultiStatisticsCard
-                                 color="info"
-                                 title={widgetMetaData.label}
-                                 data={widgetData[i]}
-                              />
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "quickSightChart" && (
-                           <MDBox sx={{display: "flex"}}>
-                              <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "barChart" && (
-                           <MDBox mb={3} sx={{display: "flex"}}>
-                              <BarChart
-                                 color="info"
-                                 title={widgetMetaData.label}
-                                 date={`As of ${new Date().toDateString()}`}
-                                 data={widgetData[i]?.chartData}
-                              />
-                           </MDBox>
-                        )
-                     }
-                     {
-                        widgetMetaData.type === "lineChart" && (
-                           widgetData && widgetData[i] ? (
-                              <MDBox mb={3}>
-                                 <LineChart
-                                    title={widgetData[i].title}
-                                    description={(
-                                       <MDBox display="flex" justifyContent="space-between">
-                                          <MDBox display="flex" ml={-1}>
-                                             {
-                                                widgetData[i].lineChartData.datasets.map((dataSet: any) => (
-                                                   <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
-                                                ))
-                                             }
-                                          </MDBox>
-                                          <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
-                                       </MDBox>
-                                    )}
-                                    chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
-                                 />
-                              </MDBox>
-                           ) : null
-                        )
-                     }
-                  </Grid>
+                  omitWrappingGridContainer
+                     ? renderWidget(widgetMetaData, i)
+                     :
+                     <Grid id={widgetMetaData.name} key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                        {renderWidget(widgetMetaData, i)}
+                     </Grid>
                ))
             }
-         </Grid>
+         </>
+      );
+
+   return (
+      widgetCount > 0 ? (
+         omitWrappingGridContainer ? body :
+            (
+               <Grid container spacing={3} pb={4}>
+                  {body}
+               </Grid>
+            )
       ) : null
    );
 }

@@ -186,6 +186,11 @@ function EntityForm({table, id}: Props): JSX.Element
                continue;
             }
 
+            if(!section.fieldNames)
+            {
+               continue;
+            }
+
             for (let j = 0; j < section.fieldNames.length; j++)
             {
                const fieldName = section.fieldNames[j];

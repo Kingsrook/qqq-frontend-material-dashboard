@@ -31,8 +31,8 @@ import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
 import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
-import ScriptDocsForm from "qqq/pages/entity-view/ScriptDocsForm";
-import ScriptTestForm from "qqq/pages/entity-view/ScriptTestForm";
+import ScriptDocsForm from "qqq/components/ScriptComponents/ScriptDocsForm";
+import ScriptTestForm from "qqq/components/ScriptComponents/ScriptTestForm";
 import QClient from "qqq/utils/QClient";
 
 interface AssociatedScriptDefinition

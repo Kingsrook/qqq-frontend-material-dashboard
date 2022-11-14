@@ -20,7 +20,6 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Chip, Icon, ListItem, ListItemAvatar, Typography} from "@mui/material";
@@ -43,13 +42,15 @@ import {useParams} from "react-router-dom";
 import QContext from "QContext";
 import BaseLayout from "qqq/components/BaseLayout";
 import CustomWidthTooltip from "qqq/components/CustomWidthTooltip/CustomWidthTooltip";
+import AssociatedScriptEditor from "qqq/components/ScriptComponents/AssociatedScriptEditor";
+import ScriptDocsForm from "qqq/components/ScriptComponents/ScriptDocsForm";
+import ScriptLogsView from "qqq/components/ScriptComponents/ScriptLogsView";
+import ScriptTestForm from "qqq/components/ScriptComponents/ScriptTestForm";
+import TabPanel from "qqq/components/TabPanel/TabPanel";
 import MDBox from "qqq/components/Temporary/MDBox";
-import AssociatedScriptEditor from "qqq/pages/entity-view/AssociatedScriptEditor";
-import ScriptLogsView from "qqq/pages/entity-view/ScriptLogsView";
-import ScriptTestForm from "qqq/pages/entity-view/ScriptTestForm";
+import DeveloperModeUtils from "qqq/utils/DeveloperModeUtils";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
-import ScriptDocsForm from "./ScriptDocsForm";
 
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
@@ -58,35 +59,6 @@ import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 const qController = QClient.getInstance();
-
-interface TabPanelProps
-{
-   children?: React.ReactNode;
-   index: number;
-   value: number;
-}
-
-function TabPanel(props: TabPanelProps)
-{
-   const {children, value, index, ...other} = props;
-
-   return (
-      <div
-         role="tabpanel"
-         hidden={value !== index}
-         id={`simple-tabpanel-${index}`}
-         aria-labelledby={`simple-tab-${index}`}
-         {...other}
-      >
-         {value === index && (
-            <Box>
-               <Typography>{children}</Typography>
-            </Box>
-         )}
-      </div>
-   );
-}
-
 
 // Declaring props types for ViewForm
 interface Props
@@ -115,8 +87,6 @@ function EntityDeveloperView({table}: Props): JSX.Element
    const [selectedTabs, setSelectedTabs] = useState({} as any);
    const [viewingRevisions, setViewingRevisions] = useState({} as any);
    const [scriptLogs, setScriptLogs] = useState({} as any);
-   const [testInputValues, setTestInputValues] = useState({} as any);
-   const [testOutputValues, setTestOutputValues] = useState({} as any);
 
    const [editingScript, setEditingScript] = useState(null as any);
    const [alertText, setAlertText] = useState(null as string);
@@ -155,23 +125,6 @@ function EntityDeveloperView({table}: Props): JSX.Element
 
             setAssociatedScripts(developerModeData.associatedScripts);
 
-            const testInputValues = {};
-            const testOutputValues = {};
-            console.log("@dk - here");
-            console.log(developerModeData.associatedScripts);
-            developerModeData.associatedScripts.forEach((object: any) =>
-            {
-               const fieldName = object.associatedScript.fieldName;
-
-               // @ts-ignore
-               testInputValues[fieldName] = {};
-
-               // @ts-ignore
-               testOutputValues[fieldName] = {};
-            });
-            setTestInputValues(testInputValues);
-            setTestOutputValues(testOutputValues);
-
             const recordJSONObject = {} as any;
             for (let key of record.values.keys())
             {
@@ -197,32 +150,6 @@ function EntityDeveloperView({table}: Props): JSX.Element
       })();
    }
 
-   const revToColor = (fieldName: string, rev: number): string =>
-   {
-      let hash = 0;
-      let idFactor = 1;
-      try
-      {
-         idFactor = Number(id);
-      }
-      catch (e)
-      {
-      }
-      const string = `${fieldName} ${90210 * idFactor * rev}`;
-      for (let i = 0; i < string.length; i += 1)
-      {
-         hash = string.charCodeAt(i) + ((hash << 5) - hash);
-      }
-
-      let color = "#";
-      for (let i = 0; i < 3; i += 1)
-      {
-         const value = (hash >> (i * 8)) & 0xff;
-         color += `00${value.toString(16)}`.slice(-2);
-      }
-      return color;
-   };
-
    const editScript = (fieldName: string, code: string, object: any) =>
    {
       const editingScript = {} as any;
@@ -231,34 +158,6 @@ function EntityDeveloperView({table}: Props): JSX.Element
       editingScript.code = code;
       editingScript.scriptDefinitionObject = object;
       setEditingScript(editingScript);
-   };
-
-   const testScript = (object: any, fieldName: string) =>
-   {
-      const viewingRevisionArray = object.scriptRevisions?.filter((rev: any) => rev?.values?.id === viewingRevisions[fieldName]);
-      const code = viewingRevisionArray?.length > 0 ? viewingRevisionArray[0].values.contents : "";
-
-      const inputValues = new Map<string, any>();
-      if (object.testInputFields)
-      {
-         object.testInputFields.forEach((field: QFieldMetaData) =>
-         {
-            console.log(`${field.name} = ${testInputValues[fieldName][field.name]}`)
-            inputValues.set(field.name, testInputValues[fieldName][field.name]);
-         });
-      }
-
-      const newTestOutputValues = JSON.parse(JSON.stringify(testOutputValues));
-      newTestOutputValues[fieldName] = {};
-      setTestOutputValues(newTestOutputValues);
-
-      (async () =>
-      {
-         const output = await qController.testScript(tableName, id, fieldName, code, inputValues);
-         const newTestOutputValues = JSON.parse(JSON.stringify(testOutputValues));
-         newTestOutputValues[fieldName] = output.outputValues;
-         setTestOutputValues(newTestOutputValues);
-      })();
    };
 
    const closeEditingScript = (event: object, reason: string, alert: string = null) =>
@@ -336,7 +235,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
                <React.Fragment key={revision.values.id}>
                   <ListItem sx={{p: 1}} alignItems="flex-start" selected={viewingRevisions[fieldName] == revision.values.id} onClick={(event) => selectRevision(fieldName, revision.values.id)}>
                      <ListItemAvatar>
-                        <Avatar sx={{bgcolor: revToColor(fieldName, revision.values.sequenceNo)}}>{`${revision.values.sequenceNo}`}</Avatar>
+                        <Avatar sx={{bgcolor: DeveloperModeUtils.revToColor(fieldName, id, revision.values.sequenceNo)}}>{`${revision.values.sequenceNo}`}</Avatar>
                      </ListItemAvatar>
                      <ListItemText
                         primaryTypographyProps={{fontSize: "1rem"}}

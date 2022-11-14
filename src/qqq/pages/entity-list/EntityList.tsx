@@ -57,6 +57,7 @@ import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
 import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/entity-list/QGridFilterOperators";
 import ProcessRun from "qqq/pages/process-run";
+import DataGridUtils from "qqq/utils/DataGridUtils";
 import QClient from "qqq/utils/QClient";
 import QFilterUtils from "qqq/utils/QFilterUtils";
 import QProcessUtils from "qqq/utils/QProcessUtils";
@@ -442,120 +443,6 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       })();
    };
 
-   const setupGridColumns = (columnsToRender: any) =>
-   {
-      const sortedKeys: string[] = [];
-
-      for (let i = 0; i < tableMetaData.sections.length; i++)
-      {
-         const section = tableMetaData.sections[i];
-         for (let j = 0; j < section.fieldNames.length; j++)
-         {
-            sortedKeys.push(section.fieldNames[j]);
-         }
-      }
-
-      const columns = [] as GridColDef[];
-      sortedKeys.forEach((key) =>
-      {
-         const field = tableMetaData.fields.get(key);
-
-         let columnType = "string";
-         let columnWidth = 200;
-         let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
-
-         if (field.possibleValueSourceName)
-         {
-            filterOperators = buildQGridPvsOperators(tableName, field);
-         }
-         else
-         {
-            switch (field.type)
-            {
-               case QFieldType.DECIMAL:
-               case QFieldType.INTEGER:
-                  columnType = "number";
-                  columnWidth = 100;
-
-                  if (key === tableMetaData.primaryKeyField && field.label.length < 3)
-                  {
-                     columnWidth = 75;
-                  }
-
-                  filterOperators = QGridNumericOperators;
-                  break;
-               case QFieldType.DATE:
-                  columnType = "date";
-                  columnWidth = 100;
-                  filterOperators = getGridDateOperators();
-                  break;
-               case QFieldType.DATE_TIME:
-                  columnType = "dateTime";
-                  columnWidth = 200;
-                  filterOperators = getGridDateOperators(true);
-                  break;
-               case QFieldType.BOOLEAN:
-                  columnType = "string"; // using boolean gives an odd 'no' for nulls.
-                  columnWidth = 75;
-                  filterOperators = QGridBooleanOperators;
-                  break;
-               default:
-               // noop - leave as string
-            }
-         }
-
-         if (field.hasAdornment(AdornmentType.SIZE))
-         {
-            const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
-            const width: string = sizeAdornment.getValue("width");
-            const widths: Map<string, number> = new Map<string, number>([
-               [ "small", 100 ],
-               [ "medium", 200 ],
-               [ "large", 400 ],
-               [ "xlarge", 600 ]
-            ]);
-            if (widths.has(width))
-            {
-               columnWidth = widths.get(width);
-            }
-            else
-            {
-               console.log("Unrecognized size.width adornment value: " + width);
-            }
-         }
-
-         const column = {
-            field: field.name,
-            type: columnType,
-            headerName: field.label,
-            width: columnWidth,
-            renderCell: null as any,
-            filterOperators: filterOperators,
-         };
-
-         if (columnsToRender[field.name])
-         {
-            column.renderCell = (cellValues: any) => (
-               (cellValues.value)
-            );
-         }
-
-         if (key === tableMetaData.primaryKeyField)
-         {
-            columns.splice(0, 0, column);
-            column.renderCell = (cellValues: any) => (
-               <Link to={cellValues.value}>{cellValues.value}</Link>
-            );
-         }
-         else
-         {
-            columns.push(column);
-         }
-      });
-
-      setColumnsModel(columns);
-   };
-
    ///////////////////////////
    // display count results //
    ///////////////////////////
@@ -592,47 +479,16 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       const results = queryResults[latestQueryId];
       delete queryResults[latestQueryId];
 
-      const fields = [ ...tableMetaData.fields.values() ];
-      const rows = [] as any[];
-      const columnsToRender = {} as any;
-      results.forEach((record: QRecord) =>
-      {
-         const row: any = {};
-         fields.forEach((field) =>
-         {
-            const value = QValueUtils.getDisplayValue(field, record, "query");
-            if (typeof value !== "string")
-            {
-               columnsToRender[field.name] = true;
-            }
-            row[field.name] = value;
-         });
-
-         if(!row["id"])
-         {
-            row["id"] = row[tableMetaData.primaryKeyField];
-         }
-
-         rows.push(row);
-      });
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // do this secondary check for columnsToRender - in case we didn't have any rows above, and our check for string isn't enough. //
-      // ... shouldn't this be just based on the field definition anyway... ?  plus adornments?                                      //
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      fields.forEach((field) =>
-      {
-         if(field.possibleValueSourceName)
-         {
-            columnsToRender[field.name] = true;
-         }
-      });
+      const {rows, columnsToRender} = DataGridUtils.makeRows(results, tableMetaData);
 
       if(columnsModel.length == 0)
       {
-         setupGridColumns(columnsToRender);
+         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender);
+         setColumnsModel(columns);
       }
+
       setRows(rows);
+
       setLoading(false);
       setAlertContent(null);
       forceUpdate();

@@ -24,9 +24,9 @@ import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capabi
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -95,7 +95,6 @@ function EntityView({table, launchProcess}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
-   const [tableWidgets, setTableWidgets] = useState([] as QWidgetMetaData[]);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
@@ -116,7 +115,6 @@ function EntityView({table, launchProcess}: Props): JSX.Element
       setNonT1TableSections([]);
       setTableProcesses([]);
       setTableSections(null);
-      setTableWidgets(null);
    };
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,17 +208,6 @@ function EntityView({table, launchProcess}: Props): JSX.Element
 
          setPageHeader(record.recordLabel);
 
-         ///////////////////////////
-         // load widget meta data //
-         ///////////////////////////
-         const matchingWidgets: QWidgetMetaData[] = [];
-         tableMetaData.widgets && tableMetaData.widgets.forEach((widgetName) =>
-         {
-            const widget = metaData.widgets.get(widgetName);
-            matchingWidgets.push(widget);
-         });
-         setTableWidgets(matchingWidgets);
-
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //
          /////////////////////////////////////////////////
@@ -235,28 +222,75 @@ function EntityView({table, launchProcess}: Props): JSX.Element
          for (let i = 0; i < tableSections.length; i++)
          {
             const section = tableSections[i];
-            if(section.isHidden)
+            if (section.isHidden)
             {
                continue;
             }
 
-            sectionFieldElements.set(
-               section.name,
-               <MDBox key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
-                  {
-                     section.fieldNames.map((fieldName: string) => (
-                        <MDBox key={fieldName} flexDirection="row" pr={2}>
-                           <MDTypography variant="button" fontWeight="bold" pr={1}>
-                              {tableMetaData.fields.get(fieldName).label}:
-                           </MDTypography>
-                           <MDTypography variant="button" fontWeight="regular" color="text">
-                              {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
-                           </MDTypography>
+            if (section.widgetName)
+            {
+               const widgetMetaData = metaData.widgets.get(section.widgetName);
+
+               ////////////////////////////////////////////////////////////////////////////
+               // for a section with a widget name, call the dashboard widgets component //
+               ////////////////////////////////////////////////////////////////////////////
+               sectionFieldElements.set(section.name,
+                  <Grid id={section.name} key={section.name} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", flexGrow: 1, scrollMarginTop: "100px"}}>
+                     <Box width="100%" flexGrow={1} alignItems="stretch">
+                        <DashboardWidgets key={section.name} widgetMetaDataList={[widgetMetaData]} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} omitWrappingGridContainer={true} />
+                     </Box>
+                  </Grid>
+               );
+            }
+            else if (section.fieldNames)
+            {
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // for a section with field names, render the field values.                                               //
+               // for the T1 section, the "wrapper" will come out below - but for other sections, produce a wrapper too. //
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               const fields = (
+                  <MDBox key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
+                     {
+                        section.fieldNames.map((fieldName: string) => (
+                           <MDBox key={fieldName} flexDirection="row" pr={2}>
+                              <MDTypography variant="button" fontWeight="bold" pr={1}>
+                                 {tableMetaData.fields.get(fieldName).label}:
+                              </MDTypography>
+                              <MDTypography variant="button" fontWeight="regular" color="text">
+                                 {QValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
+                              </MDTypography>
+                           </MDBox>
+                        ))
+                     }
+                  </MDBox>
+               );
+
+               if (section.tier === "T1")
+               {
+                  sectionFieldElements.set(section.name, fields);
+               }
+               else
+               {
+                  sectionFieldElements.set(section.name,
+                     <Grid id={section.name} key={section.name} item lg={12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                        <MDBox mb={3} width="100%">
+                           <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
+                              <MDTypography variant="h5" p={3} pb={1}>
+                                 {section.label}
+                              </MDTypography>
+                              <MDBox p={3} pt={0} flexDirection="column">
+                                 {fields}
+                              </MDBox>
+                           </Card>
                         </MDBox>
-                     ))
-                  }
-               </MDBox>,
-            );
+                     </Grid>
+                  );
+               }
+            }
+            else
+            {
+               continue;
+            }
 
             if (section.tier === "T1")
             {
@@ -401,7 +435,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
 
                               <Grid container spacing={3}>
                                  <Grid item xs={12} lg={3}>
-                                    <QRecordSidebar tableSections={tableSections} widgetMetaDataList={tableWidgets} />
+                                    <QRecordSidebar tableSections={tableSections} />
                                  </Grid>
                                  <Grid item xs={12} lg={9}>
 
@@ -428,21 +462,15 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                                           </Card>
                                        </Grid>
                                     </Grid>
-                                    {tableMetaData && tableMetaData.widgets && record && (
-                                       <DashboardWidgets widgetMetaDataList={tableWidgets} entityPrimaryKey={record.values.get(tableMetaData.primaryKeyField)} />
-                                    )}
-                                    {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
-                                       iconName, label, name, fieldNames, tier,
-                                    }: any) => (
-                                       <MDBox mb={3} key={name}>
-                                          <Card key={name} id={name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
-                                             <MDTypography variant="h5" p={3} pb={1}>
-                                                {label}
-                                             </MDTypography>
-                                             <MDBox p={3} pt={0} flexDirection="column">{sectionFieldElements.get(name)}</MDBox>
-                                          </Card>
-                                       </MDBox>
-                                    )) : null}
+                                    <Grid container spacing={3} pb={4}>
+                                       {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
+                                          iconName, label, name, fieldNames, tier,
+                                       }: any) => (
+                                          <>
+                                             {sectionFieldElements.get(name)}
+                                          </>
+                                       )) : null}
+                                    </Grid>
                                     <MDBox component="form" p={3}>
                                        <Grid container justifyContent="flex-end" spacing={3}>
                                           {
