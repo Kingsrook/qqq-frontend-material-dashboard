@@ -19,12 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
@@ -44,10 +41,9 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, getGridDateOperators, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
-import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import React, {useContext, useEffect, useReducer, useRef, useState} from "react";
-import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
@@ -55,7 +51,6 @@ import Navbar from "qqq/components/Navbar";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/QButtons";
 import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
-import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/entity-list/QGridFilterOperators";
 import ProcessRun from "qqq/pages/process-run";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import QClient from "qqq/utils/QClient";
@@ -237,7 +232,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
-   const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter)
+   const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
 
    const instance = useRef({timer: null});
 
@@ -355,13 +350,26 @@ function EntityList({table, launchProcess}: Props): JSX.Element
       return qFilter;
    };
 
+   const getTableMetaData = async (): Promise<QTableMetaData> =>
+   {
+      if(tableMetaData !== null)
+      {
+         return(new Promise((resolve) =>
+         {
+            resolve(tableMetaData)
+         }));
+      }
+
+      return (qController.loadTableMetaData(tableName));
+   }
+
    const updateTable = () =>
    {
       setLoading(true);
       setRows([]);
       (async () =>
       {
-         const tableMetaData = await qController.loadTableMetaData(tableName);
+         const tableMetaData = await getTableMetaData();
          setPageHeader(tableMetaData.label);
 
          ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -530,7 +538,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const handlePinnedColumnsChange = (pinnedColumns: GridPinnedColumns) =>
    {
-      setPinnedColumns(pinnedColumns)
+      setPinnedColumns(pinnedColumns);
       localStorage.setItem(pinnedColumnsLocalStorageKey, JSON.stringify(pinnedColumns));
    };
 
@@ -1080,7 +1088,14 @@ function EntityList({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      updateTable();
+      if(latestQueryId > 0)
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////
+         // to avoid both this useEffect and the one below from both doing an "initial query", //
+         // only run this one if at least 1 query has already been ran                         //
+         ////////////////////////////////////////////////////////////////////////////////////////
+         updateTable();
+      }
    }, [ pageNumber, rowsPerPage, columnSortModel ]);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

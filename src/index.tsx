@@ -20,6 +20,7 @@
  */
 
 import {Auth0Provider} from "@auth0/auth0-react";
+import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import React from "react";
 import {render} from "react-dom";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
@@ -28,52 +29,73 @@ import "qqq/styles/qqq-override-styles.css";
 import {MaterialUIControllerProvider} from "context";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/auth0/protected-route";
+import QClient from "qqq/utils/QClient";
 
-export const AUTH0_DOMAIN = process.env.REACT_APP_AUTH0_DOMAIN;
-export const AUTH0_CLIENT_ID = process.env.REACT_APP_AUTH0_CLIENT_ID;
+const qController = QClient.getInstance();
+const authenticationMetaDataPromise: Promise<QAuthenticationMetaData> = qController.getAuthenticationMetaData()
 
-// @ts-ignore
-function Auth0ProviderWithRedirectCallback({children, ...props})
+authenticationMetaDataPromise.then((authenticationMetaData) =>
 {
-   const navigate = useNavigate();
-   const [searchParams] = useSearchParams();
-
    // @ts-ignore
-   const onRedirectCallback = (appState) =>
+   function Auth0ProviderWithRedirectCallback({children, ...props})
    {
-      navigate((appState && appState.returnTo) || window.location.pathname);
-   };
-   if (searchParams.get("error"))
+      const navigate = useNavigate();
+      const [searchParams] = useSearchParams();
+
+      // @ts-ignore
+      const onRedirectCallback = (appState) =>
+      {
+         navigate((appState && appState.returnTo) || window.location.pathname);
+      };
+      if (searchParams.get("error"))
+      {
+         return (
+            // @ts-ignore
+            <Auth0Provider {...props}>
+               <HandleAuthorizationError errorMessage={searchParams.get("error_description")} />
+            </Auth0Provider>
+         );
+      }
+      else
+      {
+         return (
+            // @ts-ignore
+            <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
+               {children}
+            </Auth0Provider>
+         );
+      }
+   }
+
+   if (authenticationMetaData.type === "AUTH_0")
    {
-      return (
-         // @ts-ignore
-         <Auth0Provider {...props}>
-            <HandleAuthorizationError errorMessage={searchParams.get("error_description")} />
-         </Auth0Provider>
+      const domain = process.env.REACT_APP_AUTH0_DOMAIN;
+      const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+
+      render(
+         <BrowserRouter>
+            <Auth0ProviderWithRedirectCallback
+               domain={domain}
+               clientId={clientId}
+               redirectUri={`${window.location.origin}/dashboards/overview`}
+            >
+               <MaterialUIControllerProvider>
+                  <ProtectedRoute component={App} />
+               </MaterialUIControllerProvider>
+            </Auth0ProviderWithRedirectCallback>
+         </BrowserRouter>,
+         document.getElementById("root"),
       );
    }
    else
    {
-      return (
-         // @ts-ignore
-         <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
-            {children}
-         </Auth0Provider>
-      );
+      render(
+         <BrowserRouter>
+            <MaterialUIControllerProvider>
+               <App />
+            </MaterialUIControllerProvider>
+         </BrowserRouter>
+         , document.getElementById("root"));
    }
-}
 
-render(
-   <BrowserRouter>
-      <Auth0ProviderWithRedirectCallback
-         domain={AUTH0_DOMAIN}
-         clientId={AUTH0_CLIENT_ID}
-         redirectUri={`${window.location.origin}/dashboards/overview`}
-      >
-         <MaterialUIControllerProvider>
-            <ProtectedRoute component={App} />
-         </MaterialUIControllerProvider>
-      </Auth0ProviderWithRedirectCallback>
-   </BrowserRouter>,
-   document.getElementById("root"),
-);
+})

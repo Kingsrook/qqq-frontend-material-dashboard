@@ -35,3 +35,7 @@
 //     }
 //   }
 // }
+
+import {registerCommand} from "cypress-wait-for-stable-dom";
+
+registerCommand({pollInterval: 100, timeout: 3000});
