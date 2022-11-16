@@ -35,12 +35,12 @@ workflows:
           context: [ qqq-maven-registry-credentials ]
           requires:
             - setup-job
-          build: 'npm run build' # run a custom app build step
+          build: 'cp .circleci/env ./.env && npm run build' # run a custom app build step
       - cypress/run:
           context: [ qqq-maven-registry-credentials ]
           requires:
             - cypress/install
-          start: 'npm run start' # start server before running tests
+          start: 'cp .circleci/env ./.env && npm run start' # start server before running tests
           wait-on: 'https://localhost:3000'
           ## record: true # record results on Cypress Dashboard
           ## parallel: true # split all specs across machines
