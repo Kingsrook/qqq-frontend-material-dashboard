@@ -17,7 +17,7 @@ commands:
       - run:
           name: copy .env
           command: |
-            echo cp .circleci/.env ./.env
+            echo cp .circleci/env ./.env
             cat .env
 
 jobs:
