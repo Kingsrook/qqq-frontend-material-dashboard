@@ -1,9 +1,9 @@
 version: 2.1
 
 orbs:
-  cypress: cypress-io/cypress@1
+  cypress: cypress-io/cypress@2
 
-jobs:
+commands:
   setup:
     steps:
       - checkout
@@ -15,10 +15,16 @@ jobs:
             echo "@OWNER:registry=https://npm.pkg.github.com/" >> .npmrc
             echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> .npmrc
 
+jobs:
+  setup-job:
+    executor: cypress/base-10
+    steps:
+      - setup
+
 workflows:
   build:
     jobs:
-      - setup:
+      - setup-job:
          context: [ qqq-maven-registry-credentials ]
       - cypress/install:
           build: 'npm run build' # run a custom app build step
