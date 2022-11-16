@@ -23,6 +23,7 @@ jobs:
       - run:
           name: Start web server
           command: npm run start
+          background: true
       - run:
           name: Run cypress tests
           command: |
