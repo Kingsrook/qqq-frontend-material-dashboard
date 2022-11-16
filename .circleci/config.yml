@@ -27,6 +27,8 @@ workflows:
       - setup-job:
          context: [ qqq-maven-registry-credentials ]
       - cypress/install:
+          requires:
+            - setup-job
           build: 'npm run build' # run a custom app build step
       - cypress/run:
           requires:
