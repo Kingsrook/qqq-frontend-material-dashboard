@@ -77,7 +77,8 @@
       "prepublishOnly": "tsc -p ./ --outDir lib/",
       "start": "BROWSER=none react-scripts start",
       "test": "react-scripts test",
-      "cypress:open": "cypress open"
+      "cypress:open": "cypress open",
+      "cypress:run": "cypress run"
    },
    "eslintConfig": {
       "extends": [
