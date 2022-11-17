@@ -43,7 +43,13 @@ describe("table query screen", () =>
       /////////////////////////////////////////////////////////////////////
       cy.contains("Filters").click();
       cy.get(".MuiDataGrid-filterForm input.MuiInput-input").should("be.focused").type("1");
-      cy.wait(["@personQuery", "@personCount"]);
+
+      ///////////////////////////////////////////////////////////////////
+      // assert that query & count both have the expected filter value //
+      ///////////////////////////////////////////////////////////////////
+      let expectedFilterContents = JSON.stringify({fieldName: "id", operator: "EQUALS", values: ["1"]});
+      cy.wait("@personQuery").its("request.body").should((body) => expect(body).to.contain(expectedFilterContents));
+      cy.wait("@personCount").its("request.body").should((body) => expect(body).to.contain(expectedFilterContents));
 
       ///////////////////////////////////////
       // click away from the filter window //
@@ -57,49 +63,21 @@ describe("table query screen", () =>
       cy.waitForStableDOM();
       cy.get("#clearFiltersButton").should("be.visible").click();
       cy.contains("button", "Yes").click();
-      cy.wait(["@personQuery", "@personCount"]);
+
+      ////////////////////////////////////////////////////////////////////
+      // assert that query & count both no longer have the filter value //
+      ////////////////////////////////////////////////////////////////////
+      cy.wait("@personQuery").its("request.body").should((body) => expect(body).not.to.contain(expectedFilterContents));
+      cy.wait("@personCount").its("request.body").should((body) => expect(body).not.to.contain(expectedFilterContents));
       cy.contains(".MuiDataGrid-toolbarContainer .MuiBadge-root", "1").should("not.exist");
    });
 
-
-   xit("todo delete", () =>
-   {
-      // cy.get(".MuiDataGrid-columnHeaders input[type='checkbox']").click();
-      // cy.contains("button", "Bulk Actions").click();
-      // cy.contains("li", "Bulk Edit").click();
-
-      // ////////////////////////////
-      // // bulk edit process init //
-      // ////////////////////////////
-      // cy.location().should((loc) =>
-      // {
-      //    expect(loc.pathname).to.eq("/processes/person.bulkEdit");
-      //    expect(loc.search).to.eq("?recordsParam=recordIds&recordIds=1,2,3,4,5");
-      // });
-      // cy.wait(["@personBulkEditMetaData"]);
-      // cy.wait(["@personBulkEditInit"]);
-
-      // cy.contains("p[variation='h5']", "Edit Values");
-      // cy.get("#bulkEditSwitch-firstName").click();
-      // cy.get("input[name='firstName']").click()
-      //    .type("Kahhhhn");
-      // cy.contains("button", "next").click();
-
-      // ///////////////////////////
-      // // bulk edit review step //
-      // ///////////////////////////
-      // cy.contains("p[variation='h5']", "Review");
-      // cy.contains(".MuiDataGrid-cellContent", "Kahhhhn");
-
-      // cy.contains("button", "submit").click();
-      // cy.wait(["@personBulkEditStepEdit"]);
-      // cy.wait(["@personBulkEditRecords"]);
-
-      // ////////////////////////////
-      // // bulk edit result step //
-      // ////////////////////////////
-      // cy.contains("p[variation='h5']", "Results");
-      // cy.wait(["@personBulkEditRecords"]);
-   });
+   // tests to add:
+   // - filter boolean OR
+   // - sort column
+   // - all field types and operators
+   // - pagination, page size
+   // - check marks, select all
+   // - column chooser
 
 });
