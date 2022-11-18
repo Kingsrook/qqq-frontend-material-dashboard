@@ -32,6 +32,7 @@ class QClient
 
    private static handleException(exception: QException)
    {
+      // todo - check for 401 and clear cookie et al & logout?
       console.log(`Caught Exception: ${JSON.stringify(exception)}`);
       throw (exception);
    }

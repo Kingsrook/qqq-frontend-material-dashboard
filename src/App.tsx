@@ -23,6 +23,7 @@ import {useAuth0} from "@auth0/auth0-react";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
+import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -86,6 +87,7 @@ function getStaticRoutes()
    ];
 }
 
+const qController = QClient.getInstance();
 export const SESSION_ID_COOKIE_NAME = "sessionId";
 LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
@@ -105,24 +107,51 @@ export default function App()
          return;
       }
       setLoadingToken(true);
+
       (async () =>
       {
-         try
+         const authenticationMetaData: QAuthenticationMetaData = await qController.getAuthenticationMetaData();
+
+         if (authenticationMetaData.type === "AUTH_0")
          {
-            console.log("Loading token...");
-            await getAccessTokenSilently();
-            const idToken = await getIdTokenClaims();
-            setCookie(SESSION_ID_COOKIE_NAME, idToken.__raw, {path: "/"});
-            setIsFullyAuthenticated(true);
-            console.log("Token load complete.");
+            /////////////////////////////////////////
+            // use auth0 if auth type is ... auth0 //
+            /////////////////////////////////////////
+            try
+            {
+               console.log("Loading token...");
+               await getAccessTokenSilently();
+               const idToken = await getIdTokenClaims();
+               setCookie(SESSION_ID_COOKIE_NAME, idToken.__raw, {path: "/"});
+               setIsFullyAuthenticated(true);
+               console.log("Token load complete.");
+            }
+            catch (e)
+            {
+               console.log(`Error loading token: ${JSON.stringify(e)}`);
+               removeCookie(SESSION_ID_COOKIE_NAME);
+               qController.clearAuthenticationMetaDataLocalStorage();
+               logout();
+               return;
+            }
          }
-         catch (e)
+         else if (authenticationMetaData.type === "FULLY_ANONYMOUS" || authenticationMetaData.type === "MOCK")
          {
-            console.log(`Error loading token: ${JSON.stringify(e)}`);
-            removeCookie(SESSION_ID_COOKIE_NAME);
-            logout();
+            /////////////////////////////////////////////
+            // use a random token if anonymous or mock //
+            /////////////////////////////////////////////
+            console.log("Generating random token...");
+            setIsFullyAuthenticated(true);
+            setCookie(SESSION_ID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
+            console.log("Token generation complete.");
             return;
          }
+         else
+         {
+            console.log(`Unrecognized authenticationMetaData.type: ${authenticationMetaData.type}`);
+            qController.clearAuthenticationMetaDataLocalStorage();
+         }
+
       })();
    }, [loadingToken]);
 
@@ -265,7 +294,7 @@ export default function App()
 
                routeList.push({
                   name: `${app.label}`,
-                  key: `${app.name}.dev`,
+                  key: `${app.name}.record.dev`,
                   route: `${path}/:id/dev`,
                   component: <EntityDeveloperView table={table} />,
                });
@@ -342,13 +371,13 @@ export default function App()
 
             let profileRoutes = {};
             const gravatarBase = "https://www.gravatar.com/avatar/";
-            const hash = Md5.hashStr(user.email);
+            const hash = Md5.hashStr(user?.email || "user");
             const profilePicture = `${gravatarBase}${hash}`;
             profileRoutes = {
                type: "collapse",
-               name: user.name,
-               key: user.name,
-               icon: <MDAvatar src={profilePicture} alt="{user.name}" size="sm" />,
+               name: user?.name,
+               key: "username",
+               icon: <MDAvatar src={profilePicture} alt="{user?.name}" size="sm" />,
                collapse: [
                   {
                      name: "My Profile",
@@ -388,11 +417,16 @@ export default function App()
          }
          catch (e)
          {
+            console.error(e);
             if (e instanceof QException)
             {
                if ((e as QException).message.indexOf("status code 401") !== -1)
                {
                   removeCookie(SESSION_ID_COOKIE_NAME);
+
+                  //////////////////////////////////////////////////////
+                  // todo - this is auth0 logout... make more generic //
+                  //////////////////////////////////////////////////////
                   logout();
                   return;
                }

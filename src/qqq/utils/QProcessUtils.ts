@@ -32,30 +32,36 @@ class QProcessUtils
    public static getProcessesForTable(metaData: QInstance, tableName: string, includeHidden = false): QProcessMetaData[]
    {
       const matchingProcesses: QProcessMetaData[] = [];
-      const processKeys = [...metaData.processes.keys()];
-      processKeys.forEach((key) =>
+      if (metaData.processes)
       {
-         const process = metaData.processes.get(key);
-         if (process.tableName === tableName && (includeHidden || !process.isHidden))
+         const processKeys = [...metaData.processes.keys()];
+         processKeys.forEach((key) =>
          {
-            matchingProcesses.push(process);
-         }
-      });
+            const process = metaData.processes.get(key);
+            if (process.tableName === tableName && (includeHidden || !process.isHidden))
+            {
+               matchingProcesses.push(process);
+            }
+         });
+      }
       return matchingProcesses;
    }
 
    public static getReportsForTable(metaData: QInstance, tableName: string, includeHidden = false): QReportMetaData[]
    {
       const matchingReports: QReportMetaData[] = [];
-      const reportKeys = [...metaData.reports.keys()];
-      reportKeys.forEach((key) =>
+      if (metaData.reports)
       {
-         const process = metaData.reports.get(key);
-         if (process.tableName === tableName)
+         const reportKeys = [...metaData.reports.keys()];
+         reportKeys.forEach((key) =>
          {
-            matchingReports.push(process);
-         }
-      });
+            const process = metaData.reports.get(key);
+            if (process.tableName === tableName)
+            {
+               matchingReports.push(process);
+            }
+         });
+      }
       return matchingReports;
    }
 

@@ -27,7 +27,8 @@
             "backendName": "first_name",
             "type": "STRING",
             "isRequired": true,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "lastName",
@@ -35,7 +36,8 @@
             "backendName": "last_name",
             "type": "STRING",
             "isRequired": true,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "birthDate",
@@ -43,14 +45,44 @@
             "backendName": "birth_date",
             "type": "DATE",
             "isRequired": false,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "email",
             "label": "Email",
+            "backendName": "email",
             "type": "STRING",
             "isRequired": false,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
+          },
+          {
+            "name": "isEmployed",
+            "label": "Is Employed",
+            "backendName": "is_employed",
+            "type": "BOOLEAN",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%s"
+          },
+          {
+            "name": "annualSalary",
+            "label": "Annual Salary",
+            "backendName": "annual_salary",
+            "type": "DECIMAL",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "$%,.2f"
+          },
+          {
+            "name": "daysWorked",
+            "label": "Days Worked",
+            "backendName": "days_worked",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%,d"
           }
         ]
       },
@@ -60,19 +92,7 @@
         "stepType": "frontend",
         "components": [
           {
-            "type": "HELP_TEXT",
-            "values": {
-              "text": "The records below will be updated if you click Submit."
-            }
-          }
-        ],
-        "viewFields": [
-          {
-            "name": "valuesBeingUpdated",
-            "label": "Values Being Updated",
-            "type": "STRING",
-            "isRequired": false,
-            "isEditable": true
+            "type": "VALIDATION_REVIEW_SCREEN"
           }
         ],
         "recordListFields": [
@@ -82,7 +102,8 @@
             "backendName": "first_name",
             "type": "STRING",
             "isRequired": true,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "lastName",
@@ -90,7 +111,8 @@
             "backendName": "last_name",
             "type": "STRING",
             "isRequired": true,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "birthDate",
@@ -98,83 +120,54 @@
             "backendName": "birth_date",
             "type": "DATE",
             "isRequired": false,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
           },
           {
             "name": "email",
             "label": "Email",
+            "backendName": "email",
             "type": "STRING",
             "isRequired": false,
-            "isEditable": true
+            "isEditable": true,
+            "displayFormat": "%s"
+          },
+          {
+            "name": "isEmployed",
+            "label": "Is Employed",
+            "backendName": "is_employed",
+            "type": "BOOLEAN",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%s"
+          },
+          {
+            "name": "annualSalary",
+            "label": "Annual Salary",
+            "backendName": "annual_salary",
+            "type": "DECIMAL",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "$%,.2f"
+          },
+          {
+            "name": "daysWorked",
+            "label": "Days Worked",
+            "backendName": "days_worked",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%,d"
           }
         ]
       },
       {
-        "name": "results",
-        "label": "Results",
+        "name": "result",
+        "label": "Result",
         "stepType": "frontend",
         "components": [
           {
-            "type": "HELP_TEXT",
-            "values": {
-              "text": "The records below have been updated."
-            }
-          }
-        ],
-        "recordListFields": [
-          {
-            "name": "id",
-            "label": "Id",
-            "type": "INTEGER",
-            "isRequired": false,
-            "isEditable": false
-          },
-          {
-            "name": "createDate",
-            "label": "Create Date",
-            "backendName": "create_date",
-            "type": "DATE_TIME",
-            "isRequired": false,
-            "isEditable": false
-          },
-          {
-            "name": "modifyDate",
-            "label": "Modify Date",
-            "backendName": "modify_date",
-            "type": "DATE_TIME",
-            "isRequired": false,
-            "isEditable": false
-          },
-          {
-            "name": "firstName",
-            "label": "First Name",
-            "backendName": "first_name",
-            "type": "STRING",
-            "isRequired": true,
-            "isEditable": true
-          },
-          {
-            "name": "lastName",
-            "label": "Last Name",
-            "backendName": "last_name",
-            "type": "STRING",
-            "isRequired": true,
-            "isEditable": true
-          },
-          {
-            "name": "birthDate",
-            "label": "Birth Date",
-            "backendName": "birth_date",
-            "type": "DATE",
-            "isRequired": false,
-            "isEditable": true
-          },
-          {
-            "name": "email",
-            "label": "Email",
-            "type": "STRING",
-            "isRequired": false,
-            "isEditable": true
+            "type": "PROCESS_SUMMARY_RESULTS"
           }
         ]
       }
