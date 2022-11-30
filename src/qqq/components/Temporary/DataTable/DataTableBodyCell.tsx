@@ -45,7 +45,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
          })}
       >
          <MDBox
-            display="inline-block"
+            display="initial"
             width="max-content"
             color="text"
          >

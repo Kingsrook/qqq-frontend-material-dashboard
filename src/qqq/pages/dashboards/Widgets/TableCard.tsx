@@ -53,13 +53,14 @@ interface Props
       id: string,
       name: string
    }[];
-   dropdownOnChange?: (selectedValue: string, widgetIndex: number) => void;
+   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
    widgetIndex?: number;
+   isChild?: boolean;
 
    [key: string]: any;
 }
 
-function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOptions, dropdownOnChange, widgetIndex}: Props): JSX.Element
+function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOptions, reloadWidgetCallback, widgetIndex, isChild}: Props): JSX.Element
 {
    const openArrowIcon = "arrow_drop_down";
    const closeArrowIcon = "arrow_drop_up";
@@ -82,7 +83,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
       setDropdown(null);
       setDropdownValue(currentTarget.innerText || dropdownValue);
       setDropdownIcon(openArrowIcon);
-      dropdownOnChange(currentTarget.innerText || dropdownValue, widgetIndex);
+      reloadWidgetCallback(widgetIndex, null);
    };
 
    const renderMenu = (state: any, open: any, close: any, icon: string) => (
@@ -113,6 +114,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
       {
          setDropdownValue(dropdownOptions[0]["id"]);
          setDropdownLabel(dropdownOptions[0]["name"]);
+
       }
    }, [dropdownOptions]);
 
@@ -121,7 +123,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
          <Grid container>
             <Grid item xs={6}>
                <MDBox pt={3} px={3}>
-                  <MDTypography variant="h5" fontWeight="medium">
+                  <MDTypography variant={isChild ? "h5" : "h6"} fontWeight="medium">
                      {title}
                   </MDTypography>
                </MDBox>

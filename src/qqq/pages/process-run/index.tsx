@@ -20,6 +20,7 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
@@ -70,6 +71,7 @@ interface Props
    process?: QProcessMetaData;
    defaultProcessValues?: any;
    isModal?: boolean;
+   isWidget?: boolean;
    recordIds?: string | QQueryFilter;
    closeModalHandler?: (event: object, reason: string) => void;
 }
@@ -78,7 +80,7 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeModalHandler}: Props): JSX.Element
+function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds, closeModalHandler}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -320,8 +322,8 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
 
       return (
          <>
-            <MDTypography variation="h5" component="div" fontWeight="bold">
-               {isModal ? `${process.label}: ` : ""}
+            <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
+               {(isModal) ? `${process.label}: ` : ""}
                {step?.label}
             </MDTypography>
             {step.components && (
@@ -421,16 +423,26 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
                         component.type === QComponentType.VIEW_FORM && step.viewFields && (
                            <div>
                               {step.viewFields.map((field: QFieldMetaData) => (
-                                 <MDBox key={field.name} display="flex" py={1} pr={2}>
-                                    <MDTypography variant="button" fontWeight="bold">
-                                       {field.label}
-                                       : &nbsp;
-                                    </MDTypography>
-                                    <MDTypography variant="button" fontWeight="regular" color="text">
-                                       {QValueUtils.getValueForDisplay(field, processValues[field.name], "view")}
-                                    </MDTypography>
-                                 </MDBox>
-                              ))}
+                                 field.hasAdornment(AdornmentType.ERROR) ? (
+                                    processValues[field.name] && (
+                                       <MDBox key={field.name} display="flex" py={1} pr={2}>
+                                          <MDTypography variant="button" fontWeight="regular">
+                                             {QValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
+                                          </MDTypography>
+                                       </MDBox>
+                                    )
+                                 ) : (
+                                    <MDBox key={field.name} display="flex" py={1} pr={2}>
+                                       <MDTypography variant="button" fontWeight="bold">
+                                          {field.label}
+                                          : &nbsp;
+                                       </MDTypography>
+                                       <MDTypography variant="button" fontWeight="regular" color="text">
+                                          {QValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
+                                       </MDTypography>
+                                    </MDBox>
+                                 )))
+                              }
                            </div>
                         )
                      }
@@ -589,7 +601,11 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          console.log("No process meta data yet, so returning early");
          return;
       }
-      setPageHeader(processMetaData.label);
+
+      if(! isWidget)
+      {
+         setPageHeader(processMetaData.label);
+      }
 
       let newIndex = null;
       if (typeof newStep === "number")
@@ -1083,11 +1099,21 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
    };
 
    const mainCardStyles: any = {};
+   const formStyles: any = {};
    mainCardStyles.minHeight = `calc(100vh - ${isModal ? 150 : 400}px)`;
-   if (!processError && (qJobRunning || activeStep === null) && !isModal)
+   if (!processError && (qJobRunning || activeStep === null) && !isModal && !isWidget)
    {
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";
+   }
+   if(isWidget)
+   {
+      mainCardStyles.minHeight = "";
+      mainCardStyles.alignItems = "stretch";
+      mainCardStyles.flexGrow = 1;
+      mainCardStyles.display = "flex";
+      formStyles.display = "flex";
+      formStyles.flexGrow = 1;
    }
 
    let nextButtonLabel = "Next";
@@ -1106,95 +1132,107 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
       nextButtonIcon = "check";
    }
 
+   const form = (
+      <Formik
+         enableReinitialize
+         initialValues={initialValues}
+         validationSchema={validationScheme}
+         validation={validationFunction}
+         onSubmit={handleSubmit}
+      >
+         {({
+            values, errors, touched, isSubmitting, setFieldValue,
+         }) => (
+            <Form style={formStyles} id={formId} autoComplete="off">
+               <Card sx={mainCardStyles}>
+                  {
+                     !isWidget && (
+                        <MDBox mx={2} mt={-3}>
+                           <Stepper activeStep={activeStepIndex} alternativeLabel>
+                              {steps.map((step) => (
+                                 <Step key={step.name}>
+                                    <StepLabel>{step.label}</StepLabel>
+                                 </Step>
+                              ))}
+                           </Stepper>
+                        </MDBox>
+                     )
+                  }
+
+                  <MDBox p={3}>
+                     <MDBox>
+                        {/***************************************************************************
+                               ** step content - e.g., the appropriate form or other screen for the step **
+                               ***************************************************************************/}
+                        {getDynamicStepContent(
+                           activeStepIndex,
+                           activeStep,
+                           {
+                              values,
+                              touched,
+                              formFields,
+                              errors,
+                           },
+                           processError,
+                           processValues,
+                           recordConfig,
+                           setFieldValue,
+                        )}
+                        {/********************************
+                               ** back &| next/submit buttons **
+                               ********************************/}
+                        <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
+                           {true || activeStepIndex === 0 ? (
+                              <MDBox />
+                           ) : (
+                              <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
+                           )}
+                           {processError || qJobRunning || !activeStep ? (
+                              <MDBox />
+                           ) : (
+                              <>
+                                 {formError && (
+                                    <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
+                                       {formError}
+                                    </MDTypography>
+                                 )}
+                                 {
+                                    noMoreSteps && <QCancelButton
+                                       onClickHandler={handleCancelClicked}
+                                       label={isModal ? "Close" : "Return"}
+                                       iconName={isModal ? "cancel" : "arrow_back"}
+                                       disabled={isSubmitting} />
+                                 }
+                                 {
+                                    !noMoreSteps && (
+                                       <MDBox component="div" py={3}>
+                                          <Grid container justifyContent="flex-end" spacing={3}>
+                                             {
+                                                ! isWidget && (
+                                                   <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                                                )
+                                             }
+                                             <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
+                                          </Grid>
+                                       </MDBox>
+                                    )
+                                 }
+                              </>
+                           )}
+                        </MDBox>
+                     </MDBox>
+                  </MDBox>
+               </Card>
+            </Form>
+         )}
+      </Formik>
+   );
+
    const body = (
       <MDBox py={3} mb={20}>
          <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
             <Grid item xs={12} lg={10} xl={8}>
-               <Formik
-                  enableReinitialize
-                  initialValues={initialValues}
-                  validationSchema={validationScheme}
-                  validation={validationFunction}
-                  onSubmit={handleSubmit}
-               >
-                  {({
-                     values, errors, touched, isSubmitting, setFieldValue,
-                  }) => (
-                     <Form id={formId} autoComplete="off">
-                        <Card sx={mainCardStyles}>
-                           <MDBox mx={2} mt={-3}>
-                              <Stepper activeStep={activeStepIndex} alternativeLabel>
-                                 {steps.map((step) => (
-                                    <Step key={step.name}>
-                                       <StepLabel>{step.label}</StepLabel>
-                                    </Step>
-                                 ))}
-                              </Stepper>
-                           </MDBox>
-
-                           <MDBox p={3}>
-                              <MDBox>
-                                 {/***************************************************************************
-                                  ** step content - e.g., the appropriate form or other screen for the step **
-                                  ***************************************************************************/}
-                                 {getDynamicStepContent(
-                                    activeStepIndex,
-                                    activeStep,
-                                    {
-                                       values,
-                                       touched,
-                                       formFields,
-                                       errors,
-                                    },
-                                    processError,
-                                    processValues,
-                                    recordConfig,
-                                    setFieldValue,
-                                 )}
-                                 {/********************************
-                                  ** back &| next/submit buttons **
-                                  ********************************/}
-                                 <MDBox mt={6} width="100%" display="flex" justifyContent="space-between">
-                                    {true || activeStepIndex === 0 ? (
-                                       <MDBox />
-                                    ) : (
-                                       <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
-                                    )}
-                                    {processError || qJobRunning || !activeStep ? (
-                                       <MDBox />
-                                    ) : (
-                                       <>
-                                          {formError && (
-                                             <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
-                                                {formError}
-                                             </MDTypography>
-                                          )}
-                                          {
-                                             noMoreSteps && <QCancelButton
-                                                onClickHandler={handleCancelClicked}
-                                                label={isModal ? "Close" : "Return"}
-                                                iconName={isModal ? "cancel" : "arrow_back"}
-                                                disabled={isSubmitting} />
-                                          }
-                                          {
-                                             !noMoreSteps && (
-                                                <MDBox component="div" py={3}>
-                                                   <Grid container justifyContent="flex-end" spacing={3}>
-                                                      <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
-                                                      <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
-                                                   </Grid>
-                                                </MDBox>
-                                             )
-                                          }
-                                       </>
-                                    )}
-                                 </MDBox>
-                              </MDBox>
-                           </MDBox>
-                        </Card>
-                     </Form>
-                  )}
-               </Formik>
+               {form}
             </Grid>
          </Grid>
       </MDBox>
@@ -1208,7 +1246,14 @@ function ProcessRun({process, defaultProcessValues, isModal, recordIds, closeMod
          </Box>
       );
    }
-   else
+   else if (isWidget)
+   {
+      return (
+         <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+            {form}
+         </Box>
+      );
+   }
    {
       return (
          <BaseLayout>
@@ -1222,6 +1267,7 @@ ProcessRun.defaultProps = {
    process: null,
    defaultProcessValues: {},
    isModal: false,
+   isWidget: false,
    recordIds: null,
    closeModalHandler: null
 };

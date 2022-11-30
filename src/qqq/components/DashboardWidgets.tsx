@@ -32,10 +32,12 @@ import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
+import ParentWidget from "qqq/pages/dashboards/Widgets/ParentWidget";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
 import RecordGridWidget from "qqq/pages/dashboards/Widgets/RecordGridWidget";
 import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
+import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 
 const qController = QClient.getInstance();
@@ -45,15 +47,19 @@ interface Props
    widgetMetaDataList: QWidgetMetaData[];
    entityPrimaryKey?: string;
    omitWrappingGridContainer: boolean;
+   areChildren?: boolean;
+   childUrlParams?: string
 }
 
 DashboardWidgets.defaultProps = {
    widgetMetaDataList: null,
    entityPrimaryKey: null,
-   omitWrappingGridContainer: false
+   omitWrappingGridContainer: false,
+   areChildren: false,
+   childUrlParams: ""
 };
 
-function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGridContainer}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams}: Props): JSX.Element
 {
    const location = useLocation();
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -83,7 +89,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
          widgetData[i] = {};
          (async () =>
          {
-            widgetData[i] = await qController.widget(widgetMetaDataList[i].name, `id=${entityPrimaryKey}`);
+            widgetData[i] = await qController.widget(widgetMetaDataList[i].name, `id=${entityPrimaryKey}&${childUrlParams}`);
             setWidgetCounter(widgetCounter + 1);
             forceUpdate();
          })();
@@ -96,143 +102,141 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
       setWidgetData([] as any[]);
    }, [location.pathname]);
 
-   const handleDropdownOnChange = (value: string, index: number) =>
+   const reloadWidget = (index: number, data: string) =>
    {
       setTimeout(async () =>
       {
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name);
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, `id=${entityPrimaryKey}&${data}`);
+         setWidgetCounter(widgetCounter + 1);
       }, 1);
    };
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
-   // console.log(JSON.stringify(widgetMetaDataList));
-   // console.log(widgetCount);
 
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
       return (
-         <>
+         <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+            {
+               widgetMetaData.type === "parentWidget" && (
+                  <ParentWidget
+                     widgetIndex={i}
+                     label={widgetMetaData.label}
+                     data={widgetData[i]}
+                     reloadWidgetCallback={reloadWidget}
+                  />
+               )
+            }
             {
                widgetMetaData.type === "table" && (
-                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%"}}>
-                     <TableCard
-                        color="info"
-                        title={widgetMetaData.label}
-                        linkText={widgetData[i]?.linkText}
-                        linkURL={widgetData[i]?.linkURL}
-                        noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
-                        data={widgetData[i]}
-                        dropdownOptions={widgetData[i]?.dropdownOptions}
-                        dropdownOnChange={handleDropdownOnChange}
-                        widgetIndex={i}
-                     />
-                  </MDBox>
+                  <TableCard
+                     color="info"
+                     title={widgetMetaData.label}
+                     linkText={widgetData[i]?.linkText}
+                     linkURL={widgetData[i]?.linkURL}
+                     noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
+                     data={widgetData[i]}
+                     dropdownOptions={widgetData[i]?.dropdownOptions}
+                     reloadWidgetCallback={reloadWidget}
+                     widgetIndex={i}
+                  />
+               )
+            }
+            {
+               widgetMetaData.type === "process" && widgetData[i]?.processMetaData && (
+                  <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} />
                )
             }
             {
                widgetMetaData.type === "stepper" && (
-                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                     <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                        <MDBox padding="1rem">
-                           {
-                              widgetMetaData.label && (
-                                 <MDTypography variant="h5" textTransform="capitalize">
-                                    {widgetMetaData.label}
-                                 </MDTypography>
-                              )
-                           }
-                           <StepperCard data={widgetData[i]} />
-                        </MDBox>
-                     </Card>
-                  </MDBox>
+                  <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                     <MDBox padding="1rem">
+                        {
+                           widgetMetaData.label && (
+                              <MDTypography variant="h5" textTransform="capitalize">
+                                 {widgetMetaData.label}srp
+                              </MDTypography>
+                           )
+                        }
+                        <StepperCard data={widgetData[i]} />
+                     </MDBox>
+                  </Card>
                )
             }
             {
                widgetMetaData.type === "html" && (
-                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                     <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                        <MDBox padding="1rem">
-                           <MDTypography variant="h5" textTransform="capitalize">
-                              {widgetMetaData.label}
-                           </MDTypography>
-                           <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                              {
-                                 widgetData && widgetData[i] && widgetData[i].html ? (
-                                    parse(widgetData[i].html)
-                                 ) : <Skeleton />
-                              }
-                           </MDTypography>
-                        </MDBox>
-                     </Card>
-                  </MDBox>
+                  <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                     <MDBox padding="1rem">
+                        <MDTypography variant="h5" textTransform="capitalize">
+                           {widgetMetaData.label}
+                        </MDTypography>
+                        <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                           {
+                              widgetData && widgetData[i] && widgetData[i].html ? (
+                                 parse(widgetData[i].html)
+                              ) : <Skeleton />
+                           }
+                        </MDTypography>
+                     </MDBox>
+                  </Card>
                )
             }
             {
                widgetMetaData.type === "multiStatistics" && (
-                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                     <MultiStatisticsCard
-                        color="info"
-                        title={widgetMetaData.label}
-                        data={widgetData[i]}
-                     />
-                  </MDBox>
+                  <MultiStatisticsCard
+                     color="info"
+                     title={widgetMetaData.label}
+                     data={widgetData[i]}
+                  />
                )
             }
             {
                widgetMetaData.type === "quickSightChart" && (
-                  <MDBox sx={{display: "flex"}}>
-                     <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
-                  </MDBox>
+                  <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
                )
             }
             {
                widgetMetaData.type === "barChart" && (
-                  <MDBox mb={3} sx={{display: "flex"}}>
-                     <BarChart
-                        color="info"
-                        title={widgetMetaData.label}
-                        date={`As of ${new Date().toDateString()}`}
-                        data={widgetData[i]?.chartData}
-                     />
-                  </MDBox>
+                  <BarChart
+                     color="info"
+                     title={widgetMetaData.label}
+                     date={`As of ${new Date().toDateString()}`}
+                     data={widgetData[i]?.chartData}
+                  />
                )
             }
             {
                widgetMetaData.type === "lineChart" && (
                   widgetData && widgetData[i] ? (
-                     <MDBox mb={3}>
-                        <LineChart
-                           title={widgetData[i].title}
-                           description={(
-                              <MDBox display="flex" justifyContent="space-between">
-                                 <MDBox display="flex" ml={-1}>
-                                    {
-                                       widgetData[i].lineChartData.datasets.map((dataSet: any) => (
-                                          <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
-                                       ))
-                                    }
-                                 </MDBox>
-                                 <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                     <LineChart
+                        title={widgetData[i].title}
+                        description={(
+                           <MDBox display="flex" justifyContent="space-between">
+                              <MDBox display="flex" ml={-1}>
+                                 {
+                                    widgetData[i].lineChartData.datasets.map((dataSet: any) => (
+                                       <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
+                                    ))
+                                 }
                               </MDBox>
-                           )}
-                           chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
-                        />
-                     </MDBox>
+                              <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
+                           </MDBox>
+                        )}
+                        chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                     />
                   ) : null
                )
             }
             {
                widgetMetaData.type === "childRecordList" && (
                   widgetData && widgetData[i] &&
-                  <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%"}}>
                      <RecordGridWidget
                         title={widgetMetaData.label}
                         data={widgetData[i]}
                      />
-                  </MDBox>
                )
             }
-         </>
+         </MDBox>
       );
    }
 

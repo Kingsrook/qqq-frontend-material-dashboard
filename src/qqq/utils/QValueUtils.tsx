@@ -25,7 +25,7 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
-import {Chip, Icon, Typography} from "@mui/material";
+import {Box, Chip, Icon} from "@mui/material";
 import React, {Fragment} from "react";
 import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
@@ -172,6 +172,20 @@ class QValueUtils
          }
       }
 
+      if (field.hasAdornment(AdornmentType.ERROR))
+      {
+         return (
+            <Box color={"darkred"} alignContent={"baseline"}>
+               <Box mr={2} sx={{float: "left"}}>
+                  <Icon>warning</Icon>
+               </Box>
+               <Box sx={{float: "left"}}>
+                  {rawValue}
+               </Box>
+            </Box>
+         );
+      }
+
       return (QValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }
 
@@ -181,6 +195,11 @@ class QValueUtils
     *******************************************************************************/
    private static getUnadornedValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any): string | JSX.Element
    {
+      if(! displayValue && field.defaultValue)
+      {
+         displayValue = field.defaultValue;
+      }
+
       if (field.type === QFieldType.DATE_TIME)
       {
          if (!rawValue)
