@@ -259,7 +259,7 @@ function CarrierPerformance(): JSX.Element
                <Grid container spacing={3}>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title={qInstance?.widgets.get("TotalShipmentsStatisticsCard").label}
+                        title={qInstance?.widgets?.get("TotalShipmentsStatisticsCard").label}
                         data={totalShipmentsData}
                         increaseIsGood={true}
                         dropdown={{
@@ -271,7 +271,7 @@ function CarrierPerformance(): JSX.Element
                   </Grid>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title={qInstance?.widgets.get("SuccessfulDeliveriesStatisticsCard").label}
+                        title={qInstance?.widgets?.get("SuccessfulDeliveriesStatisticsCard").label}
                         data={successfulDeliveriesData}
                         increaseIsGood={true}
                         dropdown={{
@@ -284,7 +284,7 @@ function CarrierPerformance(): JSX.Element
                   </Grid>
                   <Grid item xs={12} sm={4}>
                      <SimpleStatisticsCard
-                        title={qInstance?.widgets.get("ServiceFailuresStatisticsCard").label}
+                        title={qInstance?.widgets?.get("ServiceFailuresStatisticsCard").label}
                         data={serviceFailuresData}
                         increaseIsGood={false}
                         dropdown={{
@@ -300,7 +300,7 @@ function CarrierPerformance(): JSX.Element
                <Grid container spacing={3}>
                   <Grid item xs={12} sm={6} lg={8}>
                      <DefaultLineChart
-                        title={qInstance?.widgets.get("CarrierVolumeLineChart").label}
+                        title={qInstance?.widgets?.get("CarrierVolumeLineChart").label}
                         data={carrierVolumeData}
                      />
                   </Grid>

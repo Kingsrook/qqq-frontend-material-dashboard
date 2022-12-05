@@ -21,6 +21,7 @@
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Skeleton} from "@mui/material";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
@@ -37,6 +38,7 @@ import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
 import RecordGridWidget from "qqq/pages/dashboards/Widgets/RecordGridWidget";
 import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
+import Widget from "qqq/pages/dashboards/Widgets/Widget";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
 
@@ -116,7 +118,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
       return (
-         <MDBox sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+         <MDBox key={i} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
             {
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
@@ -165,11 +167,8 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
             }
             {
                widgetMetaData.type === "html" && (
-                  <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                     <MDBox padding="1rem">
-                        <MDTypography variant="h5" textTransform="capitalize">
-                           {widgetMetaData.label}
-                        </MDTypography>
+                  <Widget label={widgetMetaData.label}>
+                     <Box px={1} pt={0} pb={2}>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
                            {
                               widgetData && widgetData[i] && widgetData[i].html ? (
@@ -177,8 +176,8 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                               ) : <Skeleton />
                            }
                         </MDTypography>
-                     </MDBox>
-                  </Card>
+                     </Box>
+                  </Widget>
                )
             }
             {
@@ -233,6 +232,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                      <RecordGridWidget
                         title={widgetMetaData.label}
                         data={widgetData[i]}
+                        reloadWidgetCallback={reloadWidget}
                      />
                )
             }

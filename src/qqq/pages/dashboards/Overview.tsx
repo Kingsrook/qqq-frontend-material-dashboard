@@ -265,7 +265,7 @@ function Overview(): JSX.Element
                      <MDBox mb={3}>
                         <BarChart
                            color="info"
-                           title={qInstance?.widgets.get("TotalShipmentsByDayBarChart").label}
+                           title={qInstance?.widgets?.get("TotalShipmentsByDayBarChart").label}
                            description={shipmentsByDayDescription}
                            date="Updated 3 minutes ago"
                            data={shipmentsByDayData}
@@ -275,7 +275,7 @@ function Overview(): JSX.Element
                   <Grid item xs={12} md={6} lg={4}>
                      <MDBox mb={3}>
                         <PieChartCard
-                           title={qInstance?.widgets.get("YTDShipmentsByCarrierPieChart").label}
+                           title={qInstance?.widgets?.get("YTDShipmentsByCarrierPieChart").label}
                            description={shipmentsByCarrierDescription}
                            data={shipmentsByCarrierData}
                         />
@@ -285,7 +285,7 @@ function Overview(): JSX.Element
                      <MDBox mb={3}>
                         <SmallLineChart
                            color="dark"
-                           title={qInstance?.widgets.get("TotalShipmentsByMonthLineChart").label}
+                           title={qInstance?.widgets?.get("TotalShipmentsByMonthLineChart").label}
                            description={shipmentsByMonthDescription}
                            date=""
                            chart={shipmentsByMonthData}

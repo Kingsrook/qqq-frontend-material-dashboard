@@ -273,9 +273,9 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                {
                   sectionFieldElements.set(section.name,
                      <Grid id={section.name} key={section.name} item lg={12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
-                        <MDBox mb={3} width="100%">
+                        <MDBox width="100%">
                            <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
-                              <MDTypography variant="h5" p={3} pb={1}>
+                              <MDTypography variant="h6" p={3} pb={1}>
                                  {section.label}
                               </MDTypography>
                               <MDBox p={3} pt={0} flexDirection="column">
@@ -466,9 +466,9 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                                        {nonT1TableSections.length > 0 ? nonT1TableSections.map(({
                                           iconName, label, name, fieldNames, tier,
                                        }: any) => (
-                                          <>
+                                          <React.Fragment key={name}>
                                              {sectionFieldElements.get(name)}
-                                          </>
+                                          </React.Fragment>
                                        )) : null}
                                     </Grid>
                                     <MDBox component="form" p={3}>

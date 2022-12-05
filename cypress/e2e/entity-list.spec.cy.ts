@@ -1,10 +1,13 @@
 /// <reference types="cypress-wait-for-stable-dom" />
 
+import QLib from "./lib/qLib";
+
 describe("table query screen", () =>
 {
-
    before(() =>
    {
+      QLib.init(cy);
+
       cy.intercept("GET", "/metaData/authentication", {fixture: "metaData/authentication.json"}).as("authenticationMetaData");
       cy.intercept("GET", "/metaData", {fixture: "metaData/index.json"}).as("metaData");
       cy.intercept("GET", "/metaData/table/person", {fixture: "metaData/table/person.json"}).as("personMetaData");
@@ -29,14 +32,13 @@ describe("table query screen", () =>
       });
    });
 
-   it.only("can add query filters", () =>
+   it("can add query filters", () =>
    {
       /////////////////////////////////////////////////////////////
       // go to table, wait for filter to run, and rows to appear //
       /////////////////////////////////////////////////////////////
       cy.visit("https://localhost:3000/peopleApp/greetingsApp/person");
-      cy.wait(["@personQuery", "@personCount"]);
-      cy.get(".MuiDataGrid-virtualScrollerRenderZone").children().should("have.length.greaterThan", 3);
+      QLib.waitForQueryScreen();
 
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
@@ -70,6 +72,29 @@ describe("table query screen", () =>
       cy.wait("@personQuery").its("request.body").should((body) => expect(body).not.to.contain(expectedFilterContents));
       cy.wait("@personCount").its("request.body").should((body) => expect(body).not.to.contain(expectedFilterContents));
       cy.contains(".MuiDataGrid-toolbarContainer .MuiBadge-root", "1").should("not.exist");
+   });
+
+   it.only("can do a boolean or query", () =>
+   {
+      /////////////////////////////////////////
+      // go to table, wait for filter to run //
+      /////////////////////////////////////////
+      cy.visit("https://localhost:3000/peopleApp/greetingsApp/person");
+      QLib.waitForQueryScreen();
+
+      QLib.buildEntityListQueryFilter([
+         {fieldLabel: "First Name", operator: "contains", textValue: "Dar"},
+         {fieldLabel: "First Name", operator: "contains", textValue: "Jam"}
+      ], "or");
+
+      let expectedFilterContents0 = JSON.stringify({fieldName: "firstName", operator: "CONTAINS", values: ["Dar"]});
+      let expectedFilterContents1 = JSON.stringify({fieldName: "firstName", operator: "CONTAINS", values: ["Jam"]});
+      cy.wait("@personQuery").its("request.body").should((body) =>
+      {
+         expect(body).to.contain(expectedFilterContents0);
+         expect(body).to.contain(expectedFilterContents1);
+         expect(body).to.contain("asdf");
+      });
    });
 
    // tests to add:

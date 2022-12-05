@@ -21,32 +21,28 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Typography from "@mui/material/Typography";
-import {DataGridPro, GridValidRowModel} from "@mui/x-data-grid-pro";
+import {DataGridPro} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
-import MDTypography from "qqq/components/Temporary/MDTypography";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import Widget, {AddNewRecordButton, HeaderLink} from "./Widget";
 
 interface Props
 {
-   title: string
+   title: string;
    data: any;
+   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
 }
 
-RecordGridWidget.defaultProps = {
-};
+RecordGridWidget.defaultProps = {};
 
-function RecordGridWidget({title, data}: Props): JSX.Element
+function RecordGridWidget({title, data, reloadWidgetCallback}: Props): JSX.Element
 {
    const [rows, setRows] = useState([]);
-   const [columns, setColumns] = useState([])
+   const [columns, setColumns] = useState([]);
 
    useEffect(() =>
    {
-      if(data && data.childTableMetaData && data.queryOutput)
+      if (data && data.childTableMetaData && data.queryOutput)
       {
          const records: QRecord[] = [];
          const queryOutputRecords = data.queryOutput.records;
@@ -60,28 +56,26 @@ function RecordGridWidget({title, data}: Props): JSX.Element
 
          const tableMetaData = new QTableMetaData(data.childTableMetaData);
          const {rows, columnsToRender} = DataGridUtils.makeRows(records, tableMetaData);
-         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, data.tablePath);
+
+         const childTablePath = data.tablePath + (data.tablePath.endsWith("/") ? "" : "/")
+         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, childTablePath);
 
          setRows(rows);
          setColumns(columns);
       }
-   }, [data])
+   }, [data]);
 
    return (
-      <Card sx={{width: "100%"}}>
-         <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5" fontWeight="medium" p={3}>
-               {title}
-            </Typography>
-            {
-               data.viewAllLink &&
-               <Typography variant="body2" p={3}>
-                  <Link to={data.viewAllLink}>
-                     View All
-                  </Link>
-               </Typography>
-            }
-         </Box>
+      <Widget
+         label={title}
+         labelAdditionalComponentsLeft={[
+            new HeaderLink("View All", data.viewAllLink)
+         ]}
+         labelAdditionalComponentsRight={[
+            new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords)
+         ]}
+         reloadWidgetCallback={reloadWidgetCallback}
+      >
          <DataGridPro
             autoHeight
             rows={rows}
@@ -115,8 +109,8 @@ function RecordGridWidget({title, data}: Props): JSX.Element
             // sortingOrder={[ "asc", "desc" ]}
             // sortModel={columnSortModel}
          />
-      </Card>
-   )
+      </Widget>
+   );
 }
 
 export default RecordGridWidget;

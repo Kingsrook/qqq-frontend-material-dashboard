@@ -24,9 +24,11 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
@@ -49,10 +51,23 @@ import QValueUtils from "qqq/utils/QValueUtils";
 interface Props
 {
    id?: string;
+   isModal: boolean;
    table?: QTableMetaData;
+   closeModalHandler?: (event: object, reason: string) => void;
+   defaultValues: { [key: string]: string };
+   disabledFields: { [key: string]: boolean };
 }
 
-function EntityForm({table, id}: Props): JSX.Element
+EntityForm.defaultProps = {
+   id: null,
+   isModal: false,
+   table: null,
+   closeModalHandler: null,
+   defaultValues: {},
+   disabledFields: {},
+};
+
+function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disabledFields}: Props): JSX.Element
 {
    const qController = QClient.getInstance();
    const tableNameParam = useParams().tableName;
@@ -126,39 +141,89 @@ function EntityForm({table, id}: Props): JSX.Element
          // if doing an edit, fetch the record and pre-populate the form values from it //
          /////////////////////////////////////////////////////////////////////////////////
          let record: QRecord = null;
+         let defaultDisplayValues = new Map<string, string>();
          if (id !== null)
          {
             record = await qController.get(tableName, id);
             setRecord(record);
             setFormTitle(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
-            setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
+
+            if (!isModal)
+            {
+               setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
+            }
 
             tableMetaData.fields.forEach((fieldMetaData, key) =>
             {
                initialValues[key] = record.values.get(key);
-               if(fieldMetaData.type == QFieldType.DATE_TIME)
-               {
-                  initialValues[key] = QValueUtils.formatDateTimeValueForForm(record.values.get(key));
-               }
             });
 
-            setFormValues(formValues);
+            //? safe to delete? setFormValues(formValues);
 
-            if(!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+            if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
             {
                setNoCapabilityError("You may not edit records in this table");
             }
          }
          else
          {
+            ///////////////////////////////////////////
+            // else handle preparing to do an insert //
+            ///////////////////////////////////////////
             setFormTitle(`Creating New ${tableMetaData?.label}`);
-            setPageHeader(`Creating New ${tableMetaData?.label}`);
 
-            if(!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
+            if (!isModal)
+            {
+               setPageHeader(`Creating New ${tableMetaData?.label}`);
+            }
+
+            if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
             {
                setNoCapabilityError("You may not create records in this table");
             }
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////
+            // if default values were supplied for a new record, then populate initialValues, for formik. //
+            ////////////////////////////////////////////////////////////////////////////////////////////////
+            if(defaultValues)
+            {
+               for (let i = 0; i < fieldArray.length; i++)
+               {
+                  const fieldMetaData = fieldArray[i];
+                  const fieldName = fieldMetaData.name;
+                  if (defaultValues[fieldName])
+                  {
+                     initialValues[fieldName] = defaultValues[fieldName];
+
+                     ///////////////////////////////////////////////////////////////////////////////////////////
+                     // we need to set the initialDisplayValue for possible value fields with a default value //
+                     // so, look them up here now if needed                                                   //
+                     ///////////////////////////////////////////////////////////////////////////////////////////
+                     if (fieldMetaData.possibleValueSourceName)
+                     {
+                        const results: QPossibleValue[] = await qController.possibleValues(tableName, fieldName, null, [initialValues[fieldName]]);
+                        if (results && results.length > 0)
+                        {
+                           defaultDisplayValues.set(fieldName, results[0].label);
+                        }
+                     }
+                  }
+               }
+            }
          }
+
+         /////////////////////////////////////////////////////////////////////
+         // make sure all initialValues are properly formatted for the form //
+         /////////////////////////////////////////////////////////////////////
+         for (let i = 0; i < fieldArray.length; i++)
+         {
+            const fieldMetaData = fieldArray[i];
+            if (fieldMetaData.type == QFieldType.DATE_TIME && initialValues[fieldMetaData.name])
+            {
+               initialValues[fieldMetaData.name] = QValueUtils.formatDateTimeValueForForm(initialValues[fieldMetaData.name]);
+            }
+         }
+
          setInitialValues(initialValues);
 
          /////////////////////////////////////////////////////////
@@ -168,7 +233,15 @@ function EntityForm({table, id}: Props): JSX.Element
             dynamicFormFields,
             formValidations,
          } = DynamicFormUtils.getFormData(fieldArray);
-         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, record?.displayValues);
+         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, record ? record.displayValues : defaultDisplayValues);
+
+         if(disabledFields)
+         {
+            for (let fieldName in disabledFields)
+            {
+               dynamicFormFields[fieldName].isEditable = false;
+            }
+         }
 
          /////////////////////////////////////
          // group the formFields by section //
@@ -181,12 +254,7 @@ function EntityForm({table, id}: Props): JSX.Element
             const section = tableSections[i];
             const sectionDynamicFormFields: any[] = [];
 
-            if(section.isHidden)
-            {
-               continue;
-            }
-
-            if(!section.fieldNames)
+            if (section.isHidden || !section.fieldNames)
             {
                continue;
             }
@@ -271,8 +339,15 @@ function EntityForm({table, id}: Props): JSX.Element
                .update(tableName, id, values)
                .then((record) =>
                {
-                  const path = `${location.pathname.replace(/\/edit$/, "")}?updateSuccess=true`;
-                  navigate(path);
+                  if (isModal)
+                  {
+                     closeModalHandler(null, "recordUpdated");
+                  }
+                  else
+                  {
+                     const path = `${location.pathname.replace(/\/edit$/, "")}?updateSuccess=true`;
+                     navigate(path);
+                  }
                })
                .catch((error) =>
                {
@@ -287,8 +362,15 @@ function EntityForm({table, id}: Props): JSX.Element
                .create(tableName, values)
                .then((record) =>
                {
-                  const path = `${location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField))}?createSuccess=true`;
-                  navigate(path);
+                  if (isModal)
+                  {
+                     closeModalHandler(null, "recordCreated");
+                  }
+                  else
+                  {
+                     const path = `${location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField))}?createSuccess=true`;
+                     navigate(path);
+                  }
                })
                .catch((error) =>
                {
@@ -300,111 +382,128 @@ function EntityForm({table, id}: Props): JSX.Element
 
    const formId = id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 
-   if(noCapabilityError)
+   let body;
+   if (noCapabilityError)
    {
-      return <MDBox mb={3}>
-         <Grid container spacing={3}>
-            <Grid item xs={12}>
-               <MDBox mb={3}>
-                  <Alert severity="error">{noCapabilityError}</Alert>
-               </MDBox>
-            </Grid>
-         </Grid>
-      </MDBox>;
-   }
-
-   return (
-      <MDBox mb={3}>
-         <Grid container spacing={3}>
-            <Grid item xs={12}>
-               {alertContent ? (
+      body = (
+         <MDBox mb={3}>
+            <Grid container spacing={3}>
+               <Grid item xs={12}>
                   <MDBox mb={3}>
-                     <Alert severity="error">{alertContent}</Alert>
+                     <Alert severity="error">{noCapabilityError}</Alert>
                   </MDBox>
-               ) : ("")}
+               </Grid>
             </Grid>
-         </Grid>
-         <Grid container spacing={3}>
-            <Grid item xs={12} lg={3}>
-               <QRecordSidebar tableSections={tableSections} />
+         </MDBox>
+      );
+   }
+   else
+   {
+      const cardElevation = isModal ? 3 : 1;
+      body = (
+         <MDBox mb={3}>
+            <Grid container spacing={3}>
+               <Grid item xs={12}>
+                  {alertContent ? (
+                     <MDBox mb={3}>
+                        <Alert severity="error">{alertContent}</Alert>
+                     </MDBox>
+                  ) : ("")}
+               </Grid>
             </Grid>
-            <Grid item xs={12} lg={9}>
+            <Grid container spacing={3}>
+               {
+                  !isModal &&
+                  <Grid item xs={12} lg={3}>
+                     <QRecordSidebar tableSections={tableSections} />
+                  </Grid>
+               }
+               <Grid item xs={12} lg={isModal ? 12 : 9}>
 
-               <Formik
-                  initialValues={initialValues}
-                  validationSchema={validations}
-                  onSubmit={handleSubmit}
-               >
-                  {({
-                     values,
-                     errors,
-                     touched,
-                     isSubmitting,
-                  }) => (
-                     <Form id={formId} autoComplete="off">
+                  <Formik
+                     initialValues={initialValues}
+                     validationSchema={validations}
+                     onSubmit={handleSubmit}
+                  >
+                     {({
+                        values,
+                        errors,
+                        touched,
+                        isSubmitting,
+                     }) => (
+                        <Form id={formId} autoComplete="off">
 
-                        <MDBox pb={3} pt={0}>
-                           <Card id={`${t1sectionName}`} sx={{overflow: "visible", pb: 2, scrollMarginTop: "100px"}}>
-                              <MDBox display="flex" p={3} pb={1}>
-                                 <MDBox mr={1.5}>
-                                    <Avatar sx={{bgcolor: colors.info.main}}>
-                                       <Icon>
-                                          {tableMetaData?.iconName}
-                                       </Icon>
-                                    </Avatar>
+                           <MDBox pb={3} pt={0}>
+                              <Card id={`${t1sectionName}`} sx={{overflow: "visible", pb: 2, scrollMarginTop: "100px"}} elevation={cardElevation}>
+                                 <MDBox display="flex" p={3} pb={1}>
+                                    <MDBox mr={1.5}>
+                                       <Avatar sx={{bgcolor: colors.info.main}}>
+                                          <Icon>
+                                             {tableMetaData?.iconName}
+                                          </Icon>
+                                       </Avatar>
+                                    </MDBox>
+                                    <MDBox display="flex" alignItems="center">
+                                       <MDTypography variant="h5">{formTitle}</MDTypography>
+                                    </MDBox>
                                  </MDBox>
-                                 <MDBox display="flex" alignItems="center">
-                                    <MDTypography variant="h5">{formTitle}</MDTypography>
-                                 </MDBox>
-                              </MDBox>
-                              {
-                                 t1sectionName && formFields ? (
-                                    <MDBox pb={1} px={3}>
-                                       <MDBox p={3} width="100%">
-                                          {getFormSection(values, touched, formFields.get(t1sectionName), errors)}
+                                 {
+                                    t1sectionName && formFields ? (
+                                       <MDBox pb={1} px={3}>
+                                          <MDBox p={3} width="100%">
+                                             {getFormSection(values, touched, formFields.get(t1sectionName), errors)}
+                                          </MDBox>
                                        </MDBox>
-                                    </MDBox>
-                                 ) : null
-                              }
-                           </Card>
-                        </MDBox>
-                        {formFields && nonT1Sections.length ? nonT1Sections.map((section: QTableSection) => (
-                           <MDBox key={`edit-card-${section.name}`} pb={3}>
-                              <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
-                                 <MDTypography variant="h5" p={3} pb={1}>
-                                    {section.label}
-                                 </MDTypography>
-                                 <MDBox pb={1} px={3}>
-                                    <MDBox p={3} width="100%">
-                                       {
-                                          getFormSection(values, touched, formFields.get(section.name), errors)
-                                       }
-                                    </MDBox>
-                                 </MDBox>
+                                    ) : null
+                                 }
                               </Card>
                            </MDBox>
-                        )) : null}
+                           {formFields && nonT1Sections.length ? nonT1Sections.map((section: QTableSection) => (
+                              <MDBox key={`edit-card-${section.name}`} pb={3}>
+                                 <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}} elevation={cardElevation}>
+                                    <MDTypography variant="h5" p={3} pb={1}>
+                                       {section.label}
+                                    </MDTypography>
+                                    <MDBox pb={1} px={3}>
+                                       <MDBox p={3} width="100%">
+                                          {getFormSection(values, touched, formFields.get(section.name), errors)}
+                                       </MDBox>
+                                    </MDBox>
+                                 </Card>
+                              </MDBox>
+                           )) : null}
 
-                        <MDBox component="div" p={3}>
-                           <Grid container justifyContent="flex-end" spacing={3}>
-                              <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
-                              <QSaveButton disabled={isSubmitting} />
-                           </Grid>
-                        </MDBox>
+                           <MDBox component="div" p={3}>
+                              <Grid container justifyContent="flex-end" spacing={3}>
+                                 <QCancelButton onClickHandler={isModal ? closeModalHandler : handleCancelClicked} disabled={isSubmitting} />
+                                 <QSaveButton disabled={isSubmitting} />
+                              </Grid>
+                           </MDBox>
 
-                     </Form>
-                  )}
-               </Formik>
+                        </Form>
+                     )}
+                  </Formik>
 
+               </Grid>
             </Grid>
-         </Grid>
-      </MDBox>
-   );
-}
+         </MDBox>
+      );
+   }
 
-EntityForm.defaultProps = {
-   id: null,
-   table: null,
-};
+   if (isModal)
+   {
+      return (
+         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+            <Card sx={{my: 5, mx: "auto", p: 6, pb: 0, maxWidth: "1024px"}}>
+               {body}
+            </Card>
+         </Box>
+      );
+   }
+   else
+   {
+      return (body);
+   }
+}
 
 export default EntityForm;

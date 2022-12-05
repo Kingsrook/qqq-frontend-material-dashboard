@@ -133,6 +133,7 @@ function QDynamicForm(props: Props): JSX.Element
                               <QDynamicSelect
                                  tableName={field.possibleValueProps.tableName}
                                  fieldName={fieldName}
+                                 isEditable={field.isEditable}
                                  fieldLabel={field.label}
                                  initialValue={values[fieldName]}
                                  initialDisplayValue={field.possibleValueProps.initialDisplayValue}

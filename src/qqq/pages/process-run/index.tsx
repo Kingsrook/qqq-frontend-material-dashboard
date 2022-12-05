@@ -275,7 +275,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
             <Grid m={3} mt={9} container>
                <Grid item xs={0} lg={3} />
                <Grid item xs={12} lg={6}>
-                  <Card>
+                  <Card elevation={5}>
                      <MDBox p={3}>
                         <MDTypography variant="h5" component="div">
                            Working
