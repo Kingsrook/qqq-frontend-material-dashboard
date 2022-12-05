@@ -154,7 +154,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                         {
                            widgetMetaData.label && (
                               <MDTypography variant="h5" textTransform="capitalize">
-                                 {widgetMetaData.label}srp
+                                 {widgetMetaData.label}
                               </MDTypography>
                            )
                         }
