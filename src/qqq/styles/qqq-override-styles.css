@@ -265,18 +265,18 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    cursor: pointer;
 }
 
-.parcelRulesCard
+.optimizationRulesCard
 {
    font-size: 16px;
 }
 
-.parcelRulesCard TD
+.optimizationRulesCard TD
 {
    font-size: 14px !important;
    vertical-align: top;
 }
 
-.parcelRulesCard A
+.optimizationRulesCard A
 {
    color: blue;
    font-size: 14px;
