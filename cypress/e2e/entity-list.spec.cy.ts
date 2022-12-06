@@ -22,7 +22,7 @@ describe("table query screen", () =>
       cy.intercept("GET", "/widget/* ", {fixture: "widget/empty.json"}).as("emptyWidget");
    });
 
-   it("can be loaded from app screen", () =>
+   it.skip("can be loaded from app screen", () =>
    {
       cy.visit("https://localhost:3000/peopleApp/greetingsApp/");
       cy.contains("Person").click();
@@ -32,7 +32,7 @@ describe("table query screen", () =>
       });
    });
 
-   it("can add query filters", () =>
+   it.skip("can add query filters", () =>
    {
       /////////////////////////////////////////////////////////////
       // go to table, wait for filter to run, and rows to appear //
