@@ -34,7 +34,7 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import {Form, Formik} from "formik";
 import React, {useContext, useReducer, useState} from "react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
+import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import * as Yup from "yup";
 import QContext from "QContext";
 import {QCancelButton, QSaveButton} from "qqq/components/QButtons";
@@ -67,11 +67,11 @@ EntityForm.defaultProps = {
    disabledFields: {},
 };
 
-function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disabledFields}: Props): JSX.Element
+function EntityForm(props: Props): JSX.Element
 {
    const qController = QClient.getInstance();
    const tableNameParam = useParams().tableName;
-   const tableName = table === null ? tableNameParam : table.name;
+   const tableName = props.table === null ? tableNameParam : props.table.name;
 
    const [formTitle, setFormTitle] = useState("");
    const [validations, setValidations] = useState({});
@@ -95,6 +95,34 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
 
    const navigate = useNavigate();
    const location = useLocation();
+
+   ////////////////////////////////////////////////////////////////////
+   // first take defaultValues and disabledFields from props         //
+   // but, also allow them to be sent in the hash, in the format of: //
+   // #/defaultValues={jsonName=value}/disabledFields={jsonName=any} //
+   ////////////////////////////////////////////////////////////////////
+   let defaultValues = props.defaultValues;
+   let disabledFields = props.disabledFields;
+
+   const hashParts = location.hash.split("/");
+   for (let i = 0; i < hashParts.length; i++)
+   {
+      try
+      {
+         const parts = hashParts[i].split("=")
+         if (parts.length > 1 && parts[0] == "defaultValues")
+         {
+            defaultValues = JSON.parse(decodeURIComponent(parts[1])) as { [key: string]: any };
+         }
+
+         if (parts.length > 1 && parts[0] == "disabledFields")
+         {
+            disabledFields = JSON.parse(decodeURIComponent(parts[1])) as { [key: string]: any };
+         }
+      }
+      catch (e) 
+      {}
+   }
 
    function getFormSection(values: any, touched: any, formFields: any, errors: any): JSX.Element
    {
@@ -142,13 +170,13 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
          /////////////////////////////////////////////////////////////////////////////////
          let record: QRecord = null;
          let defaultDisplayValues = new Map<string, string>();
-         if (id !== null)
+         if (props.id !== null)
          {
-            record = await qController.get(tableName, id);
+            record = await qController.get(tableName, props.id);
             setRecord(record);
             setFormTitle(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
 
-            if (!isModal)
+            if (!props.isModal)
             {
                setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
             }
@@ -172,7 +200,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
             ///////////////////////////////////////////
             setFormTitle(`Creating New ${tableMetaData?.label}`);
 
-            if (!isModal)
+            if (!props.isModal)
             {
                setPageHeader(`Creating New ${tableMetaData?.label}`);
             }
@@ -268,7 +296,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
                // if id !== null - means we're on the edit screen -- show all fields on the edit screen. //
                // || (or) we're on the insert screen in which case, only show editable fields.           //
                ////////////////////////////////////////////////////////////////////////////////////////////
-               if (id !== null || field.isEditable)
+               if (props.id !== null || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
                }
@@ -316,7 +344,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
       //  but if the user used the anchors on the page, this doesn't effectively cancel... //
       //  what we have here pushed a new history entry (I think?), so could be better      //
       ///////////////////////////////////////////////////////////////////////////////////////
-      if (id !== null)
+      if (props.id !== null)
       {
          const path = `${location.pathname.replace(/\/edit$/, "")}`;
          navigate(path, {replace: true});
@@ -333,15 +361,15 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
       actions.setSubmitting(true);
       await (async () =>
       {
-         if (id !== null)
+         if (props.id !== null)
          {
             await qController
-               .update(tableName, id, values)
+               .update(tableName, props.id, values)
                .then((record) =>
                {
-                  if (isModal)
+                  if (props.isModal)
                   {
-                     closeModalHandler(null, "recordUpdated");
+                     props.closeModalHandler(null, "recordUpdated");
                   }
                   else
                   {
@@ -362,9 +390,9 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
                .create(tableName, values)
                .then((record) =>
                {
-                  if (isModal)
+                  if (props.isModal)
                   {
-                     closeModalHandler(null, "recordCreated");
+                     props.closeModalHandler(null, "recordCreated");
                   }
                   else
                   {
@@ -380,7 +408,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
       })();
    };
 
-   const formId = id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
+   const formId = props.id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 
    let body;
    if (noCapabilityError)
@@ -399,7 +427,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
    }
    else
    {
-      const cardElevation = isModal ? 3 : 1;
+      const cardElevation = props.isModal ? 3 : 1;
       body = (
          <MDBox mb={3}>
             <Grid container spacing={3}>
@@ -413,12 +441,12 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
             </Grid>
             <Grid container spacing={3}>
                {
-                  !isModal &&
+                  !props.isModal &&
                   <Grid item xs={12} lg={3}>
                      <QRecordSidebar tableSections={tableSections} />
                   </Grid>
                }
-               <Grid item xs={12} lg={isModal ? 12 : 9}>
+               <Grid item xs={12} lg={props.isModal ? 12 : 9}>
 
                   <Formik
                      initialValues={initialValues}
@@ -475,7 +503,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
 
                            <MDBox component="div" p={3}>
                               <Grid container justifyContent="flex-end" spacing={3}>
-                                 <QCancelButton onClickHandler={isModal ? closeModalHandler : handleCancelClicked} disabled={isSubmitting} />
+                                 <QCancelButton onClickHandler={props.isModal ? props.closeModalHandler : handleCancelClicked} disabled={isSubmitting} />
                                  <QSaveButton disabled={isSubmitting} />
                               </Grid>
                            </MDBox>
@@ -490,7 +518,7 @@ function EntityForm({table, isModal, id, closeModalHandler, defaultValues, disab
       );
    }
 
-   if (isModal)
+   if (props.isModal)
    {
       return (
          <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>

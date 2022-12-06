@@ -26,14 +26,14 @@ import Card from "@mui/material/Card";
 import Modal from "@mui/material/Modal";
 import Typography from "@mui/material/Typography";
 import React, {useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import EntityForm from "qqq/components/EntityForm";
 
 interface Props
 {
    label: string;
-   labelAdditionalComponentsLeft: [LabelComponent];
-   labelAdditionalComponentsRight: [LabelComponent];
+   labelAdditionalComponentsLeft: LabelComponent[];
+   labelAdditionalComponentsRight: LabelComponent[];
    children: JSX.Element;
    reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
 }
@@ -46,7 +46,7 @@ Widget.defaultProps = {
 
 
 
-class LabelComponent
+export class LabelComponent
 {
 
 }
@@ -89,39 +89,12 @@ export class AddNewRecordButton extends LabelComponent
 
 function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 {
-   const [showEditForm, setShowEditForm] = useState(null as any);
+   const navigate = useNavigate();
 
    function openEditForm(table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any)
    {
-      const showEditForm: any = {};
-      showEditForm.table = table;
-      showEditForm.id = id;
-      showEditForm.defaultValues = defaultValues;
-      showEditForm.disabledFields = disabledFields;
-      setShowEditForm(showEditForm);
+      navigate(`#/createChild=${table.name}/defaultValues=${JSON.stringify(defaultValues)}/disabledFields=${JSON.stringify(disabledFields)}`)
    }
-
-   const closeEditForm = (event: object, reason: string) =>
-   {
-      if (reason === "backdropClick")
-      {
-         return;
-      }
-
-      if (reason === "recordUpdated" || reason === "recordCreated")
-      {
-         if(props.reloadWidgetCallback)
-         {
-            props.reloadWidgetCallback(0, "ok");
-         }
-         else
-         {
-            window.location.reload()
-         }
-      }
-
-      setShowEditForm(null);
-   };
 
    function renderComponent(component: LabelComponent)
    {
@@ -152,7 +125,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          <Card sx={{width: "100%"}}>
             <Box display="flex" justifyContent="space-between" alignItems="center">
                <Box py={2}>
-                  <Typography variant="h6" fontWeight="medium" p={3} display="inline">
+                  <Typography variant="h5" fontWeight="medium" p={3} display="inline">
                      {props.label}
                   </Typography>
                   {
@@ -173,20 +146,6 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             </Box>
             {props.children}
          </Card>
-         {
-            showEditForm &&
-            <Modal open={showEditForm as boolean} onClose={(event, reason) => closeEditForm(event, reason)}>
-               <div className="modalEditForm">
-                  <EntityForm
-                     isModal={true}
-                     closeModalHandler={closeEditForm}
-                     table={showEditForm.table}
-                     id={showEditForm.id}
-                     defaultValues={showEditForm.defaultValues}
-                     disabledFields={showEditForm.disabledFields} />
-               </div>
-            </Modal>
-         }
       </>
    );
 }

@@ -46,6 +46,7 @@ import {useLocation, useNavigate, useParams, useSearchParams} from "react-router
 import QContext from "QContext";
 import BaseLayout from "qqq/components/BaseLayout";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
+import EntityForm from "qqq/components/EntityForm";
 import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/QButtons";
 import QRecordSidebar from "qqq/components/QRecordSidebar";
 import colors from "qqq/components/Temporary/colors";
@@ -60,7 +61,6 @@ import QValueUtils from "qqq/utils/QValueUtils";
 
 const qController = QClient.getInstance();
 
-// Declaring props types for ViewForm
 interface Props
 {
    table?: QTableMetaData;
@@ -70,7 +70,7 @@ interface Props
 EntityView.defaultProps =
    {
       table: null,
-      launchProcess: null
+      launchProcess: null,
    };
 
 function EntityView({table, launchProcess}: Props): JSX.Element
@@ -102,6 +102,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
+   const [showEditChildForm, setShowEditChildForm] = useState(null as any);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -126,10 +127,16 @@ function EntityView({table, launchProcess}: Props): JSX.Element
    {
       try
       {
-         /////////////////////////////////////////////////////////////////
-         // the path for a process looks like: .../table/id/process     //
-         // so if our tableName is in the -3 index, try to open process //
-         /////////////////////////////////////////////////////////////////
+         const hashParts = location.hash.split("/");
+
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         // the path for a process looks like: .../table/id/process                                   //
+         // the path for creating a child record looks like: .../table/id/createChild/:childTableName //
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+
+         //////////////////////////////////////////////////////////////
+         // if our tableName is in the -3 index, try to open process //
+         //////////////////////////////////////////////////////////////
          if (pathParts[pathParts.length - 3] === tableName)
          {
             const processName = pathParts[pathParts.length - 1];
@@ -144,19 +151,69 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                console.log(`Couldn't find process named ${processName}`);
             }
          }
+
+         ///////////////////////////////////////////////////////////////////////
+         // alternatively, look for a launchProcess specification in the hash //
+         // e.g., for non-natively rendered links to open the modal.          //
+         ///////////////////////////////////////////////////////////////////////
+         for (let i = 0; i < hashParts.length; i++)
+         {
+            const parts = hashParts[i].split("=")
+            if (parts.length > 1 && parts[0] == "launchProcess")
+            {
+               (async () =>
+               {
+                  const processMetaData = await qController.loadProcessMetaData(parts[1])
+                  setActiveModalProcess(processMetaData);
+               })();
+               return;
+            }
+         }
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if our table is in the -4 index, and there's `createChild` in the -2 index, try to open a createChild form //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == "createChild")
+         {
+            (async () =>
+            {
+               const childTable = await qController.loadTableMetaData(pathParts[pathParts.length - 1])
+               const childId: any = null; // todo - for editing a child, not just creating one.
+               openEditChildForm(childTable, childId, null, null); // todo - defaults & disableds
+            })();
+            return;
+         }
+
+         /////////////////////////////////////////////////////////////////////
+         // alternatively, look for a createChild specification in the hash //
+         // e.g., for non-natively rendered links to open the modal.        //
+         /////////////////////////////////////////////////////////////////////
+         for (let i = 0; i < hashParts.length; i++)
+         {
+            const parts = hashParts[i].split("=")
+            if (parts.length > 1 && parts[0] == "createChild")
+            {
+               (async () =>
+               {
+                  const childTable = await qController.loadTableMetaData(parts[1])
+                  const childId: any = null; // todo - for editing a child, not just creating one.
+                  openEditChildForm(childTable, childId, null, null); // todo - defaults & disableds
+               })();
+               return;
+            }
+         }
       }
       catch (e)
       {
          console.log(e);
       }
 
-      /////////////////////////////////////////////////////////////
-      // if we didn't open a process, assume we need to (re)load //
-      /////////////////////////////////////////////////////////////
-      reload();
-
+      ///////////////////////////////////////////////////////////////////
+      // if we didn't open something, then, assume we need to (re)load //
+      ///////////////////////////////////////////////////////////////////
       setActiveModalProcess(null);
-   }, [location.pathname]);
+      reload();
+   }, [location.pathname, location.hash]);
 
    if (!asyncLoadInited)
    {
@@ -275,7 +332,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                      <Grid id={section.name} key={section.name} item lg={12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         <MDBox width="100%">
                            <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
-                              <MDTypography variant="h6" p={3} pb={1}>
+                              <MDTypography variant="h5" p={3} pb={1}>
                                  {section.label}
                               </MDTypography>
                               <MDBox p={3} pt={0} flexDirection="column">
@@ -395,7 +452,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
 
    const closeModalProcess = (event: object, reason: string) =>
    {
-      if (reason === "backdropClick")
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
       {
          return;
       }
@@ -403,9 +460,53 @@ function EntityView({table, launchProcess}: Props): JSX.Element
       //////////////////////////////////////////////////////////////////////////
       // when closing a modal process, navigate up to the record being viewed //
       //////////////////////////////////////////////////////////////////////////
-      const newPath = location.pathname.split("/");
-      newPath.pop();
-      navigate(newPath.join("/"));
+      if(location.hash)
+      {
+         navigate(location.pathname);
+      }
+      else
+      {
+         const newPath = location.pathname.split("/");
+         newPath.pop();
+         navigate(newPath.join("/"));
+      }
+
+      setActiveModalProcess(null);
+   };
+
+   function openEditChildForm(table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any)
+   {
+      const showEditChildForm: any = {};
+      showEditChildForm.table = table;
+      showEditChildForm.id = id;
+      showEditChildForm.defaultValues = defaultValues;
+      showEditChildForm.disabledFields = disabledFields;
+      setShowEditChildForm(showEditChildForm);
+   }
+
+   const closeEditChildForm = (event: object, reason: string) =>
+   {
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
+      {
+         return;
+      }
+
+      /////////////////////////////////////////////////
+      // navigate back up to the record being viewed //
+      /////////////////////////////////////////////////
+      if(location.hash)
+      {
+         navigate(location.pathname);
+      }
+      else
+      {
+         const newPath = location.pathname.split("/");
+         newPath.pop();
+         newPath.pop();
+         navigate(newPath.join("/"));
+      }
+
+      setShowEditChildForm(null);
    };
 
    return (
@@ -511,6 +612,21 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                                  <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                                     <div className="modalProcess">
                                        <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+                                    </div>
+                                 </Modal>
+                              }
+
+                              {
+                                 showEditChildForm &&
+                                 <Modal open={showEditChildForm as boolean} onClose={(event, reason) => closeEditChildForm(event, reason)}>
+                                    <div className="modalEditForm">
+                                       <EntityForm
+                                          isModal={true}
+                                          closeModalHandler={closeEditChildForm}
+                                          table={showEditChildForm.table}
+                                          id={showEditChildForm.id}
+                                          defaultValues={showEditChildForm.defaultValues}
+                                          disabledFields={showEditChildForm.disabledFields} />
                                     </div>
                                  </Modal>
                               }

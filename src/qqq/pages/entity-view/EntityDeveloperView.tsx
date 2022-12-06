@@ -162,7 +162,7 @@ function EntityDeveloperView({table}: Props): JSX.Element
 
    const closeEditingScript = (event: object, reason: string, alert: string = null) =>
    {
-      if (reason === "backdropClick")
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
       {
          return;
       }

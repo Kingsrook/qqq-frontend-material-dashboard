@@ -24,7 +24,7 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {DataGridPro} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
 import DataGridUtils from "qqq/utils/DataGridUtils";
-import Widget, {AddNewRecordButton, HeaderLink} from "./Widget";
+import Widget, {AddNewRecordButton, HeaderLink, LabelComponent} from "./Widget";
 
 interface Props
 {
@@ -65,15 +65,23 @@ function RecordGridWidget({title, data, reloadWidgetCallback}: Props): JSX.Eleme
       }
    }, [data]);
 
+   const labelAdditionalComponentsLeft: LabelComponent[] = []
+   if(data && data.viewAllLink)
+   {
+      labelAdditionalComponentsLeft.push(new HeaderLink("View All", data.viewAllLink));
+   }
+
+   const labelAdditionalComponentsRight: LabelComponent[] = []
+   if(data && data.canAddChildRecord)
+   {
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords))
+   }
+
    return (
       <Widget
          label={title}
-         labelAdditionalComponentsLeft={[
-            new HeaderLink("View All", data.viewAllLink)
-         ]}
-         labelAdditionalComponentsRight={[
-            new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords)
-         ]}
+         labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+         labelAdditionalComponentsRight={labelAdditionalComponentsRight}
          reloadWidgetCallback={reloadWidgetCallback}
       >
          <DataGridPro

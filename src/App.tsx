@@ -278,6 +278,16 @@ export default function App()
                   component: <EntityCreate table={table} />,
                });
 
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////
+               // this is the path to open a modal-form when viewing a record, to create a different (child) record //
+               // it can also be done with a hash like: #/createChild=:childTableName                               //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////
+               routeList.push({
+                  key: `${app.name}.createChild`,
+                  route: `${path}/:id/createChild/:childTableName`,
+                  component: <EntityView table={table} />,
+               });
+
                routeList.push({
                   name: `${app.label} View`,
                   key: `${app.name}.view`,
@@ -302,6 +312,10 @@ export default function App()
                const processesForTable = QProcessUtils.getProcessesForTable(metaData, table.name, true);
                processesForTable.forEach((process) =>
                {
+                  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // paths to open modal process under its owning table.                                                                           //
+                  // note, processes can also be launched (at least initially on entityView screen) with a hash like: #/launchProcess=:processName //
+                  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                   routeList.push({
                      name: process.label,
                      key: process.name,

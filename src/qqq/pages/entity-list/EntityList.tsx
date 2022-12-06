@@ -795,7 +795,7 @@ function EntityList({table, launchProcess}: Props): JSX.Element
 
    const closeModalProcess = (event: object, reason: string) =>
    {
-      if (reason === "backdropClick")
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
       {
          return;
       }
