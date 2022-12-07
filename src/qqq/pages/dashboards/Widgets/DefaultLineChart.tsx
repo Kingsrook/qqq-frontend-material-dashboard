@@ -52,6 +52,15 @@ const options = {
       legend: {
          display: false,
       },
+      tooltip: {
+         enabled: true,
+         callbacks: {
+            label: function(context:any)
+            {
+               return(context.parsed.x);
+            }
+         }
+      }
    },
    interaction: {
       intersect: false,
@@ -78,6 +87,10 @@ const options = {
                style: "normal",
                lineHeight: 2,
             },
+            callback: function(value: any, index: any, values: any)
+            {
+               return value;
+            }
          },
       },
       x: {
@@ -116,6 +129,8 @@ interface Props
    };
    title?: string;
    height?: string | number;
+   isYAxisCurrency?: boolean;
+   isChild?: boolean;
    data: DefaultLineChartData;
 
    [key: string]: any;
@@ -128,7 +143,7 @@ DefaultLineChart.defaultProps = {
 };
 
 
-function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
+function DefaultLineChart({icon, title, height, data, isYAxisCurrency, isChild}: Props): JSX.Element
 {
    const allBackgroundColors = ["info", "warning", "primary", "success", "error", "secondary", "dark"];
    if (data && data.datasets)
@@ -158,6 +173,27 @@ function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
       }))
       : [];
 
+   let customOptions = options;
+   if(isYAxisCurrency)
+   {
+      customOptions.scales.y.ticks =
+         {
+            ... customOptions.scales.y.ticks,
+            callback: function(value: any, index: any, values: any)
+            {
+               return value.toLocaleString("en-US", {style: "currency", currency: "USD", minimumFractionDigits: 0});
+            }
+         }
+      customOptions.plugins.tooltip.callbacks =
+         {
+            ... customOptions.plugins.tooltip.callbacks,
+            label: function(context:any)
+            {
+               return " " + context.parsed.y.toLocaleString("en-US", {style: "currency", currency: "USD", minimumFractionDigits: 2});
+            }
+         }
+   }
+
    let fullData = {};
    if (data)
    {
@@ -169,6 +205,7 @@ function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
 
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
+
          {title ? (
             <MDBox display="flex" px={0} pt={0}>
                {icon.component && (
@@ -190,7 +227,12 @@ function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
                   </MDBox>
                )}
                <MDBox mt={icon.component ? -2 : 0}>
-                  {title && <MDTypography variant="h5">{title}</MDTypography>}
+                  {isChild ? (
+                     title && <MDTypography variant="h6">{title}</MDTypography>
+                  ) : (
+                     title && <MDTypography variant="h5">{title}</MDTypography>
+                  )
+                  }
                   <MDBox mb={2}>
                      <MDTypography component="div" variant="button" color="text">
                         <MDBox display="flex" justifyContent="space-between">
@@ -224,7 +266,11 @@ function DefaultLineChart({icon, title, height, data}: Props): JSX.Element
       </MDBox>
    );
 
-   return title ? <Card>{renderChart}</Card> : renderChart;
+   return title ?
+      <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+         {renderChart}
+      </Card>
+      : renderChart;
 }
 
 export default DefaultLineChart;

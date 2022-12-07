@@ -54,11 +54,12 @@ interface Props
    label: string;
    data: ParentWidgetData;
    reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
+   entityPrimaryKey?: string;
 }
 
 
 const qController = QClient.getInstance();
-function ParentWidget({widgetIndex, label, data, reloadWidgetCallback}: Props, ): JSX.Element
+function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPrimaryKey}: Props, ): JSX.Element
 {
    const [childUrlParams, setChildUrlParams] = useState("");
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -154,7 +155,7 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback}: Props, )
       <Card className="parentWidgetCard" sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
 
          <Grid container>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
                <Box pt={3} px={3}>
                   {
                      label && (
@@ -165,7 +166,7 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback}: Props, )
                   }
                </Box>
             </Grid>
-            <Grid item xs={9}>
+            <Grid item xs={8}>
                <Box mb={3} p={3}>
                   {
                      data?.dropdownDataList?.map((dropdownData: any, index: number) =>
@@ -182,7 +183,7 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback}: Props, )
             </Grid>
          </Grid>
          <Box pr={3} pl={3}>
-            <DashboardWidgets widgetMetaDataList={widgets} areChildren={true} childUrlParams={childUrlParams}/>
+            <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} childUrlParams={childUrlParams} areChildren={true}/>
          </Box>
       </Card>
    );

@@ -31,6 +31,7 @@ interface Props
    title: string;
    data: StatisticsCardData;
    increaseIsGood: boolean;
+   isCurrency?: boolean;
    dropdown?: {
       action: (...args: any) => void;
       menu: ReactNode;
@@ -40,7 +41,7 @@ interface Props
    [key: string]: any;
 }
 
-function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): JSX.Element
+function SimpleStatisticsCard({title, data, increaseIsGood, isCurrency, dropdown}: Props): JSX.Element
 {
    const {count, percentageAmount, percentageLabel} = data;
 
@@ -65,10 +66,10 @@ function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): J
    }
 
    return (
-      <Card>
+      <Card sx={{height: "fit-content", alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
          <MDBox p={2}>
             <Grid container>
-               <Grid item xs={7}>
+               <Grid item xs={12}>
                   <MDBox mb={0.5} lineHeight={1}>
                      <MDTypography
                         variant="button"
@@ -82,9 +83,16 @@ function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): J
                   <MDBox lineHeight={1}>
                      {
                         count ? (
-                           <MDTypography variant="h5" fontWeight="bold">
-                              {count.toLocaleString()}
-                           </MDTypography>
+                           isCurrency ? (
+                              <MDTypography variant="h5" fontWeight="bold">
+                                 {count.toLocaleString("en-US", {style: "currency", currency: "USD"})}
+                              </MDTypography>
+                           ) : (
+
+                              <MDTypography variant="h5" fontWeight="bold">
+                                 {count.toLocaleString("en-US", {style: "currency", currency: "USD"})}
+                              </MDTypography>
+                           )
                         ) : null
                      }
                      <MDTypography variant="button" fontWeight="bold" color={percentColor}>
@@ -99,8 +107,8 @@ function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): J
                      </MDTypography>
                   </MDBox>
                </Grid>
-               <Grid item xs={5}>
-                  {dropdown && (
+               {dropdown && (
+                  <Grid item xs={5}>
                      <MDBox width="100%" textAlign="right" lineHeight={1}>
                         <MDTypography
                            variant="caption"
@@ -113,8 +121,8 @@ function SimpleStatisticsCard({title, data, increaseIsGood, dropdown}: Props): J
                         </MDTypography>
                         {dropdown.menu}
                      </MDBox>
-                  )}
-               </Grid>
+                  </Grid>
+               )}
             </Grid>
          </MDBox>
       </Card>

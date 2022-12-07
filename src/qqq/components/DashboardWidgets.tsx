@@ -31,16 +31,19 @@ import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
-import LineChart from "qqq/pages/dashboards/Widgets/LineChart";
+import DefaultLineChart from "qqq/pages/dashboards/Widgets/DefaultLineChart";
+import HorizontalBarChart from "qqq/pages/dashboards/Widgets/HorizontalBarChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import ParentWidget from "qqq/pages/dashboards/Widgets/ParentWidget";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
 import RecordGridWidget from "qqq/pages/dashboards/Widgets/RecordGridWidget";
+import SimpleStatisticsCard from "qqq/pages/dashboards/Widgets/SimpleStatisticsCard";
 import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
 import Widget from "qqq/pages/dashboards/Widgets/Widget";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
+
 
 const qController = QClient.getInstance();
 
@@ -49,7 +52,7 @@ interface Props
    widgetMetaDataList: QWidgetMetaData[];
    entityPrimaryKey?: string;
    omitWrappingGridContainer: boolean;
-   areChildren?: boolean;
+   areChildren?: boolean
    childUrlParams?: string
 }
 
@@ -118,10 +121,11 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
       return (
-         <MDBox key={i} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
+         <MDBox key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "center", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
             {
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
+                     entityPrimaryKey={entityPrimaryKey}
                      widgetIndex={i}
                      label={widgetMetaData.label}
                      data={widgetData[i]}
@@ -190,6 +194,18 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                )
             }
             {
+               widgetMetaData.type === "statistics" && (
+                  widgetData && widgetData[i] && (
+                     <SimpleStatisticsCard
+                        title={widgetMetaData.label}
+                        data={widgetData[i]}
+                        increaseIsGood={true}
+                        isCurrency={widgetData[i].isCurrency}
+                     />
+                  )
+               )
+            }
+            {
                widgetMetaData.type === "quickSightChart" && (
                   <QuickSightChart url={widgetData[i]?.url} label={widgetMetaData.label} />
                )
@@ -205,15 +221,27 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                )
             }
             {
+               widgetMetaData.type === "horizontalBarChart" && (
+                  widgetData && widgetData[i] && widgetData[i].chartData && (
+                     <HorizontalBarChart
+                        height={widgetData[i].height}
+                        title={widgetMetaData.label}
+                        data={widgetData[i]?.chartData}
+                        isCurrency={widgetData[i].isCurrency}
+                     />
+                  )
+               )
+            }
+            {
                widgetMetaData.type === "lineChart" && (
-                  widgetData && widgetData[i] ? (
-                     <LineChart
+                  widgetData && widgetData[i] && widgetData[i].chartData && widgetData[i].chartData?.datasets ? (
+                     <DefaultLineChart sx={{alignItems: "center"}}
                         title={widgetData[i].title}
                         description={(
                            <MDBox display="flex" justifyContent="space-between">
                               <MDBox display="flex" ml={-1}>
                                  {
-                                    widgetData[i].lineChartData.datasets.map((dataSet: any) => (
+                                    widgetData[i].chartData.datasets.map((dataSet: any) => (
                                        <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
                                     ))
                                  }
@@ -221,7 +249,9 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                               <MDBox mt={-4} mr={-1} position="absolute" right="1.5rem" />
                            </MDBox>
                         )}
-                        chart={widgetData[i].lineChartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                        data={widgetData[i].chartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
+                        isYAxisCurrency={widgetData[i].isYAxisCurrency}
+                        isChild={areChildren}
                      />
                   ) : null
                )
@@ -248,7 +278,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                   omitWrappingGridContainer
                      ? renderWidget(widgetMetaData, i)
                      :
-                     <Grid id={widgetMetaData.name} key={`${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                     <Grid id={widgetMetaData.name} key={`${widgetMetaData.name}-${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         {renderWidget(widgetMetaData, i)}
                      </Grid>
                ))

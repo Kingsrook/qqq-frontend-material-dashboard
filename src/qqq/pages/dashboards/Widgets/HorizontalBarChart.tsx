@@ -40,6 +40,15 @@ const options = {
       legend: {
          display: false,
       },
+      tooltip: {
+         enabled: true,
+         callbacks: {
+            label: function(context:any)
+            {
+               return(context.parsed.x);
+            }
+         }
+      }
    },
    scales: {
       y: {
@@ -75,7 +84,7 @@ const options = {
          ticks: {
             display: true,
             color: "#9ca2b7",
-            padding: 10,
+            padding: 0,
             font: {
                size: 14,
                weight: 300,
@@ -83,6 +92,10 @@ const options = {
                style: "normal",
                lineHeight: 2,
             },
+            callback: function(value: any, index: any, values: any)
+            {
+               return value;
+            }
          },
       },
    },
@@ -101,12 +114,13 @@ interface Props
    title?: string;
    description?: string | ReactNode;
    height?: string | number;
+   isCurrency?: boolean;
    data: GenericChartData;
 
    [key: string]: any;
 }
 
-function HorizontalBarChart({icon, title, description, height, data}: Props): JSX.Element
+function HorizontalBarChart({icon, title, description, height, data, isCurrency}: Props): JSX.Element
 {
    const chartDatasets = data.datasets
       ? data.datasets.map((dataset) => ({
@@ -114,11 +128,11 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
          weight: 5,
          borderWidth: 0,
          borderRadius: 4,
-         backgroundColor: colors[dataset.color]
-            ? colors[dataset.color || "dark"].main
-            : colors.dark.main,
+         backgroundColor: dataset?.color
+            ? dataset.color
+            : colors.info.main,
          fill: false,
-         maxBarThickness: 35,
+         maxBarThickness: 15,
       }))
       : [];
 
@@ -131,10 +145,32 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
       };
    }
 
+   let customOptions = options;
+   if(isCurrency)
+   {
+      customOptions.scales.x.ticks =
+      {
+         ... customOptions.scales.x.ticks,
+         callback: function(value: any, index: any, values: any)
+         {
+            return value.toLocaleString("en-US", {style: "currency", currency: "USD", minimumFractionDigits: 0});
+         }
+      }
+      customOptions.plugins.tooltip.callbacks =
+      {
+         ... customOptions.plugins.tooltip.callbacks,
+         label: function(context:any)
+         {
+            return context.parsed.x.toLocaleString("en-US", {style: "currency", currency: "USD", minimumFractionDigits: 0});
+         }
+      }
+   }
+
+
    const renderChart = (
-      <MDBox py={2} pr={2} pl={icon.component ? 1 : 2}>
+      <MDBox py={2} pr={2} pl={icon.component ? 1 : 2} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
          {title || description ? (
-            <MDBox display="flex" px={description ? 1 : 0} pt={description ? 1 : 0}>
+            <MDBox display="flex" px={description ? 1 : 0} pt={description ? 1 : 0} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                {icon.component && (
                   <MDBox
                      width="4rem"
@@ -165,7 +201,7 @@ function HorizontalBarChart({icon, title, description, height, data}: Props): JS
          ) : null}
          {useMemo(
             () => (
-               <MDBox height={height}>
+               <MDBox height={height} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                   <Bar data={fullData} options={options} />
                </MDBox>
             ),
