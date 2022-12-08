@@ -73,7 +73,7 @@
       "build": "react-scripts build",
       "clean": "rm -rf node_modules package-lock.json",
       "eject": "react-scripts eject",
-      "geff-ham": "rm -rf node_modules/ && rm -rf package-lock.json && npm install --legacy-peer-deps && npm start",
+      "geff-ham": "rm -rf node_modules/ && rm -rf package-lock.json && npm install --legacy-peer-deps",
       "install-legacy-peer-deps": "npm install --legacy-peer-deps",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
       "start": "BROWSER=none react-scripts start",
