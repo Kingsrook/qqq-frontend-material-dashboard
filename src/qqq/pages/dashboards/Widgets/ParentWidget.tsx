@@ -42,6 +42,7 @@ export interface ParentWidgetData
       label: string
    }[][];
    childWidgetNameList: string[];
+   dropdownNeedsSelectedText?: string;
 }
 
 
@@ -55,11 +56,12 @@ interface Props
    data: ParentWidgetData;
    reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
    entityPrimaryKey?: string;
+   tableName?: string;
 }
 
 
 const qController = QClient.getInstance();
-function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPrimaryKey}: Props, ): JSX.Element
+function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPrimaryKey, tableName}: Props, ): JSX.Element
 {
    const [childUrlParams, setChildUrlParams] = useState("");
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -86,14 +88,8 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
             widgetMetaDataList.push(qInstance.widgets.get(widgetName));
          })
          setWidgets(widgetMetaDataList);
-         console.log(`SETTINGWIDGETS...${widgetMetaDataList.length}`)
       }
    }, [qInstance, data]);
-
-   function doit()
-   {
-      reloadWidgetCallback(0, "ok");
-   }
 
    function handleDataChange(dropdownLabel: string, changedData: any)
    {
@@ -128,8 +124,6 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
    {
       if(dropdownData)
       {
-         console.log(JSON.stringify(data));
-
          let params = "";
          for (let i = 0; i < dropdownData.length; i++)
          {
@@ -144,7 +138,6 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
 
             }
          }
-         console.log(params);
          reloadWidgetCallback(widgetIndex, params);
          setChildUrlParams(params)
       }
@@ -173,7 +166,7 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
                         <DropdownMenu
                            key={`dropdown-${data.dropdownLabelList[index]}-${index}`}
                            label={`Select ${data.dropdownLabelList[index]}`}
-                           sx={{width: 200, marginLeft: "15px", float: "right"}}
+                           sx={{width: 250, marginLeft: "15px", float: "right"}}
                            dropdownOptions={dropdownData}
                            onChangeCallback={handleDataChange}
                         />
@@ -183,7 +176,17 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
             </Grid>
          </Grid>
          <Box pr={3} pl={3}>
-            <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} childUrlParams={childUrlParams} areChildren={true}/>
+            {
+               data?.dropdownNeedsSelectedText ? (
+                  <Box pb={3} sx={{width: "100%", textAlign: "right"}}>
+                     <Typography variant="body2">
+                        {data.dropdownNeedsSelectedText}
+                     </Typography>
+                  </Box>
+               ) :(
+                  <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
+               )
+            }
          </Box>
       </Card>
    );

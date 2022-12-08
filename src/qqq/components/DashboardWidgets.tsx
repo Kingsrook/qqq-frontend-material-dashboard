@@ -31,6 +31,7 @@ import MDBadgeDot from "qqq/components/Temporary/MDBadgeDot";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
+import DividerWidget from "qqq/pages/dashboards/Widgets/Data/Divider";
 import DefaultLineChart from "qqq/pages/dashboards/Widgets/DefaultLineChart";
 import FieldValueListWidget from "qqq/pages/dashboards/Widgets/FieldValueListWidget";
 import HorizontalBarChart from "qqq/pages/dashboards/Widgets/HorizontalBarChart";
@@ -51,6 +52,7 @@ const qController = QClient.getInstance();
 interface Props
 {
    widgetMetaDataList: QWidgetMetaData[];
+   tableName?: string;
    entityPrimaryKey?: string;
    omitWrappingGridContainer: boolean;
    areChildren?: boolean
@@ -59,13 +61,14 @@ interface Props
 
 DashboardWidgets.defaultProps = {
    widgetMetaDataList: null,
+   tableName: null,
    entityPrimaryKey: null,
    omitWrappingGridContainer: false,
    areChildren: false,
    childUrlParams: ""
 };
 
-function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams}: Props): JSX.Element
 {
    const location = useLocation();
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -95,7 +98,8 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
          widgetData[i] = {};
          (async () =>
          {
-            widgetData[i] = await qController.widget(widgetMetaDataList[i].name, `id=${entityPrimaryKey}&${childUrlParams}`);
+            console.log(`widgets: ${getQueryParams(null)}`)
+            widgetData[i] = await qController.widget(widgetMetaDataList[i].name, getQueryParams(null));
             setWidgetCounter(widgetCounter + 1);
             forceUpdate();
          })();
@@ -112,9 +116,37 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
    {
       setTimeout(async () =>
       {
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, `id=${entityPrimaryKey}&${data}`);
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(data));
          setWidgetCounter(widgetCounter + 1);
       }, 1);
+   };
+
+   function getQueryParams(extraParams: string): string
+   {
+      let ampersand = "";
+      let params = "";
+      let foundParam = false;
+      if(entityPrimaryKey)
+      {
+         params += `${ampersand}id=${entityPrimaryKey}`;
+         ampersand = "&";
+      }
+      if(tableName)
+      {
+         params += `${ampersand}tableName=${tableName}`;
+         ampersand = "&";
+      }
+      if(extraParams)
+      {
+         params += `${ampersand}${extraParams}`;
+         ampersand = "&";
+      }
+      if(childUrlParams)
+      {
+         params += `${ampersand}${childUrlParams}`;
+      }
+
+      return params;
    };
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
@@ -127,6 +159,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
                      entityPrimaryKey={entityPrimaryKey}
+                     tableName={tableName}
                      widgetIndex={i}
                      label={widgetMetaData.label}
                      data={widgetData[i]}
@@ -219,6 +252,13 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
                      date={`As of ${new Date().toDateString()}`}
                      data={widgetData[i]?.chartData}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "divider" && (
+                  <Box>
+                     <DividerWidget />
+                  </Box>
                )
             }
             {

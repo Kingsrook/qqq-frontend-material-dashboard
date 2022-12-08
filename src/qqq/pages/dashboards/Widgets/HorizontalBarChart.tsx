@@ -38,7 +38,7 @@ const options = {
    maintainAspectRatio: false,
    plugins: {
       legend: {
-         display: false,
+         display: true,
       },
       tooltip: {
          enabled: true,
