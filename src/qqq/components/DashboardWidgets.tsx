@@ -121,7 +121,7 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
       return (
-         <MDBox key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "center", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
+         <MDBox key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
             {
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
