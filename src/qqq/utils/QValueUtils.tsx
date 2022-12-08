@@ -26,6 +26,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs";
 import {Box, Chip, Icon} from "@mui/material";
+import parse from "html-react-parser";
 import React, {Fragment} from "react";
 import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
@@ -67,7 +68,7 @@ class QValueUtils
     ** When you have a field, and a record - call this method to get a string or
     ** element back to display the field's value.
     *******************************************************************************/
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view"): string | JSX.Element
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view"): string | JSX.Element | JSX.Element[]
    {
       const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
       const rawValue = record.values ? record.values.get(field.name) : undefined;
@@ -79,7 +80,7 @@ class QValueUtils
     ** When you have a field and a value (either just a raw value, or a raw and
     ** display value), call this method to get a string Element to display.
     *******************************************************************************/
-   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view"): string | JSX.Element
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view"): string | JSX.Element | JSX.Element[]
    {
       if (field.hasAdornment(AdornmentType.LINK))
       {
@@ -126,6 +127,11 @@ class QValueUtils
          {
             return (<Link target={adornment.getValue("target") ?? "_self"} to={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</Link>);
          }
+      }
+
+      if (field.hasAdornment(AdornmentType.RENDER_HTML))
+      {
+         return (parse(rawValue));
       }
 
       if (field.hasAdornment(AdornmentType.CHIP))

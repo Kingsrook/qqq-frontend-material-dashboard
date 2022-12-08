@@ -55,7 +55,7 @@ interface Props
    table?: QTableMetaData;
    closeModalHandler?: (event: object, reason: string) => void;
    defaultValues: { [key: string]: string };
-   disabledFields: { [key: string]: boolean };
+   disabledFields: { [key: string]: boolean } | string[];
 }
 
 EntityForm.defaultProps = {
@@ -265,9 +265,19 @@ function EntityForm(props: Props): JSX.Element
 
          if(disabledFields)
          {
-            for (let fieldName in disabledFields)
+            if(Array.isArray(disabledFields))
             {
-               dynamicFormFields[fieldName].isEditable = false;
+               for (let i = 0; i < disabledFields.length; i++)
+               {
+                  dynamicFormFields[disabledFields[i]].isEditable = false;
+               }
+            }
+            else
+            {
+               for (let fieldName in disabledFields)
+               {
+                  dynamicFormFields[fieldName].isEditable = false;
+               }
             }
          }
 

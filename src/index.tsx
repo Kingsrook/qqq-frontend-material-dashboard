@@ -32,6 +32,12 @@ import ProtectedRoute from "qqq/auth0/protected-route";
 import QClient from "qqq/utils/QClient";
 
 const qController = QClient.getInstance();
+
+if(document.location.search && document.location.search.indexOf("clearAuthenticationMetaDataLocalStorage") > -1)
+{
+   qController.clearAuthenticationMetaDataLocalStorage()
+}
+
 const authenticationMetaDataPromise: Promise<QAuthenticationMetaData> = qController.getAuthenticationMetaData()
 
 authenticationMetaDataPromise.then((authenticationMetaData) =>
@@ -69,8 +75,28 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
 
    if (authenticationMetaData.type === "AUTH_0")
    {
-      const domain = process.env.REACT_APP_AUTH0_DOMAIN;
-      const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+      // @ts-ignore
+      let domain: string = authenticationMetaData.data.baseUrl;
+
+      // @ts-ignore
+      const clientId = authenticationMetaData.data.clientId;
+
+      if(!domain || !clientId)
+      {
+         render(
+            <div>Error:  AUTH0 authenticationMetaData is missing domain [{domain}] and/or clientId [{clientId}].</div>,
+            document.getElementById("root"),
+         );
+         return;
+      }
+
+      if(domain.endsWith("/"))
+      {
+         /////////////////////////////////////////////////////////////////////////////////////
+         // auth0 lib fails if we have a trailing slash.  be a bit more graceful than that. //
+         /////////////////////////////////////////////////////////////////////////////////////
+         domain = domain.replace(/\/$/, "");
+      }
 
       render(
          <BrowserRouter>

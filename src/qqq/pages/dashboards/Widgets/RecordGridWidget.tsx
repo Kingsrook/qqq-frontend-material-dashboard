@@ -74,7 +74,12 @@ function RecordGridWidget({title, data, reloadWidgetCallback}: Props): JSX.Eleme
    const labelAdditionalComponentsRight: LabelComponent[] = []
    if(data && data.canAddChildRecord)
    {
-      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords))
+      let disabledFields = data.disabledFieldsForNewChildRecords;
+      if(!disabledFields)
+      {
+         disabledFields = data.defaultValuesForNewChildRecords;
+      }
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields))
    }
 
    return (

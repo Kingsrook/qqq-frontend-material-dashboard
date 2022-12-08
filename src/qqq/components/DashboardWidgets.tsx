@@ -32,6 +32,7 @@ import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import BarChart from "qqq/pages/dashboards/Widgets/BarChart";
 import DefaultLineChart from "qqq/pages/dashboards/Widgets/DefaultLineChart";
+import FieldValueListWidget from "qqq/pages/dashboards/Widgets/FieldValueListWidget";
 import HorizontalBarChart from "qqq/pages/dashboards/Widgets/HorizontalBarChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import ParentWidget from "qqq/pages/dashboards/Widgets/ParentWidget";
@@ -259,10 +260,19 @@ function DashboardWidgets({widgetMetaDataList, entityPrimaryKey, omitWrappingGri
             {
                widgetMetaData.type === "childRecordList" && (
                   widgetData && widgetData[i] &&
-                     <RecordGridWidget
+                  <RecordGridWidget
+                     title={widgetMetaData.label}
+                     data={widgetData[i]}
+                     reloadWidgetCallback={reloadWidget}
+                  />
+               )
+            }
+            {
+               widgetMetaData.type === "fieldValueList" && (
+                  widgetData && widgetData[i] &&
+                     <FieldValueListWidget
                         title={widgetMetaData.label}
                         data={widgetData[i]}
-                        reloadWidgetCallback={reloadWidget}
                      />
                )
             }

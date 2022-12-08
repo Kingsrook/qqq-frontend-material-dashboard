@@ -54,6 +54,7 @@ import MDAlert from "qqq/components/Temporary/MDAlert";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import ProcessRun from "qqq/pages/process-run";
+import HistoryUtils from "qqq/utils/HistoryUtils";
 import QClient from "qqq/utils/QClient";
 import QProcessUtils from "qqq/utils/QProcessUtils";
 import QTableUtils from "qqq/utils/QTableUtils";
@@ -109,6 +110,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
 
    const reload = () =>
    {
+      setNotFoundMessage(null);
       setAsyncLoadInited(false);
       setTableMetaData(null);
       setRecord(null);
@@ -258,12 +260,32 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                if ((e as QException).status === "404")
                {
                   setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
+
+                  try
+                  {
+                     HistoryUtils.ensurePathNotInHistory(location.pathname);
+                  }
+                  catch(e)
+                  {
+                     console.error("Error pushing history: " + e);
+                  }
+
                   return;
                }
             }
          }
 
          setPageHeader(record.recordLabel);
+
+         try
+         {
+            HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName})
+         }
+         catch(e)
+         {
+            console.error("Error pushing history: " + e);
+         }
+
 
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //

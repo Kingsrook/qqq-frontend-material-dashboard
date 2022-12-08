@@ -22,10 +22,12 @@
 import AppBar from "@mui/material/AppBar";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
-import {useState, useEffect} from "react";
-import {useLocation} from "react-router-dom";
+import React, {useState, useEffect} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
 import {useMaterialUIController, setTransparentNavbar, setMiniSidenav, setOpenConfigurator,} from "context";
 import {navbar, navbarContainer, navbarRow, navbarIconButton, navbarDesktopMenu, navbarMobileMenu,} from "qqq/components/Navbar/styles";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
@@ -33,6 +35,7 @@ import MDBadge from "qqq/components/Temporary/MDBadge";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDInput from "qqq/components/Temporary/MDInput";
 import NotificationItem from "qqq/components/Temporary/NotificationItem";
+import HistoryUtils, {QHistoryEntry} from "qqq/utils/HistoryUtils";
 
 // Declaring prop types for Navbar
 interface Props
@@ -50,7 +53,9 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       miniSidenav, transparentNavbar, fixedNavbar, openConfigurator, darkMode,
    } = controller;
    const [openMenu, setOpenMenu] = useState<any>(false);
+   const [openHistory, setOpenHistory] = useState<any>(false);
    const route = useLocation().pathname.split("/").slice(1);
+   const navigate = useNavigate();
 
    useEffect(() =>
    {
@@ -87,6 +92,52 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
    const handleConfiguratorOpen = () => setOpenConfigurator(dispatch, !openConfigurator);
    const handleOpenMenu = (event: any) => setOpenMenu(event.currentTarget);
    const handleCloseMenu = () => setOpenMenu(false);
+
+   const handleHistory = (event: any) =>
+   {
+      setOpenHistory(event.currentTarget);
+   }
+
+   const handleCloseHistory = () =>
+   {
+      setOpenHistory(false);
+   }
+
+   const goToHistory = (entry: QHistoryEntry) =>
+   {
+      navigate(entry.path);
+      handleCloseHistory();
+   }
+
+   const renderHistory = () =>
+   {
+      const history = HistoryUtils.get();
+
+      return (
+         <Menu
+            anchorEl={openHistory}
+            anchorReference={null}
+            anchorOrigin={{
+               vertical: "bottom",
+               horizontal: "left",
+            }}
+            open={Boolean(openHistory)}
+            onClose={handleCloseHistory}
+            sx={{mt: 1, "& ul": {maxWidth: "500px"}}}
+         >
+            <MenuItem sx={{px: "8px"}} disabled><h3 style={{color: "black"}}>Recently Viewed Records</h3></MenuItem>
+            {history.entries.reverse().map((entry) =>
+               (
+                  <MenuItem sx={{px: "8px", whiteSpace: "normal"}} key={entry.path} onClick={() => goToHistory(entry)}>
+                     <ListItemIcon sx={{minWidth: "24px !important"}}><Icon>{entry.iconName}</Icon></ListItemIcon>
+                     {entry.label}
+                  </MenuItem>
+               )
+            )}
+         </Menu>
+      );
+   };
+
 
    // Render the notifications menu
    const renderMenu = () => (
@@ -166,6 +217,16 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
                            {miniSidenav ? "menu_open" : "menu"}
                         </Icon>
                      </IconButton>
+                     <IconButton
+                        size="small"
+                        disableRipple
+                        color="inherit"
+                        sx={navbarIconButton}
+                        onClick={handleHistory}
+                     >
+                        <Icon sx={iconsStyle}>history</Icon>
+                     </IconButton>
+                     {renderHistory()}
                      <IconButton
                         size="small"
                         disableRipple

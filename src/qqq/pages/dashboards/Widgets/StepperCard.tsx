@@ -20,7 +20,7 @@
  */
 
 import {Check, Pending, RocketLaunch} from "@mui/icons-material";
-import {Skeleton, StepConnector} from "@mui/material";
+import {Icon, Skeleton, StepConnector} from "@mui/material";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
@@ -38,10 +38,11 @@ export interface StepperCardData
    title: string;
    activeStep: number;
    steps: {
-      icon: string;
       label: string;
       linkText: string;
       linkURL: string;
+      iconOverride: string;
+      colorOverride: string;
    }[];
 }
 
@@ -79,12 +80,12 @@ function StepperCard({data}: Props): JSX.Element
                      {
                         index < activeStep && (
                            <MDBox>
-                              <StepLabel icon={<Check />} sx={{
-                                 color: "green",
+                              <StepLabel icon={step.iconOverride ? <Icon>{step.iconOverride}</Icon> : <Check />} sx={{
+                                 color: step.colorOverride ?? "green",
                                  fontSize: "35px",
                                  "& .MuiStepLabel-label.Mui-completed.MuiStepLabel-alternativeLabel":
                                     {
-                                       color: "green !important",
+                                       color: `${step.colorOverride ?? "green"} !important`,
                                     }
                               }}>{step.label}</StepLabel>
                            </MDBox>
@@ -93,12 +94,12 @@ function StepperCard({data}: Props): JSX.Element
                      {
                         index > activeStep && (
                            <MDBox>
-                              <StepLabel icon={<Pending />} sx={{
-                                 color: "#ced4da",
+                              <StepLabel icon={step.iconOverride ? <Icon>{step.iconOverride}</Icon> : <Pending />} sx={{
+                                 color: step.colorOverride ?? "#ced4da",
                                  fontSize: "35px",
                                  "& .MuiStepLabel-label.MuiStepLabel-alternativeLabel":
                                     {
-                                       color: "#ced4da !important",
+                                       color: `${step.colorOverride ?? "#ced4da"} !important`,
                                     }
                               }}>{step.label}</StepLabel>
                            </MDBox>
@@ -107,12 +108,12 @@ function StepperCard({data}: Props): JSX.Element
                      {
                         index === activeStep && (
                            <MDBox>
-                              <StepLabel icon={<RocketLaunch />} sx={{
-                                 color: "#04aaef",
+                              <StepLabel icon={step.iconOverride ? <Icon>{step.iconOverride}</Icon> : <RocketLaunch />} sx={{
+                                 color: step.colorOverride ?? "#04aaef",
                                  fontSize: "35px",
                                  "& .MuiStepLabel-label.MuiStepLabel-alternativeLabel":
                                     {
-                                       color: "#344767 !important", // Just text label (COMPLETED)
+                                       color: `${step.colorOverride ?? "#344767"} !important`,
                                     }
                               }}>{step.label}</StepLabel>
                               {
