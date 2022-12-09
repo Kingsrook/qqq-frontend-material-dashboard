@@ -101,7 +101,7 @@ interface QActionsMenuButtonProps
 export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
 {
    return (
-      <MDBox width={standardWidth}>
+      <MDBox width={standardWidth} ml={1}>
          <MDButton
             variant={isOpen ? "contained" : "outlined"}
             color="dark"

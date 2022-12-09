@@ -339,7 +339,8 @@ function Overview(): JSX.Element
             <MDBox mt={2}>
                <Grid container spacing={3}>
                   {
-                     warehouseData && warehouseData.map((data) => (
+                     // @ts-ignore
+                     warehouseData && warehouseData.locationDataList?.map((data) => (
                         <Grid item xs={12} md={6} lg={4} key={data.title}>
                            <MDBox mt={3}>
                               <LocationCard

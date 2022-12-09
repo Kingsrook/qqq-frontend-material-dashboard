@@ -25,25 +25,40 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Modal from "@mui/material/Modal";
 import Typography from "@mui/material/Typography";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
+import DashboardWidgets from "qqq/components/DashboardWidgets";
 import EntityForm from "qqq/components/EntityForm";
+import DropdownMenu, {DropdownOption} from "qqq/pages/dashboards/Widgets/Components/DropdownMenu";
+
+export interface WidgetData
+{
+   dropdownLabelList: string[];
+   dropdownNameList: string[];
+   dropdownDataList: {
+      id: string,
+      label: string
+   }[][];
+   dropdownNeedsSelectedText?: string;
+}
+
 
 interface Props
 {
    label: string;
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalComponentsRight: LabelComponent[];
+   widgetData?: WidgetData;
    children: JSX.Element;
-   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
+   reloadWidgetCallback?: (params: string) => void;
 }
 
 Widget.defaultProps = {
    label: null,
+   widgetData: {},
    labelAdditionalComponentsLeft: [],
    labelAdditionalComponentsRight: [],
 };
-
 
 
 export class LabelComponent
@@ -71,7 +86,7 @@ export class HeaderLink extends LabelComponent
 export class AddNewRecordButton extends LabelComponent
 {
    table: QTableMetaData;
-   label:string;
+   label: string;
    defaultValues: any;
    disabledFields: any;
 
@@ -86,10 +101,28 @@ export class AddNewRecordButton extends LabelComponent
 }
 
 
+export class Dropdown extends LabelComponent
+{
+   label: string;
+   options: DropdownOption[];
+   onChangeCallback: any
+
+   constructor(label: string, options: DropdownOption[], onChangeCallback: any)
+   {
+      super();
+      this.label = label;
+      this.options = options;
+      this.onChangeCallback = onChangeCallback;
+   }
+}
+
+
 
 function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 {
    const navigate = useNavigate();
+   const [dropdownData, setDropdownData] = useState([]);
+   const [counter, setCounter] = useState(0);
 
    function openEditForm(table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any)
    {
@@ -118,7 +151,100 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          );
       }
 
+      if (component instanceof Dropdown)
+      {
+         const dropdown = component as Dropdown
+         return (
+            <Box my={3} mr={2} sx={{float: "right"}}>
+               <DropdownMenu
+                  sx={{width: 200, marginLeft: "15px"}}
+                  label={`Select ${dropdown.label}`}
+                  dropdownOptions={dropdown.options}
+                  onChangeCallback={dropdown.onChangeCallback}
+               />
+            </Box>
+         );
+      }
+
+      return (<div>Unsupported component type.</div>)
    }
+
+
+   ///////////////////////////////////////////////////////////////////
+   // make dropdowns from the widgetData appear as label-components //
+   ///////////////////////////////////////////////////////////////////
+   const effectiveLabelAdditionalComponentsRight: LabelComponent[] = [];
+   if(props.labelAdditionalComponentsRight)
+   {
+      props.labelAdditionalComponentsRight.map((component) => effectiveLabelAdditionalComponentsRight.push(component));
+   }
+   if(props.widgetData && props.widgetData.dropdownDataList)
+   {
+      props.widgetData.dropdownDataList?.map((dropdownData: any, index: number) =>
+      {
+         effectiveLabelAdditionalComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], dropdownData, handleDataChange))
+      });
+   }
+
+
+   function handleDataChange(dropdownLabel: string, changedData: any)
+   {
+      if(dropdownData)
+      {
+         ///////////////////////////////////////////
+         // find the index base on selected label //
+         ///////////////////////////////////////////
+         const tableName = dropdownLabel.replace("Select ", "");
+         let index = -1;
+         for (let i = 0; i < props.widgetData.dropdownLabelList.length; i++)
+         {
+            if (tableName === props.widgetData.dropdownLabelList[i])
+            {
+               index = i;
+               break;
+            }
+         }
+
+         if (index < 0)
+         {
+            throw(`Could not find table name for label ${tableName}`);
+         }
+
+         dropdownData[index] = (changedData) ? changedData.id : null;
+         setDropdownData(dropdownData);
+         setCounter(counter + 1);
+      }
+   }
+
+   useEffect(() =>
+   {
+      if(dropdownData)
+      {
+         let params = "";
+         for (let i = 0; i < dropdownData.length; i++)
+         {
+            if (i > 0)
+            {
+               params += "&";
+            }
+            params += `${props.widgetData.dropdownNameList[i]}=`;
+            if(dropdownData[i])
+            {
+               params += `${dropdownData[i]}`;
+
+            }
+         }
+
+         if(props.reloadWidgetCallback)
+         {
+            props.reloadWidgetCallback(params);
+         }
+         else
+         {
+            console.log(`No reload widget callback in ${props.label}`)
+         }
+      }
+   }, [counter]);
 
    return (
       <>
@@ -137,14 +263,24 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                </Box>
                <Box pr={1}>
                   {
-                     props.labelAdditionalComponentsRight.map((component, i) =>
+                     effectiveLabelAdditionalComponentsRight.map((component, i) =>
                      {
                         return (<span key={i}>{renderComponent(component)}</span>);
                      })
                   }
                </Box>
             </Box>
-            {props.children}
+            {
+               props.widgetData?.dropdownNeedsSelectedText ? (
+                  <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
+                     <Typography variant="body2">
+                        {props.widgetData?.dropdownNeedsSelectedText}
+                     </Typography>
+                  </Box>
+               ) : (
+                  props.children
+               )
+            }
          </Card>
       </>
    );

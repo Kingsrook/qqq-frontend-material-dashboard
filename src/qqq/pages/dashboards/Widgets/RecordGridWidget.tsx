@@ -30,12 +30,11 @@ interface Props
 {
    title: string;
    data: any;
-   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
 }
 
 RecordGridWidget.defaultProps = {};
 
-function RecordGridWidget({title, data, reloadWidgetCallback}: Props): JSX.Element
+function RecordGridWidget({title, data}: Props): JSX.Element
 {
    const [rows, setRows] = useState([]);
    const [columns, setColumns] = useState([]);
@@ -87,7 +86,6 @@ function RecordGridWidget({title, data, reloadWidgetCallback}: Props): JSX.Eleme
          label={title}
          labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
-         reloadWidgetCallback={reloadWidgetCallback}
       >
          <DataGridPro
             autoHeight

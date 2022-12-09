@@ -27,6 +27,7 @@ import Grid from "@mui/material/Grid";
 import React, {useEffect, useState} from "react";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
 import DropdownMenu from "qqq/pages/dashboards/Widgets/Components/DropdownMenu";
+import Widget, {Dropdown, LabelComponent} from "qqq/pages/dashboards/Widgets/Widget";
 import QClient from "qqq/utils/QClient";
 
 
@@ -91,104 +92,22 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
       }
    }, [qInstance, data]);
 
-   function handleDataChange(dropdownLabel: string, changedData: any)
+   const parentReloadWidgetCallback = (data: string) =>
    {
-      if(dropdownData)
-      {
-         ///////////////////////////////////////////
-         // find the index base on selected label //
-         ///////////////////////////////////////////
-         const tableName = dropdownLabel.replace("Select ", "");
-         let index = -1;
-         for (let i = 0; i < data.dropdownLabelList.length; i++)
-         {
-            if (tableName === data.dropdownLabelList[i])
-            {
-               index = i;
-               break;
-            }
-         }
-
-         if (index < 0)
-         {
-            throw(`Could not find table name for label ${tableName}`);
-         }
-
-         dropdownData[index] = (changedData) ? changedData.id : null;
-         setDropdownData(dropdownData);
-         setCounter(counter + 1);
-      }
+      setChildUrlParams(data);
+      reloadWidgetCallback(widgetIndex, data);
    }
 
-   useEffect(() =>
-   {
-      if(dropdownData)
-      {
-         let params = "";
-         for (let i = 0; i < dropdownData.length; i++)
-         {
-            if (i > 0)
-            {
-               params += "&";
-            }
-            params += `${data.dropdownNameList[i]}=`;
-            if(dropdownData[i])
-            {
-               params += `${dropdownData[i]}`;
-
-            }
-         }
-         reloadWidgetCallback(widgetIndex, params);
-         setChildUrlParams(params)
-      }
-   }, [counter]);
-
-
    return (
-      <Card className="parentWidgetCard" sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-
-         <Grid container>
-            <Grid item xs={4}>
-               <Box pt={3} px={3}>
-                  {
-                     label && (
-                        <Typography variant="h5" textTransform="capitalize">
-                           {label}
-                        </Typography>
-                     )
-                  }
-               </Box>
-            </Grid>
-            <Grid item xs={8}>
-               <Box mb={3} p={3}>
-                  {
-                     data?.dropdownDataList?.map((dropdownData: any, index: number) =>
-                        <DropdownMenu
-                           key={`dropdown-${data.dropdownLabelList[index]}-${index}`}
-                           label={`Select ${data.dropdownLabelList[index]}`}
-                           sx={{width: 250, marginLeft: "15px", float: "right"}}
-                           dropdownOptions={dropdownData}
-                           onChangeCallback={handleDataChange}
-                        />
-                     )
-                  }
-               </Box>
-            </Grid>
-         </Grid>
-         <Box pr={3} pl={3}>
-            {
-               data?.dropdownNeedsSelectedText ? (
-                  <Box pb={3} sx={{width: "100%", textAlign: "right"}}>
-                     <Typography variant="body2">
-                        {data.dropdownNeedsSelectedText}
-                     </Typography>
-                  </Box>
-               ) :(
-                  <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
-               )
-            }
+      <Widget
+         label={label}
+         widgetData={data}
+         reloadWidgetCallback={parentReloadWidgetCallback}
+      >
+         <Box px={3}>
+            <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
          </Box>
-      </Card>
+      </Widget>
    );
 }
 

@@ -123,7 +123,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
          <Grid container>
             <Grid item xs={6}>
                <MDBox pt={3} px={3}>
-                  <MDTypography variant={isChild ? "h5" : "h6"} fontWeight="medium">
+                  <MDTypography variant={isChild ? "h6" : "h5"} fontWeight="medium">
                      {title}
                   </MDTypography>
                </MDBox>

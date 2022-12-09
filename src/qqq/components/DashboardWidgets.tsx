@@ -184,7 +184,14 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "process" && widgetData[i]?.processMetaData && (
-                  <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} />
+                  <Widget
+                     label={widgetData[i]?.processMetaData?.label}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}>
+                     <div>
+                        <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} forceReInit={widgetCounter} />
+                     </div>
+                  </Widget>
                )
             }
             {
@@ -303,9 +310,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   <RecordGridWidget
                      title={widgetMetaData.label}
                      data={widgetData[i]}
-                     reloadWidgetCallback={reloadWidget}
                   />
                )
+
             }
             {
                widgetMetaData.type === "fieldValueList" && (

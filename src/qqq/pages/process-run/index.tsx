@@ -74,13 +74,14 @@ interface Props
    isWidget?: boolean;
    recordIds?: string | QQueryFilter;
    closeModalHandler?: (event: object, reason: string) => void;
+   forceReInit?: number;
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds, closeModalHandler}: Props): JSX.Element
+function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds, closeModalHandler, forceReInit}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -98,6 +99,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
    const [newStep, setNewStep] = useState(null);
    const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
+   const [lastForcedReInit, setLastForcedReInit] = useState(null as number);
    const [processMetaData, setProcessMetaData] = useState(null);
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
@@ -322,13 +324,23 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
 
       return (
          <>
-            <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
-               {(isModal) ? `${process.label}: ` : ""}
-               {step?.label}
-            </MDTypography>
-            {step.components && (
-               step.components.map((component: QFrontendComponent, index: number) => (
-                  // eslint-disable-next-line react/no-array-index-key
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // hide label on widgets - the Widget component itself provides the label                                    //
+               // for modals, show the process label, but not for full-screen processes (for them, it is in the breadcrumb) //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               !isWidget &&
+               <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
+                  {(isModal) ? `${process.label}: ` : ""}
+                  {step?.label}
+               </MDTypography>
+            }
+
+            {
+               //////////////////////////////////////////////////
+               // render all of the components for this screen //
+               //////////////////////////////////////////////////
+               step.components && (step.components.map((component: QFrontendComponent, index: number) => (
                   <div key={index}>
                      {
                         component.type === QComponentType.HELP_TEXT && (
@@ -925,10 +937,14 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
 
    //////////////////////////////////////////////////////////////////////////////////////////
    // do the initial load of data for the process - that is, meta data, plus the init step //
+   // also - allow the component that contains this component to force a re-init, by       //
+   // changing the value in the forceReInit property                                       //
    //////////////////////////////////////////////////////////////////////////////////////////
-   if (needInitialLoad)
+   if (needInitialLoad || forceReInit != lastForcedReInit)
    {
       setNeedInitialLoad(false);
+      setLastForcedReInit(forceReInit);
+
       (async () =>
       {
          const urlSearchParams = new URLSearchParams(location.search);
@@ -1108,6 +1124,8 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
    }
    if(isWidget)
    {
+      mainCardStyles.background = "none";
+      mainCardStyles.boxShadow = "none";
       mainCardStyles.minHeight = "";
       mainCardStyles.alignItems = "stretch";
       mainCardStyles.flexGrow = 1;
@@ -1269,7 +1287,8 @@ ProcessRun.defaultProps = {
    isModal: false,
    isWidget: false,
    recordIds: null,
-   closeModalHandler: null
+   closeModalHandler: null,
+   forceReInit: 0
 };
 
 export default ProcessRun;

@@ -154,7 +154,7 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //
          /////////////////////////////////////////////////
-         const tableSections = QTableUtils.getSectionsForRecordSidebar(tableMetaData);
+         const tableSections = QTableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()]);
          setTableSections(tableSections);
 
          const fieldArray = [] as QFieldMetaData[];
