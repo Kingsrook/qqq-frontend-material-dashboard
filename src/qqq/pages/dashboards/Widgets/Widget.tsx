@@ -155,7 +155,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          const dropdown = component as Dropdown
          return (
-            <Box my={3} mr={2} sx={{float: "right"}}>
+            <Box my={2} mr={2} sx={{float: "right"}}>
                <DropdownMenu
                   sx={{width: 200, marginLeft: "15px"}}
                   label={`Select ${dropdown.label}`}

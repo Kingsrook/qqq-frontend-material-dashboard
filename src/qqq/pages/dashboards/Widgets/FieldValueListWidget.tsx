@@ -33,12 +33,22 @@ interface Props
 {
    title: string;
    data: any;
+   reloadWidgetCallback?: (params: string) => void;
 }
 
 FieldValueListWidget.defaultProps = {};
 
-function FieldValueListWidget({title, data}: Props): JSX.Element
+function FieldValueListWidget({title, data, reloadWidgetCallback}: Props): JSX.Element
 {
+   if(data?.dropdownNeedsSelectedText)
+   {
+      return (
+         <Widget label={title} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
+            <br />
+         </Widget>
+      );
+   }
+
    if(!data.fields || !data.record)
    {
       const skeletons = [75, 50, 90];
@@ -69,7 +79,7 @@ function FieldValueListWidget({title, data}: Props): JSX.Element
    const fieldIndentLevels = data.fieldIndentLevels ?? {};
 
    return (
-      <Widget label={title}>
+      <Widget label={title} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
          <Box p={3} pt={0} display="flex" flexDirection="column">
             {
                fields.map((field: QFieldMetaData, index: number) => (

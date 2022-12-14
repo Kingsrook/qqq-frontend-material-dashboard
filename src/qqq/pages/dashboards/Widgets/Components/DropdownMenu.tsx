@@ -61,6 +61,9 @@ function DropdownMenu({label, dropdownOptions, onChangeCallback, sx}: Props): JS
                sx={{...sx, cursor: "pointer"}}
                onChange={handleOnChange}
                renderInput={(params: any) => <TextField {...params} label={label} />}
+               renderOption={(props, option: DropdownOption) => (
+                  <li {...props} style={{whiteSpace: "normal"}}>{option.label}</li>
+               )}
             />
          </span>
       ) : null

@@ -204,6 +204,20 @@ function EntityView({table, launchProcess}: Props): JSX.Element
                return;
             }
          }
+
+         ///////////////////////////////////////////////////////////////////////////////////
+         // look for anchor links - e.g., table section names.  return w/ no-op if found. //
+         ///////////////////////////////////////////////////////////////////////////////////
+         if(tableSections)
+         {
+            for (let i = 0; i < tableSections.length; i++)
+            {
+               if("#" + tableSections[i].name === location.hash)
+               {
+                  return;
+               }
+            }
+         }
       }
       catch (e)
       {
@@ -564,7 +578,7 @@ function EntityView({table, launchProcess}: Props): JSX.Element
 
                                     <Grid container spacing={3}>
                                        <Grid item xs={12} mb={3}>
-                                          <Card id={t1SectionName}>
+                                          <Card id={t1SectionName} sx={{scrollMarginTop: "100px"}}>
                                              <MDBox display="flex" p={3} pb={1}>
                                                 <MDBox mr={1.5}>
                                                    <Avatar sx={{bgcolor: colors.info.main}}>

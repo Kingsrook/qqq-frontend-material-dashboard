@@ -66,9 +66,7 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
 {
    const [childUrlParams, setChildUrlParams] = useState("");
    const [qInstance, setQInstance] = useState(null as QInstance);
-   const [dropdownData, setDropdownData] = useState([]);
    const [widgets, setWidgets] = useState([] as any[]);
-   const [counter, setCounter] = useState(0);
 
    useEffect(() =>
    {

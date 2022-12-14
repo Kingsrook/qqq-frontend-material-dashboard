@@ -240,7 +240,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      <SimpleStatisticsCard
                         title={widgetMetaData.label}
                         data={widgetData[i]}
-                        increaseIsGood={true}
+                        increaseIsGood={widgetData[i].increaseIsGood}
                         isCurrency={widgetData[i].isCurrency}
                      />
                   )
@@ -320,6 +320,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      <FieldValueListWidget
                         title={widgetMetaData.label}
                         data={widgetData[i]}
+                        reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      />
                )
             }

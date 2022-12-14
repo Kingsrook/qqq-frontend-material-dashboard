@@ -21,9 +21,11 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {DataGridPro} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridRowParams, MuiEvent} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import QClient from "qqq/utils/QClient";
 import Widget, {AddNewRecordButton, HeaderLink, LabelComponent} from "./Widget";
 
 interface Props
@@ -34,10 +36,13 @@ interface Props
 
 RecordGridWidget.defaultProps = {};
 
+const qController = QClient.getInstance();
+
 function RecordGridWidget({title, data}: Props): JSX.Element
 {
    const [rows, setRows] = useState([]);
    const [columns, setColumns] = useState([]);
+   const navigate = useNavigate();
 
    useEffect(() =>
    {
@@ -58,6 +63,21 @@ function RecordGridWidget({title, data}: Props): JSX.Element
 
          const childTablePath = data.tablePath + (data.tablePath.endsWith("/") ? "" : "/")
          const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, childTablePath);
+
+         ////////////////////////////////////////////////////////////////
+         // do not not show the foreign-key column of the parent table //
+         ////////////////////////////////////////////////////////////////
+         if(data.defaultValuesForNewChildRecords)
+         {
+            for (let i = 0; i < columns.length; i++)
+            {
+               if(data.defaultValuesForNewChildRecords[columns[i].field])
+               {
+                  columns.splice(i, 1);
+                  i--
+               }
+            }
+         }
 
          setRows(rows);
          setColumns(columns);
@@ -81,6 +101,21 @@ function RecordGridWidget({title, data}: Props): JSX.Element
       labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields))
    }
 
+
+   const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
+   {
+      (async () =>
+      {
+         const qInstance = await qController.loadMetaData()
+         const tablePath = qInstance.getTablePathByName(data.childTableMetaData.name)
+         if(tablePath)
+         {
+            navigate(`${tablePath}/${params.id}`);
+         }
+      })();
+   };
+
+
    return (
       <Widget
          label={title}
@@ -94,6 +129,7 @@ function RecordGridWidget({title, data}: Props): JSX.Element
             columns={columns}
             rowBuffer={10}
             getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+            onRowClick={handleRowClick}
             // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
             // components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
             // pinnedColumns={pinnedColumns}
@@ -106,7 +142,6 @@ function RecordGridWidget({title, data}: Props): JSX.Element
             // checkboxSelection
             // rowCount={totalRecords === null ? 0 : totalRecords}
             // onPageSizeChange={handleRowsPerPageChange}
-            // onRowClick={handleRowClick}
             // onStateChange={handleStateChange}
             // density={density}
             // loading={loading}
