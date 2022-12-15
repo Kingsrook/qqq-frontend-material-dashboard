@@ -37,11 +37,15 @@ import FieldValueListWidget from "qqq/pages/dashboards/Widgets/FieldValueListWid
 import HorizontalBarChart from "qqq/pages/dashboards/Widgets/HorizontalBarChart";
 import MultiStatisticsCard from "qqq/pages/dashboards/Widgets/MultiStatisticsCard";
 import ParentWidget from "qqq/pages/dashboards/Widgets/ParentWidget";
+import PieChartCard from "qqq/pages/dashboards/Widgets/PieChartCard";
 import QuickSightChart from "qqq/pages/dashboards/Widgets/QuickSightChart";
 import RecordGridWidget from "qqq/pages/dashboards/Widgets/RecordGridWidget";
 import SimpleStatisticsCard from "qqq/pages/dashboards/Widgets/SimpleStatisticsCard";
+import SmallLineChart from "qqq/pages/dashboards/Widgets/SmallLineChart";
+import StatisticsCard from "qqq/pages/dashboards/Widgets/StatisticsCard";
 import StepperCard from "qqq/pages/dashboards/Widgets/StepperCard";
 import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
+import USMapWidget from "qqq/pages/dashboards/Widgets/USMapWidget";
 import Widget from "qqq/pages/dashboards/Widgets/Widget";
 import ProcessRun from "qqq/pages/process-run";
 import QClient from "qqq/utils/QClient";
@@ -98,9 +102,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          widgetData[i] = {};
          (async () =>
          {
-            console.log(`widgets: ${getQueryParams(null)}`)
             widgetData[i] = await qController.widget(widgetMetaDataList[i].name, getQueryParams(null));
             setWidgetCounter(widgetCounter + 1);
+            console.log(`widget data: ${JSON.stringify(widgetData[i])}`)
             forceUpdate();
          })();
       }
@@ -147,7 +151,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       }
 
       return params;
-   };
+   }
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
 
@@ -158,6 +162,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
+                     icon={widgetMetaData.icon}
                      entityPrimaryKey={entityPrimaryKey}
                      tableName={tableName}
                      widgetIndex={i}
@@ -168,18 +173,36 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                )
             }
             {
-               widgetMetaData.type === "table" && (
-                  <TableCard
-                     color="info"
-                     title={widgetMetaData.label}
-                     linkText={widgetData[i]?.linkText}
-                     linkURL={widgetData[i]?.linkURL}
-                     noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
-                     data={widgetData[i]}
-                     dropdownOptions={widgetData[i]?.dropdownOptions}
-                     reloadWidgetCallback={reloadWidget}
+               widgetMetaData.type === "usaMap" && (
+                  <USMapWidget
                      widgetIndex={i}
+                     label={widgetMetaData.label}
+                     data={widgetData[i]}
+                     reloadWidgetCallback={reloadWidget}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "table" && (
+                  <Widget
+                     label={widgetData[i]?.label}
+                     isCard={widgetMetaData.isCard}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                  >
+                     <TableCard
+                        color="info"
+                        title={widgetMetaData.label}
+                        linkText={widgetData[i]?.linkText}
+                        linkURL={widgetData[i]?.linkURL}
+                        noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
+                        data={widgetData[i]}
+                        dropdownOptions={widgetData[i]?.dropdownOptions}
+                        reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                        widgetIndex={i}
+                     />
+                  </Widget>
                )
             }
             {
@@ -235,13 +258,35 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                )
             }
             {
-               widgetMetaData.type === "statistics" && (
+               widgetMetaData.type === "smallLineChart" && (
+                  <SmallLineChart
+                     color="dark"
+                     title={widgetMetaData.label}
+                     description={widgetData[i]?.description}
+                     date=""
+                     chart={widgetData[i]?.chartData}
+                  />
+               )
+            }
+            {
+               widgetMetaData.type === "simpleStatistics" && (
                   widgetData && widgetData[i] && (
                      <SimpleStatisticsCard
-                        title={widgetMetaData.label}
+                        title={widgetData[i]?.title}
                         data={widgetData[i]}
                         increaseIsGood={widgetData[i].increaseIsGood}
                         isCurrency={widgetData[i].isCurrency}
+                     />
+                  )
+               )
+            }
+            {
+               widgetMetaData.type === "statistics" && (
+                  widgetData && widgetData[i] && (
+                     <StatisticsCard
+                        icon={widgetMetaData.icon}
+                        data={widgetData[i]}
+                        increaseIsGood={true}
                      />
                   )
                )
@@ -255,8 +300,18 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "barChart" && (
                   <BarChart
                      color="info"
-                     title={widgetMetaData.label}
+                     title={widgetData[i]?.title}
                      date={`As of ${new Date().toDateString()}`}
+                     description={widgetData[i]?.description}
+                     data={widgetData[i]?.chartData}
+                  />
+               )
+            }
+            {
+               widgetMetaData.type === "pieChart" && (
+                  <PieChartCard
+                     title={widgetData[i]?.label}
+                     description={widgetData[i]?.description}
                      data={widgetData[i]?.chartData}
                   />
                )
@@ -270,14 +325,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "horizontalBarChart" && (
-                  widgetData && widgetData[i] && widgetData[i].chartData && (
-                     <HorizontalBarChart
-                        height={widgetData[i].height}
-                        title={widgetMetaData.label}
-                        data={widgetData[i]?.chartData}
-                        isCurrency={widgetData[i].isCurrency}
-                     />
-                  )
+                  <HorizontalBarChart
+                     height={widgetData[i]?.height}
+                     title={widgetMetaData.label}
+                     data={widgetData[i]?.chartData}
+                     isCurrency={widgetData[i]?.isCurrency}
+                  />
                )
             }
             {

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
@@ -142,44 +143,47 @@ function BarChart({color, title, description, date, data}: Props): JSX.Element
    const {chartData} = getChartData(data?.labels, data?.dataset);
 
    return (
-      <Card sx={{height: "100%"}}>
-         <MDBox padding="1rem">
-            {useMemo(
-               () => (
-                  <MDBox
-                     variant="gradient"
-                     bgColor={color}
-                     borderRadius="lg"
-                     coloredShadow={color}
-                     py={2}
-                     pr={0.5}
-                     mt={-5}
-                     height="12.5rem"
-                  >
-                     <Bar data={chartData} options={options} />
+
+      <Box mt={3} sx={{flexGrow: 1, display: "flex"}}>
+         <Card sx={{flexGrow: 1, display: "flex", height: "100%"}}>
+            <MDBox padding="1rem">
+               {useMemo(
+                  () => (
+                     <MDBox
+                        variant="gradient"
+                        bgColor={color}
+                        borderRadius="lg"
+                        coloredShadow={color}
+                        py={2}
+                        pr={0.5}
+                        mt={-5}
+                        height="12.5rem"
+                     >
+                        <Bar data={chartData} options={options} />
+                     </MDBox>
+                  ),
+                  [data, color]
+               )}
+               <MDBox pt={3} pb={1} px={1}>
+                  <MDTypography variant="h5" textTransform="capitalize">
+                     {title}
+                  </MDTypography>
+                  <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                     {parse(description)}
+                  </MDTypography>
+                  <Divider />
+                  <MDBox display="flex" alignItems="center">
+                     <MDTypography variant="button" color="text" lineHeight={1} sx={{mt: 0.15, mr: 0.5}}>
+                        <Icon>schedule</Icon>
+                     </MDTypography>
+                     <MDTypography variant="button" color="text" fontWeight="light">
+                        {date}
+                     </MDTypography>
                   </MDBox>
-               ),
-               [data, color]
-            )}
-            <MDBox pt={3} pb={1} px={1}>
-               <MDTypography variant="h5" textTransform="capitalize">
-                  {title}
-               </MDTypography>
-               <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                  {parse(description)}
-               </MDTypography>
-               <Divider />
-               <MDBox display="flex" alignItems="center">
-                  <MDTypography variant="button" color="text" lineHeight={1} sx={{mt: 0.15, mr: 0.5}}>
-                     <Icon>schedule</Icon>
-                  </MDTypography>
-                  <MDTypography variant="button" color="text" fontWeight="light">
-                     {date}
-                  </MDTypography>
                </MDBox>
             </MDBox>
-         </MDBox>
-      </Card>
+         </Card>
+      </Box>
    );
 }
 

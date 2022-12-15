@@ -29,7 +29,6 @@ import QContext from "QContext";
 import DashboardLayout from "qqq/components/DashboardLayout";
 import Footer from "qqq/components/Footer";
 import Navbar from "qqq/components/Navbar";
-import {TableDataInput} from "qqq/components/Temporary/DataTable";
 import MDBox from "qqq/components/Temporary/MDBox";
 import ShipmentsByWarehouseTable from "qqq/pages/dashboards/Tables/ShipmentsByWarehouseTable";
 import {GenericChartData} from "qqq/pages/dashboards/Widgets/Data/GenericChartData";
@@ -40,7 +39,7 @@ import {PieChartData} from "qqq/pages/dashboards/Widgets/PieChart";
 import PieChartCard from "qqq/pages/dashboards/Widgets/PieChartCard";
 import SimpleStatisticsCard from "qqq/pages/dashboards/Widgets/SimpleStatisticsCard";
 import {StatisticsCardData} from "qqq/pages/dashboards/Widgets/StatisticsCard";
-import TableCard from "qqq/pages/dashboards/Widgets/TableCard";
+import TableCard, {TableDataInput} from "qqq/pages/dashboards/Widgets/TableCard";
 import QClient from "qqq/utils/QClient";
 
 const qController = QClient.getInstance();

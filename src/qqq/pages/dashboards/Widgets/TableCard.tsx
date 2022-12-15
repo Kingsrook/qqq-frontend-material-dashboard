@@ -19,24 +19,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Icon, Skeleton} from "@mui/material";
-import Card from "@mui/material/Card";
-import Grid from "@mui/material/Grid";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {Skeleton} from "@mui/material";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
-import {NavLink} from "react-router-dom";
-import DataTable, {TableDataInput} from "qqq/components/Temporary/DataTable";
+import DataTable from "qqq/components/Temporary/DataTable";
 import DataTableBodyCell from "qqq/components/Temporary/DataTable/DataTableBodyCell";
 import DataTableHeadCell from "qqq/components/Temporary/DataTable/DataTableHeadCell";
 import DefaultCell from "qqq/components/Temporary/DefaultCell";
 import MDBox from "qqq/components/Temporary/MDBox";
 import MDTypography from "qqq/components/Temporary/MDTypography";
+import QClient from "qqq/utils/QClient";
+
+
+//////////////////////////////////////
+// structure of expected table data //
+//////////////////////////////////////
+export interface TableDataInput
+{
+   columns: { [key: string]: any }[];
+   rows: { [key: string]: any }[];
+}
 
 
 /////////////////////////
@@ -49,130 +56,39 @@ interface Props
    linkURL?: string;
    noRowsFoundHTML?: string;
    data: TableDataInput;
-   dropdownOptions?: {
-      id: string,
-      name: string
-   }[];
-   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
+   reloadWidgetCallback?: (params: string) => void;
    widgetIndex?: number;
    isChild?: boolean;
 
    [key: string]: any;
 }
 
-function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOptions, reloadWidgetCallback, widgetIndex, isChild}: Props): JSX.Element
+const qController = QClient.getInstance();
+function TableCard({noRowsFoundHTML, data, reloadWidgetCallback}: Props): JSX.Element
 {
-   const openArrowIcon = "arrow_drop_down";
-   const closeArrowIcon = "arrow_drop_up";
-   const [dropdown, setDropdown] = useState<string | null>(null);
-   const [dropdownValue, setDropdownValue] = useState("");
-   const [dropdownLabel, setDropdownLabel] = useState<string>("");
-   const [dropdownIcon, setDropdownIcon] = useState<string>(openArrowIcon);
-
-   // console.log(`data: ${JSON.stringify(data?.rows)}`);
-   // console.log(`bool: ${data && data?.columns && !data?.rows}`);
-   // console.log(`norowsfound: ${noRowsFoundHTML}`);
-
-   const openDropdown = ({currentTarget}: any) =>
-   {
-      setDropdown(currentTarget);
-      setDropdownIcon(closeArrowIcon);
-   };
-   const closeDropdown = ({currentTarget}: any) =>
-   {
-      setDropdown(null);
-      setDropdownValue(currentTarget.innerText || dropdownValue);
-      setDropdownIcon(openArrowIcon);
-      reloadWidgetCallback(widgetIndex, null);
-   };
-
-   const renderMenu = (state: any, open: any, close: any, icon: string) => (
-      dropdownOptions && (
-         <span style={{whiteSpace: "nowrap"}}>
-            <Icon onClick={open} fontSize={"medium"} style={{cursor: "pointer", float: "right"}}>{icon}</Icon>
-            <Menu
-               anchorEl={state}
-               transformOrigin={{vertical: "top", horizontal: "center"}}
-               open={Boolean(state)}
-               onClose={close}
-               keepMounted
-               disableAutoFocusItem
-            >
-               {
-                  dropdownOptions.map((optionMap, index: number) =>
-                     <MenuItem id={optionMap["id"]} key={index} onClick={close}>{optionMap["name"]}</MenuItem>
-                  )
-               }
-            </Menu>
-         </span>
-      )
-   );
+   const [qInstance, setQInstance] = useState(null as QInstance);
 
    useEffect(() =>
    {
-      if (dropdownOptions)
+      (async () =>
       {
-         setDropdownValue(dropdownOptions[0]["id"]);
-         setDropdownLabel(dropdownOptions[0]["name"]);
-
-      }
-   }, [dropdownOptions]);
+         const newQInstance = await qController.loadMetaData();
+         setQInstance(newQInstance);
+      })();
+   }, []);
 
    return (
-      <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-         <Grid container>
-            <Grid item xs={6}>
-               <MDBox pt={3} px={3}>
-                  <MDTypography variant={isChild ? "h6" : "h5"} fontWeight="medium">
-                     {title}
-                  </MDTypography>
-               </MDBox>
-            </Grid>
-            <Grid item xs={6}>
-               {
-                  linkText && (
-                     <MDBox sx={{textAlign: "right", fontSize: "14px"}} pt={3} px={3}>
-                        <NavLink to={linkURL}>{linkText}</NavLink>
-                     </MDBox>
-                  )
-               }
-            </Grid>
-            <Grid item xs={5}>
-               {dropdownOptions && (
-                  <MDBox p={2} width="100%" textAlign="right" lineHeight={1}>
-                     <MDTypography
-                        variant="caption"
-                        color="secondary"
-                        fontWeight="regular"
-                     >
-                        <strong>Billing Period: </strong>
-                     </MDTypography>
-                     <MDTypography
-                        variant="caption"
-                        color="secondary"
-                        fontWeight="regular"
-                        sx={{cursor: "pointer"}}
-                        onClick={openDropdown}
-                     >
-                        {dropdownLabel}
-                     </MDTypography>
-                     {renderMenu(dropdown, openDropdown, closeDropdown, dropdownIcon)}
-                  </MDBox>
-               )}
-
-            </Grid>
-         </Grid>
-         <MDBox py={1}>
-            {
-               data && data.columns && !noRowsFoundHTML ? (
-                  <DataTable
-                     table={data}
-                     entriesPerPage={false}
-                     showTotalEntries={false}
-                     isSorted={false}
-                     noEndBorder
-                  />
-               ) : noRowsFoundHTML ? (
+      <MDBox py={1}>
+         {
+            data && data.columns && !noRowsFoundHTML ?
+               <DataTable
+                  table={data}
+                  entriesPerPage={false}
+                  showTotalEntries={false}
+                  isSorted={false}
+                  noEndBorder
+               />
+               : noRowsFoundHTML ?
                   <MDBox p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
                      <MDTypography
                         variant="subtitle2"
@@ -186,7 +102,7 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                         }
                      </MDTypography>
                   </MDBox>
-               ) : (
+                  :
                   <TableContainer sx={{boxShadow: "none"}}>
                      <Table>
                         <MDBox component="thead">
@@ -211,10 +127,8 @@ function TableCard({title, linkText, linkURL, noRowsFoundHTML, data, dropdownOpt
                         </TableBody>
                      </Table>
                   </TableContainer>
-               )
-            }
-         </MDBox>
-      </Card>
+         }
+      </MDBox>
    );
 }
 

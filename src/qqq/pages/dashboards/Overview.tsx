@@ -47,7 +47,6 @@ function Overview(): JSX.Element
    //////////////////////////////////
    // shipments by day widget data //
    //////////////////////////////////
-   const [shipmentsByDayTitle, setShipmentsByDayTitle] = useState("");
    const [shipmentsByDayDescription, setShipmentsByDayDescription] = useState("");
    const [shipmentsByDayData, setShipmentsByDayData] = useState({} as GenericChartDataSingleDataset);
 
@@ -135,7 +134,6 @@ function Overview(): JSX.Element
          }
 
          const description = "Over the last week there have been <strong>" + daysOverAverage.toLocaleString() + (daysOverAverage == 1 ? " day" : " days") + "</strong> with total shipments greater than the daily average of <strong>" + average.toLocaleString() + " shipments</strong>.";
-         setShipmentsByDayTitle(widgetData.title);
          setShipmentsByDayData(widgetData.chartData);
          setShipmentsByDayDescription(description);
       })();

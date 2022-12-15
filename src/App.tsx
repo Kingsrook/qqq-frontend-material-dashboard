@@ -83,7 +83,6 @@ function getStaticRoutes()
             },
          ],
       },
-      {type: "divider", key: "divider-1"},
    ];
 }
 
@@ -411,14 +410,35 @@ export default function App()
 
             const sideNavAppList = [] as any[];
             const appRoutesList = [] as any[];
+            const mainDashboardsApp = {} as any;
+
+            ///////////////////////////////////////////////////////////////////////////////////
+            // iterate throught the list to find the 'main dashboard so we can put it first' //
+            ///////////////////////////////////////////////////////////////////////////////////
             for (let i = 0; i < metaData.appTree.length; i++)
             {
                const app = metaData.appTree[i];
+               if(app.name === "mainDashboards")
+               {
+                  addAppToSideNavList(app, sideNavAppList, "", 0);
+                  addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
+                  sideNavAppList.push({type: "divider", key: "divider-1"});
+                  break;
+               }
+            }
+            for (let i = 0; i < metaData.appTree.length; i++)
+            {
+               const app = metaData.appTree[i];
+               if(app.name === "mainDashboards")
+               {
+                  continue;
+               }
+
                addAppToSideNavList(app, sideNavAppList, "", 0);
                addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
             }
 
-            const newSideNavRoutes = getStaticRoutes();
+            const newSideNavRoutes = []; // getStaticRoutes();
             // @ts-ignore
             newSideNavRoutes.unshift(profileRoutes);
             for (let i = 0; i < sideNavAppList.length; i++)

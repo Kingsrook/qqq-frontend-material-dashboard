@@ -19,9 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
-import Divider from "@mui/material/Divider";
-import Icon from "@mui/material/Icon";
 import parse from "html-react-parser";
 import {useMemo} from "react";
 import {Line} from "react-chartjs-2";
@@ -57,47 +56,40 @@ function SmallLineChart({color, title, description, date, chart}: Props): JSX.El
 {
    const {data, options} = configs(chart?.labels || [], chart?.dataset || {});
 
-   console.log(`DATA: ${JSON.stringify(data)}`);
-
    return (
-      <Card sx={{height: "100%"}}>
-         <MDBox padding="1rem">
-            {useMemo(
-               () => (
-                  <MDBox
-                     variant="gradient"
-                     bgColor={color}
-                     borderRadius="lg"
-                     coloredShadow={color}
-                     py={2}
-                     pr={0.5}
-                     mt={-5}
-                     height="12.5rem"
-                  >
-                     <Line data={data} options={options} />
-                  </MDBox>
-               ),
-               [chart, color]
-            )}
-            <MDBox pt={3} pb={1} px={1}>
-               <MDTypography variant="h5" textTransform="capitalize">
-                  {title}
-               </MDTypography>
-               <MDTypography component="div" variant="button" color="text" fontWeight="light">
-                  {parse(description)}
-               </MDTypography>
-               <Divider />
-               <MDBox display="flex" alignItems="center">
-                  <MDTypography variant="button" color="text" lineHeight={1} sx={{mt: 0.15, mr: 0.5}}>
-                     <Icon>schedule</Icon>
+
+      <Box mt={3} sx={{flexGrow: 1, display: "flex"}}>
+         <Card sx={{height: "100%"}}>
+            <MDBox padding="1rem">
+
+               {useMemo(
+                  () => (
+                     <MDBox
+                        variant="gradient"
+                        bgColor={color}
+                        borderRadius="lg"
+                        coloredShadow={color}
+                        py={2}
+                        pr={0.5}
+                        mt={-5}
+                        height="12.5rem"
+                     >
+                        <Line data={data} options={options} />
+                     </MDBox>
+                  ),
+                  [chart, color]
+               )}
+               <MDBox pt={3} pb={1} px={1}>
+                  <MDTypography variant="h5" textTransform="capitalize">
+                     {title}
                   </MDTypography>
-                  <MDTypography variant="button" color="text" fontWeight="light">
-                     {date}
+                  <MDTypography component="div" variant="button" color="text" fontWeight="light">
+                     {parse(description)}
                   </MDTypography>
                </MDBox>
             </MDBox>
-         </MDBox>
-      </Card>
+         </Card>
+      </Box>
    );
 }
 

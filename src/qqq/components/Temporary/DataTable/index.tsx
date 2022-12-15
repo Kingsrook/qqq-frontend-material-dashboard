@@ -38,12 +38,7 @@ import MDInput from "qqq/components/Temporary/MDInput";
 import MDPagination from "qqq/components/Temporary/MDPagination";
 import MDTypography from "qqq/components/Temporary/MDTypography";
 import ImageCell from "qqq/pages/dashboards/Tables/ImageCell";
-
-export interface TableDataInput
-{
-   columns: { [key: string]: any }[];
-   rows: { [key: string]: any }[];
-}
+import {TableDataInput} from "qqq/pages/dashboards/Widgets/TableCard";
 
 interface Props
 {

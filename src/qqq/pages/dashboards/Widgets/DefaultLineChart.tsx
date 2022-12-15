@@ -57,7 +57,7 @@ const options = {
          callbacks: {
             label: function(context:any)
             {
-               return(context.parsed.x);
+               return(" " + Number(context.parsed.y).toLocaleString());
             }
          }
       }
@@ -90,7 +90,7 @@ const options = {
             },
             callback: function(value: any, index: any, values: any)
             {
-               return value;
+               return value.toLocaleString();
             }
          },
       },

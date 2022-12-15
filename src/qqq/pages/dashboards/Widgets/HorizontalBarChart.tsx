@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import {ReactNode, useMemo} from "react";
@@ -48,7 +49,7 @@ const options = {
                return(context.parsed.x);
             }
          }
-      }
+      },
    },
    scales: {
       y: {
@@ -122,27 +123,30 @@ interface Props
 
 function HorizontalBarChart({icon, title, description, height, data, isCurrency}: Props): JSX.Element
 {
-   const chartDatasets = data.datasets
-      ? data.datasets.map((dataset) => ({
-         ...dataset,
-         weight: 5,
-         borderWidth: 0,
-         borderRadius: 4,
-         backgroundColor: dataset?.color
-            ? dataset.color
-            : colors.info.main,
-         fill: false,
-         maxBarThickness: 15,
-      }))
-      : [];
-
    let fullData = {};
-   if (data)
+   if(data && data.datasets)
    {
-      fullData = {
-         labels: data.labels,
-         datasets: chartDatasets
-      };
+      const chartDatasets = data.datasets
+         ? data.datasets.map((dataset) => ({
+            ...dataset,
+            weight: 5,
+            borderWidth: 0,
+            borderRadius: 4,
+            backgroundColor: dataset?.color
+               ? dataset.color
+               : colors.info.main,
+            fill: false,
+            maxBarThickness: 15,
+         }))
+         : [];
+
+      if (data)
+      {
+         fullData = {
+            labels: data.labels,
+            datasets: chartDatasets
+         };
+      }
    }
 
    let customOptions = options;
@@ -166,10 +170,9 @@ function HorizontalBarChart({icon, title, description, height, data, isCurrency}
       }
    }
 
-
    const renderChart = (
       <MDBox py={2} pr={2} pl={icon.component ? 1 : 2} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-         {title || description ? (
+         {title || description && (
             <MDBox display="flex" px={description ? 1 : 0} pt={description ? 1 : 0} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                {icon.component && (
                   <MDBox
@@ -198,11 +201,17 @@ function HorizontalBarChart({icon, title, description, height, data, isCurrency}
                   </MDBox>
                </MDBox>
             </MDBox>
-         ) : null}
+         )}
          {useMemo(
             () => (
                <MDBox height={height} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                  <Bar data={fullData} options={options} />
+                  {
+                     data && data?.datasets && data?.datasets.length > 0 ?(
+                        <Bar data={fullData} options={options} />
+                     ):(
+                        <Box mt={2} sx={{width: "100%", textAlign: "center"}}><i>No data was provided to this chart</i></Box>
+                     )
+                  }
                </MDBox>
             ),
             [data, height]

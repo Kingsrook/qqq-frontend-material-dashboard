@@ -21,13 +21,10 @@
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Box, Typography} from "@mui/material";
-import Card from "@mui/material/Card";
-import Grid from "@mui/material/Grid";
+import {Box} from "@mui/material";
 import React, {useEffect, useState} from "react";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
-import DropdownMenu from "qqq/pages/dashboards/Widgets/Components/DropdownMenu";
-import Widget, {Dropdown, LabelComponent} from "qqq/pages/dashboards/Widgets/Widget";
+import Widget from "qqq/pages/dashboards/Widgets/Widget";
 import QClient from "qqq/utils/QClient";
 
 
@@ -44,6 +41,7 @@ export interface ParentWidgetData
    }[][];
    childWidgetNameList: string[];
    dropdownNeedsSelectedText?: string;
+   icon?: string;
 }
 
 
@@ -54,6 +52,7 @@ interface Props
 {
    widgetIndex: number;
    label: string;
+   icon?: string;
    data: ParentWidgetData;
    reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
    entityPrimaryKey?: string;
@@ -62,7 +61,7 @@ interface Props
 
 
 const qController = QClient.getInstance();
-function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPrimaryKey, tableName}: Props, ): JSX.Element
+function ParentWidget({widgetIndex, label, icon, data, reloadWidgetCallback, entityPrimaryKey, tableName}: Props, ): JSX.Element
 {
    const [childUrlParams, setChildUrlParams] = useState("");
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -93,16 +92,19 @@ function ParentWidget({widgetIndex, label, data, reloadWidgetCallback, entityPri
    const parentReloadWidgetCallback = (data: string) =>
    {
       setChildUrlParams(data);
+
       reloadWidgetCallback(widgetIndex, data);
    }
 
+   // @ts-ignore
    return (
       <Widget
+         icon={icon}
          label={label}
          widgetData={data}
          reloadWidgetCallback={parentReloadWidgetCallback}
       >
-         <Box px={3}>
+         <Box px={3} sx={{width: "100%"}}>
             <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
          </Box>
       </Widget>

@@ -88,7 +88,8 @@ function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
    }
 
    return (
-      <Card>
+
+      <Card sx={{height: "100%", alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: 3, paddingTop: "0px"}}>
          <MDBox display="flex" justifyContent="space-between" pt={1} px={2}>
             <MDBox
                variant="gradient"
@@ -118,10 +119,10 @@ function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
                }
             </MDBox>
          </MDBox>
-         <Divider />
          {
             percentageAmount !== undefined && percentageAmount !== 0 ? (
-               <MDBox pb={2} px={2}>
+               <MDBox px={2}>
+                  <Divider />
                   <MDTypography component="p" variant="button" color="text" display="flex">
                      <MDTypography
                         component="span"

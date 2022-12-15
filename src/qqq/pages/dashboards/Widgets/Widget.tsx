@@ -23,19 +23,18 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import Modal from "@mui/material/Modal";
+import Icon from "@mui/material/Icon";
 import Typography from "@mui/material/Typography";
 import React, {useEffect, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import DashboardWidgets from "qqq/components/DashboardWidgets";
-import EntityForm from "qqq/components/EntityForm";
+import colors from "qqq/components/Temporary/colors";
 import DropdownMenu, {DropdownOption} from "qqq/pages/dashboards/Widgets/Components/DropdownMenu";
 
 export interface WidgetData
 {
-   dropdownLabelList: string[];
-   dropdownNameList: string[];
-   dropdownDataList: {
+   dropdownLabelList?: string[];
+   dropdownNameList?: string[];
+   dropdownDataList?: {
       id: string,
       label: string
    }[][];
@@ -45,15 +44,20 @@ export interface WidgetData
 
 interface Props
 {
+   icon?: string;
    label: string;
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalComponentsRight: LabelComponent[];
    widgetData?: WidgetData;
    children: JSX.Element;
    reloadWidgetCallback?: (params: string) => void;
+   isChild?: boolean;
+   isCard?: boolean;
 }
 
 Widget.defaultProps = {
+   isCard: true,
+   isChild: false,
    label: null,
    widgetData: {},
    labelAdditionalComponentsLeft: [],
@@ -246,44 +250,70 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       }
    }, [counter]);
 
-   return (
-      <>
-         <Card sx={{width: "100%"}}>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-               <Box py={2}>
-                  <Typography variant="h5" fontWeight="medium" p={3} display="inline">
-                     {props.label}
-                  </Typography>
-                  {
-                     props.labelAdditionalComponentsLeft.map((component, i) =>
+   const widgetContent =
+      <Box sx={{width: "100%"}}>
+         {
+            (props.icon || props.label) && (
+               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{width: "100%"}}>
+                  <Box py={2}>
                      {
-                        return (<span key={i}>{renderComponent(component)}</span>);
-                     })
-                  }
-               </Box>
-               <Box pr={1}>
-                  {
-                     effectiveLabelAdditionalComponentsRight.map((component, i) =>
-                     {
-                        return (<span key={i}>{renderComponent(component)}</span>);
-                     })
-                  }
-               </Box>
-            </Box>
-            {
-               props.widgetData?.dropdownNeedsSelectedText ? (
-                  <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
-                     <Typography variant="body2">
-                        {props.widgetData?.dropdownNeedsSelectedText}
+                        props.icon && (
+                           <Box
+                              ml={3}
+                              mt={-4}
+                              sx={{
+                                 display: "flex",
+                                 justifyContent: "center",
+                                 alignItems: "center",
+                                 width: "64px",
+                                 height: "64px",
+                                 borderRadius: "8px",
+                                 background: colors.info.main,
+                                 color: "#ffffff",
+                                 float: "left"
+                              }}
+                           >
+                              <Icon fontSize="medium" color="inherit">
+                                 {props.icon}
+                              </Icon>
+                           </Box>
+                        )
+                     }
+                     <Typography variant={props.isChild ? "h6" : "h5"} fontWeight="medium" p={3} display="inline">
+                        {props.label}
                      </Typography>
+                     {
+                        props.labelAdditionalComponentsLeft.map((component, i) =>
+                        {
+                           return (<span key={i}>{renderComponent(component)}</span>);
+                        })
+                     }
                   </Box>
-               ) : (
-                  props.children
-               )
-            }
-         </Card>
-      </>
-   );
+                  <Box pr={1}>
+                     {
+                        effectiveLabelAdditionalComponentsRight.map((component, i) =>
+                        {
+                           return (<span key={i}>{renderComponent(component)}</span>);
+                        })
+                     }
+                  </Box>
+               </Box>
+            )
+         }
+         {
+            props.widgetData?.dropdownNeedsSelectedText ? (
+               <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
+                  <Typography variant="body2">
+                     {props.widgetData?.dropdownNeedsSelectedText}
+                  </Typography>
+               </Box>
+            ) : (
+               props.children
+            )
+         }
+      </Box>;
+
+   return props.isCard ? <Card sx={{width: "100%"}}>{widgetContent}</Card> : widgetContent;
 }
 
 export default Widget;

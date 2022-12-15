@@ -82,7 +82,7 @@ function SimpleStatisticsCard({title, data, increaseIsGood, isCurrency, dropdown
                   </MDBox>
                   <MDBox lineHeight={1}>
                      {
-                        count ? (
+                        count !== undefined ? (
                            isCurrency ? (
                               <MDTypography variant="h5" fontWeight="bold">
                                  {count.toLocaleString("en-US", {style: "currency", currency: "USD"})}
@@ -90,21 +90,29 @@ function SimpleStatisticsCard({title, data, increaseIsGood, isCurrency, dropdown
                            ) : (
 
                               <MDTypography variant="h5" fontWeight="bold">
-                                 {count.toLocaleString("en-US", {style: "currency", currency: "USD"})}
+                                 {count.toLocaleString()}
                               </MDTypography>
                            )
                         ) : null
                      }
-                     <MDTypography variant="button" fontWeight="bold" color={percentColor}>
-                        {percentageString}&nbsp;
-                        <MDTypography
-                           variant="button"
-                           fontWeight="regular"
-                           color={"secondary"}
-                        >
-                           {percentageLabel}
-                        </MDTypography>
-                     </MDTypography>
+                     {
+                        count !== undefined ? (
+                           <MDTypography variant="button" fontWeight="bold" color={percentColor}>
+                              {percentageString}&nbsp;
+                              <MDTypography
+                                 variant="button"
+                                 fontWeight="regular"
+                                 color={"secondary"}
+                              >
+                                 {percentageLabel}
+                              </MDTypography>
+                           </MDTypography>
+                        ):(
+                           <MDTypography variant="button" fontWeight="regular">
+                              <i>Loading.</i>
+                           </MDTypography>
+                        )
+                     }
                   </MDBox>
                </Grid>
                {dropdown && (

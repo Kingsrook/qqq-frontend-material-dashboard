@@ -48,8 +48,8 @@ function PieChartCard({title, description, data}: Props): JSX.Element
    }
 
    return (
-      <Card sx={{height: "100%"}}>
-         <MDBox display="flex" justifyContent="space-between" alignItems="center" pt={2} px={2}>
+      <Card sx={{height: "100%", width: "100%", display: "flex"}}>
+         <MDBox display="flex" pt={2} px={2}>
             <MDTypography variant="h5">{title}</MDTypography>
          </MDBox>
          <MDBox mt={3}>
@@ -72,15 +72,19 @@ function PieChartCard({title, description, data}: Props): JSX.Element
                </Grid>
             </Grid>
             <Divider />
-            <Grid container>
-               <Grid item xs={12}>
-                  <MDBox pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
-                     <MDTypography variant="button" color="text" fontWeight="light">
-                        {parse(description)}
-                     </MDTypography>
-                  </MDBox>
-               </Grid>
-            </Grid>
+            {
+               description && (
+                  <Grid container>
+                     <Grid item xs={12}>
+                        <MDBox pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
+                           <MDTypography variant="button" color="text" fontWeight="light">
+                              {parse(description)}
+                           </MDTypography>
+                        </MDBox>
+                     </Grid>
+                  </Grid>
+               )
+            }
          </MDBox>
       </Card>
    );
