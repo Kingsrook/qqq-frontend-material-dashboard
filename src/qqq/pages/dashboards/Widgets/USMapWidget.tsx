@@ -70,8 +70,6 @@ function USMapWidget(props: Props, ): JSX.Element
       })();
    }, []);
 
-   console.log(JSON.stringify(props))
-
    return (
       <Grid container>
          <Grid item xs={12} sx={{height: props.data?.height}}>

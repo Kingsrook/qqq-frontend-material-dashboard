@@ -104,7 +104,6 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          {
             widgetData[i] = await qController.widget(widgetMetaDataList[i].name, getQueryParams(null));
             setWidgetCounter(widgetCounter + 1);
-            console.log(`widget data: ${JSON.stringify(widgetData[i])}`)
             forceUpdate();
          })();
       }

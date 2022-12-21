@@ -253,7 +253,8 @@ function Sidenav({color, icon, logo, companyName, routes, ...rest}: Props): JSX.
                      icon={icon}
                      active={key === collapseName}
                      open={openCollapse === key}
-                     onClick={() => (openCollapse === key ? setOpenCollapse(false) : setOpenCollapse(key))}
+                     noCollapse={noCollapse}
+                     onClick={() => (! noCollapse ? (openCollapse === key ? setOpenCollapse(false) : setOpenCollapse(key)) : null) }
                   >
                      {collapse ? renderCollapse(collapse) : null}
                   </SidenavCollapse>

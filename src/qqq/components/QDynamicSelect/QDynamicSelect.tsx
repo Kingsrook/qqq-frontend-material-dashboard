@@ -66,7 +66,8 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
    const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
    const [ searchTerm, setSearchTerm ] = useState(null);
    const [ firstRender, setFirstRender ] = useState(true);
-   const [defaultValue, _] = useState(initialValue && initialDisplayValue ? {id: initialValue, label: initialDisplayValue} : null);
+   // @ts-ignore
+   const [defaultValue, _] = useState(initialValue && initialDisplayValue ? [{id: initialValue, label: initialDisplayValue}] : null);
    // const loading = open && options.length === 0;
    const [loading, setLoading] = useState(false);
    const [ switchChecked, setSwitchChecked ] = useState(false);
@@ -224,7 +225,7 @@ function QDynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue,
             setOpen(false);
          }}
          isOptionEqualToValue={(option, value) => option.id === value.id}
-         getOptionLabel={(option) => option.label}
+         getOptionLabel={(option) => (option as QPossibleValue).label}
          options={options}
          loading={loading}
          onInputChange={inputChanged}

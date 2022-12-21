@@ -207,9 +207,9 @@ function DataTable({
                         disableClearable
                         value={pageSize.toString()}
                         options={entries}
-                        onChange={(event, newValue) =>
+                        onChange={(event, newValues) =>
                         {
-                           setEntriesPerPage(parseInt(newValue, 10));
+                           setEntriesPerPage(parseInt(newValues[0], 10));
                         }}
                         size="small"
                         sx={{width: "5rem"}}

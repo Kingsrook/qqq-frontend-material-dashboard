@@ -19,23 +19,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Popper} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
+import Autocomplete from "@mui/material/Autocomplete";
+import Badge from "@mui/material/Badge";
+import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
-import React, {useState, useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
-import {useMaterialUIController, setTransparentNavbar, setMiniSidenav, setOpenConfigurator,} from "context";
-import {navbar, navbarContainer, navbarRow, navbarIconButton, navbarDesktopMenu, navbarMobileMenu,} from "qqq/components/Navbar/styles";
+import {boolean} from "yup";
+import {setTransparentNavbar, useMaterialUIController,} from "context";
+import {navbar, navbarContainer, navbarIconButton, navbarRow,} from "qqq/components/Navbar/styles";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/QBreadcrumbs";
-import MDBadge from "qqq/components/Temporary/MDBadge";
-import MDBox from "qqq/components/Temporary/MDBox";
-import MDInput from "qqq/components/Temporary/MDInput";
 import NotificationItem from "qqq/components/Temporary/NotificationItem";
-import HistoryUtils, {QHistoryEntry} from "qqq/utils/HistoryUtils";
+import HistoryUtils from "qqq/utils/HistoryUtils";
 
 // Declaring prop types for Navbar
 interface Props
@@ -45,15 +47,21 @@ interface Props
    isMini?: boolean;
 }
 
+interface HistoryEntry {
+   id: number;
+   path: string;
+   label: string;
+   iconName?: string;
+}
+
 function Navbar({absolute, light, isMini}: Props): JSX.Element
 {
    const [navbarType, setNavbarType] = useState<"fixed" | "absolute" | "relative" | "static" | "sticky">();
    const [controller, dispatch] = useMaterialUIController();
-   const {
-      miniSidenav, transparentNavbar, fixedNavbar, openConfigurator, darkMode,
-   } = controller;
+   const {transparentNavbar, fixedNavbar, darkMode,} = controller;
    const [openMenu, setOpenMenu] = useState<any>(false);
-   const [openHistory, setOpenHistory] = useState<any>(false);
+   const [history, setHistory] = useState<any>([] as HistoryEntry[]);
+   const [autocompleteValue, setAutocompleteValue] = useState<any>(null);
    const route = useLocation().pathname.split("/").slice(1);
    const navigate = useNavigate();
 
@@ -84,59 +92,84 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
       // Call the handleTransparentNavbar function to set the state with the initial value.
       handleTransparentNavbar();
 
+      buildHistoryEntries();
+
+      const history = HistoryUtils.get();
+      setHistory([ {label: "The Godfather", id: 1}, {label: "Pulp Fiction", id: 2}]);
+      const options = [] as any;
+      history.entries.reverse().forEach((entry, index) =>
+         options.push({label: `${entry.label} index`, id: index, key: index, path: entry.path, iconName: entry.iconName})
+      )
+      setHistory(options);
+
       // Remove event listener on cleanup
       return () => window.removeEventListener("scroll", handleTransparentNavbar);
    }, [dispatch, fixedNavbar]);
 
-   const handleMiniSidenav = () => setMiniSidenav(dispatch, !miniSidenav);
-   const handleConfiguratorOpen = () => setOpenConfigurator(dispatch, !openConfigurator);
+   const goToHistory = (path: string) =>
+   {
+      navigate(path);
+   }
+
+   function buildHistoryEntries()
+   {
+      const history = HistoryUtils.get();
+      const options = [] as any;
+      history.entries.reverse().forEach((entry, index) =>
+         options.push({label: entry.label, id: index, key: index, path: entry.path, iconName: entry.iconName})
+      )
+      setHistory(options);
+   }
+
    const handleOpenMenu = (event: any) => setOpenMenu(event.currentTarget);
    const handleCloseMenu = () => setOpenMenu(false);
 
-   const handleHistory = (event: any) =>
+   const handleAutocompleteOnChange = (event: any, value: any, reason: any, details: any) =>
    {
-      setOpenHistory(event.currentTarget);
+      if(value)
+      {
+         goToHistory(value.path);
+      }
+      setAutocompleteValue(null);
    }
 
-   const handleCloseHistory = () =>
+   const CustomPopper = function (props: any)
    {
-      setOpenHistory(false);
-   }
-
-   const goToHistory = (entry: QHistoryEntry) =>
-   {
-      navigate(entry.path);
-      handleCloseHistory();
+      return (<Popper
+         {...props}
+         style={{whiteSpace: "nowrap", width: "auto"}}
+         placement="bottom-end"
+      />)
    }
 
    const renderHistory = () =>
    {
-      const history = HistoryUtils.get();
-
       return (
-         <Menu
-            anchorEl={openHistory}
-            anchorReference={null}
-            anchorOrigin={{
-               vertical: "bottom",
-               horizontal: "left",
-            }}
-            open={Boolean(openHistory)}
-            onClose={handleCloseHistory}
-            sx={{mt: 1, "& ul": {maxWidth: "500px"}}}
-         >
-            <MenuItem sx={{px: "8px"}} disabled><h3 style={{color: "black"}}>Recently Viewed Records</h3></MenuItem>
-            {history.entries.reverse().map((entry) =>
-               (
-                  <MenuItem sx={{px: "8px", whiteSpace: "normal"}} key={entry.path} onClick={() => goToHistory(entry)}>
-                     <ListItemIcon sx={{minWidth: "24px !important"}}><Icon>{entry.iconName}</Icon></ListItemIcon>
-                     {entry.label}
-                  </MenuItem>
-               )
+         <Autocomplete
+            disablePortal
+            id="recently-viewed-combo-box"
+            size="small"
+            value={autocompleteValue}
+            options={history}
+            autoHighlight
+            blurOnSelect
+            style={{width: "200px"}}
+            onOpen={buildHistoryEntries}
+            onChange={handleAutocompleteOnChange}
+            PopperComponent={CustomPopper}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => <TextField {...params} label="Recently Viewed Records" />}
+            renderOption={(props, option: HistoryEntry) => (
+               <Box {...props} component="li" key={option.id} sx={{width: "auto"}}>
+                  <Box sx={{width: "auto", px: "8px", whiteSpace: "overflow"}} key={option.id}>
+                     <ListItemIcon sx={{minWidth: "24px !important"}}><Icon>{option.iconName}</Icon></ListItemIcon>
+                     {option.label}
+                  </Box>
+               </Box>
             )}
-         </Menu>
+         />
       );
-   };
+   }
 
 
    // Render the notifications menu
@@ -192,63 +225,28 @@ function Navbar({absolute, light, isMini}: Props): JSX.Element
          })}
       >
          <Toolbar sx={navbarContainer}>
-            <MDBox color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
+            <Box color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
                <QBreadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
-               <IconButton sx={navbarDesktopMenu} onClick={handleMiniSidenav} size="small" disableRipple>
-                  <Icon fontSize="medium" sx={iconsStyle}>
-                     {miniSidenav ? "menu_open" : "menu"}
-                  </Icon>
-               </IconButton>
-            </MDBox>
+            </Box>
             {isMini ? null : (
-               <MDBox sx={(theme) => navbarRow(theme, {isMini})}>
-                  <MDBox pr={1}>
-                     <MDInput label="Search here" />
-                  </MDBox>
-                  <MDBox color={light ? "white" : "inherit"}>
-                     <IconButton
-                        size="small"
-                        disableRipple
-                        color="inherit"
-                        sx={navbarMobileMenu}
-                        onClick={handleMiniSidenav}
-                     >
-                        <Icon sx={iconsStyle} fontSize="medium">
-                           {miniSidenav ? "menu_open" : "menu"}
-                        </Icon>
-                     </IconButton>
-                     <IconButton
-                        size="small"
-                        disableRipple
-                        color="inherit"
-                        sx={navbarIconButton}
-                        onClick={handleHistory}
-                     >
-                        <Icon sx={iconsStyle}>history</Icon>
-                     </IconButton>
+               <Box sx={(theme) => navbarRow(theme, {isMini})}>
+                  <Box pr={1}>
                      {renderHistory()}
-                     <IconButton
-                        size="small"
-                        disableRipple
-                        color="inherit"
-                        sx={navbarIconButton}
-                        onClick={handleConfiguratorOpen}
-                     >
-                        <Icon sx={iconsStyle}>settings</Icon>
-                     </IconButton>
+                  </Box>
+                  <Box color={light ? "white" : "inherit"}>
                      <IconButton
                         size="small"
                         color="inherit"
                         sx={navbarIconButton}
                         onClick={handleOpenMenu}
                      >
-                        <MDBadge badgeContent={0} color="error" size="xs" circular>
+                        <Badge badgeContent={0} color="error" variant="dot">
                            <Icon sx={iconsStyle}>notifications</Icon>
-                        </MDBadge>
+                        </Badge>
                      </IconButton>
                      {renderMenu()}
-                  </MDBox>
-               </MDBox>
+                  </Box>
+               </Box>
             )}
          </Toolbar>
       </AppBar>

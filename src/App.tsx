@@ -26,6 +26,7 @@ import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QApp
 import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
@@ -34,13 +35,10 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
+import {number} from "yup";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
-import Settings from "layouts/pages/account/settings";
-import ProfileOverview from "layouts/pages/profile/profile-overview";
 import QContext from "QContext";
 import Sidenav from "qqq/components/Sidenav";
-import Configurator from "qqq/components/Temporary/Configurator";
-import MDAvatar from "qqq/components/Temporary/MDAvatar";
 import MDBox from "qqq/components/Temporary/MDBox";
 import theme from "qqq/components/Temporary/Theme";
 import AppHome from "qqq/pages/app-home";
@@ -390,27 +388,13 @@ export default function App()
                type: "collapse",
                name: user?.name,
                key: "username",
-               icon: <MDAvatar src={profilePicture} alt="{user?.name}" size="sm" />,
-               collapse: [
-                  {
-                     name: "My Profile",
-                     key: "my-profile",
-                     route: "/pages/profile/profile-overview",
-                     component: <ProfileOverview />,
-                  },
-                  {
-                     name: "Settings",
-                     key: "profile-settings",
-                     route: "/pages/account/settings",
-                     component: <Settings />,
-                  },
-               ],
+               noCollapse: true,
+               icon: <Avatar src={profilePicture} alt="{user?.name}" />,
             };
             setProfileRoutes(profileRoutes);
 
             const sideNavAppList = [] as any[];
             const appRoutesList = [] as any[];
-            const mainDashboardsApp = {} as any;
 
             ///////////////////////////////////////////////////////////////////////////////////
             // iterate throught the list to find the 'main dashboard so we can put it first' //
@@ -565,20 +549,15 @@ export default function App()
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />
-               {layout === "dashboard" && (
-                  <>
-                     <Sidenav
-                        color={sidenavColor}
-                        icon={branding.icon}
-                        logo={branding.logo}
-                        companyName={branding.companyName}
-                        routes={sideNavRoutes}
-                        onMouseEnter={handleOnMouseEnter}
-                        onMouseLeave={handleOnMouseLeave}
-                     />
-                     <Configurator />
-                  </>
-               )}
+               <Sidenav
+                  color={sidenavColor}
+                  icon={branding.icon}
+                  logo={branding.logo}
+                  companyName={branding.companyName}
+                  routes={sideNavRoutes}
+                  onMouseEnter={handleOnMouseEnter}
+                  onMouseLeave={handleOnMouseLeave}
+               />
                <Routes>
                   <Route path="*" element={<Navigate to="/dashboards/overview" />} />
                   {appRoutes && getRoutes(appRoutes)}
