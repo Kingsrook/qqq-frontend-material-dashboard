@@ -19,8 +19,8 @@
  */
 
 import {FC, forwardRef} from "react";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
+import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 // declaring props types for MDBadgeDot
 interface Props

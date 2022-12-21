@@ -29,7 +29,7 @@ import Icon from "@mui/material/Icon";
 import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
 import React, {useState} from "react";
-import MDBox from "components/MDBox";
+import MDBox from "qqq/components/Temporary/MDBox";
 import {ProcessSummaryLine} from "qqq/pages/process-run/model/ProcessSummaryLine";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";

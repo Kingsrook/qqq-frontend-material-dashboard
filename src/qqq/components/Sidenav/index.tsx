@@ -25,15 +25,15 @@ import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import {ReactNode, useEffect, useReducer, useState} from "react";
 import {NavLink, useLocation} from "react-router-dom";
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
 import {setMiniSidenav, setTransparentSidenav, setWhiteSidenav, useMaterialUIController,} from "context";
-import sidenavLogoLabel from "examples/Sidenav/styles/sidenav";
 import AuthenticationButton from "qqq/components/Buttons/AuthenticationButton";
 import SidenavCollapse from "qqq/components/Sidenav/SidenavCollapse";
 import SidenavItem from "qqq/components/Sidenav/SidenavItem";
 import SidenavList from "qqq/components/Sidenav/SidenavList";
 import SidenavRoot from "qqq/components/Sidenav/SidenavRoot";
+import sidenavLogoLabel from "qqq/components/Sidenav/styles/sidenav";
+import MDTypography from "qqq/components/Temporary/MDTypography";
+import MDBox from "../Temporary/MDBox";
 
 interface Props
 {

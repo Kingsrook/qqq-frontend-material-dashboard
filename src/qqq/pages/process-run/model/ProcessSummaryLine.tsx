@@ -31,7 +31,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 import {Link} from "react-router-dom";
-import MDBox from "components/MDBox";
+import MDBox from "qqq/components/Temporary/MDBox";
 import QValueUtils from "qqq/utils/QValueUtils";
 
 /*******************************************************************************

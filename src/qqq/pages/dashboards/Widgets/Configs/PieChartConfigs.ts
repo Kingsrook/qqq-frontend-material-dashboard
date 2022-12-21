@@ -23,11 +23,11 @@ import colors from "assets/theme/base/colors";
 
 const {gradients, dark} = colors;
 
-function configs(labels: any, datasets: any) 
+function configs(labels: any, datasets: any)
 {
    const backgroundColors = [];
 
-   if (datasets.backgroundColors) 
+   if (datasets.backgroundColors)
    {
       datasets.backgroundColors.forEach((color: string) =>
          gradients[color]
@@ -35,7 +35,7 @@ function configs(labels: any, datasets: any)
             : backgroundColors.push(dark.main)
       );
    }
-   else 
+   else
    {
       backgroundColors.push(dark.main);
    }

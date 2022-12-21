@@ -49,8 +49,8 @@ import {Form, Formik} from "formik";
 import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
+import BaseLayout from "layouts/BaseLayout";
 import QContext from "QContext";
-import BaseLayout from "qqq/components/BaseLayout";
 import {QCancelButton, QSubmitButton} from "qqq/components/QButtons";
 import QDynamicForm from "qqq/components/QDynamicForm";
 import DynamicFormUtils from "qqq/components/QDynamicForm/utils/DynamicFormUtils";
@@ -295,6 +295,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
                                        <div>{`${qJobRunning.current.toLocaleString()} of ${qJobRunning.total.toLocaleString()}`}</div>
                                        <MDBox width="20rem">
                                           <MDProgress variant="gradient" value={100 * (qJobRunning.current / qJobRunning.total)} color="success" />
+
                                        </MDBox>
                                     </>
                                  )}

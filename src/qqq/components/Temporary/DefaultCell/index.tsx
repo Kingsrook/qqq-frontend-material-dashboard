@@ -14,7 +14,7 @@ Coded by www.creative-tim.com
 */
 
 import {ReactNode} from "react";
-import MDTypography from "components/MDTypography";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 function DefaultCell({children}: { children: ReactNode }): JSX.Element
 {

@@ -20,8 +20,8 @@
  */
 
 import {FC, forwardRef} from "react";
-import MDProgressRoot from "components/MDProgress/MDProgressRoot";
-import MDTypography from "components/MDTypography";
+import MDProgressRoot from "qqq/components/Temporary/MDProgress/MDProgressRoot";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 
 // Delcare props types for MDProgress
 interface Props {

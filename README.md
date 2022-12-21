@@ -191,7 +191,7 @@ material-dashboard-2-pro-react-ts
     │   │        └── widgets
     │   ├── types
     │   ├── App.tsx
-    │   ├── index.tsx
+    │   ├── BaseLayout.tsx
     │   ├── page.routes.tsx
     │   └── routes.tsx
     ├── .eslintignore

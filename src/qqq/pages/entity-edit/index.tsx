@@ -22,7 +22,7 @@
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Grid from "@mui/material/Grid";
 import {useParams} from "react-router-dom";
-import BaseLayout from "qqq/components/BaseLayout";
+import BaseLayout from "layouts/BaseLayout";
 import EntityForm from "qqq/components/EntityForm";
 import MDBox from "qqq/components/Temporary/MDBox";
 

@@ -20,15 +20,16 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {Map} from "@mui/icons-material";
 import {Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
-import React, {useEffect, useState} from "react";
-import MDTypography from "components/MDTypography";
+import React, {useState} from "react";
 import MDBox from "qqq/components/Temporary/MDBox";
+import MDTypography from "qqq/components/Temporary/MDTypography";
 import QClient from "qqq/utils/QClient";
 import QValueUtils from "qqq/utils/QValueUtils";
 
@@ -75,6 +76,7 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
 
    const testScript = () =>
    {
+      // @ts-ignore
       const inputValues = new Map<string, any>();
       if (scriptDefinition.testInputFields)
       {

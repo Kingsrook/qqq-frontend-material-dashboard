@@ -32,8 +32,8 @@ import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import React, {useContext, useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
+import BaseLayout from "layouts/BaseLayout";
 import QContext from "QContext";
-import BaseLayout from "qqq/components/BaseLayout";
 import DashboardWidgets from "qqq/components/DashboardWidgets";
 import ProcessLinkCard from "qqq/components/ProcessLinkCard";
 import MDBox from "qqq/components/Temporary/MDBox";
@@ -57,7 +57,7 @@ function AppHome({app}: Props): JSX.Element
    const [childApps, setChildApps] = useState([] as QAppMetaData[]);
    const [tableCounts, setTableCounts] = useState(new Map<string, { isLoading: boolean, value: number }>());
    const [tableCountNumbers, setTableCountNumbers] = useState(new Map<string, string>());
-   const [tableCountTexts, setTableCountTexts] = useState(new Map<string, string>());
+   const [tableCountTexts, setTableCountTexts] = useState(new Map<string, string>() as any);
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
