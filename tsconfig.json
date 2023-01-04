@@ -7,7 +7,7 @@
     "lib": [
       "DOM",
       "ES6",
-      "DOM.Iterable",
+      "esnext",
       "ScriptHost",
       "ES2016.Array.Include"
     ],
@@ -31,7 +31,7 @@
     "sourceMap": true,
     "strict": true,
     "strictNullChecks": false,
-    "target": "ES6"
+    "target": "es2019"
   },
   "include": [
     "src"
@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "lib",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "src/qqq/assets"
   ]
 }

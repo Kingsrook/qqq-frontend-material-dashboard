@@ -35,56 +35,22 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
-import {number} from "yup";
-import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "context";
+import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "qqq/context";
 import QContext from "QContext";
-import Sidenav from "qqq/components/Sidenav";
-import MDBox from "qqq/components/Temporary/MDBox";
-import theme from "qqq/components/Temporary/Theme";
-import AppHome from "qqq/pages/app-home";
-import CarrierPerformance from "qqq/pages/dashboards/CarrierPerformance";
-import Overview from "qqq/pages/dashboards/Overview";
-import EntityCreate from "qqq/pages/entity-create";
-import EntityEdit from "qqq/pages/entity-edit";
-import EntityList from "qqq/pages/entity-list/EntityList";
-import EntityDeveloperView from "qqq/pages/entity-view/EntityDeveloperView";
-import EntityView from "qqq/pages/entity-view/EntityView";
-import ProcessRun from "qqq/pages/process-run";
-import ReportRun from "qqq/pages/process-run/ReportRun";
-import QClient from "qqq/utils/QClient";
-import QProcessUtils from "qqq/utils/QProcessUtils";
+import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
+import theme from "qqq/components/legacy/Theme";
+import AppHome from "qqq/pages/apps/Home";
+import ProcessRun from "qqq/pages/processes/ProcessRun";
+import ReportRun from "qqq/pages/processes/ReportRun";
+import EntityCreate from "qqq/pages/records/create/RecordCreate";
+import EntityEdit from "qqq/pages/records/edit/RecordEdit";
+import RecordQuery from "qqq/pages/records/query/RecordQuery";
+import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
+import RecordView from "qqq/pages/records/view/RecordView";
+import Client from "qqq/utils/qqq/Client";
+import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 
-///////////////////////////////////////////////////////////////////////////////////////////////
-// define the parts of the nav that are static - before the qqq tables etc get dynamic added //
-///////////////////////////////////////////////////////////////////////////////////////////////
-function getStaticRoutes()
-{
-   return [
-      {type: "divider", key: "divider-0"},
-      {
-         type: "collapse",
-         name: "Dashboards",
-         key: "dashboards",
-         icon: <Icon fontSize="medium">dashboard</Icon>,
-         collapse: [
-            {
-               name: "Overview",
-               key: "overview",
-               route: "/dashboards/overview",
-               component: <Overview />,
-            },
-            {
-               name: "Carrier Performance",
-               key: "carrierPerformance",
-               route: "/dashboards/carrierPerformance",
-               component: <CarrierPerformance />,
-            },
-         ],
-      },
-   ];
-}
-
-const qController = QClient.getInstance();
+const qController = Client.getInstance();
 export const SESSION_ID_COOKIE_NAME = "sessionId";
 LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
@@ -158,7 +124,7 @@ export default function App()
    const {pathname} = useLocation();
 
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
-   const [sideNavRoutes, setSideNavRoutes] = useState(getStaticRoutes());
+   const [sideNavRoutes, setSideNavRoutes] = useState([]);
    const [appRoutes, setAppRoutes] = useState(null as any);
 
    ////////////////////////////////////////////
@@ -265,7 +231,7 @@ export default function App()
                   name: `${app.label}`,
                   key: app.name,
                   route: path,
-                  component: <EntityList table={table} />,
+                  component: <RecordQuery table={table} />,
                });
 
                routeList.push({
@@ -282,14 +248,14 @@ export default function App()
                routeList.push({
                   key: `${app.name}.createChild`,
                   route: `${path}/:id/createChild/:childTableName`,
-                  component: <EntityView table={table} />,
+                  component: <RecordView table={table} />,
                });
 
                routeList.push({
                   name: `${app.label} View`,
                   key: `${app.name}.view`,
                   route: `${path}/:id`,
-                  component: <EntityView table={table} />,
+                  component: <RecordView table={table} />,
                });
 
                routeList.push({
@@ -303,10 +269,10 @@ export default function App()
                   name: `${app.label}`,
                   key: `${app.name}.record.dev`,
                   route: `${path}/:id/dev`,
-                  component: <EntityDeveloperView table={table} />,
+                  component: <RecordDeveloperView table={table} />,
                });
 
-               const processesForTable = QProcessUtils.getProcessesForTable(metaData, table.name, true);
+               const processesForTable = ProcessUtils.getProcessesForTable(metaData, table.name, true);
                processesForTable.forEach((process) =>
                {
                   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -317,21 +283,21 @@ export default function App()
                      name: process.label,
                      key: process.name,
                      route: `${path}/${process.name}`,
-                     component: <EntityList table={table} launchProcess={process} />,
+                     component: <RecordQuery table={table} launchProcess={process} />,
                   });
 
                   routeList.push({
                      name: process.label,
                      key: `${app.name}/${process.name}`,
                      route: `${path}/:id/${process.name}`,
-                     component: <EntityView table={table} launchProcess={process} />,
+                     component: <RecordView table={table} launchProcess={process} />,
                   });
                });
 
-               const reportsForTable = QProcessUtils.getReportsForTable(metaData, table.name, true);
+               const reportsForTable = ProcessUtils.getReportsForTable(metaData, table.name, true);
                reportsForTable.forEach((report) =>
                {
-                  // todo - do we need some table/report routes here, that would go to EntityList and/or EntityView
+                  // todo - do we need some table/report routes here, that would go to RecordQuery and/or RecordView
                   routeList.push({
                      name: report.label,
                      key: report.name,
@@ -364,7 +330,7 @@ export default function App()
 
          try
          {
-            const metaData = await QClient.getInstance().loadMetaData();
+            const metaData = await Client.getInstance().loadMetaData();
             if (metaData.branding)
             {
                setBranding(metaData.branding);
@@ -402,29 +368,14 @@ export default function App()
             for (let i = 0; i < metaData.appTree.length; i++)
             {
                const app = metaData.appTree[i];
-               if(app.name === "mainDashboards")
-               {
-                  addAppToSideNavList(app, sideNavAppList, "", 0);
-                  addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
-                  sideNavAppList.push({type: "divider", key: "divider-1"});
-                  break;
-               }
-            }
-            for (let i = 0; i < metaData.appTree.length; i++)
-            {
-               const app = metaData.appTree[i];
-               if(app.name === "mainDashboards")
-               {
-                  continue;
-               }
-
                addAppToSideNavList(app, sideNavAppList, "", 0);
                addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
             }
 
-            const newSideNavRoutes = []; // getStaticRoutes();
+            const newSideNavRoutes = [];
             // @ts-ignore
             newSideNavRoutes.unshift(profileRoutes);
+            newSideNavRoutes.push({type: "divider", key: "divider-1"});
             for (let i = 0; i < sideNavAppList.length; i++)
             {
                newSideNavRoutes.push(sideNavAppList[i]);
@@ -514,32 +465,7 @@ export default function App()
       },
    );
 
-   const configsButton = (
-      <MDBox
-         display="flex"
-         justifyContent="center"
-         alignItems="center"
-         width="3.25rem"
-         height="3.25rem"
-         bgColor="white"
-         shadow="sm"
-         borderRadius="50%"
-         position="fixed"
-         right="2rem"
-         bottom="2rem"
-         zIndex={99}
-         color="dark"
-         sx={{cursor: "pointer"}}
-         onClick={handleConfiguratorOpen}
-      >
-         <Icon fontSize="small" color="inherit">
-            settings
-         </Icon>
-      </MDBox>
-   );
-
    const [pageHeader, setPageHeader] = useState("");
-
    return (
 
       appRoutes && (
@@ -561,7 +487,6 @@ export default function App()
                <Routes>
                   <Route path="*" element={<Navigate to="/dashboards/overview" />} />
                   {appRoutes && getRoutes(appRoutes)}
-                  {getRoutes(getStaticRoutes())}
                   {profileRoutes && getRoutes([profileRoutes])}
                </Routes>
             </ThemeProvider>

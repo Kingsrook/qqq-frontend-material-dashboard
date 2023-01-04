@@ -20,15 +20,14 @@
  */
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {getGridDateOperators, GridColDef, GridRowsProp} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import {Link} from "react-router-dom";
-import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/entity-list/QGridFilterOperators";
-import QValueUtils from "qqq/utils/QValueUtils";
+import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 export default class DataGridUtils
 {
@@ -46,7 +45,7 @@ export default class DataGridUtils
          const row: any = {};
          fields.forEach((field) =>
          {
-            const value = QValueUtils.getDisplayValue(field, record, "query");
+            const value = ValueUtils.getDisplayValue(field, record, "query");
             if (typeof value !== "string")
             {
                columnsToRender[field.name] = true;
