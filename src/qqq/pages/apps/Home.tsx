@@ -300,7 +300,6 @@ function AppHome({app}: Props): JSX.Element
                                                                count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
                                                                percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
                                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
-                                                               direction="right"
                                                             />
                                                          </Box>
                                                       </Link>

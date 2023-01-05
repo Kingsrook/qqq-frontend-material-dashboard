@@ -26,9 +26,9 @@ import {render} from "react-dom";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
 import "qqq/styles/qqq-override-styles.css";
-import {MaterialUIControllerProvider} from "qqq/context";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/authorization/auth0/ProtectedRoute";
+import {MaterialUIControllerProvider} from "qqq/context";
 import Client from "qqq/utils/qqq/Client";
 
 const qController = Client.getInstance();

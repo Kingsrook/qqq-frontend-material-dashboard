@@ -24,7 +24,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Box, Button, FormControlLabel, ListItem, Radio, RadioGroup} from "@mui/material";
+import {Box, Button, FormControlLabel, ListItem, Radio, RadioGroup, Typography} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
@@ -192,9 +192,9 @@ function ValidationReview({
    );
 
    const recordPreviewWidget = step.recordListFields && (
-      <Box border="1px solid rgb(70%, 70%, 70%)" borderRadius="lg" p={2} mt={2}>
-         <Box mx={2} mt={-5} p={1} sx={{width: "fit-content", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "white"}} borderColor="orange" width="initial" color="white">
-            <MDTypography sx={{color: "warning"}}>Preview</MDTypography>
+      <Box border="1px solid rgb(70%, 70%, 70%)" borderRadius="10px" p={2} mt={2}>
+         <Box mx={2} mt={-5} p={1} sx={{width: "fit-content", borderColor: "rgb(70%, 70%, 70%)", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "#FFFFFF"}} width="initial" color="white">
+            <Typography>Preview</Typography>
          </Box>
          <Box p={3} pb={0}>
             <MDTypography color="body" variant="body2" component="div" mb={2}>

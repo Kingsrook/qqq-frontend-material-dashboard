@@ -24,9 +24,9 @@ import Card from "@mui/material/Card";
 import parse from "html-react-parser";
 import {useMemo} from "react";
 import {Line} from "react-chartjs-2";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import configs from "qqq/components/widgets/charts/linechart/LineChartConfigs";
-import colors from "qqq/assets/theme/base/colors";
 
 //////////////////////////////////////////
 // structure of expected bar chart data //

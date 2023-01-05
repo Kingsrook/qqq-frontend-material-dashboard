@@ -26,8 +26,8 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import {Theme} from "@mui/material/styles";
 import {ReactNode} from "react";
-import {useMaterialUIController} from "qqq/context";
 import {item, itemArrow, itemContent} from "qqq/components/horseshoe/sidenav/styles/SideNavItem";
+import {useMaterialUIController} from "qqq/context";
 
 // Declaring props types for SideNavCollapse
 interface Props {

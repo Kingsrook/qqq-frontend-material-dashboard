@@ -344,10 +344,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                      {
                         section.fieldNames.map((fieldName: string) => (
                            <Box  key={fieldName} flexDirection="row" pr={2}>
-                              <Typography variant="button" fontWeight="bold" pr={1}>
+                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1}>
                                  {tableMetaData.fields.get(fieldName).label}:
                               </Typography>
-                              <Typography variant="button" fontWeight="regular" color="text">
+                              <Typography variant="button" textTransform="none" fontWeight="regular" color="text">
                                  {ValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
                               </Typography>
                            </Box>

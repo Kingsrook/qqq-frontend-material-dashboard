@@ -21,8 +21,8 @@
 
 import {TypographyProps} from "@mui/material";
 import {FC, forwardRef, ReactNode} from "react";
-import {useMaterialUIController} from "qqq/context";
 import MDTypographyRoot from "qqq/components/legacy/MDTypography/MDTypographyRoot";
+import {useMaterialUIController} from "qqq/context";
 
 // Declaring props types for MDTypography
 interface Props extends TypographyProps

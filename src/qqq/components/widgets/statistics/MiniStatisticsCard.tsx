@@ -24,8 +24,9 @@ import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import {ReactNode} from "react";
-import {useMaterialUIController} from "qqq/context";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {useMaterialUIController} from "qqq/context";
 
 
 // Decalaring props types for MiniStatisticsCard
@@ -70,24 +71,6 @@ function MiniStatisticsCard({
          >
             <Box p={2}>
                <Grid container alignItems="center">
-                  {direction === "left" ? (
-                     <Grid item xs={4}>
-                        <Box
-                           color={bgColor === "white" ? "white" : "dark"}
-                           width="4rem"
-                           height="4rem"
-                           borderRadius="md"
-                           display="flex"
-                           justifyContent="center"
-                           alignItems="center"
-                           sx={{backgroundColor: bgColor === "white" ? icon.color : "white"}}
-                        >
-                           <Icon fontSize="medium" color="inherit">
-                              {icon.component}
-                           </Icon>
-                        </Box>
-                     </Grid>
-                  ) : null}
                   <Grid item xs={8}>
                      <Box
                         ml={direction === "left" ? 2 : 0}
@@ -115,25 +98,23 @@ function MiniStatisticsCard({
                         </MDTypography>
                      </Box>
                   </Grid>
-                  {direction === "right" ? (
-                     <Grid item xs={4}>
-                        <Box
-                           color={bgColor === "white" ? "white" : "dark"}
-                           width="4rem"
-                           height="4rem"
-                           marginLeft="auto"
-                           borderRadius="md"
-                           display="flex"
-                           justifyContent="center"
-                           alignItems="center"
-                           sx={{backgroundColor: bgColor === "white" ? icon.color : "white"}}
-                        >
-                           <Icon fontSize="medium" color="inherit">
-                              {icon.component}
-                           </Icon>
-                        </Box>
-                     </Grid>
-                  ) : null}
+                  <Grid item xs={4}>
+                     <Box
+                        width="4rem"
+                        height="4rem"
+                        marginLeft="auto"
+                        borderRadius="md"
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        color="#FFFFFF"
+                        sx={{borderRadius: "10px", backgroundColor: colors.info.main}}
+                     >
+                        <Icon fontSize="medium" color="inherit">
+                           {icon.component}
+                        </Icon>
+                     </Box>
+                  </Grid>
                </Grid>
             </Box>
          </Box>

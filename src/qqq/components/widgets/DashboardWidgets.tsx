@@ -27,6 +27,7 @@ import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
 import React, {useEffect, useReducer, useState} from "react";
 import {useLocation} from "react-router-dom";
+import colors from "qqq/assets/theme/base/colors";
 import MDBadgeDot from "qqq/components/legacy/MDBadgeDot";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
@@ -48,7 +49,6 @@ import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget from "qqq/components/widgets/Widget";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
-import colors from "qqq/assets/theme/base/colors";
 
 
 const qController = Client.getInstance();
