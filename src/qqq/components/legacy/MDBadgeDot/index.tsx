@@ -82,8 +82,18 @@ const MDBadgeDot: FC<Props> = forwardRef(
          "dark",
       ];
 
-      const validColorIndex = validColors.findIndex((el) => el === color);
+      const colorValues = {
+         "primary": "#e91e63",
+         "secondary": "#7b809a",
+         "info": "#04aaef",
+         "success": "#4CAF50",
+         "warning": "#fb8c00",
+         "error": "#F44335",
+         "light": "#f0f2f5",
+         "dark": "#344767"
+      } as any;
 
+      const validColorIndex = validColors.findIndex((el) => el === color);
       return (
          <Box ref={ref} display="flex" alignItems="center" p={padding} {...rest}>
             <Box
@@ -93,7 +103,7 @@ const MDBadgeDot: FC<Props> = forwardRef(
                height={finalSize}
                borderRadius="50%"
                mr={1}
-               sx={{backgroundColor: validColors[validColorIndex]}}
+               sx={{backgroundColor: colorValues[color]}}
             />
             <MDTypography
                variant={fontSize}
