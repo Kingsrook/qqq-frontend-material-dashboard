@@ -24,6 +24,7 @@ import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import {ReactNode} from "react";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 interface Props
@@ -37,33 +38,34 @@ interface Props
       label: string;
    };
    icon: ReactNode;
+   isDisabled?: boolean;
 
    [key: string]: any;
 }
 
 function ProcessLinkCard({
-   color, isReport, title, percentage, icon,
+   color, isReport, title, percentage, icon, isDisabled
 }: Props): JSX.Element
 {
    return (
       <Card>
-         <Box display="flex" justifyContent="space-between" pt={3} px={2}>
+         <Box display="flex" justifyContent="space-between" pt={3} px={2} title={isDisabled ? `You do not have permission to access this ${isReport ? "report" : "process"}` : ""}>
             <Box
-               color={color === "light" ? "dark" : "white"}
+               color={color === "light" ? "#000000" : "#FFFFFF"}
                borderRadius="xl"
                display="flex"
                justifyContent="center"
                alignItems="center"
                width="4rem"
                height="4rem"
-               mt={-3}
-               sx={{backgroundColor: color}}
+               mt={-1.5}
+               sx={{borderRadius: "10px", backgroundColor: isDisabled ? colors.secondary.main : colors.info.main}}
             >
                <Icon fontSize="medium" color="inherit">
                   {icon}
                </Icon>
             </Box>
-            <Box textAlign="right" lineHeight={1.25}>
+            <Box textAlign="right" lineHeight={1.25} mt={1}>
                <MDTypography variant="button" fontWeight="bold" color="text">
                   {title}
                </MDTypography>
@@ -81,9 +83,15 @@ function ProcessLinkCard({
                   {percentage.amount}
                </MDTypography>
                {
-                  isReport
-                     ? `Click here to access the ${title} report.`
-                     : `Click here to run the process called ${title}.`
+                  isDisabled ? (
+                     isReport
+                        ? `You do not have permission to access the ${title} report.`
+                        : `You do not have permission to run the process called ${title}.`
+                  ) : (
+                     isReport
+                        ? `Click here to access the ${title} report.`
+                        : `Click here to run the process called ${title}.`
+                  )
                }
                {percentage.label}
             </MDTypography>
@@ -100,6 +108,7 @@ ProcessLinkCard.defaultProps = {
       text: "",
       label: "",
    },
+   isDisabled: false,
 };
 
 export default ProcessLinkCard;

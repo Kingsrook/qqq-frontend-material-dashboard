@@ -1044,27 +1044,27 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          keepMounted
       >
          {
-            table.capabilities.has(Capability.TABLE_INSERT) &&
+            table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
             <MenuItem onClick={bulkLoadClicked}>
                <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
                Bulk Load
             </MenuItem>
          }
          {
-            table.capabilities.has(Capability.TABLE_UPDATE) &&
+            table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission &&
             <MenuItem onClick={bulkEditClicked}>
                <ListItemIcon><Icon>edit</Icon></ListItemIcon>
                Bulk Edit
             </MenuItem>
          }
          {
-            table.capabilities.has(Capability.TABLE_DELETE) &&
+            table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission &&
             <MenuItem onClick={bulkDeleteClicked}>
                <ListItemIcon><Icon>delete</Icon></ListItemIcon>
                Bulk Delete
             </MenuItem>
          }
-         {(table.capabilities.has(Capability.TABLE_INSERT) || table.capabilities.has(Capability.TABLE_UPDATE) ||  table.capabilities.has(Capability.TABLE_DELETE)) && tableProcesses.length > 0 && <Divider />}
+         {((table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission) || (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) ||  (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)) && tableProcesses.length > 0 && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
@@ -1072,7 +1072,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </MenuItem>
          ))}
          {
-            tableProcesses.length == 0 && !table.capabilities.has(Capability.TABLE_INSERT) && !table.capabilities.has(Capability.TABLE_UPDATE) && !table.capabilities.has(Capability.TABLE_DELETE) &&
+            tableProcesses.length == 0 && !(table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission) && !(table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) && !(table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission) &&
             <MenuItem disabled>
                <ListItemIcon><Icon>block</Icon></ListItemIcon>
                <i>No actions available</i>
@@ -1112,6 +1112,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       document.scrollingElement.scrollTop = 0;
    }, [ pageNumber, rowsPerPage ]);
 
+   if(tableMetaData && !tableMetaData.readPermission)
+   {
+      return (
+         <DashboardLayout>
+            <NavBar />
+            <Alert severity="error">
+               You do not have permission to view {tableMetaData?.label} records
+            </Alert>
+         </DashboardLayout>
+      );
+   }
 
    return (
       <DashboardLayout>
@@ -1148,7 +1159,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                </Box>
 
                {
-                  table.capabilities.has(Capability.TABLE_INSERT) &&
+                  table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
                   <QCreateNewButton />
                }
 

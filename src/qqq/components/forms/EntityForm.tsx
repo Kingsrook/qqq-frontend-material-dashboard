@@ -88,7 +88,7 @@ function EntityForm(props: Props): JSX.Element
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-   const [noCapabilityError, setNoCapabilityError] = useState(null as string);
+   const [notAllowedError, setNotAllowedError] = useState(null as string);
 
    const {pageHeader, setPageHeader} = useContext(QContext);
 
@@ -189,7 +189,11 @@ function EntityForm(props: Props): JSX.Element
 
             if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
             {
-               setNoCapabilityError("You may not edit records in this table");
+               setNotAllowedError("Records may not be edited in this table");
+            }
+            else if (!tableMetaData.editPermission)
+            {
+               setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
             }
          }
          else
@@ -206,7 +210,11 @@ function EntityForm(props: Props): JSX.Element
 
             if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
             {
-               setNoCapabilityError("You may not create records in this table");
+               setNotAllowedError("Records may not be created in this table");
+            }
+            else if (!tableMetaData.insertPermission)
+            {
+               setNotAllowedError(`You do not have permission to create ${tableMetaData.label} records`);
             }
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,14 +428,19 @@ function EntityForm(props: Props): JSX.Element
    const formId = props.id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 
    let body;
-   if (noCapabilityError)
+   if (notAllowedError)
    {
       body = (
          <Box mb={3}>
             <Grid container spacing={3}>
                <Grid item xs={12}>
                   <Box mb={3}>
-                     <Alert severity="error">{noCapabilityError}</Alert>
+                     <Alert severity="error">{notAllowedError}</Alert>
+                     {props.isModal &&
+                        <Box mt={5}>
+                           <QCancelButton onClickHandler={props.isModal ? props.closeModalHandler : handleCancelClicked} label="Close" disabled={false} />
+                        </Box>
+                     }
                   </Box>
                </Grid>
             </Grid>

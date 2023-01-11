@@ -53,7 +53,7 @@ function ReportRun({report}: Props): JSX.Element
       setPageHeader(report.label);
       const process = metaData.processes.get(report.processName);
       const defaultProcessValues = {reportName: report.name};
-      return (<ProcessRun process={process} defaultProcessValues={defaultProcessValues} />);
+      return (<ProcessRun process={process} overrideLabel={report.label} isReport={true} defaultProcessValues={defaultProcessValues} />);
    }
    else
    {

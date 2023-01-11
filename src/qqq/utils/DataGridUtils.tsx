@@ -182,7 +182,7 @@ export default class DataGridUtils
             );
          }
 
-         if (key === tableMetaData.primaryKeyField)
+         if (key === tableMetaData.primaryKeyField && linkBase)
          {
             columns.splice(0, 0, column);
             column.renderCell = (cellValues: any) => (

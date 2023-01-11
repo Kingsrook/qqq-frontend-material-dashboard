@@ -46,6 +46,7 @@ interface Props {
     component: ReactNode;
   };
   direction?: "right" | "left";
+  isDisabled?: boolean;
   [key: string]: any;
 }
 
@@ -56,6 +57,7 @@ function MiniStatisticsCard({
    percentage,
    icon,
    direction,
+   isDisabled,
 }: Props): JSX.Element
 {
    const [controller] = useMaterialUIController();
@@ -108,7 +110,7 @@ function MiniStatisticsCard({
                         justifyContent="center"
                         alignItems="center"
                         color="#FFFFFF"
-                        sx={{borderRadius: "10px", backgroundColor: colors.info.main}}
+                        sx={{borderRadius: "10px", backgroundColor: isDisabled ? colors.secondary.main : colors.info.main}}
                      >
                         <Icon fontSize="medium" color="inherit">
                            {icon.component}
@@ -134,6 +136,7 @@ MiniStatisticsCard.defaultProps = {
       text: "",
    },
    direction: "right",
+   isDisabled: false,
 };
 
 export default MiniStatisticsCard;

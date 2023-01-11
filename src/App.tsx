@@ -40,6 +40,7 @@ import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "qqq/context";
 import AppHome from "qqq/pages/apps/Home";
+import NoApps from "qqq/pages/apps/NoApps";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import ReportRun from "qqq/pages/processes/ReportRun";
 import EntityCreate from "qqq/pages/records/create/RecordCreate";
@@ -53,7 +54,6 @@ import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 
 const qController = Client.getInstance();
 export const SESSION_ID_COOKIE_NAME = "sessionId";
-LicenseInfo.setLicenseKey(process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
 
 export default function App()
 {
@@ -63,6 +63,9 @@ export default function App()
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
    const [branding, setBranding] = useState({} as QBrandingMetaData);
+   const [needLicenseKey, setNeedLicenseKey] = useState(true);
+
+   const [defaultRoute, setDefaultRoute] = useState("/no-apps");
 
    useEffect(() =>
    {
@@ -83,17 +86,21 @@ export default function App()
             /////////////////////////////////////////
             try
             {
-               console.log("Loading token...");
-               await getAccessTokenSilently();
-               const idToken = await getIdTokenClaims();
-               setCookie(SESSION_ID_COOKIE_NAME, idToken.__raw, {path: "/"});
+               console.log("Loading token from auth0...");
+               const accessToken = await getAccessTokenSilently();
+               qController.setAuthorizationHeaderValue("Bearer " + accessToken);
+
+               /////////////////////////////////////////////////////////////////////////////////
+               // we've stopped using session id cook with auth0, so make sure it is not set. //
+               /////////////////////////////////////////////////////////////////////////////////
+               removeCookie(SESSION_ID_COOKIE_NAME);
+
                setIsFullyAuthenticated(true);
                console.log("Token load complete.");
             }
             catch (e)
             {
                console.log(`Error loading token: ${JSON.stringify(e)}`);
-               removeCookie(SESSION_ID_COOKIE_NAME);
                qController.clearAuthenticationMetaDataLocalStorage();
                logout();
                return;
@@ -105,6 +112,7 @@ export default function App()
             // use a random token if anonymous or mock //
             /////////////////////////////////////////////
             console.log("Generating random token...");
+            qController.setAuthorizationHeaderValue(null);
             setIsFullyAuthenticated(true);
             setCookie(SESSION_ID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
             console.log("Token generation complete.");
@@ -118,6 +126,16 @@ export default function App()
 
       })();
    }, [loadingToken]);
+
+   if(needLicenseKey)
+   {
+      (async () =>
+      {
+         const metaData: QInstance = await qController.loadMetaData();
+         LicenseInfo.setLicenseKey(metaData.environmentValues.get("MATERIAL_UI_LICENSE_KEY") || process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
+         setNeedLicenseKey(false);
+      })();
+   }
 
    const [controller, dispatch] = useMaterialUIController();
    const {miniSidenav, direction, layout, openConfigurator, sidenavColor} = controller;
@@ -205,6 +223,8 @@ export default function App()
             }
          }
 
+         let foundFirstApp = false;
+
          function addAppToAppRoutesList(metaData: QInstance, app: QAppTreeNode, routeList: any[], parentPath: string, depth: number)
          {
             const path = `${parentPath}/${app.name}`;
@@ -224,6 +244,16 @@ export default function App()
                   route: path,
                   component: <AppHome app={metaData.apps.get(app.name)} />,
                });
+
+               if(!foundFirstApp)
+               {
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // keep track of what the top-most app the user has access to is.  set that as their default route //
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////
+                  foundFirstApp = true;
+                  setDefaultRoute(path);
+                  console.log("Set default route to: " + path);
+               }
             }
             else if (app.type === QAppNodeType.TABLE)
             {
@@ -363,14 +393,29 @@ export default function App()
             const sideNavAppList = [] as any[];
             const appRoutesList = [] as any[];
 
-            ///////////////////////////////////////////////////////////////////////////////////
-            // iterate throught the list to find the 'main dashboard so we can put it first' //
-            ///////////////////////////////////////////////////////////////////////////////////
-            for (let i = 0; i < metaData.appTree.length; i++)
+            //////////////////////////////////////////////////////////////////////////////////
+            // iterate through the list to find the 'main dashboard so we can put it first' //
+            //////////////////////////////////////////////////////////////////////////////////
+            if(metaData.appTree && metaData.appTree.length)
             {
-               const app = metaData.appTree[i];
-               addAppToSideNavList(app, sideNavAppList, "", 0);
-               addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
+               for (let i = 0; i < metaData.appTree.length; i++)
+               {
+                  const app = metaData.appTree[i];
+                  addAppToSideNavList(app, sideNavAppList, "", 0);
+                  addAppToAppRoutesList(metaData, app, appRoutesList, "", 0);
+               }
+            }
+            else
+            {
+               ///////////////////////////////////////////////////////////////////
+               // if the user doesn't have access to any apps, push this route. //
+               ///////////////////////////////////////////////////////////////////
+               appRoutesList.push({
+                  name: "No Apps",
+                  key: "no-apps",
+                  route: "/no-apps",
+                  component: <NoApps />,
+               });
             }
 
             const newSideNavRoutes = [];
@@ -390,10 +435,8 @@ export default function App()
             console.error(e);
             if (e instanceof QException)
             {
-               if ((e as QException).message.indexOf("status code 401") !== -1)
+               if ((e as QException).status === "401")
                {
-                  removeCookie(SESSION_ID_COOKIE_NAME);
-
                   //////////////////////////////////////////////////////
                   // todo - this is auth0 logout... make more generic //
                   //////////////////////////////////////////////////////
@@ -486,7 +529,7 @@ export default function App()
                   onMouseLeave={handleOnMouseLeave}
                />
                <Routes>
-                  <Route path="*" element={<Navigate to="/dashboards/overview" />} />
+                  <Route path="*" element={<Navigate to={defaultRoute} />} />
                   {appRoutes && getRoutes(appRoutes)}
                   {profileRoutes && getRoutes([profileRoutes])}
                </Routes>

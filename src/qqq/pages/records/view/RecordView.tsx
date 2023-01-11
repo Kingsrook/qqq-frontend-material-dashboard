@@ -95,6 +95,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
+   const [successMessage, setSuccessMessage] = useState(null as string);
    const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
@@ -108,6 +109,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const reload = () =>
    {
+      setSuccessMessage(null);
       setNotFoundMessage(null);
       setAsyncLoadInited(false);
       setTableMetaData(null);
@@ -267,21 +269,30 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          }
          catch (e)
          {
+            const historyPurge = (path: string) =>
+            {
+               try
+               {
+                  HistoryUtils.ensurePathNotInHistory(location.pathname);
+               }
+               catch(e)
+               {
+                  console.error("Error pushing history: " + e);
+               }
+            }
+
             if (e instanceof QException)
             {
                if ((e as QException).status === "404")
                {
                   setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
-
-                  try
-                  {
-                     HistoryUtils.ensurePathNotInHistory(location.pathname);
-                  }
-                  catch(e)
-                  {
-                     console.error("Error pushing history: " + e);
-                  }
-
+                  historyPurge(location.pathname)
+                  return;
+               }
+               else if ((e as QException).status === "403")
+               {
+                  setNotFoundMessage(`You do not have permission to view ${tableMetaData.label} records`);
+                  historyPurge(location.pathname)
                   return;
                }
             }
@@ -297,7 +308,6 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          {
             console.error("Error pushing history: " + e);
          }
-
 
          /////////////////////////////////////////////////
          // define the sections, e.g., for the left-bar //
@@ -344,10 +354,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                      {
                         section.fieldNames.map((fieldName: string) => (
                            <Box  key={fieldName} flexDirection="row" pr={2}>
-                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1}>
+                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
                                  {tableMetaData.fields.get(fieldName).label}:
                               </Typography>
-                              <Typography variant="button" textTransform="none" fontWeight="regular" color="text">
+                              <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
                                  {ValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
                               </Typography>
                            </Box>
@@ -395,6 +405,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          }
          setSectionFieldElements(sectionFieldElements);
          setNonT1TableSections(nonT1TableSections);
+
+         if (searchParams.get("createSuccess") || searchParams.get("updateSuccess"))
+         {
+            setSuccessMessage(`${tableMetaData.label} successfully ${searchParams.get("createSuccess") ? "created" : "updated"}`);
+         }
 
          forceUpdate();
       })();
@@ -445,14 +460,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          keepMounted
       >
          {
-            table.capabilities.has(Capability.TABLE_UPDATE) &&
+            table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission &&
             <MenuItem onClick={() => navigate("edit")}>
                <ListItemIcon><Icon>edit</Icon></ListItemIcon>
                Edit
             </MenuItem>
          }
          {
-            table.capabilities.has(Capability.TABLE_DELETE) &&
+            table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission &&
             <MenuItem onClick={() =>
             {
                setActionsMenu(null);
@@ -463,7 +478,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                Delete
             </MenuItem>
          }
-         {tableProcesses.length > 0 && (table.capabilities.has(Capability.TABLE_UPDATE) || table.capabilities.has(Capability.TABLE_DELETE)) && <Divider />}
+         {tableProcesses.length > 0 && ((table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)) && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
@@ -552,21 +567,18 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                      {
                         notFoundMessage
                            ?
-                           <Box>{notFoundMessage}</Box>
+                           <Alert color="error" sx={{mb: 3}}>{notFoundMessage}</Alert>
                            :
                            <Box pb={3}>
                               {
-                                 (searchParams.get("createSuccess") || searchParams.get("updateSuccess")) ? (
-                                    <Alert color="success" onClose={() =>
-                                    {}}>
-                                       {tableMetaData?.label}
-                                       {" "}
-                                       successfully
-                                       {" "}
-                                       {searchParams.get("createSuccess") ? "created" : "updated"}
-
+                                 successMessage ?
+                                    <Alert color="success" sx={{mb: 3}} onClose={() => 
+                                    {
+                                       setSuccessMessage(null)
+                                    }}>
+                                       {successMessage}
                                     </Alert>
-                                 ) : ("")
+                                    : ("")
                               }
 
                               <Grid container spacing={3}>
@@ -588,7 +600,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                                 </Box>
                                                 <Box display="flex" justifyContent="space-between" width="100%" alignItems="center">
                                                    <Typography variant="h5">
-                                                      {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel}` : ""}
+                                                      {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel || ""}` : ""}
                                                    </Typography>
                                                    <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                                                    {renderActionsMenu}
@@ -610,10 +622,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                     <Box component="form" p={3}>
                                        <Grid container justifyContent="flex-end" spacing={3}>
                                           {
-                                             table.capabilities.has(Capability.TABLE_DELETE) && <QDeleteButton onClickHandler={handleClickDeleteButton} />
+                                             table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission && <QDeleteButton onClickHandler={handleClickDeleteButton} />
                                           }
                                           {
-                                             table.capabilities.has(Capability.TABLE_UPDATE) && <QEditButton />
+                                             table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission && <QEditButton />
                                           }
                                        </Grid>
                                     </Box>

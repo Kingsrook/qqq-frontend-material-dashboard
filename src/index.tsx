@@ -81,6 +81,9 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
       // @ts-ignore
       const clientId = authenticationMetaData.data.clientId;
 
+      // @ts-ignore
+      const audience = authenticationMetaData.data.audience;
+
       if(!domain || !clientId)
       {
          render(
@@ -103,7 +106,8 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
             <Auth0ProviderWithRedirectCallback
                domain={domain}
                clientId={clientId}
-               redirectUri={`${window.location.origin}/dashboards/overview`}
+               audience={audience}
+               redirectUri={`${window.location.origin}/`}
             >
                <MaterialUIControllerProvider>
                   <ProtectedRoute component={App} />

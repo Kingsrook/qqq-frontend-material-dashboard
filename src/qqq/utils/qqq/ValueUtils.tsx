@@ -95,8 +95,8 @@ class ValueUtils
                let tablePath = ValueUtils.getQInstance().getTablePathByName(toRecordFromTable);
                if (!tablePath)
                {
-                  console.log("Couldn't find path for table: " + tablePath);
-                  return ("");
+                  console.log("Couldn't find path for table: " + toRecordFromTable);
+                  return (displayValue ?? rawValue);
                }
 
                if (!tablePath.endsWith("/"))

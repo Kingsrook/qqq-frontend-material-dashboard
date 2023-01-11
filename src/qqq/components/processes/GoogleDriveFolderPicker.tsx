@@ -39,8 +39,8 @@ interface Props
 
 export function GoogleDriveFolderPicker({showDefaultFoldersView, showSharedDrivesView, qInstance}: Props): JSX.Element
 {
-   const clientId = "649816208522-m6oa971vqicrc1hlam7333pt4qck0tm8.apps.googleusercontent.com";
-   const appApiKey = "AIzaSyBhXK34CF2fUfCgUS1VIHoKZbHxEBuHtDM";
+   const clientId = qInstance.environmentValues.get("GOOGLE_APP_CLIENT_ID") || process.env.REACT_APP_GOOGLE_APP_CLIENT_ID;
+   const appApiKey = qInstance.environmentValues.get("GOOGLE_APP_API_KEY") || process.env.REACT_APP_GOOGLE_APP_API_KEY;
    if(!clientId)
    {
       console.error("Missing environmentValue GOOGLE_APP_CLIENT_ID")

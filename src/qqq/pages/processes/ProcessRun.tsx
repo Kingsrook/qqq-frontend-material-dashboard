@@ -71,16 +71,18 @@ interface Props
    defaultProcessValues?: any;
    isModal?: boolean;
    isWidget?: boolean;
+   isReport?: boolean;
    recordIds?: string | QQueryFilter;
    closeModalHandler?: (event: object, reason: string) => void;
    forceReInit?: number;
+   overrideLabel?: string
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds, closeModalHandler, forceReInit}: Props): JSX.Element
+function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -236,9 +238,9 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
                   Error
                </MDTypography>
                <MDTypography color="body" variant="button">
-                  An error occurred while running the process:
+                  An error occurred while running the {isReport ? "report" : "process"}:
                   {" "}
-                  {process.label}
+                  {overrideLabel ?? process.label}
                   {
                      isUserFacingError ? (
                         <Box mt={1}>
@@ -331,7 +333,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                !isWidget &&
                <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
-                  {(isModal) ? `${process.label}: ` : ""}
+                  {(isModal) ? `${overrideLabel ?? process.label}: ` : ""}
                   {step?.label}
                </MDTypography>
             }
@@ -616,7 +618,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
 
       if(! isWidget)
       {
-         setPageHeader(processMetaData.label);
+         setPageHeader(overrideLabel ?? processMetaData.label);
       }
 
       let newIndex = null;
@@ -935,6 +937,18 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
       }
    }, [needToCheckJobStatus, retryMillis]);
 
+
+   const handlePermissionDenied = (e: any): boolean =>
+   {
+      if ((e as QException).status === "403")
+      {
+         setProcessError(`You do not have permission to run this ${isReport ? "report" : "process"}.`, true)
+         return (true);
+      }
+      return (false);
+   }
+
+
    //////////////////////////////////////////////////////////////////////////////////////////
    // do the initial load of data for the process - that is, meta data, plus the init step //
    // also - allow the component that contains this component to force a re-init, by       //
@@ -1011,7 +1025,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
          }
          catch (e)
          {
-            setProcessError("Error loading process definition.");
+            handlePermissionDenied(e) || setProcessError("Error loading process definition.");
             return;
          }
 
@@ -1031,7 +1045,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, recordIds
          }
          catch (e)
          {
-            setProcessError("Error initializing process.");
+            handlePermissionDenied(e) || setProcessError("Error initializing process.");
          }
       })();
    }
@@ -1286,9 +1300,11 @@ ProcessRun.defaultProps = {
    defaultProcessValues: {},
    isModal: false,
    isWidget: false,
+   isReport: false,
    recordIds: null,
    closeModalHandler: null,
-   forceReInit: 0
+   forceReInit: 0,
+   overrideLabel: null,
 };
 
 export default ProcessRun;

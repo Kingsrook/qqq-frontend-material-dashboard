@@ -125,7 +125,7 @@ function AppHome({app}: Props): JSX.Element
          {
             const tableMetaData = await qController.loadTableMetaData(table.name);
             let countResult = null;
-            if(tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+            if(tableMetaData.capabilities.has(Capability.TABLE_COUNT) && tableMetaData.readPermission)
             {
                countResult = await qController.count(table.name);
 
@@ -183,6 +183,20 @@ function AppHome({app}: Props): JSX.Element
       }, 1);
    };
 
+   const hasTablePermission = (tableName: string) =>
+   {
+      return tables.find(t => t.name === tableName && (t.readPermission || t.insertPermission || t.editPermission || t.deletePermission));
+   };
+
+   const hasProcessPermission = (processName: string) =>
+   {
+      return processes.find(p => p.name === processName && p.hasPermission);
+   };
+
+   const hasReportPermission = (reportName: string) =>
+   {
+      return reports.find(r => r.name === reportName && r.hasPermission);
+   };
 
    return (
       <BaseLayout>
@@ -210,7 +224,7 @@ function AppHome({app}: Props): JSX.Element
                                  </Box>
                                  {
                                     section.processes ? (
-                                       <Box p={3} pl={5} pt={0}>
+                                       <Box p={3} pl={5} pt={0} pb={1}>
                                           <MDTypography variant="h6">Actions</MDTypography>
                                        </Box>
                                     ) : null
@@ -224,12 +238,19 @@ function AppHome({app}: Props): JSX.Element
                                                 let process = app.childMap.get(processName);
                                                 return (
                                                    <Grid key={process.name} item xs={12} md={12} lg={tileSizeLg}>
-                                                      <Link to={process.name}>
+                                                      {hasProcessPermission(processName) ?
+                                                         <Link to={process.name}>
+                                                            <ProcessLinkCard
+                                                               icon={process.iconName || app.iconName}
+                                                               title={process.label}
+                                                            />
+                                                         </Link> :
                                                          <ProcessLinkCard
                                                             icon={process.iconName || app.iconName}
                                                             title={process.label}
+                                                            isDisabled={true}
                                                          />
-                                                      </Link>
+                                                      }
                                                    </Grid>
                                                 );
                                              })
@@ -244,7 +265,7 @@ function AppHome({app}: Props): JSX.Element
                                  }
                                  {
                                     section.reports ? (
-                                       <Box p={3} pl={5} pt={0}>
+                                       <Box p={3} pl={5} pt={0} pb={1}>
                                           <MDTypography variant="h6">Reports</MDTypography>
                                        </Box>
                                     ) : null
@@ -258,13 +279,21 @@ function AppHome({app}: Props): JSX.Element
                                                 let report = app.childMap.get(reportName);
                                                 return (
                                                    <Grid key={report.name} item xs={12} md={12} lg={tileSizeLg}>
-                                                      <Link to={report.name}>
+                                                      {hasReportPermission(reportName) ?
+                                                         <Link to={report.name}>
+                                                            <ProcessLinkCard
+                                                               icon={report.iconName || app.iconName}
+                                                               title={report.label}
+                                                               isReport={true}
+                                                            />
+                                                         </Link> :
                                                          <ProcessLinkCard
                                                             icon={report.iconName || app.iconName}
                                                             title={report.label}
                                                             isReport={true}
+                                                            isDisabled={true}
                                                          />
-                                                      </Link>
+                                                      }
                                                    </Grid>
                                                 );
                                              })
@@ -279,7 +308,7 @@ function AppHome({app}: Props): JSX.Element
                                  }
                                  {
                                     section.tables ? (
-                                       <Box p={3} pl={5} pb={0} pt={0}>
+                                       <Box p={3} pl={5} pb={1} pt={0}>
                                           <MDTypography variant="h6">Data</MDTypography>
                                        </Box>
                                     ) : null
@@ -293,16 +322,27 @@ function AppHome({app}: Props): JSX.Element
                                                 let table = app.childMap.get(tableName);
                                                 return (
                                                    <Grid key={table.name} item xs={12} md={12} lg={tileSizeLg}>
-                                                      <Link to={table.name}>
-                                                         <Box mb={3}>
+                                                      {hasTablePermission(tableName) ?
+                                                         <Link to={table.name}>
+                                                            <Box mb={3}>
+                                                               <MiniStatisticsCard
+                                                                  title={{fontWeight: "bold", text: table.label}}
+                                                                  count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
+                                                                  percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
+                                                                  icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
+                                                               />
+                                                            </Box>
+                                                         </Link> :
+                                                         <Box mb={3} title="You do not have permission to access this table">
                                                             <MiniStatisticsCard
                                                                title={{fontWeight: "bold", text: table.label}}
                                                                count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
                                                                percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
                                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
+                                                               isDisabled={true}
                                                             />
                                                          </Box>
-                                                      </Link>
+                                                      }
                                                    </Grid>
                                                 );
                                              })

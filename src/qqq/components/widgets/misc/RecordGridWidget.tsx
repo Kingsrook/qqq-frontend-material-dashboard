@@ -61,7 +61,10 @@ function RecordGridWidget({title, data}: Props): JSX.Element
          const tableMetaData = new QTableMetaData(data.childTableMetaData);
          const {rows, columnsToRender} = DataGridUtils.makeRows(records, tableMetaData);
 
-         const childTablePath = data.tablePath + (data.tablePath.endsWith("/") ? "" : "/")
+         /////////////////////////////////////////////////////////////////////////////////
+         // note - tablePath may be null, if the user doesn't have access to the table. //
+         /////////////////////////////////////////////////////////////////////////////////
+         const childTablePath = data.tablePath ? data.tablePath + (data.tablePath.endsWith("/") ? "" : "/") : data.tablePath;
          const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, childTablePath);
 
          ////////////////////////////////////////////////////////////////
