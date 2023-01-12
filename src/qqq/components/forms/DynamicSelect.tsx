@@ -224,7 +224,17 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
             setOpen(false);
          }}
          isOptionEqualToValue={(option, value) => option.id === value.id}
-         getOptionLabel={(option) => (option as QPossibleValue).label}
+         getOptionLabel={(option) =>
+         {
+            // @ts-ignore
+            if(option && option.length)
+            {
+               // @ts-ignore
+               option = option[0];
+            }
+            // @ts-ignore
+            return option.label
+         }}
          options={options}
          loading={loading}
          onInputChange={inputChanged}
