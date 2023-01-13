@@ -729,12 +729,29 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <script>
                         setTimeout(() =>
                         {
-                           window.location.href="${url}";
+                           document.getElementById("exportForm").submit();
                         }, 1);
                      </script>
                   </head>
-                  <body>Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...</body>
+                  <body>
+                     Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...
+                     <form id="exportForm" method="post" action="${url}" >
+                        <input type="hidden" name="Authorization" value="${qController.getAuthorizationHeaderValue()}">
+                     </form>
+                  </body>
                </html>`);
+
+               /*
+               // todo - probably better - generate the report in an iframe...
+               // only open question is, giving user immediate feedback, and knowing when the stream has started and/or stopped
+               // maybe a busy-loop that would check iframe's url (e.g., after posting should change, maybe?)
+               const iframe = document.getElementById("exportIFrame");
+               const form = iframe.querySelector("form");
+               form.action = url;
+               form.target = "exportIFrame";
+               (iframe.querySelector("#authorizationInput") as HTMLInputElement).value = qController.getAuthorizationHeaderValue();
+               form.submit();
+               */
 
                ///////////////////////////////////////////
                // Hide the export menu after the export //
@@ -1126,6 +1143,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    return (
       <DashboardLayout>
+         {/*
+         // see above code that would use this
+         <iframe id="exportIFrame" name="exportIFrame">
+            <form method="post" target="_self">
+               <input type="hidden" id="authorizationInput" name="Authorization" />
+            </form>
+         </iframe>
+         */}
          <NavBar />
          <Box my={3}>
             {alertContent ? (
