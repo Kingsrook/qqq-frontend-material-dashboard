@@ -271,7 +271,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "simpleStatistics" && (
                   widgetData && widgetData[i] && (
                      <SimpleStatisticsCard
-                        title={widgetData[i]?.title}
+                        title={widgetMetaData.label}
                         data={widgetData[i]}
                         increaseIsGood={widgetData[i].increaseIsGood}
                         isCurrency={widgetData[i].isCurrency}
@@ -283,6 +283,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "statistics" && (
                   widgetData && widgetData[i] && (
                      <StatisticsCard
+                        title={widgetMetaData.label}
                         color={colors.info.main}
                         icon={widgetMetaData.icon}
                         data={widgetData[i]}

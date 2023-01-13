@@ -105,6 +105,18 @@
    font-size: .875rem !important;
 }
 
+.MuiInput-input, .MuiInputLabel-root
+{
+   padding-left: 8px !important;
+   padding-right: 8px !important;
+}
+
+.MuiInputLabel-shrink
+{
+   padding-top: 2px !important;
+   padding-left: 2px !important;
+}
+
 .MuiDataGrid-toolbarContainer .selectionTool
 {
    margin-left: 40px;

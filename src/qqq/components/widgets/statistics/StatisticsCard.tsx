@@ -42,6 +42,7 @@ export interface StatisticsCardData
 /////////////////////////
 interface Props
 {
+   title: string
    data: StatisticsCardData;
    color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
    icon: ReactNode;
@@ -60,9 +61,9 @@ StatisticsCard.defaultProps = {
    increaseIsGood: true
 };
 
-function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
+function StatisticsCard({title, data, color, icon, increaseIsGood}: Props): JSX.Element
 {
-   const {title, count, percentageAmount, percentageLabel} = data;
+   const {count, percentageAmount, percentageLabel} = data;
 
    let percentageString = "";
    if (percentageAmount)
