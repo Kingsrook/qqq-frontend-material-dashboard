@@ -152,7 +152,7 @@ class ValueUtils
       {
          let mode = "text";
          const adornmentValues = field.getAdornment(AdornmentType.CODE_EDITOR).values;
-         if (adornmentValues.has("languageMode"))
+         if (adornmentValues && adornmentValues.has("languageMode"))
          {
             mode = adornmentValues.get("languageMode");
          }
