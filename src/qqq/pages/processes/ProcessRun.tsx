@@ -217,6 +217,41 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
       setShowFullHelpText(!showFullHelpText);
    };
 
+   const download = (url: string, fileName: string) =>
+   {
+      const qController = Client.getInstance();
+
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.responseType = "blob";
+      let formData = new FormData();
+      formData.append("Authorization", qController.getAuthorizationHeaderValue())
+
+      // @ts-ignore
+      xhr.send(formData);
+
+      xhr.onload = function(e)
+      {
+         if (this.status == 200)
+         {
+            const blob = new Blob([this.response]);
+
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+
+            const url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+         }
+         else
+         {
+            setProcessError("Error downloading file", true)
+         }
+      };
+   };
+
    ////////////////////////////////////////////////////
    // generate the main form body content for a step //
    ////////////////////////////////////////////////////
@@ -463,20 +498,16 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                      {
                         component.type === QComponentType.DOWNLOAD_FORM && (
                            <Grid container display="flex" justifyContent="center">
-                              <Grid item xs={12} sm={12} xl={8} m={3} p={3} sx={{border: "1px solid gray", borderRadius: "1rem"}}>
-                                 <Box mt={-5} mb={1} p={1} sx={{width: "fit-content", borderRadius: ".25em"}} width="initial" color="white">
-                                    <Box display="flex" alignItems="center" color="white">
-                                       Download
-                                    </Box>
+                              <Grid item xs={12} sm={12} xl={8} m={3} p={3} mt={6} sx={{border: "1px solid gray", borderRadius: "1rem"}}>
+                                 <Box mx={2} mt={-6} p={1} sx={{width: "fit-content", borderColor: "rgb(70%, 70%, 70%)", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "#FFFFFF"}} width="initial" color="white">
+                                    Download
                                  </Box>
                                  <Box display="flex" py={1} pr={2}>
-                                    <MDTypography variant="button" fontWeight="bold">
-                                       <Link target="_blank" download href={`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`} display="flex" alignItems="center">
+                                    <MDTypography variant="button" fontWeight="bold" onClick={() => download(`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`, processValues.downloadFileName)} sx={{cursor: "pointer"}}>
+                                       <Box display="flex" alignItems="center" gap={1} py={1} pr={2}>
                                           <Icon fontSize="large">download_for_offline</Icon>
-                                          <Box pl={1}>
-                                             {processValues.downloadFileName}
-                                          </Box>
-                                       </Link>
+                                          {processValues.downloadFileName}
+                                       </Box>
                                     </MDTypography>
                                  </Box>
                               </Grid>
