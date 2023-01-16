@@ -127,7 +127,7 @@ export default function App()
       })();
    }, [loadingToken]);
 
-   if(needLicenseKey)
+   if (needLicenseKey)
    {
       (async () =>
       {
@@ -245,7 +245,7 @@ export default function App()
                   component: <AppHome app={metaData.apps.get(app.name)} />,
                });
 
-               if(!foundFirstApp)
+               if (!foundFirstApp)
                {
                   /////////////////////////////////////////////////////////////////////////////////////////////////////
                   // keep track of what the top-most app the user has access to is.  set that as their default route //
@@ -396,7 +396,7 @@ export default function App()
             //////////////////////////////////////////////////////////////////////////////////
             // iterate through the list to find the 'main dashboard so we can put it first' //
             //////////////////////////////////////////////////////////////////////////////////
-            if(metaData.appTree && metaData.appTree.length)
+            if (metaData.appTree && metaData.appTree.length)
             {
                for (let i = 0; i < metaData.appTree.length; i++)
                {
@@ -437,6 +437,8 @@ export default function App()
             {
                if ((e as QException).status === "401")
                {
+                  qController.clearAuthenticationMetaDataLocalStorage();
+
                   //////////////////////////////////////////////////////
                   // todo - this is auth0 logout... make more generic //
                   //////////////////////////////////////////////////////
