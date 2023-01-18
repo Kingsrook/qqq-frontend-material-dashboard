@@ -311,7 +311,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "pieChart" && (
                   <PieChartCard
-                     title={widgetData[i]?.label}
+                     title={widgetMetaData.label}
                      description={widgetData[i]?.description}
                      data={widgetData[i]?.chartData}
                   />
