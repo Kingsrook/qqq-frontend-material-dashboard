@@ -58,7 +58,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const [limit, setLimit] = useState(1000);
    const [statusString, setStatusString] = useState("Loading audits...");
    const [auditsByDate, setAuditsByDate] = useState([] as QRecord[][]);
-   const [sortDirection, setSortDirection] = useState(false);
+   const [sortDirection, setSortDirection] = useState(localStorage.getItem("audit.sortDirection") === "true");
 
    useEffect(() =>
    {
@@ -160,7 +160,9 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const changeSortDirection = () =>
    {
       setAudits([]);
-      setSortDirection(!sortDirection);
+      const newSortDirection = !sortDirection
+      setSortDirection(newSortDirection);
+      localStorage.setItem("audit.sortDirection", String(newSortDirection));
    };
 
    const todayFormatted = ValueUtils.formatDateTime(new Date()).split(" ")[0];
@@ -223,6 +225,9 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                            {
                               audits.map((audit) =>
                               {
+                                 const formattedTimestamp = ValueUtils.formatDateTime(audit.values.get("timestamp"));
+                                 const timestampParts = formattedTimestamp.split(" ");
+
                                  return (
                                     <Box key={audit.values.get("id")} display="flex" flexDirection="row" mb={1} className="singleAuditBlock">
                                        <Avatar sx={{bgcolor: colors.info.main, zIndex: 2}}>
