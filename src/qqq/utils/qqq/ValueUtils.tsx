@@ -24,7 +24,7 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import "datejs";
+import "datejs"; // https://github.com/datejs/Datejs
 import {Box, Chip, Icon} from "@mui/material";
 import parse from "html-react-parser";
 import React, {Fragment} from "react";
@@ -251,6 +251,16 @@ class ValueUtils
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
+   }
+
+   public static getFullWeekday(date: Date)
+   {
+      if(!(date instanceof Date))
+      {
+         date = new Date(date)
+      }
+      // @ts-ignore
+      return (`${date.toString("dddd")}`);
    }
 
    public static formatBoolean(value: any)

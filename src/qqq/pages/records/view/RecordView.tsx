@@ -21,6 +21,7 @@
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
@@ -45,7 +46,8 @@ import Modal from "@mui/material/Modal";
 import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
-import {QActionsMenuButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
+import AuditBody from "qqq/components/audits/AuditBody";
+import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
 import colors from "qqq/components/legacy/colors";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
@@ -86,6 +88,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
+   const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1SectionName, setT1SectionName] = useState(null as string);
@@ -103,6 +106,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
+   const [showAudit, setShowAudit] = useState(false);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -174,6 +178,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // if our table is in the -4 index, and there's `createChild` in the -2 index, try to open a createChild form //
+         // e.g., person/42/createChild/address (to create an address under person 42)                                 //
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          if(pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == "createChild")
          {
@@ -186,10 +191,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             return;
          }
 
-         /////////////////////////////////////////////////////////////////////
-         // alternatively, look for a createChild specification in the hash //
-         // e.g., for non-natively rendered links to open the modal.        //
-         /////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////
+         // alternatively, look for a createChild specification in the hash            //
+         // e.g., for non-natively rendered links to open the modal.                   //
+         // e.g., person/42#createChild=address (to create an address under person 42) //
+         ////////////////////////////////////////////////////////////////////////////////
          for (let i = 0; i < hashParts.length; i++)
          {
             const parts = hashParts[i].split("=")
@@ -203,6 +209,12 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                })();
                return;
             }
+         }
+
+         if(hashParts[0] == "#audit")
+         {
+            setShowAudit(true);
+            return;
          }
 
          ///////////////////////////////////////////////////////////////////////////////////
@@ -247,6 +259,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          // load top-level meta-data (e.g., to find processes for table) //
          //////////////////////////////////////////////////////////////////
          const metaData = await qController.loadMetaData();
+         setMetaData(metaData);
          ValueUtils.qInstance = metaData;
          const processesForTable = ProcessUtils.getProcessesForTable(metaData, tableName);
          setTableProcesses(processesForTable);
@@ -490,6 +503,17 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
             Developer Mode
          </MenuItem>
+         {
+            metaData && metaData.tables.has("audit") &&
+            <MenuItem onClick={() =>
+            {
+               setActionsMenu(null);
+               navigate("#audit")
+            }}>
+               <ListItemIcon><Icon>checklist</Icon></ListItemIcon>
+               Audit
+            </MenuItem>
+         }
       </Menu>
    );
 
@@ -556,6 +580,30 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       }
 
       setShowEditChildForm(null);
+   };
+
+   const closeAudit = (event: object, reason: string) =>
+   {
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
+      {
+         return;
+      }
+
+      setShowAudit(false);
+
+      /////////////////////////////////////////////////
+      // navigate back up to the record being viewed //
+      /////////////////////////////////////////////////
+      if(location.hash)
+      {
+         navigate(location.pathname);
+      }
+      else
+      {
+         const newPath = location.pathname.split("/");
+         newPath.pop();
+         navigate(newPath.join("/"));
+      }
    };
 
    return (
@@ -674,6 +722,24 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                           id={showEditChildForm.id}
                                           defaultValues={showEditChildForm.defaultValues}
                                           disabledFields={showEditChildForm.disabledFields} />
+                                    </div>
+                                 </Modal>
+                              }
+
+                              {
+                                 showAudit && tableMetaData && record &&
+                                 <Modal open={showAudit} onClose={(event, reason) => closeAudit(event, reason)}>
+                                    <div className="audit">
+                                       <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+                                          <Card sx={{my: 5, mx: "auto", pb: 0, maxWidth: "1024px"}}>
+                                             <Box component="div">
+                                                <AuditBody recordId={id} record={record} tableMetaData={tableMetaData} />
+                                                <Box p={3} display="flex" flexDirection="row" justifyContent="flex-end">
+                                                   <QCancelButton label="Close" onClickHandler={() => closeAudit(null, null)} disabled={false} />
+                                                </Box>
+                                             </Box>
+                                          </Card>
+                                       </Box>
                                     </div>
                                  </Modal>
                               }
