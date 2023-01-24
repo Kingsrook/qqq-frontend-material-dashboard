@@ -51,20 +51,12 @@ export interface TableDataInput
 /////////////////////////
 interface Props
 {
-   title: string;
-   linkText?: string;
-   linkURL?: string;
    noRowsFoundHTML?: string;
    data: TableDataInput;
-   reloadWidgetCallback?: (params: string) => void;
-   widgetIndex?: number;
-   isChild?: boolean;
-
-   [key: string]: any;
 }
 
 const qController = Client.getInstance();
-function TableCard({noRowsFoundHTML, data, reloadWidgetCallback}: Props): JSX.Element
+function TableCard({noRowsFoundHTML, data}: Props): JSX.Element
 {
    const [qInstance, setQInstance] = useState(null as QInstance);
 

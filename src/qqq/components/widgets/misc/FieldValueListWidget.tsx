@@ -20,6 +20,7 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -31,19 +32,19 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
 {
-   title: string;
+   widgetMetaData: QWidgetMetaData;
    data: any;
    reloadWidgetCallback?: (params: string) => void;
 }
 
 FieldValueListWidget.defaultProps = {};
 
-function FieldValueListWidget({title, data, reloadWidgetCallback}: Props): JSX.Element
+function FieldValueListWidget({widgetMetaData, data, reloadWidgetCallback}: Props): JSX.Element
 {
    if(data?.dropdownNeedsSelectedText)
    {
       return (
-         <Widget label={title} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
+         <Widget widgetMetaData={widgetMetaData} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
             <br />
          </Widget>
       );
@@ -53,7 +54,7 @@ function FieldValueListWidget({title, data, reloadWidgetCallback}: Props): JSX.E
    {
       const skeletons = [75, 50, 90];
       return (
-         <Widget label={title}>
+         <Widget widgetMetaData={widgetMetaData}>
             <Box p={3} pt={0} display="flex" flexDirection="column">
                {skeletons.map((s) =>
                   (
@@ -79,7 +80,7 @@ function FieldValueListWidget({title, data, reloadWidgetCallback}: Props): JSX.E
    const fieldIndentLevels = data.fieldIndentLevels ?? {};
 
    return (
-      <Widget label={title} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
+      <Widget widgetMetaData={widgetMetaData} widgetData={data} reloadWidgetCallback={reloadWidgetCallback}>
          <Box p={3} pt={0} display="flex" flexDirection="column">
             {
                fields.map((field: QFieldMetaData, index: number) => (

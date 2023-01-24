@@ -59,15 +59,11 @@ function configs(labels: any, datasets: any)
       },
       options: {
          responsive: true,
-         maintainAspectRatio: false,
+         maintainAspectRatio: true,
          plugins: {
             legend: {
                display: false,
             },
-         },
-         interaction: {
-            intersect: false,
-            mode: "index",
          },
          scales: {
             y: {

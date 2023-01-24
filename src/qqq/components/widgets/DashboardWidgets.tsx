@@ -34,7 +34,8 @@ import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
 import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLineChart";
 import SmallLineChart from "qqq/components/widgets/charts/linechart/SmallLineChart";
-import PieChartCard from "qqq/components/widgets/charts/piechart/PieChartCard";
+import PieChart from "qqq/components/widgets/charts/piechart/PieChart";
+import StackedBarChart from "qqq/components/widgets/charts/StackedBarChart";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
@@ -161,13 +162,13 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
-                     icon={widgetMetaData.icon}
                      entityPrimaryKey={entityPrimaryKey}
                      tableName={tableName}
                      widgetIndex={i}
-                     label={widgetMetaData.label}
+                     widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
                      reloadWidgetCallback={reloadWidget}
+                     storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
                )
             }
@@ -184,30 +185,34 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "table" && (
                   <Widget
-                     label={widgetData[i]?.label}
-                     isCard={widgetMetaData.isCard}
+                     widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
                   >
                      <TableCard
-                        color="info"
-                        title={widgetMetaData.label}
-                        linkText={widgetData[i]?.linkText}
-                        linkURL={widgetData[i]?.linkURL}
                         noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
                         data={widgetData[i]}
-                        dropdownOptions={widgetData[i]?.dropdownOptions}
-                        reloadWidgetCallback={(data) => reloadWidget(i, data)}
-                        widgetIndex={i}
                      />
+                  </Widget>
+               )
+            }
+            {
+               widgetMetaData.type === "stackedBarChart" && (
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                  >
+                     <StackedBarChart data={widgetData[i]?.chartData}/>
                   </Widget>
                )
             }
             {
                widgetMetaData.type === "process" && widgetData[i]?.processMetaData && (
                   <Widget
-                     label={widgetData[i]?.processMetaData?.label}
+                     widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}>
                      <div>
@@ -234,7 +239,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "html" && (
-                  <Widget label={widgetMetaData.label}>
+                  <Widget widgetMetaData={widgetMetaData}>
                      <Box px={1} pt={0} pb={2}>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
                            {
@@ -248,15 +253,6 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                )
             }
             {
-               widgetMetaData.type === "multiStatistics" && (
-                  <MultiStatisticsCard
-                     color="info"
-                     title={widgetMetaData.label}
-                     data={widgetData[i]}
-                  />
-               )
-            }
-            {
                widgetMetaData.type === "smallLineChart" && (
                   <SmallLineChart
                      color="dark"
@@ -265,6 +261,25 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      date=""
                      chart={widgetData[i]?.chartData}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "statistics" && (
+                  widgetData && widgetData[i] && (
+                     <Widget
+                        widgetMetaData={widgetMetaData}
+                        widgetData={widgetData[i]}
+                        isChild={areChildren}
+                        reloadWidgetCallback={(data) => reloadWidget(i, data)}>
+                        <StatisticsCard
+                           title={widgetMetaData.label}
+                           color={colors.info.main}
+                           icon={widgetMetaData.icon}
+                           data={widgetData[i]}
+                           increaseIsGood={true}
+                        />
+                     </Widget>
+                  )
                )
             }
             {
@@ -280,16 +295,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                )
             }
             {
-               widgetMetaData.type === "statistics" && (
-                  widgetData && widgetData[i] && (
-                     <StatisticsCard
-                        title={widgetMetaData.label}
-                        color={colors.info.main}
-                        icon={widgetMetaData.icon}
-                        data={widgetData[i]}
-                        increaseIsGood={true}
-                     />
-                  )
+               widgetMetaData.type === "multiStatistics" && (
+                  <MultiStatisticsCard
+                     color="info"
+                     title={widgetMetaData.label}
+                     data={widgetData[i]}
+                  />
                )
             }
             {
@@ -310,11 +321,19 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "pieChart" && (
-                  <PieChartCard
-                     title={widgetMetaData.label}
-                     description={widgetData[i]?.description}
-                     data={widgetData[i]?.chartData}
-                  />
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     isChild={areChildren}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}>
+
+                     <div>
+                        <PieChart
+                           chartData={widgetData[i]?.chartData}
+                           description={widgetData[i]?.description}
+                        />
+                     </div>
+                  </Widget>
                )
             }
             {
@@ -362,7 +381,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "childRecordList" && (
                   widgetData && widgetData[i] &&
                   <RecordGridWidget
-                     title={widgetMetaData.label}
+                     widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
                   />
                )
@@ -372,7 +391,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "fieldValueList" && (
                   widgetData && widgetData[i] &&
                      <FieldValueListWidget
-                        title={widgetMetaData.label}
+                        widgetMetaData={widgetMetaData}
                         data={widgetData[i]}
                         reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      />

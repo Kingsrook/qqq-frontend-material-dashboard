@@ -114,6 +114,14 @@ async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URL
                   {
                      values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
                   }
+
+                  ////////////////////////////////////////////
+                  // log message if no values were returned //
+                  ////////////////////////////////////////////
+                  if (! values || values.length === 0)
+                  {
+                     console.warn("WARNING: No possible values were returned for [" + field.possibleValueSourceName + "] for values [" + criteria.values + "].");
+                  }
                }
 
                defaultFilter.items.push({

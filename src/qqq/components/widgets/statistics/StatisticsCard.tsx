@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {CircularProgress, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
-import Icon from "@mui/material/Icon";
-import {ReactNode} from "react";
+import React, {ReactNode} from "react";
+import {NavLink} from "react-router-dom";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 ///////////////////////////////////////////
@@ -31,8 +31,9 @@ import MDTypography from "qqq/components/legacy/MDTypography";
 ///////////////////////////////////////////
 export interface StatisticsCardData
 {
-   title: string;
    count: number;
+   countFontSize: string;
+   countURL?: string;
    percentageAmount: number;
    percentageLabel: string;
 }
@@ -42,7 +43,6 @@ export interface StatisticsCardData
 /////////////////////////
 interface Props
 {
-   title: string
    data: StatisticsCardData;
    color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
    icon: ReactNode;
@@ -61,7 +61,7 @@ StatisticsCard.defaultProps = {
    increaseIsGood: true
 };
 
-function StatisticsCard({title, data, color, icon, increaseIsGood}: Props): JSX.Element
+function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
 {
    const {count, percentageAmount, percentageLabel} = data;
 
@@ -90,39 +90,30 @@ function StatisticsCard({title, data, color, icon, increaseIsGood}: Props): JSX.
 
    return (
 
-      <Card sx={{height: "100%", alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: 3, paddingTop: "0px"}}>
-         <Box display="flex" justifyContent="space-between" pt={1} px={2}>
-            <Box
-               color="#ffffff"
-               borderRadius="xl"
-               display="flex"
-               justifyContent="center"
-               alignItems="center"
-               width="4rem"
-               height="4rem"
-               mt={-3}
-               sx={{borderRadius: "10px", backgroundColor: color}}
-            >
-               <Icon fontSize="medium" color="inherit">
-                  {icon}
-               </Icon>
-            </Box>
-            <Box textAlign="right" lineHeight={1.25}>
-               <MDTypography variant="button" fontWeight="light" color="text">
-                  {title}
-               </MDTypography>
-               {
-                  count !== undefined ? (
-                     <MDTypography variant="h4">{count.toLocaleString()}</MDTypography>
-                  ) : null
-               }
-            </Box>
+      <Box mt={0} sx={{height: "100%", flexGrow: 1, flexDirection: "column", display: "flex", paddingTop: "0px"}}>
+         <Box mt={0} display="flex" justifyContent="center">
+            {
+               count !== undefined ? (
+                  <Typography mt={0} sx={{color: "#344767", display: "flex", alignContent: "flex-end", fontSize: data?.countFontSize ? data?.countFontSize : "40px"}}>
+                     {
+                        data.countURL ? (
+                           <NavLink to={data.countURL}>{count.toLocaleString()}</NavLink>
+                        ) : (
+                           count.toLocaleString()
+                        )
+                     }
+                  </Typography>
+               ) : (
+                  <CircularProgress sx={{marginTop: "1rem", marginBottom: "20px"}} color="inherit" size={data?.countFontSize ? data.countFontSize : 30}/>
+               )
+            }
          </Box>
          {
             percentageAmount !== undefined && percentageAmount !== 0 ? (
-               <Box px={2}>
-                  <Divider />
-                  <MDTypography component="p" variant="button" color="text" display="flex">
+               <Box pb={2}>
+
+                  <Divider sx={{marginTop: "0px"}} />
+                  <MDTypography pl={3} component="p" variant="button" color="text" display="flex">
                      <MDTypography
                         component="span"
                         variant="button"
@@ -136,7 +127,7 @@ function StatisticsCard({title, data, color, icon, increaseIsGood}: Props): JSX.
                </Box>
             ) : null
          }
-      </Card>
+      </Box>
    );
 }
 

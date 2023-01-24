@@ -20,6 +20,7 @@
  */
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -44,21 +45,19 @@ export interface WidgetData
 
 interface Props
 {
-   icon?: string;
-   label: string;
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalComponentsRight: LabelComponent[];
+   widgetMetaData?: QWidgetMetaData;
    widgetData?: WidgetData;
    children: JSX.Element;
    reloadWidgetCallback?: (params: string) => void;
    isChild?: boolean;
-   isCard?: boolean;
+   storeDropdownSelections?: boolean;
 }
 
 Widget.defaultProps = {
-   isCard: true,
    isChild: false,
-   label: null,
+   widgetMetaData: {},
    widgetData: {},
    labelAdditionalComponentsLeft: [],
    labelAdditionalComponentsRight: [],
@@ -121,6 +120,8 @@ export class Dropdown extends LabelComponent
 }
 
 
+const WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT = "qqq.widgets.dropdownData";
+
 
 function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 {
@@ -133,7 +134,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       navigate(`#/createChild=${table.name}/defaultValues=${JSON.stringify(defaultValues)}/disabledFields=${JSON.stringify(disabledFields)}`)
    }
 
-   function renderComponent(component: LabelComponent)
+   function renderComponent(component: LabelComponent, index: number)
    {
       if(component instanceof HeaderLink)
       {
@@ -157,10 +158,23 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
       if (component instanceof Dropdown)
       {
+         let defaultValue = null;
+         const dropdownName = props.widgetData.dropdownNameList[index];
+         const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${props.widgetMetaData.name}.${dropdownName}`;
+         if(props.storeDropdownSelections)
+         {
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // see if an existing value is stored in local storage, and if so set it in dropdown //
+            ///////////////////////////////////////////////////////////////////////////////////////
+            defaultValue = JSON.parse(localStorage.getItem(localStorageKey));
+         }
+
          const dropdown = component as Dropdown
          return (
             <Box my={2} mr={2} sx={{float: "right"}}>
                <DropdownMenu
+                  localStorageKey={localStorageKey}
+                  defaultValue={defaultValue}
                   sx={{width: 200, marginLeft: "15px"}}
                   label={`Select ${dropdown.label}`}
                   dropdownOptions={dropdown.options}
@@ -199,12 +213,14 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          // find the index base on selected label //
          ///////////////////////////////////////////
          const tableName = dropdownLabel.replace("Select ", "");
+         let dropdownName = "";
          let index = -1;
          for (let i = 0; i < props.widgetData.dropdownLabelList.length; i++)
          {
             if (tableName === props.widgetData.dropdownLabelList[i])
             {
                index = i;
+               dropdownName = props.widgetData.dropdownNameList[i];
                break;
             }
          }
@@ -217,6 +233,22 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          dropdownData[index] = (changedData) ? changedData.id : null;
          setDropdownData(dropdownData);
          setCounter(counter + 1);
+
+         /////////////////////////////////////////////////
+         // if should store in local storage, do so now //
+         // or remove if dropdown was cleared out       //
+         /////////////////////////////////////////////////
+         if(props.storeDropdownSelections)
+         {
+            if (changedData?.id)
+            {
+               localStorage.setItem(`${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${props.widgetMetaData.name}.${dropdownName}`, JSON.stringify(changedData));
+            }
+            else
+            {
+               localStorage.removeItem(`${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${props.widgetMetaData.name}.${dropdownName}`);
+            }
+         }
       }
    }
 
@@ -245,61 +277,62 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
          else
          {
-            console.log(`No reload widget callback in ${props.label}`)
+            console.log(`No reload widget callback in ${props.widgetMetaData.label}`)
          }
       }
    }, [counter]);
 
    const widgetContent =
       <Box sx={{width: "100%"}}>
-         {
-            (props.icon || props.label) && (
-               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{width: "100%"}}>
-                  <Box py={2}>
-                     {
-                        props.icon && (
-                           <Box
-                              ml={3}
-                              mt={-4}
-                              sx={{
-                                 display: "flex",
-                                 justifyContent: "center",
-                                 alignItems: "center",
-                                 width: "64px",
-                                 height: "64px",
-                                 borderRadius: "8px",
-                                 background: colors.info.main,
-                                 color: "#ffffff",
-                                 float: "left"
-                              }}
-                           >
-                              <Icon fontSize="medium" color="inherit">
-                                 {props.icon}
-                              </Icon>
-                           </Box>
-                        )
-                     }
-                     <Typography variant={props.isChild ? "h6" : "h5"} fontWeight="medium" p={3} display="inline">
-                        {props.label}
+         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{width: "100%"}}>
+            <Box pt={2}>
+               {
+                  props.widgetMetaData?.icon && (
+                     <Box
+                        ml={3}
+                        mt={-4}
+                        sx={{
+                           display: "flex",
+                           justifyContent: "center",
+                           alignItems: "center",
+                           width: "64px",
+                           height: "64px",
+                           borderRadius: "8px",
+                           background: colors.info.main,
+                           color: "#ffffff",
+                           float: "left"
+                        }}
+                     >
+                        <Icon fontSize="medium" color="inherit">
+                           {props.widgetMetaData.icon}
+                        </Icon>
+                     </Box>
+
+                  )
+               }
+               {
+                  props.widgetMetaData?.label && (
+                     <Typography variant="h5" fontWeight="medium" pl={3} display="inline">
+                        {props.widgetMetaData.label}
                      </Typography>
-                     {
-                        props.labelAdditionalComponentsLeft.map((component, i) =>
-                        {
-                           return (<span key={i}>{renderComponent(component)}</span>);
-                        })
-                     }
-                  </Box>
-                  <Box pr={1}>
-                     {
-                        effectiveLabelAdditionalComponentsRight.map((component, i) =>
-                        {
-                           return (<span key={i}>{renderComponent(component)}</span>);
-                        })
-                     }
-                  </Box>
-               </Box>
-            )
-         }
+                  )
+               }
+               {
+                  props.labelAdditionalComponentsLeft.map((component, i) =>
+                  {
+                     return (<span key={i}>{renderComponent(component, i)}</span>);
+                  })
+               }
+            </Box>
+            <Box>
+               {
+                  effectiveLabelAdditionalComponentsRight.map((component, i) =>
+                  {
+                     return (<span key={i}>{renderComponent(component, i)}</span>);
+                  })
+               }
+            </Box>
+         </Box>
          {
             props.widgetData?.dropdownNeedsSelectedText ? (
                <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
@@ -313,7 +346,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
       </Box>;
 
-   return props.isCard ? <Card sx={{width: "100%"}}>{widgetContent}</Card> : widgetContent;
+   return props.widgetMetaData?.isCard ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%"}}>{widgetContent}</Card> : widgetContent;
 }
 
 export default Widget;

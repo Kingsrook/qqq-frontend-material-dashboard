@@ -1,17 +1,17 @@
 /**
-=========================================================
-* Material Dashboard 2 PRO React TS - v1.0.0
-=========================================================
+ =========================================================
+ * Material Dashboard 2 PRO React TS - v1.0.0
+ =========================================================
 
-* Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
-* Copyright 2022 Creative Tim (https://www.creative-tim.com)
+ * Product Page: https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts
+ * Copyright 2022 Creative Tim (https://www.creative-tim.com)
 
-Coded by www.creative-tim.com
+ Coded by www.creative-tim.com
 
  =========================================================
 
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ */
 
 /**
  * The base colors for the Material Dashboard 2 PRO React TSUI Dashboard PRO Material.
@@ -20,370 +20,405 @@ Coded by www.creative-tim.com
  */
 
 // types
-interface ColorsTypes {
-  main: string;
-  focus: string;
+interface ColorsTypes
+{
+   main: string;
+   focus: string;
 }
 
-interface GradientsTypes {
-  main: string;
-  state: string;
+interface GradientsTypes
+{
+   main: string;
+   state: string;
 }
 
-interface SocialMediaColorsTypes {
-  main: string;
-  dark: string;
+interface SocialMediaColorsTypes
+{
+   main: string;
+   dark: string;
 }
 
-interface BadgeColorsTypes {
-  background: string;
-  text: string;
+interface BadgeColorsTypes
+{
+   background: string;
+   text: string;
 }
 
-interface Types {
-  background:
-    | {
-        default: string;
-        sidenav?: string;
-        card?: string;
+interface Types
+{
+   background:
+      | {
+      default: string;
+      sidenav?: string;
+      card?: string;
+   }
+      | any;
+   white:
+      | {
+      main: string;
+      focus: string;
+   }
+      | any;
+   text:
+      | {
+      main: string;
+      focus: string;
+      primary?: string;
+      secondary?: string;
+      disabled?: string;
+   }
+      | any;
+   transparent:
+      | {
+      main: string;
+   }
+      | any;
+   black:
+      | {
+      light: string;
+      main: string;
+      focus: string;
+   }
+      | any;
+   primary: ColorsTypes | any;
+   secondary: ColorsTypes | any;
+   info: ColorsTypes | any;
+   success: ColorsTypes | any;
+   warning: ColorsTypes | any;
+   error: ColorsTypes | any;
+   light: ColorsTypes | any;
+   dark: ColorsTypes | any;
+   grey:
+      | {
+      [key: string | number]: string;
+   }
+      | any;
+   gradients:
+      | {
+      primary: GradientsTypes;
+      secondary: GradientsTypes;
+      info: GradientsTypes;
+      success: GradientsTypes;
+      warning: GradientsTypes;
+      error: GradientsTypes;
+      light: GradientsTypes;
+      dark: GradientsTypes;
+      custom1: GradientsTypes;
+      custom2: GradientsTypes;
+      custom3: GradientsTypes;
+      custom4: GradientsTypes;
+      custom5: GradientsTypes;
+   }
+      | any;
+   socialMediaColors:
+      | {
+      facebook: SocialMediaColorsTypes;
+      twitter: SocialMediaColorsTypes;
+      instagram: SocialMediaColorsTypes;
+      linkedin: SocialMediaColorsTypes;
+      pinterest: SocialMediaColorsTypes;
+      youtube: SocialMediaColorsTypes;
+      vimeo: SocialMediaColorsTypes;
+      slack: SocialMediaColorsTypes;
+      dribbble: SocialMediaColorsTypes;
+      github: SocialMediaColorsTypes;
+      reddit: SocialMediaColorsTypes;
+      tumblr: SocialMediaColorsTypes;
+   }
+      | any;
+   badgeColors:
+      | {
+      primary: BadgeColorsTypes;
+      secondary: BadgeColorsTypes;
+      info: BadgeColorsTypes;
+      success: BadgeColorsTypes;
+      warning: BadgeColorsTypes;
+      error: BadgeColorsTypes;
+      light: BadgeColorsTypes;
+      dark: BadgeColorsTypes;
+   }
+      | any;
+   coloredShadows:
+      | {
+      [key: string]: string;
+   }
+      | any;
+   inputBorderColor: string;
+   tabs:
+      | {
+      indicator:
+         | {
+         boxShadow: string;
       }
-    | any;
-  white:
-    | {
-        main: string;
-        focus: string;
-      }
-    | any;
-  text:
-    | {
-        main: string;
-        focus: string;
-        primary?: string;
-        secondary?: string;
-        disabled?: string;
-      }
-    | any;
-  transparent:
-    | {
-        main: string;
-      }
-    | any;
-  black:
-    | {
-        light: string;
-        main: string;
-        focus: string;
-      }
-    | any;
-  primary: ColorsTypes | any;
-  secondary: ColorsTypes | any;
-  info: ColorsTypes | any;
-  success: ColorsTypes | any;
-  warning: ColorsTypes | any;
-  error: ColorsTypes | any;
-  light: ColorsTypes | any;
-  dark: ColorsTypes | any;
-  grey:
-    | {
-        [key: string | number]: string;
-      }
-    | any;
-  gradients:
-    | {
-        primary: GradientsTypes;
-        secondary: GradientsTypes;
-        info: GradientsTypes;
-        success: GradientsTypes;
-        warning: GradientsTypes;
-        error: GradientsTypes;
-        light: GradientsTypes;
-        dark: GradientsTypes;
-      }
-    | any;
-  socialMediaColors:
-    | {
-        facebook: SocialMediaColorsTypes;
-        twitter: SocialMediaColorsTypes;
-        instagram: SocialMediaColorsTypes;
-        linkedin: SocialMediaColorsTypes;
-        pinterest: SocialMediaColorsTypes;
-        youtube: SocialMediaColorsTypes;
-        vimeo: SocialMediaColorsTypes;
-        slack: SocialMediaColorsTypes;
-        dribbble: SocialMediaColorsTypes;
-        github: SocialMediaColorsTypes;
-        reddit: SocialMediaColorsTypes;
-        tumblr: SocialMediaColorsTypes;
-      }
-    | any;
-  badgeColors:
-    | {
-        primary: BadgeColorsTypes;
-        secondary: BadgeColorsTypes;
-        info: BadgeColorsTypes;
-        success: BadgeColorsTypes;
-        warning: BadgeColorsTypes;
-        error: BadgeColorsTypes;
-        light: BadgeColorsTypes;
-        dark: BadgeColorsTypes;
-      }
-    | any;
-  coloredShadows:
-    | {
-        [key: string]: string;
-      }
-    | any;
-  inputBorderColor: string;
-  tabs:
-    | {
-        indicator:
-          | {
-              boxShadow: string;
-            }
-          | any;
-      }
-    | any;
+         | any;
+   }
+      | any;
 }
 
 const colors: Types = {
-  background: {
-    default: "#f0f2f5",
-  },
+   background: {
+      default: "#f0f2f5",
+   },
 
-  text: {
-    main: "#7b809a",
-    focus: "#7b809a",
-  },
+   text: {
+      main: "#7b809a",
+      focus: "#7b809a",
+   },
 
-  transparent: {
-    main: "transparent",
-  },
+   transparent: {
+      main: "transparent",
+   },
 
-  white: {
-    main: "#ffffff",
-    focus: "#ffffff",
-  },
+   white: {
+      main: "#ffffff",
+      focus: "#ffffff",
+   },
 
-  black: {
-    light: "#000000",
-    main: "#000000",
-    focus: "#000000",
-  },
+   black: {
+      light: "#000000",
+      main: "#000000",
+      focus: "#000000",
+   },
 
-  primary: {
-    main: "#e91e63",
-    focus: "#e91e63",
-  },
+   primary: {
+      main: "#e91e63",
+      focus: "#e91e63",
+   },
 
-  secondary: {
-    main: "#7b809a",
-    focus: "#8f93a9",
-  },
+   secondary: {
+      main: "#7b809a",
+      focus: "#8f93a9",
+   },
 
-  info: {
-    main: "#04aaef",
-    focus: "#1662C4",
-  },
+   info: {
+      main: "#04aaef",
+      focus: "#1662C4",
+   },
 
-  success: {
-    main: "#4CAF50",
-    focus: "#67bb6a",
-  },
+   success: {
+      main: "#4CAF50",
+      focus: "#67bb6a",
+   },
 
-  warning: {
-    main: "#fb8c00",
-    focus: "#fc9d26",
-  },
+   warning: {
+      main: "#fb8c00",
+      focus: "#fc9d26",
+   },
 
-  error: {
-    main: "#F44335",
-    focus: "#f65f53",
-  },
+   error: {
+      main: "#F44335",
+      focus: "#f65f53",
+   },
 
-  light: {
-    main: "#f0f2f5",
-    focus: "#f0f2f5",
-  },
+   light: {
+      main: "#f0f2f5",
+      focus: "#f0f2f5",
+   },
 
-  dark: {
-    main: "#344767",
-    focus: "#2c3c58",
-  },
+   dark: {
+      main: "#344767",
+      focus: "#2c3c58",
+   },
 
-  grey: {
-    100: "#f8f9fa",
-    200: "#f0f2f5",
-    300: "#dee2e6",
-    400: "#ced4da",
-    500: "#adb5bd",
-    600: "#6c757d",
-    700: "#495057",
-    800: "#343a40",
-    900: "#212529",
-  },
+   grey: {
+      100: "#f8f9fa",
+      200: "#f0f2f5",
+      300: "#dee2e6",
+      400: "#ced4da",
+      500: "#adb5bd",
+      600: "#6c757d",
+      700: "#495057",
+      800: "#343a40",
+      900: "#212529",
+   },
 
-  gradients: {
-    primary: {
-      main: "#EC407A",
-      state: "#D81B60",
-    },
+   gradients: {
+      primary: {
+         main: "#EC407A",
+         state: "#D81B60",
+      },
 
-    secondary: {
-      main: "#747b8a",
-      state: "#495361",
-    },
+      secondary: {
+         main: "#747b8a",
+         state: "#495361",
+      },
 
-    info: {
-      main: "#49a3f1",
-      state: "#04aaef",
-    },
+      info: {
+         main: "#49a3f1",
+         state: "#04aaef",
+      },
 
-    success: {
-      main: "#66BB6A",
-      state: "#43A047",
-    },
+      success: {
+         main: "#66BB6A",
+         state: "#43A047",
+      },
 
-    warning: {
-      main: "#FFA726",
-      state: "#FB8C00",
-    },
+      warning: {
+         main: "#FFA726",
+         state: "#FB8C00",
+      },
 
-    error: {
-      main: "#EF5350",
-      state: "#E53935",
-    },
+      error: {
+         main: "#EF5350",
+         state: "#E53935",
+      },
 
-    light: {
-      main: "#EBEFF4",
-      state: "#CED4DA",
-    },
+      light: {
+         main: "#EBEFF4",
+         state: "#CED4DA",
+      },
 
-    dark: {
-      main: "#42424a",
-      state: "#191919",
-    },
-  },
+      dark: {
+         main: "#42424a",
+         state: "#191919",
+      },
 
-  socialMediaColors: {
-    facebook: {
-      main: "#3b5998",
-      dark: "#344e86",
-    },
+      custom1: {
+         main: "#3aaf85",
+         state: "#8c28c2",
+      },
 
-    twitter: {
-      main: "#55acee",
-      dark: "#3ea1ec",
-    },
+      custom2: {
+         main: "#0077b5",
+         state: "#ffe120",
+      },
 
-    instagram: {
-      main: "#125688",
-      dark: "#0e456d",
-    },
+      custom3: {
+         main: "#ea4c89",
+         state: "#000000",
+      },
 
-    linkedin: {
-      main: "#0077b5",
-      dark: "#00669c",
-    },
+      custom4: {
+         main: "#0077b5",
+         state: "#747474",
+      },
 
-    pinterest: {
-      main: "#cc2127",
-      dark: "#b21d22",
-    },
+      custom5: {
+         main: "#0077b5",
+         state: "#ffcefa",
+      },
+   },
 
-    youtube: {
-      main: "#e52d27",
-      dark: "#d41f1a",
-    },
+   socialMediaColors: {
+      facebook: {
+         main: "#3b5998",
+         dark: "#344e86",
+      },
 
-    vimeo: {
-      main: "#1ab7ea",
-      dark: "#13a3d2",
-    },
+      twitter: {
+         main: "#55acee",
+         dark: "#3ea1ec",
+      },
 
-    slack: {
-      main: "#3aaf85",
-      dark: "#329874",
-    },
+      instagram: {
+         main: "#125688",
+         dark: "#0e456d",
+      },
 
-    dribbble: {
-      main: "#ea4c89",
-      dark: "#e73177",
-    },
+      linkedin: {
+         main: "#0077b5",
+         dark: "#00669c",
+      },
 
-    github: {
-      main: "#24292e",
-      dark: "#171a1d",
-    },
+      pinterest: {
+         main: "#cc2127",
+         dark: "#b21d22",
+      },
 
-    reddit: {
-      main: "#ff4500",
-      dark: "#e03d00",
-    },
+      youtube: {
+         main: "#e52d27",
+         dark: "#d41f1a",
+      },
 
-    tumblr: {
-      main: "#35465c",
-      dark: "#2a3749",
-    },
-  },
+      vimeo: {
+         main: "#1ab7ea",
+         dark: "#13a3d2",
+      },
 
-  badgeColors: {
-    primary: {
-      background: "#f8b3ca",
-      text: "#cc084b",
-    },
+      slack: {
+         main: "#3aaf85",
+         dark: "#329874",
+      },
 
-    secondary: {
-      background: "#d7d9e1",
-      text: "#6c757d",
-    },
+      dribbble: {
+         main: "#ea4c89",
+         dark: "#e73177",
+      },
 
-    info: {
-      background: "#aecef7",
-      text: "#095bc6",
-    },
+      github: {
+         main: "#24292e",
+         dark: "#171a1d",
+      },
 
-    success: {
-      background: "#bce2be",
-      text: "#339537",
-    },
+      reddit: {
+         main: "#ff4500",
+         dark: "#e03d00",
+      },
 
-    warning: {
-      background: "#ffd59f",
-      text: "#c87000",
-    },
+      tumblr: {
+         main: "#35465c",
+         dark: "#2a3749",
+      },
+   },
 
-    error: {
-      background: "#fcd3d0",
-      text: "#f61200",
-    },
+   badgeColors: {
+      primary: {
+         background: "#f8b3ca",
+         text: "#cc084b",
+      },
 
-    light: {
-      background: "#ffffff",
-      text: "#c7d3de",
-    },
+      secondary: {
+         background: "#d7d9e1",
+         text: "#6c757d",
+      },
 
-    dark: {
-      background: "#8097bf",
-      text: "#1e2e4a",
-    },
-  },
+      info: {
+         background: "#aecef7",
+         text: "#095bc6",
+      },
 
-  coloredShadows: {
-    primary: "#e91e62",
-    secondary: "#110e0e",
-    info: "#00bbd4",
-    success: "#4caf4f",
-    warning: "#ff9900",
-    error: "#f44336",
-    light: "#adb5bd",
-    dark: "#404040",
-  },
+      success: {
+         background: "#bce2be",
+         text: "#339537",
+      },
 
-  inputBorderColor: "#d2d6da",
+      warning: {
+         background: "#ffd59f",
+         text: "#c87000",
+      },
 
-  tabs: {
-    indicator: { boxShadow: "#ddd" },
-  },
+      error: {
+         background: "#fcd3d0",
+         text: "#f61200",
+      },
+
+      light: {
+         background: "#ffffff",
+         text: "#c7d3de",
+      },
+
+      dark: {
+         background: "#8097bf",
+         text: "#1e2e4a",
+      },
+   },
+
+   coloredShadows: {
+      primary: "#e91e62",
+      secondary: "#110e0e",
+      info: "#00bbd4",
+      success: "#4caf4f",
+      warning: "#ff9900",
+      error: "#f44336",
+      light: "#adb5bd",
+      dark: "#404040",
+   },
+
+   inputBorderColor: "#d2d6da",
+
+   tabs: {
+      indicator: {boxShadow: "#ddd"},
+   },
 };
 
 export default colors;

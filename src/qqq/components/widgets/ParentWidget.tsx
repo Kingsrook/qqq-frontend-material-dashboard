@@ -50,18 +50,18 @@ export interface ParentWidgetData
 ////////////////////////////////////
 interface Props
 {
+   widgetMetaData?: QWidgetMetaData;
    widgetIndex: number;
-   label: string;
-   icon?: string;
    data: ParentWidgetData;
    reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
    entityPrimaryKey?: string;
    tableName?: string;
+   storeDropdownSelections?: boolean;
 }
 
 
 const qController = Client.getInstance();
-function ParentWidget({widgetIndex, label, icon, data, reloadWidgetCallback, entityPrimaryKey, tableName}: Props, ): JSX.Element
+function ParentWidget({widgetMetaData, widgetIndex, data, reloadWidgetCallback, entityPrimaryKey, tableName, storeDropdownSelections}: Props, ): JSX.Element
 {
    const [childUrlParams, setChildUrlParams] = useState("");
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -99,12 +99,12 @@ function ParentWidget({widgetIndex, label, icon, data, reloadWidgetCallback, ent
    // @ts-ignore
    return (
       <Widget
-         icon={icon}
-         label={label}
+         widgetMetaData={widgetMetaData}
          widgetData={data}
+         storeDropdownSelections={storeDropdownSelections}
          reloadWidgetCallback={parentReloadWidgetCallback}
       >
-         <Box px={3} sx={{width: "100%"}}>
+         <Box sx={{height: "100%", width: "100%"}}>
             <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
          </Box>
       </Widget>

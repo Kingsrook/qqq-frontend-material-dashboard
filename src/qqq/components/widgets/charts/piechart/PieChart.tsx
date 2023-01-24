@@ -19,13 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {Card} from "@mui/material";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Icon from "@mui/material/Icon";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
-import {ReactNode, useMemo} from "react";
+import React, {useMemo} from "react";
 import {Pie} from "react-chartjs-2";
+import {useNavigate} from "react-router-dom";
+import MDBadgeDot from "qqq/components/legacy/MDBadgeDot";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {chartColors} from "qqq/components/widgets/charts/DefaultChartData";
 import configs from "qqq/components/widgets/charts/piechart/PieChartConfigs";
 
 //////////////////////////////////////////
@@ -38,6 +42,7 @@ export interface PieChartData
       label: string;
       backgroundColors?: string[];
       data: number[];
+      urls?: string[];
    };
 }
 
@@ -45,64 +50,78 @@ export interface PieChartData
 // Declaring props types for PieChart
 interface Props
 {
-   icon?: {
-      color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-      component: ReactNode;
-   };
-   title?: string;
    description?: string;
-   height?: string | number;
-   chart: PieChartData;
+   chartData: PieChartData;
 
    [key: string]: any;
 }
 
-function PieChart({icon, title, description, height, chart}: Props): JSX.Element
+function PieChart({description, chartData}: Props): JSX.Element
 {
-   const {data, options} = configs(chart?.labels || [], chart?.dataset || {});
+   const navigate = useNavigate();
 
-   const renderChart = (
-      <Box py={2} pr={2} pl={icon.component ? 1 : 2}>
-         {title || description ? (
-            <Box display="flex" px={description ? 1 : 0} pt={description ? 1 : 0}>
-               {icon.component && (
-                  <Box
-                     width="4rem"
-                     height="4rem"
-                     borderRadius="xl"
-                     display="flex"
-                     justifyContent="center"
-                     alignItems="center"
-                     color="white"
-                     mt={-5}
-                     mr={2}
-                     sx={{backgroundColor: icon.color || "info"}}
-                  >
-                     <Icon fontSize="medium">{icon.component}</Icon>
+   if (chartData && chartData.dataset)
+   {
+      chartData.dataset.backgroundColors = chartColors;
+   }
+
+   const {data, options} = configs(chartData?.labels || [], chartData?.dataset || {});
+
+   const handleClick = (e: Array<{}>) =>
+   {
+      if(e && e.length > 0 && chartData?.dataset?.urls && chartData?.dataset?.urls.length)
+      {
+         // @ts-ignore
+         navigate(chartData.dataset.urls[e[0]["index"]]);
+      }
+   }
+
+   return (
+      <Card sx={{boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1}}>
+         <Box mt={3}>
+            <Grid container alignItems="center">
+               <Grid item xs={5}>
+
+                  <Box py={2} pr={2} pl={2}>
+                     {useMemo(
+                        () => (
+                           <Pie data={data} options={options} getElementsAtEvent={handleClick} />
+                        ),
+                        [chartData]
+                     )}
                   </Box>
-               )}
-               <Box mt={icon.component ? -2 : 0}>
-                  {title && <MDTypography variant="h6">{title}</MDTypography>}
-                  <Box mb={2}>
-                     <MDTypography component="div" variant="button" color="text">
-                        {parse(description)}
-                     </MDTypography>
+               </Grid>
+               <Grid item xs={7}>
+                  <Box pr={1}>
+                     {
+                        data && data.labels ? (
+                           (data.labels.map((label: string, index: number) => (
+                              <Box key={index}>
+                                 <MDBadgeDot color={chartColors[index]} size="sm" badgeContent={label} />
+                              </Box>
+                           )
+                           ))) : null
+                     }
                   </Box>
-               </Box>
-            </Box>
-         ) : null}
-         {useMemo(
-            () => (
-               <Box height={height}>
-                  <Pie data={data} options={options} />
-               </Box>
-            ),
-            [chart, height]
-         )}
-      </Box>
+               </Grid>
+            </Grid>
+            <Divider />
+            {
+               description && (
+                  <Grid container>
+                     <Grid item xs={12}>
+                        <Box pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
+                           <MDTypography variant="button" color="text" fontWeight="light">
+                              {parse(description)}
+                           </MDTypography>
+                        </Box>
+                     </Grid>
+                  </Grid>
+               )
+            }
+         </Box>
+      </Card>
    );
-
-   return title || description ? <Card>{renderChart}</Card> : renderChart;
 }
 
 // Declaring default props for PieChart

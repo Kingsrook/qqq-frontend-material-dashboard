@@ -80,6 +80,11 @@ const MDBadgeDot: FC<Props> = forwardRef(
          "error",
          "light",
          "dark",
+         "custom1",
+         "custom2",
+         "custom3",
+         "custom4",
+         "custom5"
       ];
 
       const colorValues = {
@@ -90,10 +95,14 @@ const MDBadgeDot: FC<Props> = forwardRef(
          "warning": "#fb8c00",
          "error": "#F44335",
          "light": "#f0f2f5",
-         "dark": "#344767"
+         "dark": "#344767",
+         "custom1": "#8c28c2",
+         "custom2": "#ffe120",
+         "custom3": "#000000",
+         "custom4": "#747474",
+         "custom5": "#ffcefa"
       } as any;
 
-      const validColorIndex = validColors.findIndex((el) => el === color);
       return (
          <Box ref={ref} display="flex" alignItems="center" p={padding} {...rest}>
             <Box

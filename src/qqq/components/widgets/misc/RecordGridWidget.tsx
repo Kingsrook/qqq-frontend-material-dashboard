@@ -20,6 +20,7 @@
  */
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {DataGridPro, GridCallbackDetails, GridRowParams, MuiEvent} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
@@ -30,7 +31,7 @@ import Client from "qqq/utils/qqq/Client";
 
 interface Props
 {
-   title: string;
+   widgetMetaData: QWidgetMetaData;
    data: any;
 }
 
@@ -38,7 +39,7 @@ RecordGridWidget.defaultProps = {};
 
 const qController = Client.getInstance();
 
-function RecordGridWidget({title, data}: Props): JSX.Element
+function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
 {
    const [rows, setRows] = useState([]);
    const [columns, setColumns] = useState([]);
@@ -121,7 +122,7 @@ function RecordGridWidget({title, data}: Props): JSX.Element
 
    return (
       <Widget
-         label={title}
+         widgetMetaData={widgetMetaData}
          labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
       >
