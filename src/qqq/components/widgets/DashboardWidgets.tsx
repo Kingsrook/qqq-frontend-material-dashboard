@@ -36,6 +36,7 @@ import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLin
 import SmallLineChart from "qqq/components/widgets/charts/linechart/SmallLineChart";
 import PieChart from "qqq/components/widgets/charts/piechart/PieChart";
 import StackedBarChart from "qqq/components/widgets/charts/StackedBarChart";
+import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
@@ -417,6 +418,14 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                         data={widgetData[i]}
                         reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      />
+               )
+            }
+            {
+               widgetMetaData.type === "dataBagViewer" && (
+                  widgetData && widgetData[i] && widgetData[i].queryParams &&
+                  <Widget widgetMetaData={widgetMetaData}>
+                     <DataBagViewer dataBagId={widgetData[i].queryParams.id} />
+                  </Widget>
                )
             }
          </Box>

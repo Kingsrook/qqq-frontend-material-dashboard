@@ -23,7 +23,7 @@
 export default class DeveloperModeUtils
 {
 
-   public static revToColor = (fieldName: string, recordId: string, rev: number): string =>
+   public static revToColor = (fieldName: string, recordId: string | number, rev: number): string =>
    {
       let hash = 0;
       let idFactor = 1;
