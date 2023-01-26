@@ -28,6 +28,7 @@ export const chartColors = ["info", "warning", "primary", "success", "error", "s
 export interface DefaultChartData
 {
    labels: string[];
+   urls?: string[];
    datasets: [
       {
       label: string;

@@ -33,6 +33,7 @@ import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/Dr
 
 export interface WidgetData
 {
+   label?: string;
    dropdownLabelList?: string[];
    dropdownNameList?: string[];
    dropdownDataList?: {
@@ -120,7 +121,7 @@ export class Dropdown extends LabelComponent
 }
 
 
-const WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT = "qqq.widgets.dropdownData";
+export const WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT = "qqq.widgets.dropdownData";
 
 
 function Widget(props: React.PropsWithChildren<Props>): JSX.Element
@@ -254,7 +255,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
    useEffect(() =>
    {
-      if(dropdownData)
+      if(dropdownData && counter > 0)
       {
          let params = "";
          for (let i = 0; i < dropdownData.length; i++)
@@ -311,10 +312,19 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                   )
                }
                {
-                  props.widgetMetaData?.label && (
+                  //////////////////////////////////////////////////////////////////////////////////////////
+                  // first look for a label in the widget data, which would override that in the metadata //
+                  //////////////////////////////////////////////////////////////////////////////////////////
+                  props.widgetData?.label? (
                      <Typography variant="h5" fontWeight="medium" pl={3} display="inline">
-                        {props.widgetMetaData.label}
+                        {props.widgetData.label}
                      </Typography>
+                  ) : (
+                     props.widgetMetaData?.label && (
+                        <Typography variant="h5" fontWeight="medium" pl={3} display="inline">
+                           {props.widgetMetaData.label}
+                        </Typography>
+                     )
                   )
                }
                {

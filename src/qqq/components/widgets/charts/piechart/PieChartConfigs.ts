@@ -58,11 +58,12 @@ function configs(labels: any, datasets: any)
          ],
       },
       options: {
-         responsive: true,
          maintainAspectRatio: true,
+         responsive: true,
+         aspectRatio: 2,
          plugins: {
             legend: {
-               display: false,
+               position: "bottom",
             },
          },
          scales: {

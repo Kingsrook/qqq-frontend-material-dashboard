@@ -50,6 +50,7 @@ export interface ParentWidgetData
 ////////////////////////////////////
 interface Props
 {
+   urlParams?: string;
    widgetMetaData?: QWidgetMetaData;
    widgetIndex: number;
    data: ParentWidgetData;
@@ -61,9 +62,9 @@ interface Props
 
 
 const qController = Client.getInstance();
-function ParentWidget({widgetMetaData, widgetIndex, data, reloadWidgetCallback, entityPrimaryKey, tableName, storeDropdownSelections}: Props, ): JSX.Element
+function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidgetCallback, entityPrimaryKey, tableName, storeDropdownSelections}: Props, ): JSX.Element
 {
-   const [childUrlParams, setChildUrlParams] = useState("");
+   const [childUrlParams, setChildUrlParams] = useState((urlParams) ? urlParams : "");
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [widgets, setWidgets] = useState([] as any[]);
 
@@ -87,7 +88,7 @@ function ParentWidget({widgetMetaData, widgetIndex, data, reloadWidgetCallback, 
          })
          setWidgets(widgetMetaDataList);
       }
-   }, [qInstance, data]);
+   }, [qInstance, data, childUrlParams]);
 
    const parentReloadWidgetCallback = (data: string) =>
    {
@@ -98,16 +99,18 @@ function ParentWidget({widgetMetaData, widgetIndex, data, reloadWidgetCallback, 
 
    // @ts-ignore
    return (
-      <Widget
-         widgetMetaData={widgetMetaData}
-         widgetData={data}
-         storeDropdownSelections={storeDropdownSelections}
-         reloadWidgetCallback={parentReloadWidgetCallback}
-      >
-         <Box sx={{height: "100%", width: "100%"}}>
-            <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true}/>
-         </Box>
-      </Widget>
+      qInstance && data ? (
+         <Widget
+            widgetMetaData={widgetMetaData}
+            widgetData={data}
+            storeDropdownSelections={storeDropdownSelections}
+            reloadWidgetCallback={parentReloadWidgetCallback}
+         >
+            <Box sx={{height: "100%", width: "100%"}}>
+               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} />
+            </Box>
+         </Widget>
+      ) : null
    );
 }
 

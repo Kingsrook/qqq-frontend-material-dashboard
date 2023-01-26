@@ -22,8 +22,9 @@
 
 import Box from "@mui/material/Box";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip,} from "chart.js";
-import React from "react";
+import React, {useEffect} from "react";
 import {Bar} from "react-chartjs-2";
+import {useNavigate} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
 import {chartColors, DefaultChartData} from "qqq/components/widgets/charts/DefaultChartData";
 
@@ -56,29 +57,36 @@ interface Props
 const {gradients} = colors;
 function StackedBarChart({data}: Props): JSX.Element
 {
+   const navigate = useNavigate();
+
    const handleClick = (e: Array<{}>) =>
    {
-      /*
-      if(e && e.length > 0 && data?.dataset?.urls && data?.dataset?.urls.length)
+      if(e && e.length > 0 && data?.urls && data?.urls.length)
       {
          // @ts-ignore
-         navigate(chartData.dataset.urls[e[0]["index"]]);
-
+         navigate(data.urls[e[0]["index"]]);
       }
-
-       */
       console.log(e);
    }
 
-   data?.datasets.forEach((dataset: any, index: number) =>
+   useEffect(() =>
    {
-      if(! dataset.backgroundColor)
+      if(data)
       {
-         dataset.backgroundColor = gradients[chartColors[index]].state;
+         data?.datasets.forEach((dataset: any, index: number) =>
+         {
+            if (!dataset.backgroundColor)
+            {
+               dataset.backgroundColor = gradients[chartColors[index]].state;
+            }
+         });
       }
-   });
+   }, [data]);
 
-   return <Box p={3}><Bar data={data} options={options} getElementsAtEvent={handleClick} /></Box>;
+
+   return data ? (
+      <Box p={3}><Bar data={data} options={options} getElementsAtEvent={handleClick} /></Box>
+   ) : null;
 }
 
 export default StackedBarChart;

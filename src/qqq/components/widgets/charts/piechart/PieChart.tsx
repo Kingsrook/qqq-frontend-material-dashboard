@@ -27,7 +27,6 @@ import parse from "html-react-parser";
 import React, {useMemo} from "react";
 import {Pie} from "react-chartjs-2";
 import {useNavigate} from "react-router-dom";
-import MDBadgeDot from "qqq/components/legacy/MDBadgeDot";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import {chartColors} from "qqq/components/widgets/charts/DefaultChartData";
 import configs from "qqq/components/widgets/charts/piechart/PieChartConfigs";
@@ -56,6 +55,7 @@ interface Props
    [key: string]: any;
 }
 
+
 function PieChart({description, chartData}: Props): JSX.Element
 {
    const navigate = useNavigate();
@@ -80,28 +80,14 @@ function PieChart({description, chartData}: Props): JSX.Element
       <Card sx={{boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1}}>
          <Box mt={3}>
             <Grid container alignItems="center">
-               <Grid item xs={5}>
-
-                  <Box py={2} pr={2} pl={2}>
+               <Grid item xs={12} justifyContent="center">
+                  <Box width="100%" height="80%" py={2} pr={2} pl={2}>
                      {useMemo(
                         () => (
                            <Pie data={data} options={options} getElementsAtEvent={handleClick} />
                         ),
                         [chartData]
                      )}
-                  </Box>
-               </Grid>
-               <Grid item xs={7}>
-                  <Box pr={1}>
-                     {
-                        data && data.labels ? (
-                           (data.labels.map((label: string, index: number) => (
-                              <Box key={index}>
-                                 <MDBadgeDot color={chartColors[index]} size="sm" badgeContent={label} />
-                              </Box>
-                           )
-                           ))) : null
-                     }
                   </Box>
                </Grid>
             </Grid>

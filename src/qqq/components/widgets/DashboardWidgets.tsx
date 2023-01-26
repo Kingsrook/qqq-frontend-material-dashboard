@@ -47,7 +47,7 @@ import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisti
 import SimpleStatisticsCard from "qqq/components/widgets/statistics/SimpleStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
 import TableCard from "qqq/components/widgets/tables/TableCard";
-import Widget from "qqq/components/widgets/Widget";
+import Widget, {WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
 
@@ -81,6 +81,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    const [widgetCounter, setWidgetCounter] = useState(0);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+   const [currentUrlParams, setCurrentUrlParams] = useState(null as string);
+   const [haveLoadedParams, setHaveLoadedParams] = useState(false);
+
    useEffect(() =>
    {
       (async () =>
@@ -92,24 +95,23 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    useEffect(() =>
    {
-      if (!qInstance)
-      {
-         return;
-      }
-
-      forceUpdate();
       for (let i = 0; i < widgetMetaDataList.length; i++)
       {
+         const widgetMetaData = widgetMetaDataList[i];
+         const urlParams = getQueryParams(widgetMetaData, null);
+         setCurrentUrlParams(urlParams);
+         setHaveLoadedParams(true);
+
          widgetData[i] = {};
          (async () =>
          {
-            widgetData[i] = await qController.widget(widgetMetaDataList[i].name, getQueryParams(null));
+            widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
             setWidgetCounter(widgetCounter + 1);
             forceUpdate();
          })();
       }
       setWidgetData(widgetData);
-   }, [qInstance, widgetMetaDataList]);
+   }, [widgetMetaDataList]);
 
    useEffect(() =>
    {
@@ -120,16 +122,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    {
       setTimeout(async () =>
       {
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(data));
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
          setWidgetCounter(widgetCounter + 1);
       }, 1);
    };
 
-   function getQueryParams(extraParams: string): string
+   function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
    {
       let ampersand = "";
       let params = "";
-      let foundParam = false;
       if(entityPrimaryKey)
       {
          params += `${ampersand}id=${entityPrimaryKey}`;
@@ -148,6 +149,26 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       if(childUrlParams)
       {
          params += `${ampersand}${childUrlParams}`;
+         ampersand = "&";
+      }
+
+      /////////////////////////////////////////////////////////////////////////////
+      // see if local storage is used for any widget dropdowns, if so, look them //
+      // up and append to the query string                                       //
+      /////////////////////////////////////////////////////////////////////////////
+      if(widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns)
+      {
+         for(let i = 0; i< widgetMetaData.dropdowns.length; i++)
+         {
+            const dropdownName = widgetMetaData.dropdowns[i].possibleValueSourceName;
+            const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${widgetMetaData.name}.${dropdownName}`;
+            const json = JSON.parse(localStorage.getItem(localStorageKey));
+            if(json)
+            {
+               params += `${ampersand}${dropdownName}=${json.id}`;
+               ampersand = "&";
+            }
+         }
       }
 
       return params;
@@ -160,8 +181,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       return (
          <Box key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
             {
-               widgetMetaData.type === "parentWidget" && (
+               haveLoadedParams && widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
+                     urlParams={currentUrlParams}
                      entityPrimaryKey={entityPrimaryKey}
                      tableName={tableName}
                      widgetIndex={i}
