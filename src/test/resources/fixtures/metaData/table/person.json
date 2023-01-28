@@ -5,6 +5,10 @@
       "isHidden": false,
       "primaryKeyField": "id",
       "iconName": "person",
+      "deletePermission": true,
+      "editPermission": true,
+      "insertPermission": true,
+      "readPermission": true,
       "fields": {
          "firstName": {
             "name": "firstName",

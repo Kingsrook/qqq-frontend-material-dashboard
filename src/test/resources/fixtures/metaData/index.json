@@ -5,6 +5,10 @@
          "label": "Carrier",
          "isHidden": false,
          "iconName": "local_shipping",
+         "deletePermission": true,
+         "editPermission": true,
+         "insertPermission": true,
+         "readPermission": true,
          "capabilities": [
             "TABLE_COUNT",
             "TABLE_GET",
@@ -19,6 +23,10 @@
          "label": "Person",
          "isHidden": false,
          "iconName": "person",
+         "deletePermission": true,
+         "editPermission": true,
+         "insertPermission": true,
+         "readPermission": true,
          "capabilities": [
             "TABLE_COUNT",
             "TABLE_GET",
@@ -33,6 +41,10 @@
          "label": "Cities",
          "isHidden": true,
          "iconName": "location_city",
+         "deletePermission": true,
+         "editPermission": true,
+         "insertPermission": true,
+         "readPermission": true,
          "capabilities": [
             "TABLE_COUNT",
             "TABLE_GET",
@@ -546,5 +558,8 @@
          "label": "Quick Sight",
          "type": "quickSightChart"
       }
+   },
+   "environmentValues": {
+      "MATERIAL_UI_LICENSE_KEY": "ABCDE"
    }
 }
