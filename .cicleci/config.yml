@@ -1,0 +1,68 @@
+version: 2.1
+
+commands:
+  install_java17:
+    steps:
+      - run:
+          name: Install Java 17
+          command: |
+            sudo apt-get update
+            sudo apt install -y openjdk-17-jdk
+            sudo rm /etc/alternatives/java
+            sudo ln -s /usr/lib/jvm/java-17-openjdk-amd64/bin/java /etc/alternatives/java
+
+  mvn_verify:
+    steps:
+      - checkout
+      - run:
+        name: install dockerize
+        command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+        environment:
+          DOCKERIZE_VERSION: v0.3.0
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          name: Run react app and mvn verify
+          command: |
+            export REACT_APP_PROXY_LOCALHOST_PORT=8001; export PORT=3001; npm run start &
+            command: dockerize -wait tcp://localhost:3001 -timeout 3m
+            mvn verify
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+
+  mvn_jar_deploy:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          name: Run NPM Build
+          command: |
+            npm run build
+      - run:
+          name: Run Maven Jar Deploy
+          command: |
+            mvn -s .circleci/mvn-settings.xml -T4 flatten:flatten jar:jar deploy:deploy
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+
+jobs:
+  mvn_test:
+    steps:
+      - install_java17
+      - mvn_verify
+
