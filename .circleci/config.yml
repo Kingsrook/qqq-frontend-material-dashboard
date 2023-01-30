@@ -33,6 +33,11 @@ commands:
           command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
           environment:
             DOCKERIZE_VERSION: v0.3.0
+      - run:
+          name: Install Browser dependencies
+          command: |
+             sudo apt update
+             sudo apt install -y libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
 
       - restore_cache:
           keys:
@@ -57,7 +62,7 @@ commands:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
-  mvn_jar_deploy:
+  mvn_deploy:
     steps:
       - checkout
       - restore_cache:
@@ -68,9 +73,12 @@ commands:
           command: |
             npm run build
       - run:
-          name: Run Maven Jar Deploy
+          name: Build Maven Jar and Deploy
           command: |
-            mvn -s .circleci/mvn-settings.xml -T4 flatten:flatten jar:jar deploy:deploy
+            rm -rf src/main/resources/material-dashboard
+            mkdir -p src/main/resources/material-dashboard
+            cp -r build/* src/main/resources/material-dashboard
+            mvn -s .circleci/mvn-settings.xml deploy:deploy -DskipTests
       - save_cache:
           paths:
             - ~/.m2
@@ -87,5 +95,7 @@ workflows:
   test_only:
     jobs:
       - mvn_test:
+          context: [ qqq-maven-registry-credentials, kingsrook-slack, build-qqq-sample-app ]
+      - mvn_deploy:
           context: [ qqq-maven-registry-credentials, kingsrook-slack, build-qqq-sample-app ]
 
