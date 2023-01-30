@@ -94,7 +94,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       // click the 'x' clear icon, then yes, then expect another query //
       ///////////////////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
-      qSeleniumLib.waitForSelector("#clearFiltersButton").click();
+      qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelector("#clearFiltersButton").click());
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Yes").click();
 
       ////////////////////////////////////////////////////////////////////
