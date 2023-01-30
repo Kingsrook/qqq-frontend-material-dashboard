@@ -81,7 +81,7 @@ commands:
             rm -rf src/main/resources/material-dashboard
             mkdir -p src/main/resources/material-dashboard
             cp -r build/* src/main/resources/material-dashboard
-            mvn -s .circleci/mvn-settings.xml deploy:deploy -DskipTests
+            mvn -s .circleci/mvn-settings.xml deploy -DskipTests
       - save_cache:
           paths:
             - ~/.m2
