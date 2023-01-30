@@ -67,3 +67,9 @@ jobs:
       - install_java17
       - mvn_verify
 
+workflows:
+  test_only:
+    jobs:
+      - mvn_test:
+          context: [ qqq-maven-registry-credentials, kingsrook-slack, build-qqq-sample-app ]
+
