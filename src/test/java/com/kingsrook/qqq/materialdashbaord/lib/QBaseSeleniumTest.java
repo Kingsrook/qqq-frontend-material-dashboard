@@ -33,6 +33,7 @@ public class QBaseSeleniumTest
    {
       chromeOptions = new ChromeOptions();
       chromeOptions.setAcceptInsecureCerts(true);
+      chromeOptions.addArguments("--ignore-certificate-errors");
 
       String headless = System.getenv("QQQ_SELENIUM_HEADLESS");
       if("true".equals(headless))
