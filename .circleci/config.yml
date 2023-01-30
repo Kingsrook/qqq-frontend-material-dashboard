@@ -1,5 +1,10 @@
 version: 2.1
 
+executors:
+  java17:
+    docker:
+      - image: 'cimg/openjdk:17.0'
+
 commands:
   install_java17:
     steps:
@@ -62,9 +67,9 @@ commands:
 
 jobs:
   mvn_test:
-    executor: default
+    executor: java17
     steps:
-      - install_java17
+##      - install_java17
       - mvn_verify
 
 workflows:
