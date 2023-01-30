@@ -22,7 +22,7 @@
 
 import Box from "@mui/material/Box";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip,} from "chart.js";
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {Bar} from "react-chartjs-2";
 import {useNavigate} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
@@ -39,6 +39,9 @@ ChartJS.register(
 
 export const options = {
    responsive: true,
+   animation: {
+      duration: 0
+   },
    scales: {
       x: {
          stacked: true,
@@ -58,6 +61,9 @@ const {gradients} = colors;
 function StackedBarChart({data}: Props): JSX.Element
 {
    const navigate = useNavigate();
+
+   const [stateData, setStateData] = useState(data);
+
 
    const handleClick = (e: Array<{}>) =>
    {
@@ -80,12 +86,13 @@ function StackedBarChart({data}: Props): JSX.Element
                dataset.backgroundColor = gradients[chartColors[index]].state;
             }
          });
+         setStateData(stateData);
       }
    }, [data]);
 
 
    return data ? (
-      <Box p={3}><Bar data={data} options={options} getElementsAtEvent={handleClick} /></Box>
+      <Box p={3}><Bar data={data} options={options}  /></Box>
    ) : null;
 }
 

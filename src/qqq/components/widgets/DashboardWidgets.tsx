@@ -18,7 +18,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -77,22 +76,12 @@ DashboardWidgets.defaultProps = {
 function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams}: Props): JSX.Element
 {
    const location = useLocation();
-   const [qInstance, setQInstance] = useState(null as QInstance);
    const [widgetData, setWidgetData] = useState([] as any[]);
    const [widgetCounter, setWidgetCounter] = useState(0);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [currentUrlParams, setCurrentUrlParams] = useState(null as string);
    const [haveLoadedParams, setHaveLoadedParams] = useState(false);
-
-   useEffect(() =>
-   {
-      (async () =>
-      {
-         const newQInstance = await qController.loadMetaData();
-         setQInstance(newQInstance);
-      })();
-   }, []);
 
    useEffect(() =>
    {
