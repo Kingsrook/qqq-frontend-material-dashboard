@@ -38,6 +38,12 @@ commands:
           name: Start Selenium
           command: java -jar selenium-server-standalone-3.5.3.jar -log test-reports/selenium.log
           background: true
+      - run:
+          name: Install Browser dependencies
+          command: |
+             apt install libnss
+             apt install libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
+          background: true
 
       - restore_cache:
           keys:
