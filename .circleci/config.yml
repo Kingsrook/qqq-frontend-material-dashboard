@@ -15,10 +15,10 @@ commands:
     steps:
       - checkout
       - run:
-        name: install dockerize
-        command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-        environment:
-          DOCKERIZE_VERSION: v0.3.0
+          name: install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.3.0
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
@@ -26,7 +26,7 @@ commands:
           name: Run react app and mvn verify
           command: |
             export REACT_APP_PROXY_LOCALHOST_PORT=8001; export PORT=3001; npm run start &
-            command: dockerize -wait tcp://localhost:3001 -timeout 3m
+            dockerize -wait tcp://localhost:3001 -timeout 3m
             mvn verify
       - run:
           name: Save test results
@@ -62,6 +62,7 @@ commands:
 
 jobs:
   mvn_test:
+    executor: default
     steps:
       - install_java17
       - mvn_verify
