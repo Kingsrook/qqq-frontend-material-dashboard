@@ -31,18 +31,17 @@ commands:
           environment:
             DOCKERIZE_VERSION: v0.3.0
       - run:
+          name: Install Browser dependencies
+          command: |
+             apt install libnss
+             apt install libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
+      - run:
           name: Download Selenium
           command: curl -O http://selenium-release.storage.googleapis.com/3.5/selenium-server-standalone-3.5.3.jar
       - run: mkdir test-reports
       - run:
           name: Start Selenium
           command: java -jar selenium-server-standalone-3.5.3.jar -log test-reports/selenium.log
-          background: true
-      - run:
-          name: Install Browser dependencies
-          command: |
-             apt install libnss
-             apt install libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
           background: true
 
       - restore_cache:
