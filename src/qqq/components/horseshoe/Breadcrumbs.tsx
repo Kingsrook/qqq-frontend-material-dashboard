@@ -67,6 +67,11 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    let accumulatedPath = "";
    for (let i = 0; i < routes.length; i++)
    {
+      if(routes[i] === "savedFilter")
+      {
+         continue;
+      }
+
       accumulatedPath = `${accumulatedPath}/${routes[i]}`;
       fullRoutes.push(accumulatedPath);
       pageTitle = `${routeToLabel(routes[i])} | ${pageTitle}`;

@@ -28,13 +28,17 @@ import MDButton from "qqq/components/legacy/MDButton";
 
 // eslint-disable import/prefer-default-export
 
-const standardWidth = "150px";
+export const standardWidth = "150px";
 
-export function QCreateNewButton(): JSX.Element
+interface QCreateNewButtonProps
+{
+   tablePath: string;
+}
+export function QCreateNewButton({tablePath}: QCreateNewButtonProps): JSX.Element
 {
    return (
       <Box ml={3} mr={2} width={standardWidth}>
-         <Link to="create">
+         <Link to={`${tablePath}/create`}>
             <MDButton variant="gradient" color="info" fullWidth startIcon={<Icon>add</Icon>}>
                Create New
             </MDButton>
@@ -110,6 +114,23 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
             fullWidth
          >
             actions&nbsp;
+            <Icon>keyboard_arrow_down</Icon>
+         </MDButton>
+      </Box>
+   );
+}
+
+export function QSavedFiltersMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
+{
+   return (
+      <Box width={standardWidth} ml={1}>
+         <MDButton
+            variant={isOpen ? "contained" : "outlined"}
+            color="dark"
+            onClick={onClickHandler}
+            fullWidth
+         >
+            saved&nbsp;filters&nbsp;
             <Icon>keyboard_arrow_down</Icon>
          </MDButton>
       </Box>

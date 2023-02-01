@@ -266,6 +266,13 @@ export default function App()
                });
 
                routeList.push({
+                  name: `${app.label}`,
+                  key: app.name,
+                  route: `${path}/savedFilter/:id`,
+                  component: <RecordQuery table={table} />,
+               });
+
+               routeList.push({
                   name: `${app.label} Create`,
                   key: `${app.name}.create`,
                   route: `${path}/create`,

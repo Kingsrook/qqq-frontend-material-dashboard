@@ -19,9 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 /*******************************************************************************
@@ -301,7 +307,7 @@ class FilterUtils
       const fieldType = field.type;
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
-         return (null);
+         return null;
       }
       else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN || operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN)
       {
@@ -321,6 +327,171 @@ class FilterUtils
 
       return (values[0]);
    };
+
+
+   /*******************************************************************************
+    ** Get the default filter to use on the page - either from given filter string, query string param, or
+    ** local storage, or a default (empty).
+    *******************************************************************************/
+   public static async determineFilterAndSortModels(qController: QController, tableMetaData: QTableMetaData, filterString: string, searchParams: URLSearchParams, filterLocalStorageKey: string, sortLocalStorageKey: string): Promise<{ filter: GridFilterModel, sort: GridSortItem[] }>
+   {
+      let defaultFilter = {items: []} as GridFilterModel;
+      let defaultSort = [] as GridSortItem[];
+
+      if (tableMetaData.fields !== undefined)
+      {
+         if (filterString != null || (searchParams && searchParams.has("filter")))
+         {
+            try
+            {
+               const qQueryFilter = (filterString !== null) ? JSON.parse(filterString) : JSON.parse(searchParams.get("filter")) as QQueryFilter;
+
+               //////////////////////////////////////////////////////////////////
+               // translate from a qqq-style filter to one that the grid wants //
+               //////////////////////////////////////////////////////////////////
+               let id = 1;
+               for (let i = 0; i < qQueryFilter?.criteria?.length; i++)
+               {
+                  const criteria = qQueryFilter.criteria[i];
+                  const field = tableMetaData.fields.get(criteria.fieldName);
+                  let values = criteria.values;
+                  if (field.possibleValueSourceName)
+                  {
+                     //////////////////////////////////////////////////////////////////////////////////
+                     // possible-values in query-string are expected to only be their id values.     //
+                     // e.g., ...values=[1]...                                                       //
+                     // but we need them to be possibleValue objects (w/ id & label) so the label    //
+                     // can be shown in the filter dropdown.  So, make backend call to look them up. //
+                     //////////////////////////////////////////////////////////////////////////////////
+                     if (values && values.length > 0)
+                     {
+                        values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
+                     }
+
+                     ////////////////////////////////////////////
+                     // log message if no values were returned //
+                     ////////////////////////////////////////////
+                     if (!values || values.length === 0)
+                     {
+                        console.warn("WARNING: No possible values were returned for [" + field.possibleValueSourceName + "] for values [" + criteria.values + "].");
+                     }
+                  }
+
+                  defaultFilter.items.push({
+                     columnField: criteria.fieldName,
+                     operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
+                     value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
+                     id: id++, // not sure what this id is!!
+                  });
+               }
+
+               defaultFilter.linkOperator = GridLinkOperator.And;
+               if (qQueryFilter.booleanOperator === "OR")
+               {
+                  defaultFilter.linkOperator = GridLinkOperator.Or;
+               }
+
+               //////////////////////////////////////////////////////////////////
+               // translate from a qqq-style filter to one that the grid wants //
+               //////////////////////////////////////////////////////////////////
+               if (qQueryFilter.orderBys && qQueryFilter.orderBys.length > 0)
+               {
+                  for (let i = 0; i < qQueryFilter.orderBys.length; i++)
+                  {
+                     const orderBy = qQueryFilter.orderBys[i];
+                     defaultSort.push({
+                        field: orderBy.fieldName,
+                        sort: orderBy.isAscending ? "asc" : "desc"
+                     });
+                  }
+               }
+
+               return ({filter: defaultFilter, sort: defaultSort});
+            }
+            catch (e)
+            {
+               console.warn("Error parsing filter from query string", e);
+            }
+         }
+
+         if (localStorage.getItem(filterLocalStorageKey))
+         {
+            defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
+            console.log(`Got default from LS: ${JSON.stringify(defaultFilter)}`);
+         }
+
+         if (localStorage.getItem(sortLocalStorageKey))
+         {
+            defaultSort = JSON.parse(localStorage.getItem(sortLocalStorageKey));
+            console.log(`Got default from LS: ${JSON.stringify(defaultSort)}`);
+         }
+      }
+
+      return ({filter: defaultFilter, sort: defaultSort});
+   }
+
+
+   /*******************************************************************************
+    ** build a qqq filter from a grid and column sort model
+    *******************************************************************************/
+   public static buildQFilterFromGridFilter(filterModel: GridFilterModel, columnSortModel: GridSortItem[]): QQueryFilter
+   {
+      console.log("Building q filter with model:");
+      console.log(filterModel);
+
+      const qFilter = new QQueryFilter();
+      if (columnSortModel)
+      {
+         columnSortModel.forEach((gridSortItem) =>
+         {
+            qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
+         });
+      }
+
+      if (filterModel)
+      {
+         let foundFilter = false;
+         filterModel.items.forEach((item) =>
+         {
+            /////////////////////////////////////////////////////////////////////////
+            // set the values for these operators that otherwise don't have values //
+            /////////////////////////////////////////////////////////////////////////
+            if (item.operatorValue === "isTrue")
+            {
+               item.value = [true];
+            }
+            else if (item.operatorValue === "isFalse")
+            {
+               item.value = [false];
+            }
+
+            ////////////////////////////////////////////////////////////////////////////////
+            // if no value set and not 'empty' or 'not empty' operators, skip this filter //
+            ////////////////////////////////////////////////////////////////////////////////
+            if ((!item.value || item.value.length == 0) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            {
+               return;
+            }
+
+            const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
+            const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
+            qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
+            foundFilter = true;
+         });
+
+         qFilter.booleanOperator = "AND";
+         if (filterModel.linkOperator == "or")
+         {
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            // by default qFilter uses AND - so only  if we see linkOperator=or do we need to set it //
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            qFilter.booleanOperator = "OR";
+         }
+      }
+
+      return qFilter;
+   };
+
 }
 
 export default FilterUtils;

@@ -20,10 +20,12 @@
  */
 
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
+import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -42,21 +44,23 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridLinkOperator, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import FormData from "form-data";
 import React, {useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
 import Footer from "qqq/components/horseshoe/Footer";
 import NavBar from "qqq/components/horseshoe/NavBar";
+import SavedFilters from "qqq/components/misc/SavedFilters";
 import DashboardLayout from "qqq/layouts/DashboardLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
-import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
+const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
 const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
@@ -77,86 +81,6 @@ RecordQuery.defaultProps = {
 
 const qController = Client.getInstance();
 
-/*******************************************************************************
- ** Get the default filter to use on the page - either from query string, or
- ** local storage, or a default (empty).
- *******************************************************************************/
-async function getDefaultFilter(tableMetaData: QTableMetaData, searchParams: URLSearchParams, filterLocalStorageKey: string): Promise<GridFilterModel>
-{
-   if (tableMetaData.fields !== undefined)
-   {
-      if (searchParams.has("filter"))
-      {
-         try
-         {
-            const qQueryFilter = JSON.parse(searchParams.get("filter")) as QQueryFilter;
-
-            //////////////////////////////////////////////////////////////////
-            // translate from a qqq-style filter to one that the grid wants //
-            //////////////////////////////////////////////////////////////////
-            const defaultFilter = {items: []} as GridFilterModel;
-            let id = 1;
-
-            for (let i = 0; i < qQueryFilter.criteria.length; i++)
-            {
-               const criteria = qQueryFilter.criteria[i];
-               const field = tableMetaData.fields.get(criteria.fieldName);
-               let values = criteria.values;
-               if (field.possibleValueSourceName)
-               {
-                  //////////////////////////////////////////////////////////////////////////////////
-                  // possible-values in query-string are expected to only be their id values.     //
-                  // e.g., ...values=[1]...                                                       //
-                  // but we need them to be possibleValue objects (w/ id & label) so the label    //
-                  // can be shown in the filter dropdown.  So, make backend call to look them up. //
-                  //////////////////////////////////////////////////////////////////////////////////
-                  if (values && values.length > 0)
-                  {
-                     values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
-                  }
-
-                  ////////////////////////////////////////////
-                  // log message if no values were returned //
-                  ////////////////////////////////////////////
-                  if (! values || values.length === 0)
-                  {
-                     console.warn("WARNING: No possible values were returned for [" + field.possibleValueSourceName + "] for values [" + criteria.values + "].");
-                  }
-               }
-
-               defaultFilter.items.push({
-                  columnField: criteria.fieldName,
-                  operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
-                  value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
-                  id: id++, // not sure what this id is!!
-               });
-            }
-
-            defaultFilter.linkOperator = GridLinkOperator.And;
-            if (qQueryFilter.booleanOperator === "OR")
-            {
-               defaultFilter.linkOperator = GridLinkOperator.Or;
-            }
-
-            return (defaultFilter);
-         }
-         catch (e)
-         {
-            console.warn("Error parsing filter from query string", e);
-         }
-      }
-
-      if (localStorage.getItem(filterLocalStorageKey))
-      {
-         const defaultFilter = JSON.parse(localStorage.getItem(filterLocalStorageKey));
-         console.log(`Got default from LS: ${JSON.stringify(defaultFilter)}`);
-         return (defaultFilter);
-      }
-   }
-
-   return ({items: []});
-}
-
 function RecordQuery({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
@@ -170,6 +94,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ////////////////////////////////////////////
    // look for defaults in the local storage //
    ////////////////////////////////////////////
+   const currentSavedFilterLocalStorageKey = `${CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const rowsPerPageLocalStorageKey = `${ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const pinnedColumnsLocalStorageKey = `${PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
@@ -198,8 +123,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       defaultPinnedColumns = JSON.parse(localStorage.getItem(pinnedColumnsLocalStorageKey));
    }
-
-
    if (localStorage.getItem(rowsPerPageLocalStorageKey))
    {
       defaultRowsPerPage = JSON.parse(localStorage.getItem(rowsPerPageLocalStorageKey));
@@ -217,6 +140,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [pinnedColumns, setPinnedColumns] = useState(defaultPinnedColumns);
 
    const [tableState, setTableState] = useState("");
+   const [metaData, setMetaData] = useState(null as QInstance);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [defaultFilterLoaded, setDefaultFilterLoaded] = useState(false);
    const [actionsMenu, setActionsMenu] = useState(null);
@@ -236,6 +160,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [gridPreferencesWindow, setGridPreferencesWindow] = useState(undefined);
    const [showClearFiltersWarning, setShowClearFiltersWarning] = useState(false);
    const [hasValidFilters, setHasValidFilters] = useState(false);
+   const [currentSavedFilter, setCurrentSavedFilter] = useState(null as QRecord);
 
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
@@ -285,6 +210,60 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                console.log(`Couldn't find process named ${processName}`);
             }
          }
+
+         /////////////////////////////////////////////////////////////////////
+         // the path for a savedFilter looks like: .../table/savedFilter/32 //
+         // so if path has '/savedFilter/' get last parsed string           //
+         /////////////////////////////////////////////////////////////////////
+         let currentSavedFilterId = null as number;
+         if(location.pathname.indexOf("/savedFilter/") != -1)
+         {
+            const parts = location.pathname.split("/");
+            currentSavedFilterId = Number.parseInt(parts[parts.length - 1]);
+         }
+         else
+         {
+            if (localStorage.getItem(currentSavedFilterLocalStorageKey))
+            {
+               currentSavedFilterId = Number.parseInt(localStorage.getItem(currentSavedFilterLocalStorageKey));
+               navigate(`${metaData.getTablePathByName(tableName)}/savedFilter/${currentSavedFilterId}`);
+            }
+            else
+            {
+               setCurrentSavedFilter(null);
+            }
+         }
+
+         if(currentSavedFilterId != null)
+         {
+            (async () =>
+            {
+               const formData = new FormData();
+               formData.append("id", currentSavedFilterId);
+
+               //////////////////////////////////////////////////////////////////
+               // we don't want this job to go async, so, pass a large timeout //
+               //////////////////////////////////////////////////////////////////
+               formData.append("_qStepTimeoutMillis", 60 * 1000);
+
+               const formDataHeaders = {
+                  "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
+               };
+
+               const processResult = await qController.processInit("querySavedFilter", formData, formDataHeaders);
+               if (processResult instanceof QJobError)
+               {
+                  const jobError = processResult as QJobError;
+                  console.error("Could not retrieve saved filter: " + jobError.userFacingError);
+               }
+               else
+               {
+                  const result = processResult as QJobComplete;
+                  const qRecord = new QRecord(result.values.savedFilterList[0]);
+                  setCurrentSavedFilter(qRecord);
+               }
+            })();
+         }
       }
       catch (e)
       {
@@ -294,68 +273,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ////////////////////////////////////////////////////////////////////////////////////
       // if we didn't open a process... not sure what we do in the table/query use-case //
       ////////////////////////////////////////////////////////////////////////////////////
-
       setActiveModalProcess(null);
-   }, [ location ]);
+   }, [ location , tableMetaData]);
+
+
 
    const buildQFilter = (filterModel: GridFilterModel) =>
    {
-      console.log("Building q filter with model:");
-      console.log(filterModel);
-
-      const qFilter = new QQueryFilter();
-      if (columnSortModel)
-      {
-         columnSortModel.forEach((gridSortItem) =>
-         {
-            qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
-         });
-      }
-
-      if (filterModel)
-      {
-         let foundFilter = false;
-         filterModel.items.forEach((item) =>
-         {
-            /////////////////////////////////////////////////////////////////////////
-            // set the values for these operators that otherwise don't have values //
-            /////////////////////////////////////////////////////////////////////////
-            if(item.operatorValue === "isTrue")
-            {
-               item.value = [true];
-            }
-            else if(item.operatorValue === "isFalse")
-            {
-               item.value = [false];
-            }
-
-            ////////////////////////////////////////////////////////////////////////////////
-            // if no value set and not 'empty' or 'not empty' operators, skip this filter //
-            ////////////////////////////////////////////////////////////////////////////////
-            if((! item.value || item.value.length == 0) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
-            {
-               return;
-            }
-
-            const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
-            const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
-            qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
-            foundFilter = true;
-         });
-         setHasValidFilters(foundFilter);
-
-         qFilter.booleanOperator = "AND";
-         if (filterModel.linkOperator == "or")
-         {
-            ///////////////////////////////////////////////////////////////////////////////////////////
-            // by default qFilter uses AND - so only  if we see linkOperator=or do we need to set it //
-            ///////////////////////////////////////////////////////////////////////////////////////////
-            qFilter.booleanOperator = "OR";
-         }
-      }
-
-      return qFilter;
+      const filter = FilterUtils.buildQFilterFromGridFilter(filterModel, columnSortModel);
+      setHasValidFilters(filter.criteria && filter.criteria.length > 0);
+      return(filter);
    };
+
 
    const getTableMetaData = async (): Promise<QTableMetaData> =>
    {
@@ -388,10 +317,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          if (!defaultFilterLoaded)
          {
             setDefaultFilterLoaded(true);
-            localFilterModel = await getDefaultFilter(tableMetaData, searchParams, filterLocalStorageKey);
-            setFilterModel(localFilterModel);
+
+            let models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, null, searchParams, filterLocalStorageKey, sortLocalStorageKey);
+            setFilterModel(models.filter);
+            setColumnSortModel(models.sort);
             return;
          }
+
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
          if (columnSortModel.length === 0)
@@ -588,7 +520,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          clearTimeout(instance.current.timer);
          instance.current.timer = setTimeout(() =>
          {
-            navigate(`${params.id}`);
+            navigate(`${metaData.getTablePathByName(tableName)}/${params.id}`);
          }, 100);
       }
       else
@@ -663,7 +595,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          setTableState(tableName);
          const metaData = await qController.loadMetaData();
-         ValueUtils.qInstance = metaData;
+         setMetaData(metaData);
 
          setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
          setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
@@ -813,7 +745,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setRecordIdsForProcess("");
       }
 
-      navigate(`${process.name}${getRecordsQueryString()}`);
+      navigate(`${metaData?.getTablePathByName(tableName)}/${process.name}${getRecordsQueryString()}`);
       closeActionsMenu();
    };
 
@@ -922,7 +854,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             component="div"
             // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
             // so pass some sentinel value...
-            count={totalRecords === null ? -1 : totalRecords}
+            count={totalRecords === null || totalRecords === undefined ? -1 : totalRecords}
             page={pageNumber}
             rowsPerPageOptions={[ 10, 25, 50, 100, 250 ]}
             rowsPerPage={rowsPerPage}
@@ -938,6 +870,54 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (
          <LinearProgress color="info" />
       );
+   }
+
+   async function handleSavedFilterChange(selectedSavedFilterId: number)
+   {
+      if(selectedSavedFilterId != null)
+      {
+         const qRecord = await fetchSavedFilter(selectedSavedFilterId);
+         const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null,null);
+         handleFilterChange(models.filter);
+         handleSortChange(models.sort);
+         localStorage.setItem(currentSavedFilterLocalStorageKey, selectedSavedFilterId.toString());
+      }
+      else
+      {
+         handleFilterChange({items: []} as GridFilterModel);
+         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}]);
+         localStorage.removeItem(currentSavedFilterLocalStorageKey);
+      }
+   }
+
+   async function fetchSavedFilter(filterId: number):Promise<QRecord>
+   {
+      let qRecord = null;
+      const formData = new FormData();
+      formData.append("id", filterId);
+
+      //////////////////////////////////////////////////////////////////
+      // we don't want this job to go async, so, pass a large timeout //
+      //////////////////////////////////////////////////////////////////
+      formData.append("_qStepTimeoutMillis", 60 * 1000);
+
+      const formDataHeaders = {
+         "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
+      };
+
+      const processResult = await qController.processInit("querySavedFilter", formData, formDataHeaders);
+      if (processResult instanceof QJobError)
+      {
+         const jobError = processResult as QJobError;
+         console.error("Could not retrieve saved filter: " + jobError.userFacingError);
+      }
+      else
+      {
+         const result = processResult as QJobComplete;
+         qRecord = new QRecord(result.values.savedFilterList[0]);
+      }
+
+      return(qRecord);
    }
 
    function CustomToolbar()
@@ -1003,6 +983,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                               <Button onClick={() =>
                               {
                                  setShowClearFiltersWarning(false);
+                                 navigate(metaData.getTablePathByName(tableName));
                                  handleFilterChange({items: []} as GridFilterModel);
                               }}>Yes</Button>
                            </DialogActions>
@@ -1120,7 +1101,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          ////////////////////////////////////////////////////////////////////////////////////////
          updateTable();
       }
-   }, [ pageNumber, rowsPerPage, columnSortModel ]);
+   }, [ pageNumber, rowsPerPage, columnSortModel, currentSavedFilter ]);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for state changes that DO change the filter, call to update the table - and DO clear out the totalRecords //
@@ -1185,15 +1166,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                ) : null
             }
             <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
+               <Box display="flex" marginRight="auto">
+                  <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange}/>
+               </Box>
 
                <Box display="flex" width="150px">
                   <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                   {renderActionsMenu}
                </Box>
-
                {
                   table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-                  <QCreateNewButton />
+                  <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
                }
 
             </Box>
@@ -1215,7 +1198,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                      columns={columnsModel}
                      rowBuffer={10}
-                     rowCount={totalRecords === null ? 0 : totalRecords}
+                     rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
                      onPageSizeChange={handleRowsPerPageChange}
                      onRowClick={handleRowClick}
                      onStateChange={handleStateChange}
