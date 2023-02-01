@@ -51,5 +51,6 @@ module.exports = function (app)
    app.use("/serverInfo", getRequestHandler());
    app.use("/processes", getRequestHandler());
    app.use("/reports", getRequestHandler());
+   app.use("/", getRequestHandler());
 
 };
