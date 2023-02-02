@@ -111,6 +111,7 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
             variant={isOpen ? "contained" : "outlined"}
             color="dark"
             onClick={onClickHandler}
+            startIcon={<Icon>games</Icon>}
             fullWidth
          >
             actions&nbsp;
@@ -129,6 +130,7 @@ export function QSavedFiltersMenuButton({isOpen, onClickHandler}: QActionsMenuBu
             color="dark"
             onClick={onClickHandler}
             fullWidth
+            startIcon={<Icon>filter_alt</Icon>}
          >
             saved&nbsp;filters&nbsp;
             <Icon>keyboard_arrow_down</Icon>

@@ -25,7 +25,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {KeyboardArrowDown} from "@mui/icons-material";
+import {FiberManualRecord, KeyboardArrowDown} from "@mui/icons-material";
 import {Alert, ClickAwayListener, Grow, MenuList, Paper, Popper} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -34,9 +34,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import Icon from "@mui/material/Icon";
+import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import {GridFilterModel, GridSortItem} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
@@ -76,12 +80,12 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
    const location = useLocation();
    const [saveOptionsOpen, setSaveOptionsOpen] = useState(false);
 
-   const SAVE_OPTION = "Save Filter...";
-   const SAVE_AS_OPTION = "Create A New Filter From This Filter...";
-   const RENAME_OPTION = "Rename This Filter...";
-   const CLEAR_OPTION = "Clear This Filter";
-   const DELETE_OPTION = "Delete This Filter...";
-   const dropdownOptions = [SAVE_AS_OPTION, RENAME_OPTION, CLEAR_OPTION, DELETE_OPTION];
+   const SAVE_OPTION = "Save...";
+   const DUPLICATE_OPTION = "Duplicate...";
+   const RENAME_OPTION = "Rename...";
+   const DELETE_OPTION = "Delete...";
+   const CLEAR_OPTION = "Clear Current Filter";
+   const dropdownOptions = [DUPLICATE_OPTION, RENAME_OPTION, DELETE_OPTION, CLEAR_OPTION];
 
    const openSavedFiltersMenu = (event: any) => setSavedFiltersMenu(event.currentTarget);
    const closeSavedFiltersMenu = () => setSavedFiltersMenu(null);
@@ -146,7 +150,6 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
       setSaveOptionsOpen(false);
       setPopupAlertContent(null);
       closeSavedFiltersMenu();
-      setSavedFilterNameInputValue(null);
       setSaveFilterPopupOpen(true);
       setIsSaveFilterAs(false);
       setIsRenameFilter(false);
@@ -156,7 +159,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
       {
          case SAVE_OPTION:
             break;
-         case SAVE_AS_OPTION:
+         case DUPLICATE_OPTION:
             setIsSaveFilterAs(true);
             break;
          case CLEAR_OPTION:
@@ -165,6 +168,10 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
             navigate(metaData.getTablePathByName(tableMetaData.name));
             break;
          case RENAME_OPTION:
+            if(currentSavedFilter != null)
+            {
+               setSavedFilterNameInputValue(currentSavedFilter.values.get("label"));
+            }
             setIsRenameFilter(true);
             break;
          case DELETE_OPTION:
@@ -322,9 +329,12 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
       return (savedFilters);
    }
 
+   const hasStorePermission = metaData?.processes.has("storeSavedFilter");
+   const hasDeletePermission = metaData?.processes.has("deleteSavedFilter");
+   const hasQueryPermission = metaData?.processes.has("querySavedFilter");
+
    const renderSavedFiltersMenu = tableMetaData && (
       <Menu
-         sx={{width: "500px"}}
          anchorEl={savedFiltersMenu}
          anchorOrigin={{
             vertical: "bottom",
@@ -338,10 +348,47 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          onClose={closeSavedFiltersMenu}
          keepMounted
       >
+         <MenuItem sx={{width: "300px"}}><b>Filter Actions</b></MenuItem>
+         {
+            hasStorePermission &&
+            <MenuItem onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
+               <ListItemIcon><Icon>save</Icon></ListItemIcon>
+               Save...
+            </MenuItem>
+         }
+         {
+            hasStorePermission &&
+            <MenuItem disabled={currentSavedFilter === null} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
+               <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+               Rename...
+            </MenuItem>
+         }
+         {
+            hasStorePermission &&
+            <MenuItem disabled={currentSavedFilter === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
+               <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
+               Duplicate...
+            </MenuItem>
+         }
+         {
+            hasDeletePermission &&
+            <MenuItem disabled={currentSavedFilter === null} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
+               <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+               Delete...
+            </MenuItem>
+         }
+         {
+            <MenuItem disabled={currentSavedFilter === null} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
+               <ListItemIcon><Icon>clear</Icon></ListItemIcon>
+               Clear Current Filter
+            </MenuItem>
+         }
+         <Divider/>
+         <MenuItem><b>Your Filters</b></MenuItem>
          {
             savedFilters && savedFilters.length > 0 ? (
                savedFilters.map((record: QRecord, index: number) =>
-                  <MenuItem key={`savedFiler-${index}`} onClick={() => handleSavedFilterRecordOnClick(record)}>
+                  <MenuItem sx={{paddingLeft: "50px"}} key={`savedFiler-${index}`} onClick={() => handleSavedFilterRecordOnClick(record)}>
                      {record.values.get("label")}
                   </MenuItem>
                )
@@ -354,38 +401,27 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
       </Menu>
    );
 
-
-   const hasStorePermission = metaData?.processes.has("storeSavedFilter");
-   const hasDeletePermission = metaData?.processes.has("deleteSavedFilter");
-   const hasQueryPermission = metaData?.processes.has("querySavedFilter");
-
    return (
       hasQueryPermission && tableMetaData ? (
          <Box display="flex" flexGrow={1}>
             <QSavedFiltersMenuButton isOpen={savedFiltersMenu} onClickHandler={openSavedFiltersMenu} />
             {renderSavedFiltersMenu}
-            <Box display="flex" justifyContent="flex-end" flexDirection="column">
+            <Box display="flex" justifyContent="center" flexDirection="column">
                <Box pl={2} pr={2} sx={{display: "flex", alignItems: "center"}}>
-
                   {
-                     savedFiltersHaveLoaded && (
-                        currentSavedFilter ? (
-                           <Typography mr={2} variant="h6">Current Filter:&nbsp;
-                              <span style={{fontWeight: "initial"}}>
-                                 {currentSavedFilter.values.get("label")}
-                                 {
-                                    filterIsModified && (
-                                       <i>&nbsp;*</i>
-
-                                    )
-                                 }
-                              </span>
-                           </Typography>
-                        ) : (
-                           <Typography mr={2} variant="h6">&nbsp;
-                              <span style={{fontWeight: "initial"}}>&nbsp;</span>
-                           </Typography>
-                        )
+                     savedFiltersHaveLoaded && currentSavedFilter && (
+                        <Typography mr={2} variant="h6">Current Filter:&nbsp;
+                           <span style={{fontWeight: "initial"}}>
+                              {currentSavedFilter.values.get("label")}
+                              {
+                                 filterIsModified && (
+                                    <Tooltip sx={{cursor: "pointer"}} title={"The current has been modified, click \"Save...\" to save the changes."}>
+                                       <FiberManualRecord sx={{color: "orange", paddingLeft: "2px", paddingTop: "4px"}} />
+                                    </Tooltip>
+                                 )
+                              }
+                           </span>
+                        </Typography>
                      )
                   }
                </Box>
@@ -407,7 +443,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                   <Popper
                      sx={{
                         zIndex: 10,
-                        marginLeft: "175px !important"
+                        marginLeft: "100px !important"
                      }}
                      open={saveOptionsOpen}
                      anchorEl={anchorRef.current}
@@ -428,7 +464,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                               <ClickAwayListener onClickAway={handleSaveOptionsMenuClose}>
                                  <MenuList id="split-button-menu" autoFocusItem>
                                     {dropdownOptions.map((option, index) => (
-                                       (option === CLEAR_OPTION || ((option !== DELETE_OPTION || hasDeletePermission) && (option !== SAVE_AS_OPTION || hasStorePermission))) && (
+                                       (option === CLEAR_OPTION || ((option !== DELETE_OPTION || hasDeletePermission) && (option !== DUPLICATE_OPTION || hasStorePermission))) && (
                                           <MenuItem
                                              key={option}
                                              onClick={() => handleDropdownOptionClick(option)}
@@ -488,8 +524,13 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                                  placeholder="Filter Name"
                                  label="Filter Name"
                                  inputProps={{width: "100%", maxLength: 100}}
+                                 value={savedFilterNameInputValue}
                                  sx={{width: "100%"}}
                                  onChange={handleSaveFilterInputChange}
+                                 onFocus={event =>
+                                 {
+                                    event.target.select();
+                                 }}
                               />
                            </Box>
                         ):(

@@ -223,6 +223,11 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    overflow: scroll;
 }
 
+.MuiChip-root
+{
+   padding-top: 1px !important;
+}
+
 #outlined-multiline-static
 {
    padding-left: 10px;
