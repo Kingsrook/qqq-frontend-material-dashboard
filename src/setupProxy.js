@@ -29,19 +29,26 @@ const {createProxyMiddleware} = require("http-proxy-middleware");
 
 module.exports = function (app)
 {
-   app.use(
-      "/data/*/export/*",
-      createProxyMiddleware({
-         target: "http://localhost:8000",
-         changeOrigin: true,
-      }),
-   );
+   let port = 8000;
+   if(process.env.REACT_APP_PROXY_LOCALHOST_PORT)
+   {
+      port = process.env.REACT_APP_PROXY_LOCALHOST_PORT;
+   }
 
-   app.use(
-      "/download/*",
-      createProxyMiddleware({
-         target: "http://localhost:8000",
+   function getRequestHandler()
+   {
+      return createProxyMiddleware({
+         target: `http://localhost:${port}`,
          changeOrigin: true,
-      }),
-   );
+      });
+   }
+
+   app.use("/data/*/export/*", getRequestHandler());
+   app.use("/download/*", getRequestHandler());
+   app.use("/metaData/*", getRequestHandler());
+   app.use("/data/*", getRequestHandler());
+   app.use("/widget/*", getRequestHandler());
+   app.use("/serverInfo", getRequestHandler());
+   app.use("/processes", getRequestHandler());
+   app.use("/reports", getRequestHandler());
 };
