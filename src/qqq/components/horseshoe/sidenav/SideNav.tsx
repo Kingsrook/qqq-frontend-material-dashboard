@@ -41,7 +41,7 @@ interface Props
    color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
    icon?: string;
    logo?: string;
-   companyName?: string;
+   appName?: string;
    routes: {
       [key: string]:
          | ReactNode
@@ -64,7 +64,7 @@ interface Props
    [key: string]: any;
 }
 
-function Sidenav({color, icon, logo, companyName, routes, ...rest}: Props): JSX.Element
+function Sidenav({color, icon, logo, appName, routes, ...rest}: Props): JSX.Element
 {
    const [openCollapse, setOpenCollapse] = useState<boolean | string>(false);
    const [openNestedCollapse, setOpenNestedCollapse] = useState<boolean | string>(false);
@@ -319,11 +319,11 @@ function Sidenav({color, icon, logo, companyName, routes, ...rest}: Props): JSX.
                </MDTypography>
             </Box>
             <Box component={NavLink} to="/" display="flex" alignItems="center">
-               {!miniSidenav && logo && <Box component="img" src={logo} alt="Logo" width="100%" />}
-               {miniSidenav && icon && <Box component="img" src={icon} alt="Icon" width="160%" />}
-               {!miniSidenav && companyName && <Box width={!companyName && "100%"} sx={(theme: any) => sidenavLogoLabel(theme, {miniSidenav})}>
+               {!miniSidenav && logo && <Box component="img" src={logo} alt={appName} title={appName} width="100%" />}
+               {miniSidenav && icon && <Box component="img" src={icon} alt={appName} title={appName} width="160%" />}
+               {!miniSidenav && !logo && appName && <Box width={appName && "100%"} sx={(theme: any) => sidenavLogoLabel(theme, {miniSidenav})}>
                   <MDTypography component="h6" variant="button" fontWeight="medium" color={textColor}>
-                     {companyName}
+                     {appName}
                   </MDTypography>
                </Box>
                }
@@ -352,7 +352,7 @@ Sidenav.defaultProps = {
    color: "info",
    icon: "",
    logo: "",
-   companyName: "",
+   appName: "",
 };
 
 export default Sidenav;

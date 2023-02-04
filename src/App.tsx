@@ -532,7 +532,7 @@ export default function App()
                   color={sidenavColor}
                   icon={branding.icon}
                   logo={branding.logo}
-                  companyName={branding.companyName}
+                  appName={branding.appName}
                   routes={sideNavRoutes}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}

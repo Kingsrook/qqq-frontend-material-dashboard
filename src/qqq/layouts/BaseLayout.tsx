@@ -19,11 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import Box from "@mui/material/Box";
 import {ReactNode, useEffect, useState} from "react";
 import Footer from "qqq/components/horseshoe/Footer";
 import NavBar from "qqq/components/horseshoe/NavBar";
 import DashboardLayout from "qqq/layouts/DashboardLayout";
+import Client from "qqq/utils/qqq/Client";
 
 interface Props
 {
@@ -45,6 +47,16 @@ export const breakpoints = {
 function BaseLayout({stickyNavbar, children}: Props): JSX.Element
 {
    const [tabsOrientation, setTabsOrientation] = useState<"horizontal" | "vertical">("horizontal");
+   const [metaData, setMetaData] = useState(null as QInstance);
+
+   useEffect(() =>
+   {
+      (async () =>
+      {
+         const metaData = await Client.getInstance().loadMetaData();
+         setMetaData(metaData);
+      })();
+   }, []);
 
    useEffect(() =>
    {
@@ -72,7 +84,7 @@ function BaseLayout({stickyNavbar, children}: Props): JSX.Element
       <DashboardLayout>
          <NavBar />
          <Box mt={stickyNavbar ? 3 : 6}>{children}</Box>
-         <Footer />
+         <Footer company={{href: metaData?.branding?.companyUrl, name: metaData?.branding?.companyName}} />
       </DashboardLayout>
    );
 }

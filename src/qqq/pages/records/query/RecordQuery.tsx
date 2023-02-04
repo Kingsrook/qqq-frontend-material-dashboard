@@ -50,10 +50,8 @@ import React, {useContext, useEffect, useReducer, useRef, useState} from "react"
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
-import Footer from "qqq/components/horseshoe/Footer";
-import NavBar from "qqq/components/horseshoe/NavBar";
 import SavedFilters from "qqq/components/misc/SavedFilters";
-import DashboardLayout from "qqq/layouts/DashboardLayout";
+import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -1121,17 +1119,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if(tableMetaData && !tableMetaData.readPermission)
    {
       return (
-         <DashboardLayout>
-            <NavBar />
+         <BaseLayout>
             <Alert severity="error">
                You do not have permission to view {tableMetaData?.label} records
             </Alert>
-         </DashboardLayout>
+         </BaseLayout>
       );
    }
 
    return (
-      <DashboardLayout>
+      <BaseLayout>
          {/*
          // see above code that would use this
          <iframe id="exportIFrame" name="exportIFrame">
@@ -1140,7 +1137,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </form>
          </iframe>
          */}
-         <NavBar />
          <Box my={3}>
             {alertContent ? (
                <Box mb={3}>
@@ -1228,8 +1224,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </Modal>
          }
 
-         <Footer />
-      </DashboardLayout>
+      </BaseLayout>
    );
 }
 

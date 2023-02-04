@@ -40,6 +40,11 @@ interface Props
    [key: string]: any;
 }
 
+Footer.defaultProps = {
+   company: {href: "", name: ""},
+   links: [],
+};
+
 function Footer({company, links}: Props): JSX.Element
 {
    const {href, name} = company;
@@ -67,27 +72,30 @@ function Footer({company, links}: Props): JSX.Element
             position: "fixed", bottom: "0px", zIndex: -1, marginBottom: "10px",
          }}
       >
-         <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexWrap="wrap"
-            color="text"
-            fontSize={size.sm}
-            px={1.5}
-         >
-            &copy;
-            {" "}
-            {new Date().getFullYear()}
-            ,
-            <Link href={href} target="_blank">
-               <MDTypography variant="button" fontWeight="medium">
-                  &nbsp;
-                  {name}
-                  &nbsp;
-               </MDTypography>
-            </Link>
-         </Box>
+         {
+            href && name &&
+            <Box
+               display="flex"
+               justifyContent="center"
+               alignItems="center"
+               flexWrap="wrap"
+               color="text"
+               fontSize={size.sm}
+               px={1.5}
+            >
+               &copy;
+               {" "}
+               {new Date().getFullYear()}
+               ,
+               <Link href={href} target="_blank">
+                  <MDTypography variant="button" fontWeight="medium">
+                     &nbsp;
+                     {name}
+                     &nbsp;
+                  </MDTypography>
+               </Link>
+            </Box>
+         }
          <Box
             component="ul"
             sx={({breakpoints}) => ({
@@ -110,11 +118,5 @@ function Footer({company, links}: Props): JSX.Element
       </Box>
    );
 }
-
-// Declaring default props for Footer
-Footer.defaultProps = {
-   company: {href: "https://www.nutrifreshservices.com/", name: "Nutrifresh Services"},
-   links: [],
-};
 
 export default Footer;
