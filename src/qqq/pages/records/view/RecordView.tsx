@@ -369,6 +369,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                            <Box  key={fieldName} flexDirection="row" pr={2}>
                               <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
                                  {tableMetaData.fields.get(fieldName).label}:
+                                 <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
                               </Typography>
                               <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
                                  {ValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
