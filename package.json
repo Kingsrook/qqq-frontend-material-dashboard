@@ -51,7 +51,7 @@
       "geff-ham": "rm -rf node_modules/ && rm -rf package-lock.json && rm -rf lib/ && npm install",
       "npm-install": "npm install",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
-      "start": "BROWSER=none react-scripts start",
+      "start": "BROWSER=none react-scripts --max-http-header-size=65535 start",
       "test": "react-scripts test",
       "cypress:open": "cypress open",
       "cypress:run": "cypress run"
