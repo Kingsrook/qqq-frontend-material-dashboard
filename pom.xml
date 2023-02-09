@@ -25,10 +25,12 @@
 
    <groupId>com.kingsrook.qqq</groupId>
    <artifactId>qqq-frontend-material-dashboard</artifactId>
-   <version>0.0.3-SNAPSHOT</version>
+   <version>${revision}</version>
    <packaging>jar</packaging>
 
    <properties>
+      <revision>0.12.0-SNAPSHOT</revision>
+
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <maven.compiler.source>17</maven.compiler.source>
@@ -100,6 +102,24 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>3.0.0-M5</version>
+         </plugin>
+         <plugin>
+            <groupId>com.amashchenko.maven.plugin</groupId>
+            <artifactId>gitflow-maven-plugin</artifactId>
+            <version>1.18.0</version>
+            <configuration>
+               <gitFlowConfig>
+                  <productionBranch>main</productionBranch>
+                  <developmentBranch>dev</developmentBranch>
+                  <versionTagPrefix>version-</versionTagPrefix>
+               </gitFlowConfig>
+               <skipFeatureVersion>true</skipFeatureVersion> <!-- Keep feature names out of versions -->
+               <postReleaseGoals>install</postReleaseGoals>  <!-- Let CI run deploys -->
+               <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
+               <versionDigitToIncrement>1</versionDigitToIncrement> <!-- In general, we update the minor -->
+               <versionProperty>revision</versionProperty>
+               <skipUpdateVersion>true</skipUpdateVersion>
+            </configuration>
          </plugin>
       </plugins>
    </build>
