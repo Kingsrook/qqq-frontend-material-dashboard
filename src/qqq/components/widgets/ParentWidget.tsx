@@ -41,6 +41,7 @@ export interface ParentWidgetData
    }[][];
    childWidgetNameList: string[];
    dropdownNeedsSelectedText?: string;
+   storeDropdownSelections?: boolean;
    icon?: string;
 }
 
@@ -93,7 +94,6 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
    const parentReloadWidgetCallback = (data: string) =>
    {
       setChildUrlParams(data);
-
       reloadWidgetCallback(widgetIndex, data);
    }
 
@@ -107,7 +107,7 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
             reloadWidgetCallback={parentReloadWidgetCallback}
          >
             <Box sx={{height: "100%", width: "100%"}}>
-               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} />
+               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData}/>
             </Box>
          </Widget>
       ) : null

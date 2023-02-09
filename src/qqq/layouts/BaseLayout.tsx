@@ -83,7 +83,7 @@ function BaseLayout({stickyNavbar, children}: Props): JSX.Element
    return (
       <DashboardLayout>
          <NavBar />
-         <Box mt={stickyNavbar ? 3 : 6}>{children}</Box>
+         <Box>{children}</Box>
          <Footer company={{href: metaData?.branding?.companyUrl, name: metaData?.branding?.companyName}} />
       </DashboardLayout>
    );

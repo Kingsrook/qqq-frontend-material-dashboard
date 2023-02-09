@@ -22,7 +22,7 @@
 import {CircularProgress, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
-import React, {ReactNode} from "react";
+import React from "react";
 import {NavLink} from "react-router-dom";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
@@ -44,15 +44,7 @@ export interface StatisticsCardData
 interface Props
 {
    data: StatisticsCardData;
-   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
-   icon: ReactNode;
    increaseIsGood: boolean;
-   dropdown?: {
-      action: (...args: any) => void;
-      menu: ReactNode;
-      value: string;
-   };
-
    [key: string]: any;
 }
 
@@ -61,7 +53,7 @@ StatisticsCard.defaultProps = {
    increaseIsGood: true
 };
 
-function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
+function StatisticsCard({data, increaseIsGood}: Props): JSX.Element
 {
    const {count, percentageAmount, percentageLabel} = data;
 
@@ -94,7 +86,7 @@ function StatisticsCard({data, color, icon, increaseIsGood}: Props): JSX.Element
          <Box mt={0} display="flex" justifyContent="center">
             {
                count !== undefined ? (
-                  <Typography mt={0} sx={{color: "#344767", display: "flex", alignContent: "flex-end", fontSize: data?.countFontSize ? data?.countFontSize : "40px"}}>
+                  <Typography pb={1} mt={0} sx={{color: "#344767", display: "flex", alignContent: "flex-end", fontSize: data?.countFontSize ? data?.countFontSize : "30px"}}>
                      {
                         data.countURL ? (
                            <NavLink to={data.countURL}>{count.toLocaleString()}</NavLink>

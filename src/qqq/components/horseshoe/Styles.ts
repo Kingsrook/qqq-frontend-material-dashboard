@@ -98,8 +98,6 @@ const navbarContainer = ({breakpoints}: Theme): any => ({
    flexDirection: "column",
    alignItems: "flex-start",
    justifyContent: "space-between",
-   pt: 0.5,
-   pb: 0.5,
 
    [breakpoints.up("md")]: {
       flexDirection: "row",

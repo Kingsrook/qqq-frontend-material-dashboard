@@ -200,7 +200,7 @@ function AppHome({app}: Props): JSX.Element
 
    return (
       <BaseLayout>
-         <Box mt={4} mb={4}>
+         <Box>
             {app.widgets && (
                <DashboardWidgets widgetMetaDataList={widgets} />
             )}

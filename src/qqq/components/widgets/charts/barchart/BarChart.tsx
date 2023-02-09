@@ -161,7 +161,7 @@ function BarChart({color, title, description, date, data}: Props): JSX.Element
                   [data, color]
                )}
                <Box pt={3} pb={1} px={1}>
-                  <MDTypography variant="h5" textTransform="capitalize">
+                  <MDTypography variant="h6" textTransform="capitalize">
                      {title}
                   </MDTypography>
                   <MDTypography component="div" variant="button" color="text" fontWeight="light">

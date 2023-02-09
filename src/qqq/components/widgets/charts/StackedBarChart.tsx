@@ -20,6 +20,7 @@
  */
 
 
+import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip,} from "chart.js";
 import React, {useEffect, useState} from "react";
@@ -92,8 +93,8 @@ function StackedBarChart({data}: Props): JSX.Element
 
 
    return data ? (
-      <Box p={3}><Bar data={data} options={options}  /></Box>
-   ) : null;
+      <Box p={3}><Bar data={data} options={options} getElementsAtEvent={handleClick} /></Box>
+   ) : <Skeleton sx={{marginLeft: "20px", marginRight: "20px", height: "200px"}} /> ;
 }
 
 export default StackedBarChart;

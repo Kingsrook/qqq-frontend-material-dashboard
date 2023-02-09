@@ -19,12 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Card} from "@mui/material";
+import {Card, Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
-import React, {useMemo} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {Pie} from "react-chartjs-2";
 import {useNavigate} from "react-router-dom";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -59,13 +59,21 @@ interface Props
 function PieChart({description, chartData}: Props): JSX.Element
 {
    const navigate = useNavigate();
+   const [dataLoaded, setDataLoaded] = useState(false);
 
    if (chartData && chartData.dataset)
    {
       chartData.dataset.backgroundColors = chartColors;
    }
-
    const {data, options} = configs(chartData?.labels || [], chartData?.dataset || {});
+
+   useEffect(() =>
+   {
+      if(chartData)
+      {
+         setDataLoaded(true);
+      }
+   }, [chartData]);
 
    const handleClick = (e: Array<{}>) =>
    {
@@ -89,6 +97,19 @@ function PieChart({description, chartData}: Props): JSX.Element
                         [chartData]
                      )}
                   </Box>
+                  {
+                     ! chartData && (
+                        <Box sx={{
+                           position: "absolute",
+                           top: "40%",
+                           left: "50%",
+                           transform: "translate(-50%, -50%)",
+                           display: "flex",
+                           justifyContent: "center"}}>
+                           <Skeleton sx={{width: "150px", height: "150px"}} variant="circular"/>
+                        </Box>
+                     )
+                  }
                </Grid>
             </Grid>
             <Divider />

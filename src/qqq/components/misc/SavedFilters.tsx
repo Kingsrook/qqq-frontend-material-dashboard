@@ -25,11 +25,9 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {FiberManualRecord, KeyboardArrowDown} from "@mui/icons-material";
-import {Alert, ClickAwayListener, Grow, MenuList, Paper, Popper} from "@mui/material";
+import {FiberManualRecord} from "@mui/icons-material";
+import {Alert} from "@mui/material";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -424,61 +422,6 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                         </Typography>
                      )
                   }
-               </Box>
-               <Box pl={2} m={0} sx={{display: "flex", alignItems: "center"}}>
-                  <ButtonGroup variant="text" ref={anchorRef}>
-                     {
-                        hasStorePermission && (
-                           <Button sx={{minHeight: 1, margin: 0, padding: 0, minWidth: "initial !important", border: "0 !important"}} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>{SAVE_OPTION}</Button>
-                        )
-                     }
-                     {
-                        currentSavedFilter && (
-                           <Button sx={{minHeight: 1, margin: 0, padding: 0, minWidth: "20px !important", border: 0}} onClick={handleToggleSaveOptions} >
-                              <KeyboardArrowDown />
-                           </Button>
-                        )
-                     }
-                  </ButtonGroup>
-                  <Popper
-                     sx={{
-                        zIndex: 10,
-                        marginLeft: "100px !important"
-                     }}
-                     open={saveOptionsOpen}
-                     anchorEl={anchorRef.current}
-                     transition
-                     disablePortal
-                     role={undefined}
-                     nonce={undefined}
-                     onResizeCapture={undefined}
-                     onResize={null}>
-                     {({TransitionProps, placement}) => (
-                        <Grow
-                           {...TransitionProps}
-                           style={{
-                              transformOrigin: "inherit",
-                           }}
-                        >
-                           <Paper>
-                              <ClickAwayListener onClickAway={handleSaveOptionsMenuClose}>
-                                 <MenuList id="split-button-menu" autoFocusItem>
-                                    {dropdownOptions.map((option, index) => (
-                                       (option === CLEAR_OPTION || ((option !== DELETE_OPTION || hasDeletePermission) && (option !== DUPLICATE_OPTION || hasStorePermission))) && (
-                                          <MenuItem
-                                             key={option}
-                                             onClick={() => handleDropdownOptionClick(option)}
-                                          >
-                                             {option}
-                                          </MenuItem>
-                                       )
-                                    ))}
-                                 </MenuList>
-                              </ClickAwayListener>
-                           </Paper>
-                        </Grow>
-                     )}
-                  </Popper>
                </Box>
             </Box>
             {

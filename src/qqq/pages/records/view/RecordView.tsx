@@ -390,7 +390,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                      <Grid id={section.name} key={section.name} item lg={12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         <Box width="100%">
                            <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
-                              <Typography variant="h5" p={3} pb={1}>
+                              <Typography variant="h6" p={3} pb={1}>
                                  {section.label}
                               </Typography>
                               <Box p={3} pt={0} flexDirection="column">
@@ -621,7 +621,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                            <Box pb={3}>
                               {
                                  successMessage ?
-                                    <Alert color="success" sx={{mb: 3}} onClose={() => 
+                                    <Alert color="success" sx={{mb: 3}} onClose={() =>
                                     {
                                        setSuccessMessage(null);
                                     }}>

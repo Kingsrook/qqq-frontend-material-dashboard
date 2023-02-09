@@ -21,13 +21,11 @@
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
 import React, {useEffect, useReducer, useState} from "react";
 import {useLocation} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
-import MDBadgeDot from "qqq/components/legacy/MDBadgeDot";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
@@ -44,7 +42,6 @@ import StepperCard from "qqq/components/widgets/misc/StepperCard";
 import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
-import SimpleStatisticsCard from "qqq/components/widgets/statistics/SimpleStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
 import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
@@ -62,6 +59,7 @@ interface Props
    omitWrappingGridContainer: boolean;
    areChildren?: boolean
    childUrlParams?: string
+   parentWidgetMetaData?: QWidgetMetaData
 }
 
 DashboardWidgets.defaultProps = {
@@ -70,10 +68,11 @@ DashboardWidgets.defaultProps = {
    entityPrimaryKey: null,
    omitWrappingGridContainer: false,
    areChildren: false,
-   childUrlParams: ""
+   childUrlParams: "",
+   parentWidgetMetaData: null
 };
 
-function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData}: Props): JSX.Element
 {
    const location = useLocation();
    const [widgetData, setWidgetData] = useState([] as any[]);
@@ -103,18 +102,10 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       setWidgetData(widgetData);
    }, [widgetMetaDataList]);
 
-   useEffect(() =>
+   const reloadWidget = async (index: number, data: string) =>
    {
-      setWidgetData([] as any[]);
-   }, [location.pathname]);
-
-   const reloadWidget = (index: number, data: string) =>
-   {
-      setTimeout(async () =>
-      {
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
-         setWidgetCounter(widgetCounter + 1);
-      }, 1);
+      widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
+      forceUpdate();
    };
 
    function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
@@ -146,12 +137,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       // see if local storage is used for any widget dropdowns, if so, look them //
       // up and append to the query string                                       //
       /////////////////////////////////////////////////////////////////////////////
-      if(widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns)
+      let thisWidgetHasDropdowns = widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns;
+      let parentWidgetHasDropdowns = parentWidgetMetaData && parentWidgetMetaData.storeDropdownSelections && parentWidgetMetaData.dropdowns;
+      if(thisWidgetHasDropdowns || parentWidgetHasDropdowns)
       {
-         for(let i = 0; i< widgetMetaData.dropdowns.length; i++)
+         const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
+         for(let i = 0; i< metaDataToUse.dropdowns.length; i++)
          {
-            const dropdownName = widgetMetaData.dropdowns[i].possibleValueSourceName;
-            const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${widgetMetaData.name}.${dropdownName}`;
+            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
+            const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
             const json = JSON.parse(localStorage.getItem(localStorageKey));
             if(json)
             {
@@ -235,18 +229,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "stepper" && (
-                  <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-                     <Box padding="1rem">
-                        {
-                           widgetMetaData.label && (
-                              <MDTypography variant="h5" textTransform="capitalize">
-                                 {widgetMetaData.label}
-                              </MDTypography>
-                           )
-                        }
-                        <StepperCard data={widgetData[i]} />
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}>
+                     <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+                        <Box padding="1rem" sx={{width: "100%"}}>
+                           <StepperCard data={widgetData[i]} />
+                        </Box>
                      </Box>
-                  </Card>
+                  </Widget>
                )
             }
             {
@@ -282,27 +273,14 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                         widgetMetaData={widgetMetaData}
                         widgetData={widgetData[i]}
                         isChild={areChildren}
-                        reloadWidgetCallback={(data) => reloadWidget(i, data)}>
+
+                        // reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     >
                         <StatisticsCard
-                           title={widgetMetaData.label}
-                           color={colors.info.main}
-                           icon={widgetMetaData.icon}
                            data={widgetData[i]}
                            increaseIsGood={true}
                         />
                      </Widget>
-                  )
-               )
-            }
-            {
-               widgetMetaData.type === "simpleStatistics" && (
-                  widgetData && widgetData[i] && (
-                     <SimpleStatisticsCard
-                        title={widgetMetaData.label}
-                        data={widgetData[i]}
-                        increaseIsGood={widgetData[i].increaseIsGood}
-                        isCurrency={widgetData[i].isCurrency}
-                     />
                   )
                )
             }
@@ -337,8 +315,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      isChild={areChildren}
-                     reloadWidgetCallback={(data) => reloadWidget(i, data)}>
-
+                  >
                      <div>
                         <PieChart
                            chartData={widgetData[i]?.chartData}
@@ -367,26 +344,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "lineChart" && (
-                  widgetData && widgetData[i] && widgetData[i].chartData && widgetData[i].chartData?.datasets ? (
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     isChild={areChildren}>
                      <DefaultLineChart sx={{alignItems: "center"}}
-                        title={widgetData[i].title}
-                        description={(
-                           <Box display="flex" justifyContent="space-between">
-                              <Box display="flex" ml={-1}>
-                                 {
-                                    widgetData[i].chartData.datasets.map((dataSet: any) => (
-                                       <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
-                                    ))
-                                 }
-                              </Box>
-                              <Box mt={-4} mr={-1} position="absolute" right="1.5rem" />
-                           </Box>
-                        )}
-                        data={widgetData[i].chartData as { labels: string[]; datasets: { label: string; color: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark"; data: number[]; }[]; }}
-                        isYAxisCurrency={widgetData[i].isYAxisCurrency}
-                        isChild={areChildren}
+                        data={widgetData[i]?.chartData}
+                        isYAxisCurrency={widgetData[i]?.isYAxisCurrency}
                      />
-                  ) : null
+                  </Widget>
                )
             }
             {

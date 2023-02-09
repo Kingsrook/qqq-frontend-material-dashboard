@@ -72,7 +72,7 @@ function StepperCard({data}: Props): JSX.Element
    // console.log(`data ${JSON.stringify(data)}`);
 
    return (
-      <Stepper connector={<CustomizedConnector />} activeStep={activeStep} alternativeLabel sx={{paddingBottom: "0px", boxShadow: "none", background: "white"}}>
+      <Stepper connector={<CustomizedConnector />} activeStep={activeStep} alternativeLabel sx={{paddingBottom: "0px", boxShadow: "none", background: "none"}}>
          {
             data && data.steps ? (
                data.steps.map((step, index) => (

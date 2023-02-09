@@ -23,7 +23,6 @@ import {Theme} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import {SxProps} from "@mui/system";
-import React from "react";
 
 
 export interface DropdownOption
@@ -38,18 +37,17 @@ export interface DropdownOption
 interface Props
 {
    defaultValue?: any;
-   localStorageKey?: string;
    label?: string;
    dropdownOptions?: DropdownOption[];
    onChangeCallback?: (dropdownLabel: string, data: any) => void;
    sx?: SxProps<Theme>;
 }
 
-function DropdownMenu({localStorageKey, defaultValue, label, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
+function DropdownMenu({defaultValue, label, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
 {
-   const handleOnChange = (event: any, value: any, reason: string) =>
+   const handleOnChange = (event: any, newValue: any, reason: string) =>
    {
-      onChangeCallback(label, value);
+      onChangeCallback(label, newValue);
    }
 
    return (

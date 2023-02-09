@@ -21,6 +21,7 @@
 
 // Declaring props types for ProductCell
 import Box from "@mui/material/Box";
+import React from "react";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 interface Props
@@ -35,8 +36,12 @@ function ImageCell({imageUrl, label, total, totalType}: Props): JSX.Element
 {
    return (
       <Box display="flex" alignItems="center" pr={2}>
-         <Box mr={2}>
-            <img src={imageUrl} alt={label} />
+         <Box sx={{width: "50px"}} mr={2}>
+            {
+               imageUrl && imageUrl !== "" && (
+                  <img src={imageUrl} alt={label} />
+               )
+            }
          </Box>
          <Box display="flex" flexDirection="column">
             <MDTypography variant="button" fontWeight="medium">

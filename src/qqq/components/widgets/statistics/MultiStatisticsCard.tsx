@@ -70,7 +70,7 @@ function MultiStatisticsCard({title, data}: Props): JSX.Element
          <Grid container>
             <Grid item xs={12}>
                <Box pt={3} px={3}>
-                  <MDTypography variant="h5" fontWeight="medium">
+                  <MDTypography variant="h6" fontWeight="medium">
                      {title}
                   </MDTypography>
                </Box>
@@ -105,7 +105,13 @@ function MultiStatisticsCard({title, data}: Props): JSX.Element
                                  statisticsGroup.statisticList.map((stat, i2) =>
                                     <Box key={`stat-${i1}-${i2}`}>
                                        <MDTypography variant="subtitle2">
-                                          {stat.label}: <NavLink to={stat.url}>{stat.value.toLocaleString()}</NavLink>
+                                          {
+                                             stat && stat.url ? (
+                                                <Box>{stat.label}: <NavLink to={stat?.url}>{stat.value.toLocaleString()}</NavLink></Box>
+                                             ):(
+                                                <Box>{stat.label}: {stat.value.toLocaleString()}</Box>
+                                             )
+                                          }
                                        </MDTypography>
                                     </Box>
                                  )

@@ -20,13 +20,10 @@
  */
 
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Icon from "@mui/material/Icon";
 import React, {ReactNode, useMemo} from "react";
 import {Line} from "react-chartjs-2";
 import colors from "qqq/assets/theme/base/colors";
 import MDBadgeDot from "qqq/components/legacy/MDBadgeDot";
-import MDTypography from "qqq/components/legacy/MDTypography";
 
 //////////////////////////////////////////
 // structure of default line chart data //
@@ -128,10 +125,9 @@ interface Props
       color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "light" | "dark";
       component: ReactNode;
    };
-   title?: string;
    height?: string | number;
+   description?: any;
    isYAxisCurrency?: boolean;
-   isChild?: boolean;
    data: DefaultLineChartData;
 
    [key: string]: any;
@@ -139,12 +135,11 @@ interface Props
 
 DefaultLineChart.defaultProps = {
    icon: {color: "info", component: ""},
-   title: "",
    height: "19.125rem",
 };
 
 
-function DefaultLineChart({icon, title, height, data, isYAxisCurrency, isChild}: Props): JSX.Element
+function DefaultLineChart({data, height, isYAxisCurrency}: Props): JSX.Element
 {
    const allBackgroundColors = ["info", "warning", "primary", "success", "error", "secondary", "dark"];
    if (data && data.datasets)
@@ -155,6 +150,19 @@ function DefaultLineChart({icon, title, height, data, isYAxisCurrency, isChild}:
          ds.color = allBackgroundColors[index];
       });
    }
+
+   const description= (
+      <Box display="flex" justifyContent="space-between">
+         <Box display="flex" ml={-1}>
+            {
+               data?.datasets?.map((dataSet: any) => (
+                  <MDBadgeDot key={dataSet.label} color={dataSet.color} size="sm" badgeContent={dataSet.label} />
+               ))
+            }
+         </Box>
+         <Box mt={-4} mr={-1} position="absolute" right="1.5rem" />
+      </Box>
+   );
 
    const chartDatasets = data && data.datasets
       ? data.datasets.map((dataset) => ({
@@ -204,55 +212,9 @@ function DefaultLineChart({icon, title, height, data, isYAxisCurrency, isChild}:
       };
    }
 
-   const renderChart = (
-      <Box py={2} pr={2} pl={icon.component ? 1 : 2}>
-
-         {title ? (
-            <Box display="flex" px={0} pt={0}>
-               {icon.component && (
-                  <Box
-                     width="4rem"
-                     height="4rem"
-                     borderRadius="xl"
-                     display="flex"
-                     justifyContent="center"
-                     alignItems="center"
-                     color="white"
-                     mt={-5}
-                     mr={2}
-                     sx={{backgroundColor: icon.color || "info"}}
-                  >
-                     <Icon fontSize="medium">{icon.component}</Icon>
-                  </Box>
-               )}
-               <Box mt={icon.component ? -2 : 0}>
-                  {isChild ? (
-                     title && <MDTypography variant="h6">{title}</MDTypography>
-                  ) : (
-                     title && <MDTypography variant="h5">{title}</MDTypography>
-                  )
-                  }
-                  <Box mb={2}>
-                     <MDTypography component="div" variant="button" color="text">
-                        <Box display="flex" justifyContent="space-between">
-                           <Box display="flex" ml={-1}>
-                              {
-                                 data && data.lineLabels ? (
-                                    (data.lineLabels.map((label: string, index: number) => (
-
-                                       <Box key={index}>
-                                          <MDBadgeDot color={allBackgroundColors[index]} size="sm" badgeContent={label} />
-                                       </Box>
-                                    )
-                                    ))) : null
-                              }
-                           </Box>
-                        </Box>
-                     </MDTypography>
-                  </Box>
-               </Box>
-            </Box>
-         ) : null}
+   return (
+      <Box py={2} pr={2} pl={2}>
+         {description}
          {useMemo(
             () => (
                <Box height={height}>
@@ -264,12 +226,6 @@ function DefaultLineChart({icon, title, height, data, isYAxisCurrency, isChild}:
          )}
       </Box>
    );
-
-   return title ?
-      <Card sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
-         {renderChart}
-      </Card>
-      : renderChart;
 }
 
 export default DefaultLineChart;

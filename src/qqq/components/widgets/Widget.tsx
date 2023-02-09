@@ -41,6 +41,7 @@ export interface WidgetData
       label: string
    }[][];
    dropdownNeedsSelectedText?: string;
+   hasPermission?: boolean;
 }
 
 
@@ -172,9 +173,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
          const dropdown = component as Dropdown
          return (
-            <Box my={2} mr={2} sx={{float: "right"}}>
+            <Box my={2} sx={{float: "right"}}>
                <DropdownMenu
-                  localStorageKey={localStorageKey}
                   defaultValue={defaultValue}
                   sx={{width: 200, marginLeft: "15px"}}
                   label={`Select ${dropdown.label}`}
@@ -283,75 +283,103 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       }
    }, [counter]);
 
+   const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
    const widgetContent =
       <Box sx={{width: "100%"}}>
-         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{width: "100%"}}>
+         <Box pr={3} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}}>
             <Box pt={2}>
                {
-                  props.widgetMetaData?.icon && (
-                     <Box
-                        ml={3}
-                        mt={-4}
-                        sx={{
-                           display: "flex",
-                           justifyContent: "center",
-                           alignItems: "center",
-                           width: "64px",
-                           height: "64px",
-                           borderRadius: "8px",
-                           background: colors.info.main,
-                           color: "#ffffff",
-                           float: "left"
-                        }}
-                     >
-                        <Icon fontSize="medium" color="inherit">
-                           {props.widgetMetaData.icon}
-                        </Icon>
-                     </Box>
+                  hasPermission ?
+                     props.widgetMetaData?.icon && (
+                        <Box
+                           ml={3}
+                           mt={-4}
+                           sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "64px",
+                              height: "64px",
+                              borderRadius: "8px",
+                              background: colors.info.main,
+                              color: "#ffffff",
+                              float: "left"
+                           }}
+                        >
+                           <Icon fontSize="medium" color="inherit">
+                              {props.widgetMetaData.icon}
+                           </Icon>
+                        </Box>
 
-                  )
+                     ) : (
+                        <Box
+                           ml={3}
+                           mt={-4}
+                           sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "64px",
+                              height: "64px",
+                              borderRadius: "8px",
+                              background: colors.info.main,
+                              color: "#ffffff",
+                              float: "left"
+                           }}
+                        >
+                           <Icon fontSize="medium" color="inherit">lock</Icon>
+                        </Box>
+                     )
                }
                {
                   //////////////////////////////////////////////////////////////////////////////////////////
                   // first look for a label in the widget data, which would override that in the metadata //
                   //////////////////////////////////////////////////////////////////////////////////////////
-                  props.widgetData?.label? (
-                     <Typography variant="h5" fontWeight="medium" pl={3} display="inline">
+                  hasPermission && props.widgetData?.label? (
+                     <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={2} display="inline">
                         {props.widgetData.label}
                      </Typography>
                   ) : (
-                     props.widgetMetaData?.label && (
-                        <Typography variant="h5" fontWeight="medium" pl={3} display="inline">
+                     hasPermission && props.widgetMetaData?.label && (
+                        <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={3} display="inline">
                            {props.widgetMetaData.label}
                         </Typography>
                      )
                   )
                }
                {
-                  props.labelAdditionalComponentsLeft.map((component, i) =>
-                  {
-                     return (<span key={i}>{renderComponent(component, i)}</span>);
-                  })
+                  hasPermission && (
+                     props.labelAdditionalComponentsLeft.map((component, i) =>
+                     {
+                        return (<span key={i}>{renderComponent(component, i)}</span>);
+                     })
+                  )
                }
             </Box>
             <Box>
                {
-                  effectiveLabelAdditionalComponentsRight.map((component, i) =>
-                  {
-                     return (<span key={i}>{renderComponent(component, i)}</span>);
-                  })
+                  hasPermission && (
+                     effectiveLabelAdditionalComponentsRight.map((component, i) =>
+                     {
+                        return (<span key={i}>{renderComponent(component, i)}</span>);
+                     })
+                  )
                }
             </Box>
          </Box>
          {
-            props.widgetData?.dropdownNeedsSelectedText ? (
+            hasPermission && props.widgetData?.dropdownNeedsSelectedText ? (
                <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
                   <Typography variant="body2">
                      {props.widgetData?.dropdownNeedsSelectedText}
                   </Typography>
                </Box>
             ) : (
-               props.children
+               hasPermission ? (
+                  props.children
+               ) : (
+                  <Box mt={2} mb={5} sx={{display: "flex", justifyContent: "center"}}><Typography variant="body2">You do not have permission to view this data.</Typography></Box>
+               )
             )
          }
       </Box>;

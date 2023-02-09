@@ -511,7 +511,7 @@ function EntityForm(props: Props): JSX.Element
                            {formFields && nonT1Sections.length ? nonT1Sections.map((section: QTableSection) => (
                               <Box key={`edit-card-${section.name}`} pb={3}>
                                  <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}} elevation={cardElevation}>
-                                    <MDTypography variant="h5" p={3} pb={1}>
+                                    <MDTypography variant="h6" p={3} pb={1}>
                                        {section.label}
                                     </MDTypography>
                                     <Box pb={1} px={3}>
