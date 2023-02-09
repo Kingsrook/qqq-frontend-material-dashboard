@@ -47,7 +47,7 @@ import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import AuditBody from "qqq/components/audits/AuditBody";
-import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
 import colors from "qqq/components/legacy/colors";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
@@ -164,12 +164,12 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          ///////////////////////////////////////////////////////////////////////
          for (let i = 0; i < hashParts.length; i++)
          {
-            const parts = hashParts[i].split("=")
+            const parts = hashParts[i].split("=");
             if (parts.length > 1 && parts[0] == "launchProcess")
             {
                (async () =>
                {
-                  const processMetaData = await qController.loadProcessMetaData(parts[1])
+                  const processMetaData = await qController.loadProcessMetaData(parts[1]);
                   setActiveModalProcess(processMetaData);
                })();
                return;
@@ -184,7 +184,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          {
             (async () =>
             {
-               const childTable = await qController.loadTableMetaData(pathParts[pathParts.length - 1])
+               const childTable = await qController.loadTableMetaData(pathParts[pathParts.length - 1]);
                const childId: any = null; // todo - for editing a child, not just creating one.
                openEditChildForm(childTable, childId, null, null); // todo - defaults & disableds
             })();
@@ -198,12 +198,12 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          ////////////////////////////////////////////////////////////////////////////////
          for (let i = 0; i < hashParts.length; i++)
          {
-            const parts = hashParts[i].split("=")
+            const parts = hashParts[i].split("=");
             if (parts.length > 1 && parts[0] == "createChild")
             {
                (async () =>
                {
-                  const childTable = await qController.loadTableMetaData(parts[1])
+                  const childTable = await qController.loadTableMetaData(parts[1]);
                   const childId: any = null; // todo - for editing a child, not just creating one.
                   openEditChildForm(childTable, childId, null, null); // todo - defaults & disableds
                })();
@@ -292,20 +292,20 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                {
                   console.error("Error pushing history: " + e);
                }
-            }
+            };
 
             if (e instanceof QException)
             {
                if ((e as QException).status === "404")
                {
                   setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
-                  historyPurge(location.pathname)
+                  historyPurge(location.pathname);
                   return;
                }
                else if ((e as QException).status === "403")
                {
                   setNotFoundMessage(`You do not have permission to view ${tableMetaData.label} records`);
-                  historyPurge(location.pathname)
+                  historyPurge(location.pathname);
                   return;
                }
             }
@@ -315,7 +315,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          try
          {
-            HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName})
+            HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
          }
          catch(e)
          {
@@ -441,7 +441,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const handleDelete = (event: { preventDefault: () => void }) =>
    {
-      event.preventDefault();
+      event?.preventDefault();
       (async () =>
       {
          await qController.delete(tableName, id)
@@ -509,7 +509,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             <MenuItem onClick={() =>
             {
                setActionsMenu(null);
-               navigate("#audit")
+               navigate("#audit");
             }}>
                <ListItemIcon><Icon>checklist</Icon></ListItemIcon>
                Audit
@@ -585,7 +585,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const closeAudit = (event: object, reason: string) =>
    {
-      if (reason === "backdropClick" || reason === "escapeKeyDown")
+      if (reason === "backdropClick") // allowing esc here, as it's a non-destructive close || reason === "escapeKeyDown")
       {
          return;
       }
@@ -623,7 +623,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  successMessage ?
                                     <Alert color="success" sx={{mb: 3}} onClose={() => 
                                     {
-                                       setSuccessMessage(null)
+                                       setSuccessMessage(null);
                                     }}>
                                        {successMessage}
                                     </Alert>
@@ -638,7 +638,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
                                     <Grid container spacing={3}>
                                        <Grid item xs={12} mb={3}>
-                                          <Card id={t1SectionName} sx={{scrollMarginTop: "100px"}}>
+                                          <Card id={t1SectionName} sx={{scrollMarginTop: "100px", minHeight: "88px"}}>
                                              <Box display="flex" p={3} pb={1}>
                                                 <Box mr={1.5}>
                                                    <Avatar sx={{bgcolor: colors.info.main}}>

@@ -17,6 +17,7 @@ yalc.lock
 # production
 /build
 /lib
+/target
 
 # misc
 .DS_Store

@@ -26,6 +26,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon/Icon";
@@ -52,12 +53,12 @@ const qController = Client.getInstance();
 
 function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
 {
-   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
    const [audits, setAudits] = useState([] as QRecord[]);
    const [total, setTotal] = useState(null as number);
    const [limit, setLimit] = useState(1000);
    const [statusString, setStatusString] = useState("Loading audits...");
    const [auditsByDate, setAuditsByDate] = useState([] as QRecord[][]);
+   const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, string[]>)
    const [sortDirection, setSortDirection] = useState(localStorage.getItem("audit.sortDirection") === "true");
 
    useEffect(() =>
@@ -72,7 +73,8 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
             new QFilterCriteria("recordId", QCriteriaOperator.EQUALS, [recordId]),
          ], [
             new QFilterOrderBy("timestamp", sortDirection),
-            new QFilterOrderBy("id", sortDirection)
+            new QFilterOrderBy("id", sortDirection),
+            new QFilterOrderBy("auditDetail.id", true)
          ]);
 
          ///////////////////////////////
@@ -81,7 +83,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          let audits = [] as QRecord[]
          try
          {
-            audits = await qController.query("audit", filter, limit, 0);
+            audits = await qController.query("audit", filter, limit, 0, [new QueryJoin("auditDetail", true, "LEFT")]);
             setAudits(audits);
          }
          catch(e)
@@ -105,8 +107,37 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
             setTotal(count);
          }
 
-         setInitialLoadComplete(true);
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // group the audits by auditId (e.g., this is a list that joined audit & auditDetail, so un-flatten it) //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const unflattenedAudits: QRecord[] = []
+         const detailMap: Map<number, string[]> = new Map();
+         for (let i = 0; i < audits.length; i++)
+         {
+            let id = audits[i].values.get("id");
+            if(i == 0 || unflattenedAudits[unflattenedAudits.length-1].values.get("id") != id)
+            {
+               unflattenedAudits.push(audits[i]);
+            }
 
+            let auditDetail = audits[i].values.get("auditDetail.message");
+            if(auditDetail)
+            {
+               if(!detailMap.has(id))
+               {
+                  detailMap.set(id, []);
+               }
+
+               detailMap.get(id).push(auditDetail)
+            }
+         }
+         audits = unflattenedAudits;
+         setAuditDetailMap(detailMap);
+         console.log(detailMap);
+
+         //////////////////////////////
+         // group the audits by date //
+         //////////////////////////////
          const auditsByDate = [];
          let thisDatesAudits = null as QRecord[];
          let lastDate = null;
@@ -239,6 +270,16 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                                           </Box>
                                           <Box fontSize="1rem">
                                              {audit.values.get("message")}
+                                          </Box>
+                                          <Box fontSize="0.875rem">
+                                             <ul style={{"marginLeft": "1rem"}}>
+                                                {
+                                                   auditDetailMap.get(audit.values.get("id"))?.map((detail, key) =>
+                                                   {
+                                                      return (<li key={key}>{detail}</li>);
+                                                   })
+                                                }
+                                             </ul>
                                           </Box>
                                        </Box>
                                     </Box>

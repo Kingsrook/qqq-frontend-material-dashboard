@@ -83,6 +83,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
    const [ searchParams ] = useSearchParams();
+   
+   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
 
    const location = useLocation();
    const navigate = useNavigate();
@@ -1154,9 +1156,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                ""
             )}
             {
-               (tableLabel && searchParams.get("deleteSuccess")) ? (
-                  <Alert color="success" onClose={() =>
-                  {}}>
+               (tableLabel && showSuccessfullyDeletedAlert) ? (
+                  <Alert color="success" sx={{mb: 3}} onClose={() =>
+                  {
+                     setShowSuccessfullyDeletedAlert(false);
+                  }}>
                      {`${tableLabel} successfully deleted`}
                   </Alert>
                ) : null
