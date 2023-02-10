@@ -81,7 +81,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const location = useLocation();
    const navigate = useNavigate();
 
-   const pathParts = location.pathname.split("/");
+   const pathParts = location.pathname.replace(/\/+$/, "").split("/");
    const tableName = table.name;
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
@@ -122,6 +122,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       setNonT1TableSections([]);
       setTableProcesses([]);
       setTableSections(null);
+      setShowAudit(false);
    };
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -458,6 +459,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       openModalProcess(process);
    }
 
+   let hasEditOrDelete = (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission);
+
+   function gotoCreate()
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/create`;
+      navigate(path);
+   }
+
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
@@ -473,6 +482,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
+         {
+            table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+            <MenuItem onClick={() => gotoCreate()}>
+               <ListItemIcon><Icon>add</Icon></ListItemIcon>
+               Create New
+            </MenuItem>
+         }
          {
             table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission &&
             <MenuItem onClick={() => navigate("edit")}>
@@ -492,14 +508,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                Delete
             </MenuItem>
          }
-         {tableProcesses.length > 0 && ((table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)) && <Divider />}
+         {tableProcesses.length > 0 && hasEditOrDelete && <Divider />}
          {tableProcesses.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
                {process.label}
             </MenuItem>
          ))}
-         {tableProcesses.length > 0 && <Divider />}
+         {(tableProcesses.length > 0 || hasEditOrDelete) && <Divider />}
          <MenuItem onClick={() => navigate("dev")}>
             <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
             Developer Mode

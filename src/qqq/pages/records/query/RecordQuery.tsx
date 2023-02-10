@@ -89,7 +89,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const location = useLocation();
    const navigate = useNavigate();
 
-   const pathParts = location.pathname.split("/");
+   const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
    ////////////////////////////////////////////
    // look for defaults in the local storage //
@@ -995,6 +995,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <GridToolbarExportContainer>
                   <ExportMenuItem format="csv" />
                   <ExportMenuItem format="xlsx" />
+                  <ExportMenuItem format="json" />
                </GridToolbarExportContainer>
             </div>
             <div>
@@ -1131,103 +1132,104 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    return (
       <BaseLayout>
-         {/*
-         // see above code that would use this
-         <iframe id="exportIFrame" name="exportIFrame">
-            <form method="post" target="_self">
-               <input type="hidden" id="authorizationInput" name="Authorization" />
-            </form>
-         </iframe>
-         */}
-         <Box my={3}>
-            {alertContent ? (
-               <Box mb={3}>
-                  <Alert
-                     severity="error"
-                     onClose={() =>
-                     {
-                        setAlertContent(null);
-                     }}
-                  >
-                     {alertContent}
-                  </Alert>
-               </Box>
-            ) : (
-               ""
-            )}
-            {
-               (tableLabel && showSuccessfullyDeletedAlert) ? (
-                  <Alert color="success" sx={{mb: 3}} onClose={() =>
-                  {
-                     setShowSuccessfullyDeletedAlert(false);
-                  }}>
-                     {`${tableLabel} successfully deleted`}
-                  </Alert>
-               ) : null
-            }
-            <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
-               <Box display="flex" marginRight="auto">
-                  <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange}/>
-               </Box>
-
-               <Box display="flex" width="150px">
-                  <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
-                  {renderActionsMenu}
-               </Box>
+         <div className="recordQuery">
+            {/*
+            // see above code that would use this
+            <iframe id="exportIFrame" name="exportIFrame">
+               <form method="post" target="_self">
+                  <input type="hidden" id="authorizationInput" name="Authorization" />
+               </form>
+            </iframe>
+            */}
+            <Box my={3}>
+               {alertContent ? (
+                  <Box mb={3}>
+                     <Alert
+                        severity="error"
+                        onClose={() =>
+                        {
+                           setAlertContent(null);
+                        }}
+                     >
+                        {alertContent}
+                     </Alert>
+                  </Box>
+               ) : (
+                  ""
+               )}
                {
-                  table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-                  <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
+                  (tableLabel && showSuccessfullyDeletedAlert) ? (
+                     <Alert color="success" sx={{mb: 3}} onClose={() =>
+                     {
+                        setShowSuccessfullyDeletedAlert(false);
+                     }}>
+                        {`${tableLabel} successfully deleted`}
+                     </Alert>
+                  ) : null
                }
+               <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
+                  <Box display="flex" marginRight="auto">
+                     <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange}/>
+                  </Box>
 
-            </Box>
-            <Card>
-               <Box height="100%">
-                  <DataGridPro
-                     components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
-                     pinnedColumns={pinnedColumns}
-                     onPinnedColumnsChange={handlePinnedColumnsChange}
-                     pagination
-                     paginationMode="server"
-                     sortingMode="server"
-                     filterMode="server"
-                     page={pageNumber}
-                     checkboxSelection
-                     disableSelectionOnClick
-                     autoHeight
-                     rows={rows}
-                     // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-                     columns={columnsModel}
-                     rowBuffer={10}
-                     rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
-                     onPageSizeChange={handleRowsPerPageChange}
-                     onRowClick={handleRowClick}
-                     onStateChange={handleStateChange}
-                     density={density}
-                     loading={loading}
-                     filterModel={filterModel}
-                     onFilterModelChange={handleFilterChange}
-                     columnVisibilityModel={columnVisibilityModel}
-                     onColumnVisibilityModelChange={handleColumnVisibilityChange}
-                     onColumnOrderChange={handleColumnOrderChange}
-                     onSelectionModelChange={selectionChanged}
-                     onSortModelChange={handleSortChange}
-                     sortingOrder={[ "asc", "desc" ]}
-                     sortModel={columnSortModel}
-                     getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-                  />
+                  <Box display="flex" width="150px">
+                     <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
+                     {renderActionsMenu}
+                  </Box>
+                  {
+                     table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+                     <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
+                  }
+
                </Box>
-            </Card>
-         </Box>
+               <Card>
+                  <Box height="100%">
+                     <DataGridPro
+                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
+                        pinnedColumns={pinnedColumns}
+                        onPinnedColumnsChange={handlePinnedColumnsChange}
+                        pagination
+                        paginationMode="server"
+                        sortingMode="server"
+                        filterMode="server"
+                        page={pageNumber}
+                        checkboxSelection
+                        disableSelectionOnClick
+                        autoHeight
+                        rows={rows}
+                        // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
+                        columns={columnsModel}
+                        rowBuffer={10}
+                        rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
+                        onPageSizeChange={handleRowsPerPageChange}
+                        onRowClick={handleRowClick}
+                        onStateChange={handleStateChange}
+                        density={density}
+                        loading={loading}
+                        filterModel={filterModel}
+                        onFilterModelChange={handleFilterChange}
+                        columnVisibilityModel={columnVisibilityModel}
+                        onColumnVisibilityModelChange={handleColumnVisibilityChange}
+                        onColumnOrderChange={handleColumnOrderChange}
+                        onSelectionModelChange={selectionChanged}
+                        onSortModelChange={handleSortChange}
+                        sortingOrder={[ "asc", "desc" ]}
+                        sortModel={columnSortModel}
+                        getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+                     />
+                  </Box>
+               </Card>
+            </Box>
 
-         {
-            activeModalProcess &&
-            <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
-               <div className="modalProcess">
-                  <ProcessRun process={activeModalProcess} isModal={true} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
-               </div>
-            </Modal>
-         }
-
+            {
+               activeModalProcess &&
+               <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
+                  <div className="modalProcess">
+                     <ProcessRun process={activeModalProcess} isModal={true} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
+                  </div>
+               </Modal>
+            }
+         </div>
       </BaseLayout>
    );
 }

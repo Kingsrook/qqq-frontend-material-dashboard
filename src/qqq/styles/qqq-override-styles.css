@@ -24,6 +24,11 @@
    white-space: normal;
 }
 
+.recordQuery .MuiDataGrid-virtualScrollerContent
+{
+   min-height: calc(100vh - 450px) !important;
+}
+
 /* Disable red outlines on clicked cells */
 .MuiDataGrid-cell:focus,
 .MuiDataGrid-columnHeader:focus,
