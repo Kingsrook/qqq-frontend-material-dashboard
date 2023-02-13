@@ -22,7 +22,9 @@
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {Chip, CircularProgress, FilterOptionsState, Icon} from "@mui/material";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import {Checkbox, Chip, CircularProgress, FilterOptionsState, Icon} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
@@ -39,8 +41,10 @@ interface Props
    inForm: boolean;
    initialValue?: any;
    initialDisplayValue?: string;
+   initialValues?: QPossibleValue[];
    onChange?: any;
    isEditable?: boolean;
+   isMultiple?: boolean;
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
 }
@@ -49,8 +53,10 @@ DynamicSelect.defaultProps = {
    inForm: true,
    initialValue: null,
    initialDisplayValue: null,
+   initialValues: undefined,
    onChange: null,
    isEditable: true,
+   isMultiple: false,
    bulkEditMode: false,
    bulkEditSwitchChangeHandler: () =>
    {
@@ -59,14 +65,21 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, onChange, isEditable, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
+function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
 {
    const [ open, setOpen ] = useState(false);
    const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
    const [ searchTerm, setSearchTerm ] = useState(null);
    const [ firstRender, setFirstRender ] = useState(true);
-   // @ts-ignore
-   const [defaultValue, _] = useState(initialValue && initialDisplayValue ? [{id: initialValue, label: initialDisplayValue}] : null);
+
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+   // default value - needs to be an array (from initialValues (array) prop) for multiple mode - //
+   // else non-multiple, assume we took in an initialValue (id) and initialDisplayValue (label), //
+   // and build a little object that looks like a possibleValue out of those                     //
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+   const [defaultValue, _] = isMultiple ? useState(initialValues ?? undefined)
+      : useState(initialValue && initialDisplayValue ? [{id: initialValue, label: initialDisplayValue}] : null);
+
    // const loading = open && options.length === 0;
    const [loading, setLoading] = useState(false);
    const [ switchChecked, setSwitchChecked ] = useState(false);
@@ -142,7 +155,14 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
 
       if(onChange)
       {
-         onChange(value ? new QPossibleValue(value) : null);
+         if(isMultiple)
+         {
+            onChange(value);
+         }
+         else
+         {
+            onChange(value ? new QPossibleValue(value) : null);
+         }
       }
       else if(setFieldValueRef)
       {
@@ -159,7 +179,8 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
       return (options);
    }
 
-   const renderOption = (props: Object, option: any) =>
+   // @ts-ignore
+   const renderOption = (props: Object, option: any, {selected}) =>
    {
       let content = (<>{option.label}</>);
 
@@ -180,6 +201,16 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
       }
       catch(e)
       { }
+
+      if(isMultiple)
+      {
+         content = (
+            <>
+               <Checkbox style={{marginRight: 8}} checked={selected} />
+               {content}
+            </>
+         );
+      }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////
       // we provide a custom renderOption method, to prevent a bug we saw during development,      //
@@ -202,6 +233,8 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
       setIsDisabled(!newSwitchValue);
       bulkEditSwitchChangeHandler(fieldName, newSwitchValue);
    };
+
+   console.log("multiple? " + isMultiple);
 
    const autocomplete = (
       <Autocomplete
@@ -253,6 +286,8 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
          renderOption={renderOption}
          filterOptions={filterOptions}
          disabled={isDisabled}
+         multiple={isMultiple}
+         disableCloseOnSelect={isMultiple}
          renderInput={(params) => (
             <TextField
                {...params}
