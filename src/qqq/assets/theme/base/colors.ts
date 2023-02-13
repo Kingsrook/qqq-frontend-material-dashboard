@@ -191,7 +191,7 @@ const colors: Types = {
    },
 
    info: {
-      main: "#04aaef",
+      main: "#0062FF",
       focus: "#1662C4",
    },
 
@@ -245,7 +245,7 @@ const colors: Types = {
 
       info: {
          main: "#49a3f1",
-         state: "#04aaef",
+         state: "#0062FF",
       },
 
       success: {

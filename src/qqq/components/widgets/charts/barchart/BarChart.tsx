@@ -101,7 +101,7 @@ const options = {
 ////////////////////////////////////
 interface Props
 {
-   color?: "primary" | "secondary" | "info" | "success" | "warning" | "error" | "dark";
+   color?: string
    title: string;
    description?: string;
    date: string;

@@ -26,8 +26,9 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import {withStyles} from "@mui/styles";
-import React from "react";
+import React, {useContext} from "react";
 import {NavLink} from "react-router-dom";
+import QContext from "QContext";
 
 
 /////////////////////////////////////////////
@@ -58,6 +59,7 @@ interface Props
 
 function StepperCard({data}: Props): JSX.Element
 {
+   const {accentColor} = useContext(QContext);
    const activeStep = data && data.activeStep ? data.activeStep : 0;
 
    const CustomizedConnector = withStyles({
@@ -109,7 +111,7 @@ function StepperCard({data}: Props): JSX.Element
                         index === activeStep && (
                            <Box>
                               <StepLabel icon={step.iconOverride ? <Icon>{step.iconOverride}</Icon> : <RocketLaunch />} sx={{
-                                 color: step.colorOverride ?? "#04aaef",
+                                 color: step.colorOverride ?? accentColor,
                                  fontSize: "35px",
                                  "& .MuiStepLabel-label.MuiStepLabel-alternativeLabel":
                                     {

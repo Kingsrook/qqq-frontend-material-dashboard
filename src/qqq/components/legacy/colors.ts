@@ -19,129 +19,134 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-interface ColorsTypes {
-  main: string;
-  focus: string;
+interface ColorsTypes
+{
+   main: string;
+   focus: string;
 }
 
-interface GradientsTypes {
-  main: string;
-  state: string;
+interface GradientsTypes
+{
+   main: string;
+   state: string;
 }
 
-interface SocialMediaColorsTypes {
-  main: string;
-  dark: string;
+interface SocialMediaColorsTypes
+{
+   main: string;
+   dark: string;
 }
 
-interface BadgeColorsTypes {
-  background: string;
-  text: string;
+interface BadgeColorsTypes
+{
+   background: string;
+   text: string;
 }
 
-interface Types {
-  background:
-    | {
-        default: string;
-        sidenav?: string;
-        card?: string;
+interface Types
+{
+   background:
+      | {
+      default: string;
+      sidenav?: string;
+      card?: string;
+   }
+      | any;
+   white:
+      | {
+      main: string;
+      focus: string;
+   }
+      | any;
+   text:
+      | {
+      main: string;
+      focus: string;
+      primary?: string;
+      secondary?: string;
+      disabled?: string;
+   }
+      | any;
+   transparent:
+      | {
+      main: string;
+   }
+      | any;
+   black:
+      | {
+      light: string;
+      main: string;
+      focus: string;
+   }
+      | any;
+   primary: ColorsTypes | any;
+   secondary: ColorsTypes | any;
+   info: ColorsTypes | any;
+   success: ColorsTypes | any;
+   warning: ColorsTypes | any;
+   error: ColorsTypes | any;
+   light: ColorsTypes | any;
+   dark: ColorsTypes | any;
+   grey:
+      | {
+      [key: string | number]: string;
+   }
+      | any;
+   gradients:
+      | {
+      primary: GradientsTypes;
+      secondary: GradientsTypes;
+      info: GradientsTypes;
+      success: GradientsTypes;
+      warning: GradientsTypes;
+      error: GradientsTypes;
+      light: GradientsTypes;
+      dark: GradientsTypes;
+   }
+      | any;
+   socialMediaColors:
+      | {
+      facebook: SocialMediaColorsTypes;
+      twitter: SocialMediaColorsTypes;
+      instagram: SocialMediaColorsTypes;
+      linkedin: SocialMediaColorsTypes;
+      pinterest: SocialMediaColorsTypes;
+      youtube: SocialMediaColorsTypes;
+      vimeo: SocialMediaColorsTypes;
+      slack: SocialMediaColorsTypes;
+      dribbble: SocialMediaColorsTypes;
+      github: SocialMediaColorsTypes;
+      reddit: SocialMediaColorsTypes;
+      tumblr: SocialMediaColorsTypes;
+   }
+      | any;
+   badgeColors:
+      | {
+      primary: BadgeColorsTypes;
+      secondary: BadgeColorsTypes;
+      info: BadgeColorsTypes;
+      success: BadgeColorsTypes;
+      warning: BadgeColorsTypes;
+      error: BadgeColorsTypes;
+      light: BadgeColorsTypes;
+      dark: BadgeColorsTypes;
+   }
+      | any;
+   coloredShadows:
+      | {
+      [key: string]: string;
+   }
+      | any;
+   inputBorderColor: string;
+   tabs:
+      | {
+      indicator:
+         | {
+         boxShadow: string;
       }
-    | any;
-  white:
-    | {
-        main: string;
-        focus: string;
-      }
-    | any;
-  text:
-    | {
-        main: string;
-        focus: string;
-        primary?: string;
-        secondary?: string;
-        disabled?: string;
-      }
-    | any;
-  transparent:
-    | {
-        main: string;
-      }
-    | any;
-  black:
-    | {
-        light: string;
-        main: string;
-        focus: string;
-      }
-    | any;
-  primary: ColorsTypes | any;
-  secondary: ColorsTypes | any;
-  info: ColorsTypes | any;
-  success: ColorsTypes | any;
-  warning: ColorsTypes | any;
-  error: ColorsTypes | any;
-  light: ColorsTypes | any;
-  dark: ColorsTypes | any;
-  grey:
-    | {
-        [key: string | number]: string;
-      }
-    | any;
-  gradients:
-    | {
-        primary: GradientsTypes;
-        secondary: GradientsTypes;
-        info: GradientsTypes;
-        success: GradientsTypes;
-        warning: GradientsTypes;
-        error: GradientsTypes;
-        light: GradientsTypes;
-        dark: GradientsTypes;
-      }
-    | any;
-  socialMediaColors:
-    | {
-        facebook: SocialMediaColorsTypes;
-        twitter: SocialMediaColorsTypes;
-        instagram: SocialMediaColorsTypes;
-        linkedin: SocialMediaColorsTypes;
-        pinterest: SocialMediaColorsTypes;
-        youtube: SocialMediaColorsTypes;
-        vimeo: SocialMediaColorsTypes;
-        slack: SocialMediaColorsTypes;
-        dribbble: SocialMediaColorsTypes;
-        github: SocialMediaColorsTypes;
-        reddit: SocialMediaColorsTypes;
-        tumblr: SocialMediaColorsTypes;
-      }
-    | any;
-  badgeColors:
-    | {
-        primary: BadgeColorsTypes;
-        secondary: BadgeColorsTypes;
-        info: BadgeColorsTypes;
-        success: BadgeColorsTypes;
-        warning: BadgeColorsTypes;
-        error: BadgeColorsTypes;
-        light: BadgeColorsTypes;
-        dark: BadgeColorsTypes;
-      }
-    | any;
-  coloredShadows:
-    | {
-        [key: string]: string;
-      }
-    | any;
-  inputBorderColor: string;
-  tabs:
-    | {
-        indicator:
-          | {
-              boxShadow: string;
-            }
-          | any;
-      }
-    | any;
+         | any;
+   }
+      | any;
 }
 
 const colors: Types = {
@@ -180,7 +185,7 @@ const colors: Types = {
    },
 
    info: {
-      main: "#04aaef",
+      main: "#0062FF",
       focus: "#1662C4",
    },
 
@@ -234,7 +239,7 @@ const colors: Types = {
 
       info: {
          main: "#49a3f1",
-         state: "#04aaef",
+         state: "#0062FF",
       },
 
       success: {

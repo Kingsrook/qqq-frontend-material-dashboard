@@ -49,7 +49,6 @@ import QContext from "QContext";
 import AuditBody from "qqq/components/audits/AuditBody";
 import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
-import colors from "qqq/components/legacy/colors";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -80,6 +79,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const location = useLocation();
    const navigate = useNavigate();
+   const {accentColor} = useContext(QContext);
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
    const tableName = table.name;
@@ -657,7 +657,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                           <Card id={t1SectionName} sx={{scrollMarginTop: "100px", minHeight: "88px"}}>
                                              <Box display="flex" p={3} pb={1}>
                                                 <Box mr={1.5}>
-                                                   <Avatar sx={{bgcolor: colors.info.main}}>
+                                                   <Avatar sx={{bgcolor: accentColor}}>
                                                       <Icon>
                                                          {tableMetaData?.iconName}
                                                       </Icon>

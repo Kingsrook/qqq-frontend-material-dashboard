@@ -40,7 +40,6 @@ import QContext from "QContext";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
-import colors from "qqq/components/legacy/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import Client from "qqq/utils/qqq/Client";
@@ -71,6 +70,7 @@ function EntityForm(props: Props): JSX.Element
    const qController = Client.getInstance();
    const tableNameParam = useParams().tableName;
    const tableName = props.table === null ? tableNameParam : props.table.name;
+   const {accentColor} = useContext(QContext);
 
    const [formTitle, setFormTitle] = useState("");
    const [validations, setValidations] = useState({});
@@ -487,7 +487,7 @@ function EntityForm(props: Props): JSX.Element
                               <Card id={`${t1sectionName}`} sx={{overflow: "visible", pb: 2, scrollMarginTop: "100px"}} elevation={cardElevation}>
                                  <Box display="flex" p={3} pb={1}>
                                     <Box mr={1.5}>
-                                       <Avatar sx={{bgcolor: colors.info.main}}>
+                                       <Avatar sx={{bgcolor: accentColor}}>
                                           <Icon>
                                              {tableMetaData?.iconName}
                                           </Icon>

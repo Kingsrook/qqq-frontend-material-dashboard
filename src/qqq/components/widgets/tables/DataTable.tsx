@@ -42,14 +42,11 @@ import {TableDataInput} from "qqq/components/widgets/tables/TableCard";
 
 interface Props
 {
-   entriesPerPage?:
-      | false
-      | {
-      defaultValue: number;
-      entries: number[];
-   };
+   entriesPerPage?: number;
+   entriesPerPageOptions?: number[];
    canSearch?: boolean;
    showTotalEntries?: boolean;
+   hidePaginationDropdown?: boolean;
    table: TableDataInput;
    pagination?: {
       variant: "contained" | "gradient";
@@ -70,6 +67,8 @@ const NoMaxWidthTooltip = styled(({className, ...props}: TooltipProps) => (
 
 function DataTable({
    entriesPerPage,
+   entriesPerPageOptions,
+   hidePaginationDropdown,
    canSearch,
    showTotalEntries,
    table,
@@ -81,11 +80,8 @@ function DataTable({
    let defaultValue: any;
    let entries: any[];
 
-   if (entriesPerPage)
-   {
-      defaultValue = entriesPerPage.defaultValue ? entriesPerPage.defaultValue : "10";
-      entries = entriesPerPage.entries ? entriesPerPage.entries : ["10", "25", "50", "100"];
-   }
+   defaultValue = (entriesPerPage) ? entriesPerPage : "10";
+   entries = entriesPerPageOptions ? entriesPerPageOptions : ["10", "25", "50", "100"];
 
    const columns = useMemo<any>(() => table.columns, [table]);
    const data = useMemo<any>(() => table.rows, [table]);
@@ -126,7 +122,7 @@ function DataTable({
    // Set the entries per page value based on the select value
    const setEntriesPerPage = (value: any) => setPageSize(value);
 
-   // Render the paginations
+   // Render the pagination
    const renderPagination = pageOptions.map((option: any) => (
       <MDPagination
          item
@@ -164,7 +160,7 @@ function DataTable({
 
       if (isSorted && column.isSorted)
       {
-         sortedValue = column.isSortedDesc ? "desc" : "asce";
+         sortedValue = column.isSortedDesc ? "desc" : "asc";
       }
       else if (isSorted)
       {
@@ -199,17 +195,24 @@ function DataTable({
 
    return (
       <TableContainer sx={{boxShadow: "none"}}>
-         {entriesPerPage || canSearch ? (
+         {entriesPerPage && ((hidePaginationDropdown !== undefined && ! hidePaginationDropdown) || canSearch) ? (
             <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
-               {entriesPerPage && (
+               {entriesPerPage && (hidePaginationDropdown === undefined || ! hidePaginationDropdown) &&  (
                   <Box display="flex" alignItems="center">
                      <Autocomplete
                         disableClearable
                         value={pageSize.toString()}
                         options={entries}
-                        onChange={(event, newValues) =>
+                        onChange={(event, newValues: any) =>
                         {
-                           setEntriesPerPage(parseInt(newValues[0], 10));
+                           if(typeof newValues === "string")
+                           {
+                              setEntriesPerPage(parseInt(newValues, 10));
+                           }
+                           else
+                           {
+                              setEntriesPerPage(parseInt(newValues[0], 10));
+                           }
                         }}
                         size="small"
                         sx={{width: "5rem"}}
@@ -367,7 +370,8 @@ function DataTable({
 
 // Declaring default props for DataTable
 DataTable.defaultProps = {
-   entriesPerPage: {defaultValue: 10, entries: ["5", "10", "15", "20", "25"]},
+   entriesPerPage: 10,
+   entriesPerPageOptions: ["5", "10", "15", "20", "25"],
    canSearch: false,
    showTotalEntries: true,
    pagination: {variant: "gradient", color: "info"},

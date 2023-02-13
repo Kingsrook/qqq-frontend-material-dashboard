@@ -26,10 +26,13 @@ interface QContext
 {
    pageHeader: string;
    setPageHeader?: (header: string) => void;
+   accentColor: string;
+   setAccentColor?: (header: string) => void;
 }
 
 const defaultState = {
-   pageHeader: ""
+   pageHeader: "",
+   accentColor: "#0062FF"
 };
 
 const QContext = createContext<QContext>(defaultState);

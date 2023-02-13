@@ -34,8 +34,8 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {useEffect, useState} from "react";
-import colors from "qqq/components/legacy/colors";
+import {useContext, useEffect, useState} from "react";
+import QContext from "QContext";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -60,6 +60,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const [auditsByDate, setAuditsByDate] = useState([] as QRecord[][]);
    const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, string[]>)
    const [sortDirection, setSortDirection] = useState(localStorage.getItem("audit.sortDirection") === "true");
+   const {accentColor} = useContext(QContext);
 
    useEffect(() =>
    {
@@ -261,7 +262,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
 
                                  return (
                                     <Box key={audit.values.get("id")} display="flex" flexDirection="row" mb={1} className="singleAuditBlock">
-                                       <Avatar sx={{bgcolor: colors.info.main, zIndex: 2}}>
+                                       <Avatar sx={{bgcolor: accentColor, zIndex: 2}}>
                                           <Icon>check</Icon>
                                        </Avatar>
                                        <Box p={1}>

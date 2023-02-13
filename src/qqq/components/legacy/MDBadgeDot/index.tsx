@@ -19,8 +19,10 @@
  */
 
 import Box from "@mui/material/Box";
-import {FC, forwardRef} from "react";
+import {FC, forwardRef, useContext} from "react";
+import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
+
 
 // declaring props types for MDBadgeDot
 interface Props
@@ -42,6 +44,7 @@ interface Props
 const MDBadgeDot: FC<Props> = forwardRef(
    ({variant, color, size, badgeContent, font = {}, ...rest}, ref) =>
    {
+      const {accentColor} = useContext(QContext);
       let finalSize;
       let fontSize: any;
       let padding;
@@ -90,7 +93,7 @@ const MDBadgeDot: FC<Props> = forwardRef(
       const colorValues = {
          "primary": "#e91e63",
          "secondary": "#7b809a",
-         "info": "#04aaef",
+         "info": accentColor,
          "success": "#4CAF50",
          "warning": "#fb8c00",
          "error": "#F44335",

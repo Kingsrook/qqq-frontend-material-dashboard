@@ -382,6 +382,10 @@ export default function App()
                {
                   appleIcon.href = metaData.branding.icon;
                }
+               if (metaData.branding.accentColor)
+               {
+                  setAccentColor(metaData.branding.accentColor)
+               }
             }
 
             let profileRoutes = {};
@@ -519,12 +523,15 @@ export default function App()
    );
 
    const [pageHeader, setPageHeader] = useState("");
+   const [accentColor, setAccentColor] = useState("#0062FF");
    return (
 
       appRoutes && (
          <QContext.Provider value={{
             pageHeader: pageHeader,
-            setPageHeader: (header: string) => setPageHeader(header)
+            accentColor: accentColor,
+            setPageHeader: (header: string) => setPageHeader(header),
+            setAccentColor: (accentColor: string) => setAccentColor(accentColor)
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />

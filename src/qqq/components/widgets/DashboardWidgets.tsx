@@ -23,9 +23,9 @@ import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import parse from "html-react-parser";
-import React, {useEffect, useReducer, useState} from "react";
+import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation} from "react-router-dom";
-import colors from "qqq/assets/theme/base/colors";
+import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
@@ -81,6 +81,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    const [currentUrlParams, setCurrentUrlParams] = useState(null as string);
    const [haveLoadedParams, setHaveLoadedParams] = useState(false);
+   const {accentColor} = useContext(QContext);
 
    useEffect(() =>
    {
@@ -198,6 +199,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   >
                      <TableCard
                         noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
+                        rowsPerPage={widgetData[i]?.rowsPerPage}
+                        hidePaginationDropdown={widgetData[i]?.hidePaginationDropdown}
                         data={widgetData[i]}
                      />
                   </Widget>
@@ -301,7 +304,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "barChart" && (
                   <BarChart
-                     color={colors.info.main}
+                     color={accentColor}
                      title={widgetData[i]?.title}
                      date={`As of ${new Date().toDateString()}`}
                      description={widgetData[i]?.description}

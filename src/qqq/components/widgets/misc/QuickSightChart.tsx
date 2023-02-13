@@ -21,7 +21,8 @@
 
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
-import React from "react";
+import React, {useContext} from "react";
+import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 interface Props
@@ -42,7 +43,9 @@ function Iframe({iframe}: IframeProps)
 
 function QuickSightChart({label, url}: Props): JSX.Element
 {
-   const iframe = `<iframe style='border: 0 solid #04aaef; height: 411px; width: 99%' title=${label} src=${url} />`;
+   const {accentColor} = useContext(QContext);
+
+   const iframe = `<iframe style='border: 0 solid ${accentColor}; height: 411px; width: 99%' title=${label} src=${url} />`;
 
    return (
       <Card sx={{height: "100%"}}>

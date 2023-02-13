@@ -52,11 +52,13 @@ export interface TableDataInput
 interface Props
 {
    noRowsFoundHTML?: string;
+   rowsPerPage?: number;
+   hidePaginationDropdown?: boolean;
    data: TableDataInput;
 }
 
 const qController = Client.getInstance();
-function TableCard({noRowsFoundHTML, data}: Props): JSX.Element
+function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown}: Props): JSX.Element
 {
    const [qInstance, setQInstance] = useState(null as QInstance);
 
@@ -75,7 +77,8 @@ function TableCard({noRowsFoundHTML, data}: Props): JSX.Element
             data && data.columns && !noRowsFoundHTML ?
                <DataTable
                   table={data}
-                  entriesPerPage={false}
+                  entriesPerPage={rowsPerPage}
+                  hidePaginationDropdown={hidePaginationDropdown}
                   showTotalEntries={false}
                   isSorted={false}
                   noEndBorder
