@@ -142,7 +142,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          const link = component as HeaderLink
          return (
-            <Typography variant="body2" p={2} display="inline">
+            <Typography variant="body2" p={2} display="inline" fontSize=".875rem">
                {link.to ? <Link to={link.to}>{link.label}</Link> : null}
             </Typography>
          );
@@ -153,7 +153,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          const addNewRecordButton = component as AddNewRecordButton
          return (
             <Typography variant="body2" p={2} pr={1} display="inline">
-               <Button onClick={() => openEditForm(addNewRecordButton.table, null, addNewRecordButton.defaultValues, addNewRecordButton.disabledFields)}>{addNewRecordButton.label}</Button>
+               <Button sx={{mt: 0.75}} onClick={() => openEditForm(addNewRecordButton.table, null, addNewRecordButton.defaultValues, addNewRecordButton.disabledFields)}>{addNewRecordButton.label}</Button>
             </Typography>
          );
       }

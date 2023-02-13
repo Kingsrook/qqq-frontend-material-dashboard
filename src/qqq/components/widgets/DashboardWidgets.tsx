@@ -243,7 +243,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "html" && (
                   <Widget widgetMetaData={widgetMetaData}>
-                     <Box px={1} pt={0} pb={2}>
+                     <Box px={3} pt={0} pb={2}>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
                            {
                               widgetData && widgetData[i] && widgetData[i].html ? (

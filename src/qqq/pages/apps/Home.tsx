@@ -173,7 +173,7 @@ function AppHome({app}: Props): JSX.Element
    const widgetCount = widgets ? widgets.length : 0;
 
    // eslint-disable-next-line no-nested-ternary
-   const tileSizeLg = (widgetCount === 0 ? 3 : widgetCount === 1 ? 4 : 6);
+   const tileSizeLg = 3;
 
    const handleDropdownOnChange = (value: string, index: number) =>
    {
@@ -207,7 +207,7 @@ function AppHome({app}: Props): JSX.Element
             <Grid container spacing={3}>
                {
                   app.sections ? (
-                     <Grid item xs={12} lg={widgetCount === 0 ? 12 : widgetCount === 1 ? 9 : 6}>
+                     <Grid item xs={12} lg={12}>
                         {app.sections.map((section) => (
                            <Box key={section.name} mb={3}>
                               <Card sx={{overflow: "visible"}}>

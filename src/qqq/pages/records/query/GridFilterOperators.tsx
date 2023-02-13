@@ -731,6 +731,73 @@ function InputPossibleValueSourceSingle(tableName: string, field: QFieldMetaData
 }
 
 
+////////////////////////////////////////////////
+// input element for multiple possible values //
+////////////////////////////////////////////////
+function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaData, props: GridFilterInputValueProps)
+{
+   const SUBMIT_FILTER_STROKE_TIME = 500;
+   const {item, applyValue, focusElementRef = null} = props;
+
+   console.log("Item.value?  " + item.value);
+
+   const filterTimeout = useRef<any>();
+   const [ selectedPossibleValues, setSelectedPossibleValues ] = useState(item.value as QPossibleValue[]);
+   const [ applying, setIsApplying ] = useState(false);
+
+   useEffect(() =>
+   {
+      return () =>
+      {
+         clearTimeout(filterTimeout.current);
+      };
+   }, []);
+
+   useEffect(() =>
+   {
+      const itemValue = item.value ?? null;
+   }, [ item.value ]);
+
+   const updateFilterValue = (value: QPossibleValue) =>
+   {
+      clearTimeout(filterTimeout.current);
+
+      setIsApplying(true);
+      filterTimeout.current = setTimeout(() =>
+      {
+         setIsApplying(false);
+         applyValue({...item, value: value});
+      }, SUBMIT_FILTER_STROKE_TIME);
+   };
+
+   const handleChange = (value: QPossibleValue) =>
+   {
+      updateFilterValue(value);
+   };
+
+   return (
+      <Box
+         sx={{
+            display: "inline-flex",
+            flexDirection: "row",
+            alignItems: "end",
+            height: 48,
+         }}
+      >
+         <DynamicSelect
+            tableName={tableName}
+            fieldName={field.name}
+            isMultiple={true}
+            fieldLabel="Value"
+            initialValues={selectedPossibleValues}
+            inForm={false}
+            onChange={handleChange}
+         />
+      </Box>
+   );
+}
+
+
 //////////////////////////////////
 // possible value set operators //
 //////////////////////////////////
@@ -748,6 +815,18 @@ export const buildQGridPvsOperators = (tableName: string, field: QFieldMetaData)
          value: "isNot",
          getApplyFilterFn: () => null,
          InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceSingle(tableName, field, props)
+      },
+      {
+         label: "is any of",
+         value: "isAnyOf",
+         getApplyFilterFn: () => null,
+         InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceMultiple(tableName, field, props)
+      },
+      {
+         label: "is none of",
+         value: "isNone",
+         getApplyFilterFn: () => null,
+         InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceMultiple(tableName, field, props)
       },
       {
          label: "is empty",

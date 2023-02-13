@@ -344,7 +344,8 @@ class FilterUtils
          {
             try
             {
-               const qQueryFilter = (filterString !== null) ? JSON.parse(filterString) : JSON.parse(searchParams.get("filter")) as QQueryFilter;
+               const filterJSON = (filterString !== null) ? JSON.parse(filterString) : JSON.parse(searchParams.get("filter"));
+               const qQueryFilter = filterJSON as QQueryFilter;
 
                //////////////////////////////////////////////////////////////////
                // translate from a qqq-style filter to one that the grid wants //
@@ -374,6 +375,53 @@ class FilterUtils
                      if (!values || values.length === 0)
                      {
                         console.warn("WARNING: No possible values were returned for [" + field.possibleValueSourceName + "] for values [" + criteria.values + "].");
+                     }
+                  }
+
+                  if (field && field.type == "DATE_TIME" && !values)
+                  {
+                     try
+                     {
+                        const criteria = filterJSON.criteria[i];
+                        if (criteria && criteria.expression)
+                        {
+                           let value = new Date();
+                           let amount = Number(criteria.expression.amount);
+                           switch (criteria.expression.timeUnit)
+                           {
+                              case "MINUTES":
+                              {
+                                 amount = amount * 60;
+                                 break;
+                              }
+                              case "HOURS":
+                              {
+                                 amount = amount * 60 * 60;
+                                 break;
+                              }
+                              case "DAYS":
+                              {
+                                 amount = amount * 60 * 60 * 24;
+                                 break;
+                              }
+                              default:
+                              {
+                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
+                              }
+                           }
+
+                           if (criteria.expression.operator == "MINUS")
+                           {
+                              amount = -amount;
+                           }
+
+                           value.setTime(value.getTime() + 1000 * amount);
+                           values = [ValueUtils.formatDateTimeISO8601(value)];
+                        }
+                     }
+                     catch (e)
+                     {
+                        console.log(e);
                      }
                   }
 

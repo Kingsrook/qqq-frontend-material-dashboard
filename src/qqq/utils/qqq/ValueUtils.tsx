@@ -131,7 +131,7 @@ class ValueUtils
 
       if (field.hasAdornment(AdornmentType.RENDER_HTML))
       {
-         return (parse(rawValue));
+         return (rawValue ? parse(rawValue) : "");
       }
 
       if (field.hasAdornment(AdornmentType.CHIP))
@@ -251,6 +251,16 @@ class ValueUtils
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
+   }
+
+   public static formatDateTimeISO8601(date: Date)
+   {
+      if(!(date instanceof Date))
+      {
+         date = new Date(date)
+      }
+      // @ts-ignore
+      return (`${date.toString("yyyy-MM-ddThh:mm:ssZ")}`);
    }
 
    public static getFullWeekday(date: Date)
