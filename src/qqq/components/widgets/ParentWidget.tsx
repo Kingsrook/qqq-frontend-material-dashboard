@@ -97,6 +97,11 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
       reloadWidgetCallback(widgetIndex, data);
    }
 
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // if this parent widget is in card form, and its children are too, then we need some px //
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   const px = (widgetMetaData && widgetMetaData.isCard && widgets && widgets[0] && widgets[0].isCard) ? 3 : 0;
+
    // @ts-ignore
    return (
       qInstance && data ? (
@@ -106,7 +111,7 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
             storeDropdownSelections={storeDropdownSelections}
             reloadWidgetCallback={parentReloadWidgetCallback}
          >
-            <Box sx={{height: "100%", width: "100%"}}>
+            <Box sx={{height: "100%", width: "100%"}} px={px}>
                <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData}/>
             </Box>
          </Widget>

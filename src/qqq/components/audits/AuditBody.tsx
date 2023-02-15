@@ -34,7 +34,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {useContext, useEffect, useState} from "react";
+import React, {JSXElementConstructor, useContext, useEffect, useState} from "react";
 import QContext from "QContext";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -58,9 +58,127 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const [limit, setLimit] = useState(1000);
    const [statusString, setStatusString] = useState("Loading audits...");
    const [auditsByDate, setAuditsByDate] = useState([] as QRecord[][]);
-   const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, string[]>)
+   const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, JSX.Element[]>)
+   const [fieldChangeMap, setFieldChangeMap] = useState(null as Map<number, JSX.Element>)
    const [sortDirection, setSortDirection] = useState(localStorage.getItem("audit.sortDirection") === "true");
    const {accentColor} = useContext(QContext);
+
+   function wrapValue(value: any): JSX.Element
+   {
+      return <span style={{fontWeight: "500", color: " rgb(123, 128, 154)"}}>{value}</span>
+   }
+
+   function wasValue(value: any): JSX.Element
+   {
+      return <span style={{fontWeight: "100", color: " rgb(123, 128, 154)"}}>{value}</span>
+   }
+
+   function getAuditDetailFieldChangeRow(qRecord: QRecord): JSX.Element | null
+   {
+      const message = qRecord.values.get("auditDetail.message");
+      const fieldName = qRecord.values.get("auditDetail.fieldName");
+      const oldValue = qRecord.values.get("auditDetail.oldValue");
+      const newValue = qRecord.values.get("auditDetail.newValue");
+      if(fieldName && (oldValue !== null || newValue !== null))
+      {
+         const fieldLabel = tableMetaData?.fields?.get(fieldName)?.label ?? fieldName
+         return (<tr><td>{fieldLabel}</td><td>{oldValue}</td><td>{newValue}</td></tr>)
+      }
+      return (null);
+   }
+
+   function getAuditDetailElement(qRecord: QRecord): JSX.Element | null
+   {
+      const message = qRecord.values.get("auditDetail.message");
+      const fieldName = qRecord.values.get("auditDetail.fieldName");
+      const oldValue = qRecord.values.get("auditDetail.oldValue");
+      const newValue = qRecord.values.get("auditDetail.newValue");
+      if(fieldName && (oldValue !== null || newValue !== null))
+      {
+         const fieldLabel = tableMetaData?.fields?.get(fieldName)?.label ?? fieldName;
+         if(oldValue !== undefined && newValue !== undefined)
+         {
+            return (<>{fieldLabel}: Changed from {(oldValue)} to <b>{(newValue)}</b></>);
+         }
+         else if(newValue !== undefined)
+         {
+            return (<>{fieldLabel}: Set to <b>{(newValue)}</b></>);
+         }
+         else if(oldValue !== undefined)
+         {
+            return (<>{fieldLabel}: Removed value {(oldValue)}</>);
+         }
+
+         /*
+         const fieldLabel = <span style={{fontWeight: "700", color: "rgb(52, 71, 103)"}}>{tableMetaData?.fields?.get(fieldName)?.label ?? fieldName}</span>;
+         if(oldValue !== undefined && newValue !== undefined)
+         {
+            return (<>Changed {fieldLabel} from {wrapValue(oldValue)} to {wrapValue(newValue)}</>);
+         }
+         else if(newValue !== undefined)
+         {
+            return (<>Set {fieldLabel} to {wrapValue(newValue)}</>);
+         }
+         else if(oldValue !== undefined)
+         {
+            return (<>Removed {fieldLabel} value {wrapValue(oldValue)}</>);
+         }
+         */
+
+         /*
+         const fieldLabel = <span style={{fontWeight: "700", color: "rgb(52, 71, 103)"}}>{tableMetaData?.fields?.get(fieldName)?.label ?? fieldName}:</span>;
+         if(oldValue !== undefined && newValue !== undefined)
+         {
+            return (<>{fieldLabel} {wrapValue(newValue)} (was {oldValue})</>);
+         }
+         else if(newValue !== undefined)
+         {
+            return (<>{fieldLabel} {wrapValue(newValue)} (was --)</>);
+         }
+         else if(oldValue !== undefined)
+         {
+            return (<>{fieldLabel} {wrapValue("--")} (was {oldValue})</>);
+         }
+         */
+
+         /*
+         const fieldLabel = <span style={{fontWeight: "700", color: "rgb(52, 71, 103)"}}>{tableMetaData?.fields?.get(fieldName)?.label ?? fieldName}:</span>;
+         if(oldValue !== undefined && newValue !== undefined)
+         {
+            return (<>{fieldLabel} {newValue} {wasValue(`(was ${oldValue})`)}</>);
+         }
+         else if(newValue !== undefined)
+         {
+            return (<>{fieldLabel} {newValue} {wasValue("(was --)")}</>);
+         }
+         else if(oldValue !== undefined)
+         {
+            return (<>{fieldLabel} -- {wasValue(`(was ${oldValue})`)}</>);
+         }
+         */
+
+         /*
+         const fieldLabel = <span style={{fontWeight: "700", color: "rgb(52, 71, 103)"}}>{tableMetaData?.fields?.get(fieldName)?.label ?? fieldName}:</span>;
+         if(oldValue !== undefined && newValue !== undefined)
+         {
+            return (<>{fieldLabel} Changed to {wrapValue(newValue)} (was {oldValue})</>);
+         }
+         else if(newValue !== undefined)
+         {
+            return (<>{fieldLabel} Set to {wrapValue(newValue)}</>);
+         }
+         else if(oldValue !== undefined)
+         {
+            return (<>{fieldLabel} Removed value (was {oldValue})</>);
+         }
+         */
+      }
+      else if(message)
+      {
+         return (<>{message}</>);
+      }
+      return (null);
+   }
 
    useEffect(() =>
    {
@@ -112,7 +230,8 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          // group the audits by auditId (e.g., this is a list that joined audit & auditDetail, so un-flatten it) //
          //////////////////////////////////////////////////////////////////////////////////////////////////////////
          const unflattenedAudits: QRecord[] = []
-         const detailMap: Map<number, string[]> = new Map();
+         const detailMap: Map<number, JSX.Element[]> = new Map();
+         const fieldChangeRowsMap: Map<number, JSX.Element[]> = new Map();
          for (let i = 0; i < audits.length; i++)
          {
             let id = audits[i].values.get("id");
@@ -121,7 +240,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                unflattenedAudits.push(audits[i]);
             }
 
-            let auditDetail = audits[i].values.get("auditDetail.message");
+            let auditDetail = getAuditDetailElement(audits[i]);
             if(auditDetail)
             {
                if(!detailMap.has(id))
@@ -131,10 +250,45 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
 
                detailMap.get(id).push(auditDetail)
             }
+
+            // table version, probably not to commit
+            let fieldChangeRow = getAuditDetailFieldChangeRow(audits[i]);
+            if(auditDetail)
+            {
+               if(!fieldChangeRowsMap.has(id))
+               {
+                  fieldChangeRowsMap.set(id, []);
+               }
+               // fieldChangeRowsMap.get(id).push(fieldChangeRow)
+            }
          }
          audits = unflattenedAudits;
          setAuditDetailMap(detailMap);
-         console.log(detailMap);
+
+         const fieldChangeMap: Map<number, JSX.Element> = new Map();
+         for (let i = 0; i < unflattenedAudits.length; i++)
+         {
+            let id = unflattenedAudits[i].values.get("id");
+            if(fieldChangeRowsMap.has(id) && fieldChangeRowsMap.get(id).length > 0)
+            {
+               const fieldChangeTable = (
+                  <table style={{fontSize: "0.875rem"}} className="auditDetailTable" cellSpacing="0">
+                     <thead>
+                        <tr>
+                           <td>Field</td>
+                           <td>Old Value</td>
+                           <td>New Value</td>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        {fieldChangeRowsMap.get(id).map((row, key) => <React.Fragment key={key}>{row}</React.Fragment>)}
+                     </tbody>
+                  </table>
+               )
+               fieldChangeMap.set(id, fieldChangeTable);
+            }
+         }
+         setFieldChangeMap(fieldChangeMap)
 
          //////////////////////////////
          // group the audits by date //
@@ -265,11 +419,11 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                                        <Avatar sx={{bgcolor: accentColor, zIndex: 2}}>
                                           <Icon>check</Icon>
                                        </Avatar>
-                                       <Box p={1}>
+                                       <Box p={1} width="100%">
                                           <Box fontSize="0.875rem" color="rgb(123, 128, 154)">
                                              {timestampParts[1]} {timestampParts[2]} {timestampParts[3]} &nbsp; {audit.displayValues.get("auditUserId")}
                                           </Box>
-                                          <Box fontSize="1rem">
+                                          <Box fontSize="0.875rem">
                                              {audit.values.get("message")}
                                           </Box>
                                           <Box fontSize="0.875rem">
@@ -282,6 +436,9 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                                                 }
                                              </ul>
                                           </Box>
+                                          {
+                                             fieldChangeMap.has(audit.values.get("id")) && fieldChangeMap.get(audit.values.get("id"))
+                                          }
                                        </Box>
                                     </Box>
                                  );

@@ -396,9 +396,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaDataList.map((widgetMetaData, i) => (
                   omitWrappingGridContainer
-                     ? renderWidget(widgetMetaData, i)
+                     ? widgetMetaData && renderWidget(widgetMetaData, i)
                      :
-                     <Grid id={widgetMetaData.name} key={`${widgetMetaData.name}-${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                     widgetMetaData && <Grid id={widgetMetaData.name} key={`${widgetMetaData.name}-${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         {renderWidget(widgetMetaData, i)}
                      </Grid>
                ))

@@ -56,7 +56,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       CUSTOM = "Custom",
    }
 
-   const delimiterToCharacterMap: {[key: string]: string} = {};
+   const delimiterToCharacterMap: { [key: string]: string } = {};
 
    delimiterToCharacterMap[Delimiter.COMMA] = "[,\n\r]";
    delimiterToCharacterMap[Delimiter.TAB] = "[\t,\n,\r]";
@@ -87,14 +87,14 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
    {
       event.target.blur();
       setPasteModalIsOpen(true);
-   }
+   };
 
    const applyValue = (item: GridFilterItem) =>
    {
       console.log(`updating grid values: ${JSON.stringify(item.value)}`);
       setGridFilterItem(item);
       props.applyValue(item);
-   }
+   };
 
    const clearData = () =>
    {
@@ -104,7 +104,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       setInputText("");
       setDetectedText("");
       setCustomDelimiterValue("");
-      setPasteModalIsOpen(false)
+      setPasteModalIsOpen(false);
    };
 
    const handleCancelClicked = () =>
@@ -115,21 +115,21 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
 
    const handleSaveClicked = () =>
    {
-      if(gridFilterItem)
+      if (gridFilterItem)
       {
          ////////////////////////////////////////
          // if numeric remove any non-numerics //
          ////////////////////////////////////////
          let saveData = [];
-         for(let i=0; i<chipData.length; i++)
+         for (let i = 0; i < chipData.length; i++)
          {
-            if(type !== "number" || ! Number.isNaN(Number(chipData[i])))
+            if (type !== "number" || !Number.isNaN(Number(chipData[i])))
             {
                saveData.push(chipData[i]);
             }
          }
 
-         if(gridFilterItem.value)
+         if (gridFilterItem.value)
          {
             gridFilterItem.value = [...gridFilterItem.value, ...saveData];
          }
@@ -155,7 +155,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       console.log(`Delimiter Changed to ${JSON.stringify(newDelimiter)}`);
 
       setDelimiter(newDelimiter);
-      if(newDelimiter === Delimiter.CUSTOM)
+      if (newDelimiter === Delimiter.CUSTOM)
       {
          setDelimiterCharacter(customDelimiterValue);
       }
@@ -184,11 +184,11 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
    const calculateAutomaticDelimiter = (text: string): string =>
    {
       const buckets = new Map();
-      for(let i=0; i<text.length; i++)
+      for (let i = 0; i < text.length; i++)
       {
          let bucketName = "";
 
-         switch(text.charAt(i))
+         switch (text.charAt(i))
          {
             case "\t":
                bucketName = Delimiter.TAB;
@@ -208,7 +208,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                break;
          }
 
-         if(bucketName !== "")
+         if (bucketName !== "")
          {
             let currentCount = (buckets.has(bucketName)) ? buckets.get(bucketName) : 0;
             buckets.set(bucketName, currentCount + 1);
@@ -220,10 +220,10 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       ///////////////////////
       let highestCount = 0;
       let delimiter = Delimiter.COMMA;
-      for(let j = 0; j < delimiterDropdownOptions.length; j++)
+      for (let j = 0; j < delimiterDropdownOptions.length; j++)
       {
          let bucketName = delimiterDropdownOptions[j];
-         if(buckets.has(bucketName) && buckets.get(bucketName) > highestCount)
+         if (buckets.has(bucketName) && buckets.get(bucketName) > highestCount)
          {
             delimiter = bucketName;
             highestCount = buckets.get(bucketName);
@@ -231,7 +231,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       }
 
       setDetectedText(`${delimiter} Detected`);
-      return(delimiterToCharacterMap[delimiter]);
+      return (delimiterToCharacterMap[delimiter]);
    };
 
    useEffect(() =>
@@ -242,10 +242,10 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       /////////////////////////////////////////////////////////////////////////////
       // if no delimiter already set in the state, call function to determine it //
       /////////////////////////////////////////////////////////////////////////////
-      if (! currentDelimiter || currentDelimiter === Delimiter.DETECT_AUTOMATICALLY)
+      if (!currentDelimiter || currentDelimiter === Delimiter.DETECT_AUTOMATICALLY)
       {
          currentDelimiterCharacter = calculateAutomaticDelimiter(inputText);
-         if(! currentDelimiterCharacter)
+         if (!currentDelimiterCharacter)
          {
             return;
          }
@@ -254,7 +254,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
          setDelimiter(Delimiter.DETECT_AUTOMATICALLY);
          setDelimiterCharacter(currentDelimiterCharacter);
       }
-      else if(currentDelimiter === Delimiter.CUSTOM)
+      else if (currentDelimiter === Delimiter.CUSTOM)
       {
          ////////////////////////////////////////////////////
          // if custom, make sure to split on new lines too //
@@ -264,7 +264,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
 
       console.log(`current delimiter is: ${currentDelimiter}, delimiting on: ${currentDelimiterCharacter}`);
 
-      let regex = new RegExp(currentDelimiterCharacter)
+      let regex = new RegExp(currentDelimiterCharacter);
       let parts = inputText.split(regex);
       let chipData = [] as string[];
 
@@ -272,7 +272,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
       // if delimiter is empty string, dont split anything //
       ///////////////////////////////////////////////////////
       setErrorText("");
-      if(currentDelimiterCharacter !== "")
+      if (currentDelimiterCharacter !== "")
       {
          for (let i = 0; i < parts.length; i++)
          {
@@ -284,7 +284,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                ///////////////////////////////////////////////////////////
                // if numeric, check that first before pushing as a chip //
                ///////////////////////////////////////////////////////////
-               if(type === "number" && Number.isNaN(Number(part)))
+               if (type === "number" && Number.isNaN(Number(part)))
                {
                   setErrorText("Some values are not numbers");
                }
@@ -301,7 +301,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
          {
             props &&
             (
-               <Box id="testId" sx={{width: "100%", display: "inline-flex", flexDirection: "row", alignItems: "end", height: 48}} >
+               <Box id="testId" sx={{width: "100%", display: "inline-flex", flexDirection: "row", alignItems: "end", height: 48}}>
                   <GridFilterInputMultipleValue
                      sx={{width: "100%"}}
                      variant="standard"
@@ -351,7 +351,8 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                                  <FormControl sx={{m: 1, width: "100%"}}>
                                     <ChipTextField
                                        handleChipChange={() =>
-                                       {}}
+                                       {
+                                       }}
                                        chipData={chipData}
                                        chipType={type}
                                        multiline
@@ -368,7 +369,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                            <Grid container pl={3} pr={3} justifyContent="center" alignItems="stretch" sx={{display: "flex", height: "100%"}}>
                               <Grid item pl={1} pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
                                  <Box sx={{display: "inline-flex", alignItems: "baseline"}}>
-                                    <FormControl sx={{mt: 2,  width: "50%"}}>
+                                    <FormControl sx={{mt: 2, width: "50%"}}>
                                        <InputLabel htmlFor="select-native">
                                           SEPARATOR
                                        </InputLabel>
@@ -390,7 +391,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                                           ))}
                                        </Select>
                                     </FormControl>
-                                    { delimiter === Delimiter.CUSTOM.valueOf() && (
+                                    {delimiter === Delimiter.CUSTOM.valueOf() && (
 
                                        <FormControl sx={{pl: 2, top: 5, width: "50%"}}>
                                           <TextField
@@ -404,7 +405,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                                           />
                                        </FormControl>
                                     )}
-                                    { inputText && delimiter === Delimiter.DETECT_AUTOMATICALLY.valueOf() && (
+                                    {inputText && delimiter === Delimiter.DETECT_AUTOMATICALLY.valueOf() && (
 
                                        <Typography pl={2} variant="button" sx={{top: "1px", textTransform: "revert"}}>
                                           <i>{detectedText}</i>
@@ -436,7 +437,7 @@ function CustomIsAnyInput(type: "number" | "text", props: GridFilterInputValuePr
                                     onClickHandler={handleCancelClicked}
                                     iconName="cancel"
                                     disabled={false} />
-                                 <QSaveButton onClickHandler={handleSaveClicked} label="Add Filters" disabled={false}/>
+                                 <QSaveButton onClickHandler={handleSaveClicked} label="Add Filters" disabled={false} />
                               </Grid>
                            </Box>
                         </Card>
@@ -503,7 +504,7 @@ let endsWith = gridStringOperators.splice(0, 1)[0];
 // remove default isany operator //
 ///////////////////////////////////
 gridStringOperators.splice(2, 1)[0];
-gridStringOperators = [ equals, stringNotEqualsOperator, contains, stringNotContainsOperator, startsWith, stringNotStartsWithOperator, endsWith, stringNotEndWithOperator, ...gridStringOperators, stringIsAnyOfOperator ];
+gridStringOperators = [equals, stringNotEqualsOperator, contains, stringNotContainsOperator, startsWith, stringNotStartsWithOperator, endsWith, stringNotEndWithOperator, ...gridStringOperators, stringIsAnyOfOperator];
 
 export const QGridStringOperators = gridStringOperators;
 
@@ -517,10 +518,10 @@ function InputNumberInterval(props: GridFilterInputValueProps)
    const {item, applyValue, focusElementRef = null} = props;
 
    const filterTimeout = useRef<any>();
-   const [ filterValueState, setFilterValueState ] = useState<[ string, string ]>(
+   const [filterValueState, setFilterValueState] = useState<[string, string]>(
       item.value ?? "",
    );
-   const [ applying, setIsApplying ] = useState(false);
+   const [applying, setIsApplying] = useState(false);
 
    useEffect(() =>
    {
@@ -532,20 +533,20 @@ function InputNumberInterval(props: GridFilterInputValueProps)
 
    useEffect(() =>
    {
-      const itemValue = item.value ?? [ undefined, undefined ];
+      const itemValue = item.value ?? [undefined, undefined];
       setFilterValueState(itemValue);
-   }, [ item.value ]);
+   }, [item.value]);
 
    const updateFilterValue = (lowerBound: string, upperBound: string) =>
    {
       clearTimeout(filterTimeout.current);
-      setFilterValueState([ lowerBound, upperBound ]);
+      setFilterValueState([lowerBound, upperBound]);
 
       setIsApplying(true);
       filterTimeout.current = setTimeout(() =>
       {
          setIsApplying(false);
-         applyValue({...item, value: [ lowerBound, upperBound ]});
+         applyValue({...item, value: [lowerBound, upperBound]});
       }, SUBMIT_FILTER_STROKE_TIME);
    };
 
@@ -628,7 +629,7 @@ const numericIsAnyOfOperator: GridFilterOperator = {
 //////////////////////////////
 let gridNumericOperators = getGridNumericOperators();
 gridNumericOperators.splice(8, 1)[0];
-export const QGridNumericOperators = [ ...gridNumericOperators, betweenOperator, notBetweenOperator, numericIsAnyOfOperator ];
+export const QGridNumericOperators = [...gridNumericOperators, betweenOperator, notBetweenOperator, numericIsAnyOfOperator];
 
 ///////////////////////
 // boolean operators //
@@ -657,7 +658,7 @@ const booleanNotEmptyOperator: GridFilterOperator = {
    getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
 };
 
-export const QGridBooleanOperators = [ booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator ];
+export const QGridBooleanOperators = [booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator];
 
 
 ///////////////////////////////////////
@@ -671,9 +672,9 @@ function InputPossibleValueSourceSingle(tableName: string, field: QFieldMetaData
    console.log("Item.value?  " + item.value);
 
    const filterTimeout = useRef<any>();
-   const [ filterValueState, setFilterValueState ] = useState<any>(item.value ?? null);
-   const [ selectedPossibleValue, setSelectedPossibleValue ] = useState((item.value ?? null) as QPossibleValue);
-   const [ applying, setIsApplying ] = useState(false);
+   const [filterValueState, setFilterValueState] = useState<any>(item.value ?? null);
+   const [selectedPossibleValue, setSelectedPossibleValue] = useState((item.value ?? null) as QPossibleValue);
+   const [applying, setIsApplying] = useState(false);
 
    useEffect(() =>
    {
@@ -687,7 +688,7 @@ function InputPossibleValueSourceSingle(tableName: string, field: QFieldMetaData
    {
       const itemValue = item.value ?? null;
       setFilterValueState(itemValue);
-   }, [ item.value ]);
+   }, [item.value]);
 
    const updateFilterValue = (value: QPossibleValue) =>
    {
@@ -742,8 +743,8 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
    console.log("Item.value?  " + item.value);
 
    const filterTimeout = useRef<any>();
-   const [ selectedPossibleValues, setSelectedPossibleValues ] = useState(item.value as QPossibleValue[]);
-   const [ applying, setIsApplying ] = useState(false);
+   const [selectedPossibleValues, setSelectedPossibleValues] = useState(item.value as QPossibleValue[]);
+   const [applying, setIsApplying] = useState(false);
 
    useEffect(() =>
    {
@@ -756,7 +757,7 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
    useEffect(() =>
    {
       const itemValue = item.value ?? null;
-   }, [ item.value ]);
+   }, [item.value]);
 
    const updateFilterValue = (value: QPossibleValue) =>
    {
@@ -797,6 +798,31 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
    );
 }
 
+const getPvsValueString = (value: GridFilterItem["value"]): string =>
+{
+   console.log("get pvs value", value);
+   if (value && value.length)
+   {
+      let labels = [] as string[];
+      for (let i = 0; i < value.length; i++)
+      {
+         if(value[i] && value[i].label)
+         {
+            labels.push(value[i].label);
+         }
+         else
+         {
+            labels.push(value);
+         }
+      }
+      return (labels.join(", "));
+   }
+   else if (value && value.label)
+   {
+      return (value.label);
+   }
+   return (value);
+};
 
 //////////////////////////////////
 // possible value set operators //
@@ -808,34 +834,40 @@ export const buildQGridPvsOperators = (tableName: string, field: QFieldMetaData)
          label: "is",
          value: "is",
          getApplyFilterFn: () => null,
+         getValueAsString: getPvsValueString,
          InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceSingle(tableName, field, props)
       },
       {
          label: "is not",
          value: "isNot",
          getApplyFilterFn: () => null,
+         getValueAsString: getPvsValueString,
          InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceSingle(tableName, field, props)
       },
       {
          label: "is any of",
          value: "isAnyOf",
+         getValueAsString: getPvsValueString,
          getApplyFilterFn: () => null,
          InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceMultiple(tableName, field, props)
       },
       {
          label: "is none of",
          value: "isNone",
+         getValueAsString: getPvsValueString,
          getApplyFilterFn: () => null,
          InputComponent: (props: GridFilterInputValueProps<GridApiCommunity>) => InputPossibleValueSourceMultiple(tableName, field, props)
       },
       {
          label: "is empty",
          value: "isEmpty",
+         getValueAsString: getPvsValueString,
          getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
       },
       {
          label: "is not empty",
          value: "isNotEmpty",
+         getValueAsString: getPvsValueString,
          getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
       }
    ]);

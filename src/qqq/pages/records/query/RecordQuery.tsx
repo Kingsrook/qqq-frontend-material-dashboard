@@ -963,9 +963,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   Refresh
                </Button>
             </div>
-            <GridToolbarColumnsButton />
+            <GridToolbarColumnsButton nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
             <div style={{position: "relative"}}>
-               <GridToolbarFilterButton />
+               <GridToolbarFilterButton nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
                {
                   hasValidFilters && (
 
@@ -991,8 +991,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      </div>
                   )
                }
-               <GridToolbarDensitySelector />
-               <GridToolbarExportContainer>
+               <GridToolbarDensitySelector nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
+               <GridToolbarExportContainer nonce={undefined} onResize={undefined} onResizeCapture={undefined}>
                   <ExportMenuItem format="csv" />
                   <ExportMenuItem format="xlsx" />
                   <ExportMenuItem format="json" />

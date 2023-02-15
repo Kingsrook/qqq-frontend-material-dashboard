@@ -154,6 +154,11 @@
    align-items: flex-end;
 }
 
+.MuiDataGrid-filterFormValueInput > div
+{
+   height: auto;
+}
+
 /* make filter dropdowns a bit wider, less likely to need to wrap. */
 .MuiDataGrid-filterForm .MuiDataGrid-filterFormColumnInput
 {

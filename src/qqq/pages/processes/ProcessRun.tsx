@@ -34,7 +34,7 @@ import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJob
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Button, CircularProgress, Icon, TablePagination} from "@mui/material";
+import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
@@ -405,8 +405,16 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                         component.type === QComponentType.BULK_EDIT_FORM && (
                            tableMetaData && localTableSections ?
                               <Grid container spacing={3} mt={2}>
+                                 {
+                                    localTableSections.length == 0 &&
+                                    <Grid item xs={12}>
+                                       <Alert color="error">There are no editable fields on this table.</Alert>
+                                    </Grid>
+                                 }
                                  <Grid item xs={12} lg={3}>
-                                    <QRecordSidebar tableSections={localTableSections} stickyTop="20px" />
+                                    {
+                                       localTableSections.length > 0 && <QRecordSidebar tableSections={localTableSections} stickyTop="20px" />
+                                    }
                                  </Grid>
                                  <Grid item xs={12} lg={9}>
 

@@ -413,7 +413,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                               {currentSavedFilter.values.get("label")}
                               {
                                  filterIsModified && (
-                                    <Tooltip sx={{cursor: "pointer"}} title={"The current has been modified, click \"Save...\" to save the changes."}>
+                                    <Tooltip sx={{cursor: "pointer"}} title={"The current filter has been modified, click \"Save...\" to save the changes."}>
                                        <FiberManualRecord sx={{color: "orange", paddingLeft: "2px", paddingTop: "4px"}} />
                                     </Tooltip>
                                  )
