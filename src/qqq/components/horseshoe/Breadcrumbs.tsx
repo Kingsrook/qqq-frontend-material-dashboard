@@ -62,7 +62,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    const routes: string[] | any = route.slice(0, -1);
    const {pageHeader, setPageHeader} = useContext(QContext);
 
-   let pageTitle = "Nutrifresh One";
+   let pageTitle = "ColdTrack Live";
    const fullRoutes: string[] = [];
    let accumulatedPath = "";
    for (let i = 0; i < routes.length; i++)
