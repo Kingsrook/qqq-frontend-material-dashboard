@@ -68,7 +68,7 @@ function SmallLineChart({color, title, description, date, chart}: Props): JSX.El
                         py={2}
                         pr={0.5}
                         mt={-5}
-                        height="12.5rem"
+                        height="18.5rem"
                         sx={{borderRadius: "10px", backgroundColor: colors.dark.focus}}
                      >
                         <Line data={data} options={options} />

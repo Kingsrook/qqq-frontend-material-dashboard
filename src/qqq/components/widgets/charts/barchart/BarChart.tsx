@@ -152,7 +152,7 @@ function BarChart({color, title, description, date, data}: Props): JSX.Element
                         py={2}
                         pr={0.5}
                         mt={-5}
-                        height="12.5rem"
+                        height="18.5rem"
                         sx={{backgroundColor: color}}
                      >
                         <Bar data={chartData} options={options} />

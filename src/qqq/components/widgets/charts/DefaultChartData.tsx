@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const chartColors = ["info", "warning", "primary", "success", "error", "secondary", "dark", "custom1", "custom2", "custom3", "custom4", "custom5"];
+export const chartColors = ["info", "warning", "primary", "success", "secondary", "dark", "error", "custom1", "custom2", "custom3", "custom4", "custom5"];
 
 
 //////////////////////////////////////////
