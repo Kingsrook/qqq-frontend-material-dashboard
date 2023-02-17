@@ -1,4 +1,4 @@
-package com.kingsrook.qqq.materialdashbaord.lib;
+package com.kingsrook.qqq.materialdashboard.lib;
 
 
 import java.io.File;
@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
@@ -23,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  *******************************************************************************/
 public class QSeleniumLib
 {
+   Logger LOG = LogManager.getLogger(QSeleniumLib.class);
+
    public final WebDriver driver;
 
    private long    WAIT_SECONDS        = 10;
@@ -118,7 +122,7 @@ public class QSeleniumLib
    {
       // todo - if env says we're in CIRCLECI, then... just do a hard fail (or just not wait forever?)
 
-      System.out.println("Going into a waitForever...");
+      LOG.warn("Going into a waitForever...");
       new WebDriverWait(driver, Duration.ofHours(1))
          .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".wontEverBePresent")));
    }
@@ -131,13 +135,11 @@ public class QSeleniumLib
    public void gotoAndWaitForBreadcrumbHeader(String path, String headerText)
    {
       driver.get(BASE_URL + path);
-      String title = driver.getTitle();
-      System.out.println("Page Title: " + title);
 
       WebElement header = new WebDriverWait(driver, Duration.ofSeconds(WAIT_SECONDS))
          .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER)));
 
-      System.out.println("Breadcrumb Header: " + header.getText());
+      LOG.debug("Navigated to [" + path + "].  Breadcrumb Header: " + header.getText());
       assertEquals(headerText, header.getText());
    }
 
@@ -158,7 +160,7 @@ public class QSeleniumLib
     *******************************************************************************/
    public List<WebElement> waitForSelectorAll(String cssSelector, int minCount)
    {
-      System.out.println("Waiting for element matching selector [" + cssSelector + "]");
+      LOG.debug("Waiting for element matching selector [" + cssSelector + "]");
       long start = System.currentTimeMillis();
 
       do
@@ -166,7 +168,7 @@ public class QSeleniumLib
          List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
          if(elements.size() >= minCount)
          {
-            System.out.println("Found [" + elements.size() + "] element(s) matching selector [" + cssSelector + "]");
+            LOG.debug("Found [" + elements.size() + "] element(s) matching selector [" + cssSelector + "]");
             return (elements);
          }
 
@@ -176,6 +178,32 @@ public class QSeleniumLib
 
       fail("Failed to find element matching selector [" + cssSelector + "] after [" + WAIT_SECONDS + "] seconds.");
       return (null);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void waitForSelectorToNotExist(String cssSelector)
+   {
+      LOG.debug("Waiting for non-existence of element matching selector [" + cssSelector + "]");
+      long start = System.currentTimeMillis();
+
+      do
+      {
+         List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
+         if(elements.size() == 0)
+         {
+            LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "]");
+            return;
+         }
+
+         sleepABit();
+      }
+      while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
+
+      fail("Failed for non-existence of element matching selector [" + cssSelector + "] after [" + WAIT_SECONDS + "] seconds.");
    }
 
 
@@ -208,23 +236,48 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public boolean waitForCondition(String message, Code<Boolean> c)
+   {
+      LOG.debug("Waiting for condition: " + message);
+      long start = System.currentTimeMillis();
+      do
+      {
+         Boolean b = c.run();
+         if(b != null && b)
+         {
+            LOG.debug("Condition became true: " + message);
+            return (true);
+         }
+
+         sleepABit();
+      }
+      while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
+      LOG.warn("Failed for condition to become true: " + message);
+      return (false);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public <T> T waitLoop(String message, Code<T> c)
    {
-      System.out.println("Waiting for: " + message);
+      LOG.debug("Waiting for: " + message);
       long start = System.currentTimeMillis();
       do
       {
          T t = c.run();
          if(t != null)
          {
-            System.out.println("Found: " + message);
+            LOG.debug("Found: " + message);
             return (t);
          }
 
          sleepABit();
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
-      System.out.println("Failed to match while waiting for: " + message);
+      LOG.warn("Failed to match while waiting for: " + message);
       return (null);
    }
 
@@ -235,7 +288,7 @@ public class QSeleniumLib
     *******************************************************************************/
    public WebElement waitForSelectorContaining(String cssSelector, String textContains)
    {
-      System.out.println("Waiting for element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
+      LOG.debug("Waiting for element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
       long start = System.currentTimeMillis();
 
       do
@@ -247,7 +300,7 @@ public class QSeleniumLib
             {
                if(element.getText() != null && element.getText().toLowerCase().contains(textContains.toLowerCase()))
                {
-                  System.out.println("Found element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
+                  LOG.debug("Found element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
                   Actions actions = new Actions(driver);
                   actions.moveToElement(element);
                   return (element);
@@ -255,7 +308,7 @@ public class QSeleniumLib
             }
             catch(StaleElementReferenceException sere)
             {
-               System.err.println("Caught a StaleElementReferenceException - will retry.");
+               LOG.debug("Caught a StaleElementReferenceException - will retry.");
             }
          }
 
@@ -289,7 +342,7 @@ public class QSeleniumLib
             }
             catch(StaleElementReferenceException sere)
             {
-               System.err.println("Caught a StaleElementReferenceException - will retry.");
+               LOG.debug("Caught a StaleElementReferenceException - will retry.");
             }
          }
          return (null);
@@ -329,11 +382,11 @@ public class QSeleniumLib
                destFile.delete();
             }
             FileUtils.moveFile(outputFile, destFile);
-            System.out.println("Made screenshot at: " + destFile);
+            LOG.info("Made screenshot at: " + destFile);
          }
          catch(Exception e)
          {
-            System.err.println("Error taking screenshot to file: " + e.getMessage());
+            LOG.warn("Error taking screenshot to file: " + e.getMessage());
          }
       }
    }
@@ -391,7 +444,7 @@ public class QSeleniumLib
          {
             if(i < noOfTries - 1)
             {
-               System.out.println("On try [" + i + " of " + noOfTries + "] caught: " + e.getMessage());
+               LOG.debug("On try [" + i + " of " + noOfTries + "] caught: " + e.getMessage());
             }
             else
             {

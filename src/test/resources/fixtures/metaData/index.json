@@ -53,6 +53,21 @@
             "TABLE_INSERT",
             "TABLE_DELETE"
          ]
+      },
+      "audit": {
+         "name": "audit",
+         "label": "Audits",
+         "isHidden": true,
+         "iconName": "location_city",
+         "deletePermission": false,
+         "editPermission": false,
+         "insertPermission": false,
+         "readPermission": true,
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY"
+         ]
       }
    },
    "processes": {

@@ -1,8 +1,10 @@
-package com.kingsrook.qqq.materialdashbaord.lib.javalin;
+package com.kingsrook.qqq.materialdashboard.lib.javalin;
 
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /*******************************************************************************
@@ -11,6 +13,8 @@ import io.javalin.http.Handler;
  *******************************************************************************/
 public class CapturingHandler implements Handler
 {
+   Logger LOG = LogManager.getLogger(CapturingHandler.class);
+
    private final QSeleniumJavalin qSeleniumJavalin;
 
 
@@ -34,12 +38,12 @@ public class CapturingHandler implements Handler
    {
       if(qSeleniumJavalin.capturing)
       {
-         System.out.println("Capturing request for path [" + context.path() + "]");
+         LOG.info("Capturing request for path [" + context.path() + "]");
          qSeleniumJavalin.captured.add(new CapturedContext(context));
       }
       else
       {
-         System.out.println("Not capturing request for path [" + context.path() + "]");
+         LOG.trace("Not capturing request for path [" + context.path() + "]");
       }
    }
 }

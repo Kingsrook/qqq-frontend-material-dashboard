@@ -1,4 +1,4 @@
-package com.kingsrook.qqq.materialdashbaord.lib;
+package com.kingsrook.qqq.materialdashboard.lib;
 
 
 /*******************************************************************************

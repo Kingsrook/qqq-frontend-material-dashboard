@@ -1,9 +1,11 @@
-package com.kingsrook.qqq.materialdashbaord.lib.javalin;
+package com.kingsrook.qqq.materialdashboard.lib.javalin;
 
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /*******************************************************************************
@@ -11,6 +13,8 @@ import org.apache.commons.lang3.tuple.Pair;
  *******************************************************************************/
 public class RouteFromStringHandler implements Handler
 {
+   Logger LOG = LogManager.getLogger(RouteFromStringHandler.class);
+
    private final String           route;
    private final String           responseString;
    private final QSeleniumJavalin qSeleniumJavalin;
@@ -37,7 +41,7 @@ public class RouteFromStringHandler implements Handler
    public void handle(Context context)
    {
       qSeleniumJavalin.routeFilesServed.add(this.route);
-      System.out.println("Serving route [" + this.route + "] via static String");
+      LOG.debug("Serving route [" + this.route + "] via static String");
       context.result(this.responseString);
    }
 }

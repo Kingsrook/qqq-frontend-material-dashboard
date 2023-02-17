@@ -1,7 +1,7 @@
-package com.kingsrook.qqq.materialdashbaord.lib;
+package com.kingsrook.qqq.materialdashboard.lib;
 
 
-import com.kingsrook.qqq.materialdashbaord.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
