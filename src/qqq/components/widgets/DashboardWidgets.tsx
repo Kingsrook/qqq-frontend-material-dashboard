@@ -174,7 +174,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetIndex={i}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
-                     reloadWidgetCallback={reloadWidget}
+                     reloadWidgetCallback={() => 
+                     {}}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
                )
@@ -271,20 +272,18 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "statistics" && (
-                  widgetData && widgetData[i] && (
-                     <Widget
-                        widgetMetaData={widgetMetaData}
-                        widgetData={widgetData[i]}
-                        isChild={areChildren}
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     isChild={areChildren}
 
-                        // reloadWidgetCallback={(data) => reloadWidget(i, data)}
-                     >
-                        <StatisticsCard
-                           data={widgetData[i]}
-                           increaseIsGood={true}
-                        />
-                     </Widget>
-                  )
+                     // reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                  >
+                     <StatisticsCard
+                        data={widgetData[i]}
+                        increaseIsGood={true}
+                     />
+                  </Widget>
                )
             }
             {

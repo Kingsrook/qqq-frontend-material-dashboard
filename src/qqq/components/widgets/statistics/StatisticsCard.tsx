@@ -55,6 +55,10 @@ StatisticsCard.defaultProps = {
 
 function StatisticsCard({data, increaseIsGood}: Props): JSX.Element
 {
+   if(! data)
+   {
+      return null;
+   }
    const {count, percentageAmount, percentageLabel} = data;
 
    let percentageString = "";
@@ -82,7 +86,7 @@ function StatisticsCard({data, increaseIsGood}: Props): JSX.Element
 
    return (
 
-      <Box mt={0} sx={{height: "100%", flexGrow: 1, flexDirection: "column", display: "flex", paddingTop: "0px"}}>
+      <Box mt={0} sx={{minHeight: "112px", height: "100%", flexGrow: 1, flexDirection: "column", display: "flex", paddingTop: "0px"}}>
          <Box mt={0} display="flex" justifyContent="center">
             {
                count !== undefined ? (
@@ -96,7 +100,7 @@ function StatisticsCard({data, increaseIsGood}: Props): JSX.Element
                      }
                   </Typography>
                ) : (
-                  <CircularProgress sx={{marginTop: "1rem", marginBottom: "20px"}} color="inherit" size={data?.countFontSize ? data.countFontSize : 30}/>
+                  <CircularProgress sx={{marginTop: "1rem", paddingBottom: "25px"}} color="inherit" size={data?.countFontSize ? data.countFontSize : 23}/>
                )
             }
          </Box>
