@@ -221,7 +221,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             const parts = location.pathname.split("/");
             currentSavedFilterId = Number.parseInt(parts[parts.length - 1]);
          }
-         else
+         else if(!searchParams.has("filter"))
          {
             if (localStorage.getItem(currentSavedFilterLocalStorageKey))
             {
@@ -573,10 +573,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setFilterModel(filterModel);
       if (filterLocalStorageKey)
       {
-         localStorage.setItem(
-            filterLocalStorageKey,
-            JSON.stringify(filterModel),
-         );
+         localStorage.setItem(filterLocalStorageKey, JSON.stringify(filterModel));
       }
    };
 

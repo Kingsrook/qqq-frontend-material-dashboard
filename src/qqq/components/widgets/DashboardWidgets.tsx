@@ -225,7 +225,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}>
-                     <div>
+                     <div className="widgetProcessMidDiv" style={{height: "100%"}}>
                         <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} forceReInit={widgetCounter} />
                      </div>
                   </Widget>

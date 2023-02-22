@@ -109,7 +109,7 @@ class DynamicFormUtils
       return (null);
    }
 
-   public static addPossibleValueProps(dynamicFormFields: any, qFields: QFieldMetaData[], tableName: string, displayValues: Map<string, string>)
+   public static addPossibleValueProps(dynamicFormFields: any, qFields: QFieldMetaData[], tableName: string, processName: string, displayValues: Map<string, string>)
    {
       for (let i = 0; i < qFields.length; i++)
       {
@@ -126,12 +126,24 @@ class DynamicFormUtils
                initialDisplayValue = displayValues.get(field.name);
             }
 
-            dynamicFormFields[field.name].possibleValueProps =
-               {
-                  isPossibleValue: true,
-                  tableName: tableName,
-                  initialDisplayValue: initialDisplayValue,
-               };
+            if (tableName)
+            {
+               dynamicFormFields[field.name].possibleValueProps =
+                  {
+                     isPossibleValue: true,
+                     tableName: tableName,
+                     initialDisplayValue: initialDisplayValue,
+                  };
+            }
+            else
+            {
+               dynamicFormFields[field.name].possibleValueProps =
+                  {
+                     isPossibleValue: true,
+                     processName: processName,
+                     initialDisplayValue: initialDisplayValue,
+                  };
+            }
          }
       }
    }

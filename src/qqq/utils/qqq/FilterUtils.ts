@@ -30,6 +30,8 @@ import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryF
 import {GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
+const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
+
 /*******************************************************************************
  ** Utility class for working with QQQ Filters
  **
@@ -366,7 +368,7 @@ class FilterUtils
                      //////////////////////////////////////////////////////////////////////////////////
                      if (values && values.length > 0)
                      {
-                        values = await qController.possibleValues(tableMetaData.name, field.name, "", values);
+                        values = await qController.possibleValues(tableMetaData.name, null, field.name, "", values);
                      }
 
                      ////////////////////////////////////////////
@@ -452,6 +454,16 @@ class FilterUtils
                         sort: orderBy.isAscending ? "asc" : "desc"
                      });
                   }
+               }
+
+               if (searchParams && searchParams.has("filter"))
+               {
+                  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // if we're setting the filter based on a filter query-string param, then make sure we don't have a currentSavedFilter in local storage. //
+                  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  localStorage.removeItem(`${CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`);
+                  localStorage.setItem(filterLocalStorageKey, JSON.stringify(defaultFilter));
+                  localStorage.setItem(sortLocalStorageKey, JSON.stringify(defaultSort));
                }
 
                return ({filter: defaultFilter, sort: defaultSort});
