@@ -85,6 +85,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    useEffect(() =>
    {
+      setWidgetData([]);
       for (let i = 0; i < widgetMetaDataList.length; i++)
       {
          const widgetMetaData = widgetMetaDataList[i];
@@ -96,17 +97,21 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          (async () =>
          {
             widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
+            setWidgetData(widgetData);
             setWidgetCounter(widgetCounter + 1);
             forceUpdate();
          })();
       }
-      setWidgetData(widgetData);
    }, [widgetMetaDataList]);
 
    const reloadWidget = async (index: number, data: string) =>
    {
-      widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
-      forceUpdate();
+      (async() =>
+      {
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
+         setWidgetData(widgetData);
+         forceUpdate();
+      })();
    };
 
    function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
@@ -174,7 +179,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetIndex={i}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
-                     reloadWidgetCallback={widgetData[i].omitReloadWidgetCallback ? () => 
+                     reloadWidgetCallback={widgetData[i]?.omitReloadWidgetCallback ? () =>
                      {} : reloadWidget}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
