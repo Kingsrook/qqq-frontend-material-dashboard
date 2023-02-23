@@ -285,7 +285,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
    const widgetContent =
-      <Box sx={{width: "100%", height: "100%"}}>
+      <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          <Box pr={3} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}}>
             <Box pt={2}>
                {
