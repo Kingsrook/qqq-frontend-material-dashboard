@@ -174,8 +174,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetIndex={i}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
-                     reloadWidgetCallback={() => 
-                     {}}
+                     reloadWidgetCallback={widgetData[i].omitReloadWidgetCallback ? () => 
+                     {} : reloadWidget}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
                )
