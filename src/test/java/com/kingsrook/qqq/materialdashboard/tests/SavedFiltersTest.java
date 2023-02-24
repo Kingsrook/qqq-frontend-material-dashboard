@@ -171,5 +171,6 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
       assertTrue(capturedContext.getBody().matches("(?s).*id.*LESS_THAN.*10.*"));
       qSeleniumJavalin.endCapture();
+   }
 
 }
