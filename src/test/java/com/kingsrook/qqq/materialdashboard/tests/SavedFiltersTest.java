@@ -172,7 +172,4 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       assertTrue(capturedContext.getBody().matches("(?s).*id.*LESS_THAN.*10.*"));
       qSeleniumJavalin.endCapture();
 
-      qSeleniumLib.waitForever();
-   }
-
 }

@@ -62,7 +62,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
 
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
@@ -117,7 +117,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
 
       addQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
       qSeleniumJavalin.beginCapture();
