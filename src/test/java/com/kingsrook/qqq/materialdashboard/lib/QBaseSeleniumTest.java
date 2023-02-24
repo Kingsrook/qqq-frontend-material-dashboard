@@ -24,8 +24,6 @@ public class QBaseSeleniumTest
    protected QSeleniumJavalin qSeleniumJavalin;
    protected QSeleniumLib     qSeleniumLib;
 
-   private int screenshotIndex = 1;
-
 
 
    /*******************************************************************************

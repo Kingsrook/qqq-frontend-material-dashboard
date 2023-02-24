@@ -32,7 +32,7 @@ public class QSeleniumLib
    private long    WAIT_SECONDS        = 10;
    private String  BASE_URL            = "https://localhost:3001";
    private boolean SCREENSHOTS_ENABLED = true;
-   private String  SCREENSHOTS_PATH    = "/tmp/QSeleniumScreenshots";
+   private String  SCREENSHOTS_PATH    = "/tmp/QSeleniumScreenshots/";
 
 
 
