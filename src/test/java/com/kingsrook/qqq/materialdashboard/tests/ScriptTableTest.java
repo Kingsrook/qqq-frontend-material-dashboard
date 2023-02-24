@@ -59,7 +59,6 @@ public class ScriptTableTest extends QBaseSeleniumTest
 
       qSeleniumLib.waitForSelectorContaining("span", "uh, script");
 
-      qSeleniumLib.takeScreenshotToFile();
       // qSeleniumLib.waitForever();
    }
 

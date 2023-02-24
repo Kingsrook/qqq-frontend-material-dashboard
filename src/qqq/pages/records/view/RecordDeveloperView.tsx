@@ -46,6 +46,7 @@ import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptLogsView from "qqq/components/scripts/ScriptLogsView";
 import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
+import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import DeveloperModeUtils from "qqq/utils/DeveloperModeUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -79,7 +80,8 @@ function RecordDeveloperView({table}: Props): JSX.Element
    const [tableMetaData, setTableMetaData] = useState(null);
 
    const [record, setRecord] = useState(null as QRecord);
-   const [recordJSON, setRecordJSON] = useState("");
+   const [recordJSONObject, setRecordJSONObject] = useState({} as any);
+   const [recordJSONString, setRecordJSONString] = useState("");
    const [associatedScripts, setAssociatedScripts] = useState([] as any[]);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
 
@@ -129,7 +131,8 @@ function RecordDeveloperView({table}: Props): JSX.Element
             {
                recordJSONObject[key] = record.values.get(key);
             }
-            setRecordJSON(JSON.stringify(recordJSONObject, null, 3));
+            setRecordJSONObject(recordJSONObject);
+            setRecordJSONString(JSON.stringify(recordJSONObject, null, 3));
          }
          catch (e)
          {
@@ -309,7 +312,7 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                           theme="github"
                                           name="recordJSON"
                                           editorProps={{$blockScrolling: true}}
-                                          value={recordJSON}
+                                          value={recordJSONString}
                                           readOnly
                                           width="100%"
                                           showPrintMargin={false}
@@ -318,6 +321,29 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                     </Card>
 
                                     {
+                                       associatedScripts && associatedScripts.map((object) =>
+                                       {
+                                          let fieldName = object.associatedScript?.fieldName;
+                                          let field = tableMetaData.fields.get(fieldName);
+                                          let scriptId = recordJSONString ? recordJSONObject[fieldName] : null;
+                                          return (
+                                             <div key={fieldName}>
+                                                <Card sx={{mb: 3}}>
+                                                   <Typography variant="h5" p={2}>{field?.label}</Typography>
+
+                                                   <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
+                                                      {scriptId ?
+                                                         <ScriptViewer scriptId={scriptId}></ScriptViewer>
+                                                         : <>No script here yet. {/* todo! */}</>
+                                                      }
+                                                   </Box>
+                                                </Card>
+                                             </div>
+                                          );
+                                       })
+                                    }
+
+                                    {/*
                                        associatedScripts && associatedScripts.map((object) =>
                                        {
                                           let fieldName = object.associatedScript?.fieldName;
@@ -460,7 +486,7 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                              </Card>
                                           );
                                        })
-                                    }
+                                    */}
 
                                  </Grid>
                               </Grid>

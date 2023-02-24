@@ -68,6 +68,126 @@
             "TABLE_GET",
             "TABLE_QUERY"
          ]
+      },
+      "script": {
+         "name": "script",
+         "label": "Script",
+         "isHidden": false,
+         "iconName": "data_object",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "TABLE_INSERT",
+            "TABLE_DELETE",
+            "TABLE_UPDATE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "scriptLog": {
+         "name": "scriptLog",
+         "label": "Script Log",
+         "isHidden": false,
+         "iconName": "receipt_long",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "TABLE_INSERT",
+            "TABLE_DELETE",
+            "TABLE_UPDATE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "scriptType": {
+         "name": "scriptType",
+         "label": "Script Type",
+         "isHidden": false,
+         "iconName": "tune",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "TABLE_INSERT",
+            "TABLE_DELETE",
+            "TABLE_UPDATE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "scriptRevision": {
+         "name": "scriptRevision",
+         "label": "Script Revision",
+         "isHidden": false,
+         "iconName": "history_edu",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "scriptLogLine": {
+         "name": "scriptLogLine",
+         "label": "Script Log Line",
+         "isHidden": false,
+         "iconName": "reorder",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "TABLE_INSERT",
+            "TABLE_DELETE",
+            "TABLE_UPDATE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "dataBag": {
+         "name": "dataBag",
+         "label": "Data Bag",
+         "isHidden": false,
+         "iconName": "local_mall",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "TABLE_INSERT",
+            "TABLE_DELETE",
+            "TABLE_UPDATE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
+      },
+      "dataBagVersion": {
+         "name": "dataBagVersion",
+         "label": "Data Bag Version",
+         "isHidden": false,
+         "iconName": "work_history",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true
       }
    },
    "processes": {
@@ -368,6 +488,121 @@
                ]
             }
          ]
+      },
+      "developer": {
+         "name": "developer",
+         "label": "Developer",
+         "iconName": "data_object",
+         "widgets": [],
+         "children": [
+            {
+               "type": "TABLE",
+               "name": "scriptType",
+               "label": "Script Type",
+               "iconName": "tune"
+            },
+            {
+               "type": "TABLE",
+               "name": "script",
+               "label": "Script",
+               "iconName": "data_object"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptRevision",
+               "label": "Script Revision",
+               "iconName": "history_edu"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptLog",
+               "label": "Script Log",
+               "iconName": "receipt_long"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptLogLine",
+               "label": "Script Log Line",
+               "iconName": "reorder"
+            },
+            {
+               "type": "TABLE",
+               "name": "dataBag",
+               "label": "Data Bag",
+               "iconName": "local_mall"
+            },
+            {
+               "type": "TABLE",
+               "name": "dataBagVersion",
+               "label": "Data Bag Version",
+               "iconName": "work_history"
+            }
+         ],
+         "childMap": {
+            "scriptType": {
+               "type": "TABLE",
+               "name": "scriptType",
+               "label": "Script Type",
+               "iconName": "tune"
+            },
+            "dataBagVersion": {
+               "type": "TABLE",
+               "name": "dataBagVersion",
+               "label": "Data Bag Version",
+               "iconName": "work_history"
+            },
+            "dataBag": {
+               "type": "TABLE",
+               "name": "dataBag",
+               "label": "Data Bag",
+               "iconName": "local_mall"
+            },
+            "scriptLog": {
+               "type": "TABLE",
+               "name": "scriptLog",
+               "label": "Script Log",
+               "iconName": "receipt_long"
+            },
+            "scriptLogLine": {
+               "type": "TABLE",
+               "name": "scriptLogLine",
+               "label": "Script Log Line",
+               "iconName": "reorder"
+            },
+            "script": {
+               "type": "TABLE",
+               "name": "script",
+               "label": "Script",
+               "iconName": "data_object"
+            },
+            "scriptRevision": {
+               "type": "TABLE",
+               "name": "scriptRevision",
+               "label": "Script Revision",
+               "iconName": "history_edu"
+            }
+         },
+         "sections": [
+            {
+               "name": "scripts",
+               "label": "Scripts",
+               "tables": [
+                  "scriptType",
+                  "script",
+                  "scriptRevision",
+                  "scriptLog",
+                  "scriptLogLine"
+               ]
+            },
+            {
+               "name": "dataBags",
+               "label": "Data Bags",
+               "tables": [
+                  "dataBag",
+                  "dataBagVersion"
+               ]
+            }
+         ]
       }
    },
    "appTree": [
@@ -445,6 +680,56 @@
             }
          ],
          "iconName": "stars"
+      },
+      {
+         "type": "APP",
+         "name": "developer",
+         "label": "Developer",
+         "children": [
+            {
+               "type": "TABLE",
+               "name": "scriptType",
+               "label": "Script Type",
+               "iconName": "tune"
+            },
+            {
+               "type": "TABLE",
+               "name": "script",
+               "label": "Script",
+               "iconName": "data_object"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptRevision",
+               "label": "Script Revision",
+               "iconName": "history_edu"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptLog",
+               "label": "Script Log",
+               "iconName": "receipt_long"
+            },
+            {
+               "type": "TABLE",
+               "name": "scriptLogLine",
+               "label": "Script Log Line",
+               "iconName": "reorder"
+            },
+            {
+               "type": "TABLE",
+               "name": "dataBag",
+               "label": "Data Bag",
+               "iconName": "local_mall"
+            },
+            {
+               "type": "TABLE",
+               "name": "dataBagVersion",
+               "label": "Data Bag Version",
+               "iconName": "work_history"
+            }
+         ],
+         "iconName": "data_object"
       }
    ],
    "branding": {
@@ -585,6 +870,14 @@
          "name": "QuickSightChartRenderer",
          "label": "Quick Sight",
          "type": "quickSightChart"
+      },
+      "scriptViewer": {
+         "name": "scriptViewer",
+         "label": "Contents",
+         "type": "scriptViewer",
+         "isCard": true,
+         "storeDropdownSelections": false,
+         "hasPermission": true
       }
    },
    "environmentValues": {
