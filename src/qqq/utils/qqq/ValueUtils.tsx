@@ -199,7 +199,7 @@ class ValueUtils
     ** After we know there's no element to be returned (e.g., because no adornment),
     ** this method does the string formatting.
     *******************************************************************************/
-   private static getUnadornedValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any): string | JSX.Element
+   public static getUnadornedValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any): string | JSX.Element
    {
       if(! displayValue && field.defaultValue)
       {
