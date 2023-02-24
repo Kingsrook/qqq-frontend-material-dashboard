@@ -94,6 +94,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       // click into a view screen //
       //////////////////////////////
       qSeleniumLib.takeScreenshotToFile("before-johnny-click");
+      qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
       qSeleniumLib.waitForSelectorContaining("DIV", "Jonny").click();
       qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
