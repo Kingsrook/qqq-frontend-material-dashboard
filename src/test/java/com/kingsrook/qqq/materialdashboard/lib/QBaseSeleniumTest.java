@@ -19,7 +19,7 @@ public class QBaseSeleniumTest
 {
    private static ChromeOptions chromeOptions;
 
-   private   WebDriver        driver;
+   protected WebDriver        driver;
    protected QSeleniumJavalin qSeleniumJavalin;
    protected QSeleniumLib     qSeleniumLib;
 
@@ -83,6 +83,8 @@ public class QBaseSeleniumTest
    @AfterEach
    void afterEach()
    {
+      qSeleniumLib.takeScreenshotToFile();
+
       if(driver != null)
       {
          driver.quit();

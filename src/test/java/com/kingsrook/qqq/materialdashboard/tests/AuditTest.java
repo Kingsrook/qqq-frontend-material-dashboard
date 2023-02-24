@@ -76,8 +76,6 @@ public class AuditTest extends QBaseSeleniumTest
       ///////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Close").click();
       qSeleniumLib.waitForSelectorToNotExist(".audit");
-
-      qSeleniumLib.takeScreenshotToFile();
    }
 
 
@@ -110,6 +108,7 @@ public class AuditTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("DIV", "Audit message here");
       qSeleniumLib.waitForSelectorContaining("LI", "This is a detail message");
    }
+
 
 
    /*******************************************************************************
@@ -153,8 +152,6 @@ public class AuditTest extends QBaseSeleniumTest
       captured = captured.stream().filter(cc -> cc.getPath().equals(auditQueryPath)).toList();
       assertEquals(1, captured.size());
       assertThat(captured.get(0).getBody()).contains("\"isAscending\":false");
-
-      qSeleniumLib.takeScreenshotToFile();
    }
 
 }

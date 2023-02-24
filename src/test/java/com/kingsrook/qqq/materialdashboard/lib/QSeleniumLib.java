@@ -211,6 +211,38 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void waitForSelectorContainingToNotExist(String cssSelector, String textContains)
+   {
+      LOG.debug("Waiting for non-existence of element matching selector [" + cssSelector + "] containing text [" + textContains + "]");
+      long start = System.currentTimeMillis();
+
+      do
+      {
+         List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
+         if(elements.size() == 0)
+         {
+            LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "]");
+            return;
+         }
+
+         if(elements.stream().noneMatch(e -> e.getText().toLowerCase().contains(textContains)))
+         {
+            LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "] containing text [" + textContains + "]");
+            return;
+         }
+
+         sleepABit();
+      }
+      while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
+
+      fail("Failed for non-existence of element matching selector [" + cssSelector + "] after [" + WAIT_SECONDS + "] seconds.");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public static void sleepABit()
    {
       try
@@ -261,31 +293,6 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
-   public <T> T waitLoop(String message, Code<T> c)
-   {
-      LOG.debug("Waiting for: " + message);
-      long start = System.currentTimeMillis();
-      do
-      {
-         T t = c.run();
-         if(t != null)
-         {
-            LOG.debug("Found: " + message);
-            return (t);
-         }
-
-         sleepABit();
-      }
-      while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
-      LOG.warn("Failed to match while waiting for: " + message);
-      return (null);
-   }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
    public WebElement waitForSelectorContaining(String cssSelector, String textContains)
    {
       LOG.debug("Waiting for element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
@@ -313,40 +320,11 @@ public class QSeleniumLib
          }
 
          sleepABit();
-
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
 
       fail("Failed to find element matching selector [" + cssSelector + "] containing text [" + textContains + "] after [" + WAIT_SECONDS + "] seconds.");
       return (null);
-   }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   public WebElement waitForSelectorContainingV2(String cssSelector, String textContains)
-   {
-      return (waitLoop("element matching selector [" + cssSelector + "] containing text [" + textContains + "].", () ->
-      {
-         List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
-         for(WebElement element : elements)
-         {
-            try
-            {
-               if(element.getText() != null && element.getText().toLowerCase().contains(textContains.toLowerCase()))
-               {
-                  return (element);
-               }
-            }
-            catch(StaleElementReferenceException sere)
-            {
-               LOG.debug("Caught a StaleElementReferenceException - will retry.");
-            }
-         }
-         return (null);
-      }));
    }
 
 
@@ -396,20 +374,22 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
-   public void assertElementHasFocus(WebElement element)
+   public void waitForElementToHaveFocus(WebElement element)
    {
+      LOG.debug("Waiting for element [" + element + "] to have focus.");
       long start = System.currentTimeMillis();
       do
       {
          if(Objects.equals(driver.switchTo().activeElement(), element))
          {
+            LOG.debug("Element [" + element + "] has focus.");
             return;
          }
          sleepABit();
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
 
-      fail("Failed to see that element [" + element + "] has focus.");
+      fail("Failed to see that element [" + element + "] has focus after [" + WAIT_SECONDS + "] seconds.");
    }
 
 

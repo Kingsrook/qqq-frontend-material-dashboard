@@ -25,8 +25,8 @@ public class QSeleniumJavalin
 
    private long WAIT_SECONDS = 10;
 
-   private List<Pair<String, String>> routesToFiles;
-   private List<Pair<String, String>> routesToStrings;
+   private List<Pair<String, String>> routesToFiles   = new ArrayList<>();
+   private List<Pair<String, String>> routesToStrings = new ArrayList<>();
 
    private Javalin javalin;
 
@@ -48,6 +48,17 @@ public class QSeleniumJavalin
     *******************************************************************************/
    public QSeleniumJavalin()
    {
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void clearRoutes()
+   {
+      this.routesToFiles.clear();
+      this.routesToStrings.clear();
    }
 
 
@@ -271,4 +282,5 @@ public class QSeleniumJavalin
       fail("Failed to capture a request for path [" + path + "] with body containing [" + bodyContaining + "] after [" + WAIT_SECONDS + "] seconds.");
       return (null);
    }
+
 }
