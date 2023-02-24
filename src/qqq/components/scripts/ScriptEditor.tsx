@@ -1,0 +1,210 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import Snackbar from "@mui/material/Snackbar";
+import TextField from "@mui/material/TextField";
+import FormData from "form-data";
+import React, {useReducer, useState} from "react";
+import AceEditor from "react-ace";
+import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import Client from "qqq/utils/qqq/Client";
+
+export interface ScriptEditorProps
+{
+   title: string;
+   scriptId: number;
+   contents: string;
+   closeCallback: any;
+}
+
+
+const qController = Client.getInstance();
+
+function ScriptEditor({title, scriptId, contents, closeCallback}: ScriptEditorProps): JSX.Element
+{
+   const [closing, setClosing] = useState(false);
+   const [updatedCode, setUpdatedCode] = useState(contents)
+   const [commitMessage, setCommitMessage] = useState("")
+   const [openTool, setOpenTool] = useState(null);
+   const [errorAlert, setErrorAlert] = useState("")
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+   const changeOpenTool = (event: React.MouseEvent<HTMLElement>, newValue: string | null) =>
+   {
+      setOpenTool(newValue);
+
+      // need this to make Ace recognize new height.
+      setTimeout(() =>
+      {
+         window.dispatchEvent(new Event("resize"))
+      }, 100);
+   };
+
+   const saveClicked = () =>
+   {
+      setClosing(true);
+
+      (async () =>
+      {
+         const formData = new FormData();
+         formData.append("scriptId", scriptId);
+         formData.append("contents", updatedCode);
+         formData.append("commitMessage", commitMessage);
+
+         //////////////////////////////////////////////////////////////////
+         // we don't want this job to go async, so, pass a large timeout //
+         //////////////////////////////////////////////////////////////////
+         formData.append("_qStepTimeoutMillis", 60 * 1000);
+
+         const formDataHeaders = {
+            "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
+         };
+
+         try
+         {
+            const processResult = await qController.processInit("storeScriptRevision", formData, formDataHeaders);
+            console.log("process result");
+            console.log(processResult);
+
+            if (processResult instanceof QJobError)
+            {
+               const jobError = processResult as QJobError
+               setErrorAlert(jobError.userFacingError ?? jobError.error)
+               setClosing(false);
+               return;
+            }
+
+            closeCallback(null, "saved", "Saved New Script Version");
+         }
+         catch(e)
+         {
+            // @ts-ignore
+            setErrorAlert(e.message ?? "Unexpected error saving script")
+            setClosing(false);
+         }
+      })();
+   }
+
+   const cancelClicked = () =>
+   {
+      setClosing(true);
+      closeCallback(null, "cancelled");
+   }
+
+   const updateCode = (value: string, event: any) =>
+   {
+      console.log("Updating code")
+      setUpdatedCode(value);
+      forceUpdate();
+   }
+
+   const updateCommitMessage = (event: React.ChangeEvent<HTMLInputElement>) =>
+   {
+      setCommitMessage(event.target.value);
+   }
+
+   return (
+      <Box sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={6}>
+         <Card sx={{height: "100%", p: 3}}>
+
+            <Snackbar open={errorAlert !== null && errorAlert !== ""} onClose={(event?: React.SyntheticEvent | Event, reason?: string) =>
+            {
+               if (reason === "clickaway")
+               {
+                  return;
+               }
+               setErrorAlert("")
+            }} anchorOrigin={{vertical: "top", horizontal: "center"}}>
+               <Alert color="error" onClose={() => setErrorAlert("")}>
+                  {errorAlert}
+               </Alert>
+            </Snackbar>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+               <Typography variant="h5" pb={1}>
+                  {title}
+               </Typography>
+
+               <Box>
+                  <Typography variant="body2" display="inline" pr={1}>
+                     Tools:
+                  </Typography>
+                  <ToggleButtonGroup
+                     value={openTool}
+                     exclusive
+                     onChange={changeOpenTool}
+                     size="small"
+                     sx={{pb: 1}}
+                  >
+                     <ToggleButton value="preview">Preview</ToggleButton>
+                  </ToggleButtonGroup>
+               </Box>
+            </Box>
+
+            <Box sx={{height: openTool ? "45%" : "100%"}}>
+               <AceEditor
+                  mode="javascript"
+                  theme="github"
+                  name="editor"
+                  editorProps={{$blockScrolling: true}}
+                  onChange={updateCode}
+                  width="100%"
+                  height="100%"
+                  value={updatedCode}
+                  style={{border: "1px solid gray"}}
+               />
+            </Box>
+
+            {/*
+               openTool &&
+               <Box sx={{height: "45%"}} pt={2}>
+                  {
+                     openTool == "preview" &&
+                     <Box fontSize="14px" overflow="auto" height="100%" border="1px solid gray" pt={1}>
+                        <DataBagPreview json={updatedCode} />
+                     </Box>
+                  }
+               </Box>
+            */}
+
+            <Box pt={1}>
+               <Grid container alignItems="flex-end">
+                  <Box width="50%">
+                     <TextField id="commitMessage" label="Commit Message" variant="standard" fullWidth value={commitMessage} onChange={updateCommitMessage} />
+                  </Box>
+                  <Grid container justifyContent="flex-end" spacing={3}>
+                     <QCancelButton disabled={closing} onClickHandler={cancelClicked} />
+                     <QSaveButton disabled={closing} onClickHandler={saveClicked} />
+                  </Grid>
+               </Grid>
+            </Box>
+         </Card>
+      </Box>
+   );
+}
+
+export default ScriptEditor;
