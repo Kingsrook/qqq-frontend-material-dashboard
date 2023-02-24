@@ -95,7 +95,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       qSeleniumLib.takeScreenshotToFile("before-johnny-click");
       qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
-      qSeleniumLib.waitForSelectorContaining("DIV", "Jonny").click();
+      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
       qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
@@ -121,7 +121,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "Jonny").click();
+      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////////////////////////////////
@@ -160,7 +160,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "Jonny").click();
+      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////
