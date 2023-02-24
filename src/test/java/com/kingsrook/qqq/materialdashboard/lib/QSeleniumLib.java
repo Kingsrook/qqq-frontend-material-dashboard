@@ -345,6 +345,7 @@ public class QSeleniumLib
 
    /*******************************************************************************
     ** Take a screenshot, and give it a path/name of your choosing (under SCREENSHOTS_PATH)
+    ** - note - .png will be appended.
     *******************************************************************************/
    public void takeScreenshotToFile(String filePathSuffix)
    {
@@ -353,7 +354,7 @@ public class QSeleniumLib
          try
          {
             File outputFile = driver.findElement(By.cssSelector("html")).getScreenshotAs(OutputType.FILE);
-            File destFile   = new File(SCREENSHOTS_PATH + filePathSuffix);
+            File destFile   = new File(SCREENSHOTS_PATH + filePathSuffix + ".png");
             destFile.mkdirs();
             if(destFile.exists())
             {

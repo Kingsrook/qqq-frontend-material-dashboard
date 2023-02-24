@@ -93,7 +93,9 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
+      qSeleniumLib.takeScreenshotToFile("before-johnny-click");
       qSeleniumLib.waitForSelectorContaining("DIV", "Jonny").click();
+      qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////
