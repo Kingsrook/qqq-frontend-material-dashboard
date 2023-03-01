@@ -259,6 +259,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    background-color: initial !important;
    color: initial !important;
+   border: 1px solid rgb(206, 212, 218);
 }
 .MuiDataGrid-filterForm .MuiAutocomplete-tag .MuiSvgIcon-root
 {
