@@ -238,7 +238,7 @@ class FilterUtils
     ** for non-values (e.g., blank), set it to null.
     ** for list-values, it's already in an array, so don't wrap it.
     *******************************************************************************/
-   public static gridCriteriaValueToQQQ = (operator: QCriteriaOperator, value: any, gridOperatorValue: string): any[] =>
+   public static gridCriteriaValueToQQQ = (operator: QCriteriaOperator, value: any, gridOperatorValue: string, fieldMetaData: QFieldMetaData): any[] =>
    {
       if (gridOperatorValue === "isTrue")
       {
@@ -263,18 +263,34 @@ class FilterUtils
             /////////////////////////////////////////////////////////////////////////////////////////////////
             return ([null, null]);
          }
-         return (FilterUtils.extractIdsFromPossibleValueList(value));
+         return (FilterUtils.prepFilterValuesForBackend(value, fieldMetaData));
       }
 
-      return (FilterUtils.extractIdsFromPossibleValueList([value]));
+      return (FilterUtils.prepFilterValuesForBackend([value], fieldMetaData));
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static zeroPad = (n: number): string =>
+   {
+      if (n < 10)
+      {
+         return ("0" + n);
+      }
+      return (`${n}`);
+   };
+
 
    /*******************************************************************************
     ** Helper method - take a list of values, which may be possible values, and
     ** either return the original list, or a new list that is just the ids of the
-    ** possible values (if it was a list of possible values)
+    ** possible values (if it was a list of possible values).
+    **
+    ** Or, if the values are date-times, convert them to UTC.
     *******************************************************************************/
-   private static extractIdsFromPossibleValueList = (param: any[]): number[] | string[] =>
+   private static prepFilterValuesForBackend = (param: any[], fieldMetaData: QFieldMetaData): number[] | string[] =>
    {
       if (param === null || param === undefined)
       {
@@ -294,7 +310,27 @@ class FilterUtils
          }
          else
          {
-            rs.push(param[i]);
+            if (fieldMetaData?.type == QFieldType.DATE_TIME)
+            {
+               try
+               {
+                  let localDate = new Date(param[i]);
+                  let month = (1 + localDate.getUTCMonth());
+                  let zp = FilterUtils.zeroPad;
+                  let toPush = localDate.getUTCFullYear() + "-" + zp(month) + "-" + zp(localDate.getUTCDate()) + "T" + zp(localDate.getUTCHours()) + ":" + zp(localDate.getUTCMinutes()) + ":" + zp(localDate.getUTCSeconds()) + "Z";
+                  console.log(`Input date was ${localDate}.  Sending to backend as ${toPush}`);
+                  rs.push(toPush);
+               }
+               catch (e)
+               {
+                  console.log("Error converting date-time to UTC: ", e);
+                  rs.push(param[i]);
+               }
+            }
+            else
+            {
+               rs.push(param[i]);
+            }
          }
       }
       return (rs);
@@ -494,7 +530,7 @@ class FilterUtils
    /*******************************************************************************
     ** build a qqq filter from a grid and column sort model
     *******************************************************************************/
-   public static buildQFilterFromGridFilter(filterModel: GridFilterModel, columnSortModel: GridSortItem[]): QQueryFilter
+   public static buildQFilterFromGridFilter(tableMetaData: QTableMetaData, filterModel: GridFilterModel, columnSortModel: GridSortItem[]): QQueryFilter
    {
       console.log("Building q filter with model:");
       console.log(filterModel);
@@ -533,8 +569,10 @@ class FilterUtils
                return;
             }
 
+            var fieldMetadata = tableMetaData?.fields.get(item.columnField);
+
             const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
-            const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue);
+            const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue, fieldMetadata);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
             foundFilter = true;
          });

@@ -283,7 +283,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const buildQFilter = (filterModel: GridFilterModel) =>
    {
-      const filter = FilterUtils.buildQFilterFromGridFilter(filterModel, columnSortModel);
+      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
       return(filter);
    };
