@@ -21,13 +21,17 @@
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
+import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import {DataGridPro} from "@mui/x-data-grid-pro";
-import {columnsStateInitializer} from "@mui/x-data-grid/internals";
+import FormData from "form-data";
 import React, {useEffect, useState} from "react";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -36,16 +40,15 @@ interface Props
 {
    tableMetaData: QTableMetaData;
    fieldMetaData: QFieldMetaData;
-   closeModalHandler?: (event: object, reason: string) => void;
+   filter: QQueryFilter;
 }
 
 ColumnStats.defaultProps = {
-   closeModalHandler: null,
 };
 
 const qController = Client.getInstance();
 
-function ColumnStats({tableMetaData, fieldMetaData, closeModalHandler}: Props): JSX.Element
+function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 {
    const [statusString, setStatusString] = useState("Calculating statistics...");
    const [isLoaded, setIsLoaded] = useState(false);
@@ -58,7 +61,12 @@ function ColumnStats({tableMetaData, fieldMetaData, closeModalHandler}: Props): 
    {
       (async () =>
       {
-         const processResult = await qController.processRun("tableStats", `tableName=${tableMetaData.name}&fieldName=${fieldMetaData.name}`);
+         const formData = new FormData();
+         formData.append("tableName", tableMetaData.name);
+         formData.append("fieldName", fieldMetaData.name);
+         formData.append("filterJSON", JSON.stringify(filter));
+         const processResult = await qController.processRun("tableStats", formData);
+
          setStatusString(null)
          if (processResult instanceof QJobError)
          {
@@ -72,15 +80,29 @@ function ColumnStats({tableMetaData, fieldMetaData, closeModalHandler}: Props): 
             setCountDistinct(result.values.countDistinct);
 
             const valueCounts = [] as QRecord[];
-            result.values.valueCounts.forEach((object: any) =>
+            for(let i = 0; i < result.values.valueCounts.length; i++)
             {
-               valueCounts.push(new QRecord(object));
-            })
+               valueCounts.push(new QRecord(result.values.valueCounts[i]));
+            }
             setValueCounts(valueCounts);
 
-            const fakeTableMetaData = new QTableMetaData({primaryKeyField: "value", fields: {value: fieldMetaData, count: {label: "Count", type: "INTEGER"}}});
+            const fakeTableMetaData = new QTableMetaData({primaryKeyField: fieldMetaData.name});
+            fakeTableMetaData.fields = new Map<string, QFieldMetaData>();
+            fakeTableMetaData.fields.set(fieldMetaData.name, fieldMetaData);
+            fakeTableMetaData.fields.set("count", new QFieldMetaData({name: "count", label: "Count", type: "INTEGER"}));
+            fakeTableMetaData.sections = [] as QTableSection[];
+            fakeTableMetaData.sections.push(new QTableSection({fieldNames: [fieldMetaData.name, "count"]}));
+
             const {rows, columnsToRender} = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, columnsToRender);
+
+            columns[1].sortComparator = (v1, v2): number =>
+            {
+               const n1 = parseInt(v1.replaceAll(",", ""));
+               const n2 = parseInt(v2.replaceAll(",", ""));
+               return (n1 - n2);
+            }
+
             setRows(rows);
             setColumns(columns);
 
@@ -89,32 +111,71 @@ function ColumnStats({tableMetaData, fieldMetaData, closeModalHandler}: Props): 
       })();
    }, []);
 
+   // @ts-ignore
+   const defaultLabelDisplayedRows = ({from, to, count}) =>
+   {
+      // todo - not done
+      return ("Showing stuff");
+   };
+
+   function CustomPagination()
+   {
+      return (
+         <TablePagination
+            component="div"
+            page={1}
+            count={1}
+            rowsPerPage={1000}
+            onPageChange={null}
+            labelDisplayedRows={defaultLabelDisplayedRows}
+         />
+      );
+   }
+
+   function Loading()
+   {
+      return (
+         <LinearProgress color="info" />
+      );
+   }
+
    return (
       <Box>
          <Box p={3} display="flex" flexDirection="row" justifyContent="space-between" alignItems="flex-start">
             <Typography variant="h5" pb={3}>
-               Column Statistics for {tableMetaData.label} : {fieldMetaData.label}
+               Column Statistics for {tableMetaData.label}: {fieldMetaData.label}
                <Typography fontSize={14}>
                   {statusString}
                </Typography>
             </Typography>
          </Box>
-         {
-            isLoaded && <>
-               <Box sx={{overflow: "auto", height: "calc( 100vh - 19rem )", position: "relative"}} px={3}>
-                  <b>Distinct Values: </b> {countDistinct.toLocaleString()}
+         <Box px={3} fontSize="1rem">
+            <div>
+               <div className="fieldLabel">Distinct Values: </div> <div className="fieldValue">{Number(countDistinct).toLocaleString()}</div>
+            </div>
+         </Box>
 
-                  <DataGridPro
-                     autoHeight
-                     rows={rows}
-                     disableSelectionOnClick
-                     columns={columns}
-                     rowBuffer={10}
-                     getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-                  />
-               </Box>
-            </>
-         }
+         <Box sx={{overflow: "auto", height: "calc( 100vh - 19rem )", position: "relative"}} px={3}>
+            <DataGridPro
+               components={{LoadingOverlay: Loading, Pagination: CustomPagination}}
+               rows={rows}
+               disableSelectionOnClick
+               columns={columns}
+               loading={!isLoaded}
+               rowBuffer={10}
+               getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+               initialState={{
+                  sorting: {
+                     sortModel: [
+                        {
+                           field: "count",
+                           sort: "desc",
+                        },
+                     ],
+                  },
+               }}
+            />
+         </Box>
       </Box>);
 }
 

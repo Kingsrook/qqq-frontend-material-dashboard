@@ -169,6 +169,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
    const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string)
+   const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter)
 
    const instance = useRef({timer: null});
 
@@ -995,6 +996,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const openColumnStatistics = async (column: GridColDef) =>
    {
+      setFilterForColumnStats(buildQFilter(filterModel));
       setColumnStatsFieldName(column.field);
    }
 
@@ -1391,7 +1393,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
                         <Card sx={{my: 5, mx: "auto", pb: 0, maxWidth: "1024px"}}>
                            <Box component="div">
-                              <ColumnStats tableMetaData={tableMetaData} fieldMetaData={tableMetaData?.fields.get(columnStatsFieldName)} closeModalHandler={closeColumnStats} />
+                              <ColumnStats tableMetaData={tableMetaData} fieldMetaData={tableMetaData?.fields.get(columnStatsFieldName)} filter={filterForColumnStats} />
                               <Box p={3} display="flex" flexDirection="row" justifyContent="flex-end">
                                  <QCancelButton label="Close" onClickHandler={() => closeColumnStats(null, null)} disabled={false} />
                               </Box>

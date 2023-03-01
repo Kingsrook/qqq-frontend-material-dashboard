@@ -56,7 +56,7 @@ export default class DataGridUtils
 
          if(!row["id"])
          {
-            row["id"] = row[tableMetaData.primaryKeyField];
+            row["id"] = record.values.get(tableMetaData.primaryKeyField) ?? row[tableMetaData.primaryKeyField];
          }
 
          rows.push(row);
