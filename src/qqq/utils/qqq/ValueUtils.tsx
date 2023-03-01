@@ -260,7 +260,7 @@ class ValueUtils
          date = new Date(date)
       }
       // @ts-ignore
-      return (`${date.toString("yyyy-MM-ddThh:mm:ssZ")}`);
+      return (`${date.toString("yyyy-MM-ddTHH:mm:ssZ")}`);
    }
 
    public static getFullWeekday(date: Date)
