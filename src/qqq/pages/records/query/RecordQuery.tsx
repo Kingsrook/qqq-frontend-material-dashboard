@@ -434,7 +434,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       if(columnsModel.length == 0)
       {
-         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender);
+         let linkBase = metaData.getTablePath(table)
+         linkBase += linkBase.endsWith("/") ? "" : "/";
+         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, linkBase);
          setColumnsModel(columns);
       }
 
@@ -924,6 +926,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const copyColumnValues = async (column: GridColDef) =>
    {
       let data = "";
+      let counter = 0;
       if(latestQueryResults && latestQueryResults.length)
       {
          let qFieldMetaData = tableMetaData.fields.get(column.field);
@@ -931,11 +934,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             let record = latestQueryResults[i] as QRecord;
             const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(qFieldMetaData.name), record.displayValues.get(qFieldMetaData.name));
-            data += value + "\n";
+            if(value !== null && value !== undefined && String(value) !== "")
+            {
+               data += value + "\n";
+               counter++;
+            }
          }
 
-         await navigator.clipboard.writeText(data)
-         setSuccessAlert("Copied " + latestQueryResults.length + " " + qFieldMetaData.label + " values.");
+         if(counter > 0)
+         {
+            await navigator.clipboard.writeText(data)
+            setSuccessAlert(`Copied ${counter} ${qFieldMetaData.label} value${counter == 1 ? "" : "s"}.`);
+         }
+         else
+         {
+            setSuccessAlert(`There are no ${qFieldMetaData.label} values to copy.`);
+         }
          setTimeout(() => setSuccessAlert(null), 3000);
       }
    }
