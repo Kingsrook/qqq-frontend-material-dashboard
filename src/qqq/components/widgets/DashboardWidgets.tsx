@@ -85,6 +85,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    useEffect(() =>
    {
+      setWidgetData([]);
       for (let i = 0; i < widgetMetaDataList.length; i++)
       {
          const widgetMetaData = widgetMetaDataList[i];
@@ -96,17 +97,21 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          (async () =>
          {
             widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
+            setWidgetData(widgetData);
             setWidgetCounter(widgetCounter + 1);
             forceUpdate();
          })();
       }
-      setWidgetData(widgetData);
    }, [widgetMetaDataList]);
 
    const reloadWidget = async (index: number, data: string) =>
    {
-      widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
-      forceUpdate();
+      (async() =>
+      {
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
+         setWidgetData(widgetData);
+         forceUpdate();
+      })();
    };
 
    function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
@@ -224,7 +229,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}>
-                     <div>
+                     <div className="widgetProcessMidDiv" style={{height: "100%"}}>
                         <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} forceReInit={widgetCounter} />
                      </div>
                   </Widget>
@@ -271,20 +276,18 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "statistics" && (
-                  widgetData && widgetData[i] && (
-                     <Widget
-                        widgetMetaData={widgetMetaData}
-                        widgetData={widgetData[i]}
-                        isChild={areChildren}
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     isChild={areChildren}
 
-                        // reloadWidgetCallback={(data) => reloadWidget(i, data)}
-                     >
-                        <StatisticsCard
-                           data={widgetData[i]}
-                           increaseIsGood={true}
-                        />
-                     </Widget>
-                  )
+                     // reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                  >
+                     <StatisticsCard
+                        data={widgetData[i]}
+                        increaseIsGood={true}
+                     />
+                  </Widget>
                )
             }
             {

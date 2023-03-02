@@ -254,6 +254,17 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    background: orange;
 }
 
+/* make tags in filter forms not be black bg w/ white text */
+.MuiDataGrid-filterForm .MuiAutocomplete-tag
+{
+   background-color: initial !important;
+   color: initial !important;
+}
+.MuiDataGrid-filterForm .MuiAutocomplete-tag .MuiSvgIcon-root
+{
+   color: initial !important;
+}
+
 .MuiTablePagination-root .MuiTablePagination-toolbar .MuiTablePagination-select
 {
    padding-right: 1.125rem !important;

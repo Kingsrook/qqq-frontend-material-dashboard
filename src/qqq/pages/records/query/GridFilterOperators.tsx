@@ -486,9 +486,46 @@ const stringNotEndWithOperator: GridFilterOperator = {
    InputComponent: GridFilterInputValue,
 };
 
+const getListValueString = (value: GridFilterItem["value"]): string =>
+{
+   if (value && value.length)
+   {
+      let labels = [] as string[];
+
+      let maxLoops = value.length;
+      if(maxLoops > 5)
+      {
+         maxLoops = 3;
+      }
+
+      for (let i = 0; i < maxLoops; i++)
+      {
+         labels.push(value[i]);
+      }
+
+      if(maxLoops < value.length)
+      {
+         labels.push(" and " + (value.length - maxLoops) + " other values.");
+      }
+
+      return (labels.join(", "));
+   }
+   return (value);
+};
+
 const stringIsAnyOfOperator: GridFilterOperator = {
    label: "is any of",
    value: "isAnyOf",
+   getValueAsString: getListValueString,
+   getApplyFilterFn: () => null,
+   // @ts-ignore
+   InputComponent: (props: GridFilterInputMultipleValueProps<GridApiCommunity>) => CustomIsAnyInput("text", props)
+};
+
+const stringIsNoneOfOperator: GridFilterOperator = {
+   label: "is none of",
+   value: "isNone",
+   getValueAsString: getListValueString,
    getApplyFilterFn: () => null,
    // @ts-ignore
    InputComponent: (props: GridFilterInputMultipleValueProps<GridApiCommunity>) => CustomIsAnyInput("text", props)
@@ -504,7 +541,7 @@ let endsWith = gridStringOperators.splice(0, 1)[0];
 // remove default isany operator //
 ///////////////////////////////////
 gridStringOperators.splice(2, 1)[0];
-gridStringOperators = [equals, stringNotEqualsOperator, contains, stringNotContainsOperator, startsWith, stringNotStartsWithOperator, endsWith, stringNotEndWithOperator, ...gridStringOperators, stringIsAnyOfOperator];
+gridStringOperators = [equals, stringNotEqualsOperator, contains, stringNotContainsOperator, startsWith, stringNotStartsWithOperator, endsWith, stringNotEndWithOperator, ...gridStringOperators, stringIsAnyOfOperator, stringIsNoneOfOperator];
 
 export const QGridStringOperators = gridStringOperators;
 
@@ -620,6 +657,16 @@ const numericIsAnyOfOperator: GridFilterOperator = {
    label: "is any of",
    value: "isAnyOf",
    getApplyFilterFn: () => null,
+   getValueAsString: getListValueString,
+   // @ts-ignore
+   InputComponent: (props: GridFilterInputMultipleValueProps<GridApiCommunity>) => CustomIsAnyInput("number", props)
+};
+
+const numericIsNoneOfOperator: GridFilterOperator = {
+   label: "is none of",
+   value: "isNone",
+   getApplyFilterFn: () => null,
+   getValueAsString: getListValueString,
    // @ts-ignore
    InputComponent: (props: GridFilterInputMultipleValueProps<GridApiCommunity>) => CustomIsAnyInput("number", props)
 };
@@ -629,7 +676,7 @@ const numericIsAnyOfOperator: GridFilterOperator = {
 //////////////////////////////
 let gridNumericOperators = getGridNumericOperators();
 gridNumericOperators.splice(8, 1)[0];
-export const QGridNumericOperators = [...gridNumericOperators, betweenOperator, notBetweenOperator, numericIsAnyOfOperator];
+export const QGridNumericOperators = [...gridNumericOperators, betweenOperator, notBetweenOperator, numericIsAnyOfOperator, numericIsNoneOfOperator];
 
 ///////////////////////
 // boolean operators //
@@ -800,11 +847,17 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
 
 const getPvsValueString = (value: GridFilterItem["value"]): string =>
 {
-   console.log("get pvs value", value);
    if (value && value.length)
    {
       let labels = [] as string[];
-      for (let i = 0; i < value.length; i++)
+
+      let maxLoops = value.length;
+      if(maxLoops > 5)
+      {
+         maxLoops = 3;
+      }
+
+      for (let i = 0; i < maxLoops; i++)
       {
          if(value[i] && value[i].label)
          {
@@ -815,6 +868,12 @@ const getPvsValueString = (value: GridFilterItem["value"]): string =>
             labels.push(value);
          }
       }
+
+      if(maxLoops < value.length)
+      {
+         labels.push(" and " + (value.length - maxLoops) + " other values.");
+      }
+
       return (labels.join(", "));
    }
    else if (value && value.label)

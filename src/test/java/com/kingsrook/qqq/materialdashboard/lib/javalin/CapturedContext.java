@@ -1,4 +1,4 @@
-package com.kingsrook.qqq.materialdashbaord.lib.javalin;
+package com.kingsrook.qqq.materialdashboard.lib.javalin;
 
 
 import io.javalin.http.Context;

@@ -38,7 +38,6 @@ import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/mater
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
@@ -46,6 +45,7 @@ import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
+import parse from "html-react-parser";
 import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
@@ -75,7 +75,7 @@ interface Props
    recordIds?: string | QQueryFilter;
    closeModalHandler?: (event: object, reason: string) => void;
    forceReInit?: number;
-   overrideLabel?: string
+   overrideLabel?: string;
 }
 
 const INITIAL_RETRY_MILLIS = 1_500;
@@ -225,12 +225,12 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
       xhr.open("POST", url);
       xhr.responseType = "blob";
       let formData = new FormData();
-      formData.append("Authorization", qController.getAuthorizationHeaderValue())
+      formData.append("Authorization", qController.getAuthorizationHeaderValue());
 
       // @ts-ignore
       xhr.send(formData);
 
-      xhr.onload = function(e)
+      xhr.onload = function (e)
       {
          if (this.status == 200)
          {
@@ -247,7 +247,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
          }
          else
          {
-            setProcessError("Error downloading file", true)
+            setProcessError("Error downloading file", true);
          }
       };
    };
@@ -299,7 +299,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                <Box component="div" py={3}>
                   <Grid container justifyContent="flex-end" spacing={3}>
                      {isModal ? <QCancelButton onClickHandler={handleCancelClicked} disabled={false} label="Close" />
-                        : <QCancelButton onClickHandler={handleCancelClicked} disabled={false} />
+                        : !isWidget && <QCancelButton onClickHandler={handleCancelClicked} disabled={false} />
                      }
                   </Grid>
                </Box>
@@ -350,13 +350,30 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
 
       const {formFields, values, errors, touched} = formData;
       let localTableSections = tableSections;
-      if(localTableSections == null)
+      if (localTableSections == null)
       {
          //////////////////////////////////////////////////////////////////////////////////////////////////////
          // if the table sections (ones that actually have fields to edit) haven't been built yet, do so now //
          //////////////////////////////////////////////////////////////////////////////////////////////////////
          localTableSections = tableMetaData ? TableUtils.getSectionsForRecordSidebar(tableMetaData, Object.keys(formFields)) : null;
          setTableSections(localTableSections);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////////
+      // if there are any fields that are possible values, they need to know what their //
+      // initial value to display should be.                                            //
+      // this **needs to be** the actual PVS LABEL - not the raw value (e.g, PVS ID)    //
+      // but our first use case, they're the same, so... this needs fixed.              //
+      ////////////////////////////////////////////////////////////////////////////////////
+      if(formFields && processValues)
+      {
+         Object.keys(formFields).forEach((key) =>
+         {
+            if(formFields[key].possibleValueProps && processValues[key])
+            {
+               formFields[key].possibleValueProps.initialDisplayValue = processValues[key]
+            }
+         })
       }
 
       return (
@@ -420,25 +437,25 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
 
                                     {localTableSections.map((section: QTableSection, index: number) =>
                                     {
-                                       const name = section.name
+                                       const name = section.name;
 
-                                       if(section.isHidden)
+                                       if (section.isHidden)
                                        {
-                                          return ;
+                                          return;
                                        }
 
                                        const sectionFormFields = {};
-                                       for(let i = 0; i<section.fieldNames.length; i++)
+                                       for (let i = 0; i < section.fieldNames.length; i++)
                                        {
                                           const fieldName = section.fieldNames[i];
-                                          if(formFields[fieldName])
+                                          if (formFields[fieldName])
                                           {
                                              // @ts-ignore
                                              sectionFormFields[fieldName] = formFields[fieldName];
                                           }
                                        }
 
-                                       if(Object.keys(sectionFormFields).length > 0)
+                                       if (Object.keys(sectionFormFields).length > 0)
                                        {
                                           const sectionFormData = {
                                              formFields: sectionFormFields,
@@ -589,6 +606,14 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                            </div>
                         )
                      }
+                     {
+                        component.type === QComponentType.HTML && (
+                           processValues[`${step.name}.html`] &&
+                           <Box fontSize="1rem">
+                              {parse(processValues[`${step.name}.html`])}
+                           </Box>
+                        )
+                     }
                   </div>
                )))}
          </>
@@ -655,7 +680,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
          return;
       }
 
-      if(! isWidget)
+      if (!isWidget)
       {
          setPageHeader(overrideLabel ?? processMetaData.label);
       }
@@ -701,10 +726,9 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
          {
             let fullFieldList = getFullFieldList(activeStep, processValues);
             const formData = DynamicFormUtils.getFormData(fullFieldList);
-            if(tableMetaData)
-            {
-               DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData.name, null);
-            }
+
+            const possibleValueDisplayValues = new Map<string, string>();
+            DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData?.name, processName, possibleValueDisplayValues);
 
             dynamicFormFields = formData.dynamicFormFields;
             formValidations = formData.formValidations;
@@ -819,7 +843,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
             }
          });
 
-         DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, fullFieldList, tableMetaData.name, null);
+         DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, fullFieldList, tableMetaData.name, null, null);
 
          setFormFields(newDynamicFormFields);
          setValidationScheme(Yup.object().shape(newFormValidations));
@@ -981,11 +1005,11 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
    {
       if ((e as QException).status === "403")
       {
-         setProcessError(`You do not have permission to run this ${isReport ? "report" : "process"}.`, true)
+         setProcessError(`You do not have permission to run this ${isReport ? "report" : "process"}.`, true);
          return (true);
       }
       return (false);
-   }
+   };
 
 
    //////////////////////////////////////////////////////////////////////////////////////////
@@ -1175,7 +1199,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";
    }
-   if(isWidget)
+   if (isWidget)
    {
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";
@@ -1231,10 +1255,10 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                   }
 
                   <Box p={3}>
-                     <Box>
+                     <Box pb={isWidget ? 6 : "initial"}>
                         {/***************************************************************************
-                               ** step content - e.g., the appropriate form or other screen for the step **
-                               ***************************************************************************/}
+                         ** step content - e.g., the appropriate form or other screen for the step **
+                         ***************************************************************************/}
                         {getDynamicStepContent(
                            activeStepIndex,
                            activeStep,
@@ -1250,9 +1274,9 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                            setFieldValue,
                         )}
                         {/********************************
-                               ** back &| next/submit buttons **
-                               ********************************/}
-                        <Box mt={6} width="100%" display="flex" justifyContent="space-between">
+                         ** back &| next/submit buttons **
+                         ********************************/}
+                        <Box mt={6} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
                            {true || activeStepIndex === 0 ? (
                               <Box />
                            ) : (
@@ -1279,7 +1303,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
                                        <Box component="div" py={3}>
                                           <Grid container justifyContent="flex-end" spacing={3}>
                                              {
-                                                ! isWidget && (
+                                                !isWidget && (
                                                    <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
                                                 )
                                              }
@@ -1320,7 +1344,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
    else if (isWidget)
    {
       return (
-         <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
+         <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", height: "100%"}}>
             {form}
          </Box>
       );

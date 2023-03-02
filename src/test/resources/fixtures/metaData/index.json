@@ -53,6 +53,21 @@
             "TABLE_INSERT",
             "TABLE_DELETE"
          ]
+      },
+      "audit": {
+         "name": "audit",
+         "label": "Audits",
+         "isHidden": true,
+         "iconName": "location_city",
+         "deletePermission": false,
+         "editPermission": false,
+         "insertPermission": false,
+         "readPermission": true,
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY"
+         ]
       }
    },
    "processes": {
@@ -87,10 +102,23 @@
          "label": "Sleep Interactive",
          "isHidden": false
       },
-      "simpleThrow": {
-         "name": "simpleThrow",
-         "label": "Simple Throw",
-         "isHidden": false
+      "querySavedFilter": {
+         "name": "querySavedFilter",
+         "label": "Query Saved Filter",
+         "isHidden": false,
+         "hasPermission": true
+      },
+      "storeSavedFilter": {
+         "name": "storeSavedFilter",
+         "label": "Store Saved Filter",
+         "isHidden": false,
+         "hasPermission": true
+      },
+      "deleteSavedFilter": {
+         "name": "deleteSavedFilter",
+         "label": "Delete Saved Filter",
+         "isHidden": false,
+         "hasPermission": true
       },
       "carrier.bulkInsert": {
          "name": "carrier.bulkInsert",

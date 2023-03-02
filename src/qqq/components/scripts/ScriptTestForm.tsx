@@ -20,7 +20,6 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {Map} from "@mui/icons-material";
 import {Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -75,7 +74,6 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
 
    const testScript = () =>
    {
-      // @ts-ignore
       const inputValues = new Map<string, any>();
       if (scriptDefinition.testInputFields)
       {

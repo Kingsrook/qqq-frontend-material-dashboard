@@ -35,7 +35,8 @@ import Client from "qqq/utils/qqq/Client";
 
 interface Props
 {
-   tableName: string;
+   tableName?: string;
+   processName?: string;
    fieldName: string;
    fieldLabel: string;
    inForm: boolean;
@@ -50,6 +51,8 @@ interface Props
 }
 
 DynamicSelect.defaultProps = {
+   tableName: null,
+   processName: null,
    inForm: true,
    initialValue: null,
    initialDisplayValue: null,
@@ -65,7 +68,7 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
+function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
 {
    const [ open, setOpen ] = useState(false);
    const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
@@ -109,9 +112,9 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, fieldName, searchTerm ?? "");
+         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "");
 
-         if(tableMetaData == null)
+         if(tableMetaData == null && tableName)
          {
             let tableMetaData: QTableMetaData = await qController.loadTableMetaData(tableName);
             setTableMetaData(tableMetaData);
@@ -134,7 +137,7 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
 
    const inputChanged = (event: React.SyntheticEvent, value: string, reason: string) =>
    {
-      console.log(`input changed.  Reason: ${reason}, setting search term to ${value}`);
+      // console.log(`input changed.  Reason: ${reason}, setting search term to ${value}`);
       if(reason !== "reset")
       {
          // console.log(` -> setting search term to ${value}`);
@@ -186,7 +189,7 @@ function DynamicSelect({tableName, fieldName, fieldLabel, inForm, initialValue, 
 
       try
       {
-         const field = tableMetaData.fields.get(fieldName)
+         const field = tableMetaData?.fields.get(fieldName)
          if(field)
          {
             const adornment = field.getAdornment(AdornmentType.CHIP);

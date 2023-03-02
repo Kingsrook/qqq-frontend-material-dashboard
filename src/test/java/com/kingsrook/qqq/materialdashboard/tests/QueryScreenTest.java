@@ -19,13 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashbaord.tests;
+package com.kingsrook.qqq.materialdashboard.tests;
 
 
-import com.kingsrook.qqq.materialdashbaord.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashbaord.lib.QQQMaterialDashboardSelectors;
-import com.kingsrook.qqq.materialdashbaord.lib.javalin.CapturedContext;
-import com.kingsrook.qqq.materialdashbaord.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.materialdashboard.lib.QQQMaterialDashboardSelectors;
+import com.kingsrook.qqq.materialdashboard.lib.QSeleniumLib;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -56,19 +57,18 @@ public class QueryScreenTest extends QBaseSeleniumTest
    /*******************************************************************************
     **
     *******************************************************************************/
-   // @RepeatedTest(10)
    @Test
    void testBasicQueryAndClearFilters()
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
 
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
       /////////////////////////////////////////////////////////////////////
       WebElement filterInput = qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_FILTER_INPUT);
-      qSeleniumLib.assertElementHasFocus(filterInput);
+      qSeleniumLib.waitForElementToHaveFocus(filterInput);
       qSeleniumJavalin.beginCapture();
       filterInput.sendKeys("1");
 
@@ -105,9 +105,6 @@ public class QueryScreenTest extends QBaseSeleniumTest
       assertThat(capturedCount).extracting("body").asString().doesNotContain(idEquals1FilterSubstring);
       assertThat(capturedQuery).extracting("body").asString().doesNotContain(idEquals1FilterSubstring);
       qSeleniumJavalin.endCapture();
-
-      qSeleniumLib.takeScreenshotToFile();
-      // qSeleniumLib.waitForever(); // todo not commit - in fact, build in linting that makes sure we never do?
    }
 
 
@@ -115,17 +112,16 @@ public class QueryScreenTest extends QBaseSeleniumTest
    /*******************************************************************************
     **
     *******************************************************************************/
-   // @RepeatedTest(10)
    @Test
    void testMultiCriteriaQueryWithOr()
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
 
-      addQueryFilterInput(0, "First Name", "contains", "Dar", "Or");
+      addQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
       qSeleniumJavalin.beginCapture();
-      addQueryFilterInput(1, "First Name", "contains", "Jam", "Or");
+      addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
 
       String expectedFilterContents0 = """
          {"fieldName":"firstName","operator":"CONTAINS","values":["Dar"]}""";
@@ -138,9 +134,6 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents1);
       qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents2);
       qSeleniumJavalin.endCapture();
-
-      qSeleniumLib.takeScreenshotToFile();
-      // qSeleniumLib.waitForever(); // todo not commit - in fact, build in linting that makes sure we never do?
    }
 
 
@@ -148,7 +141,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
    /*******************************************************************************
     **
     *******************************************************************************/
-   private void addQueryFilterInput(int index, String fieldlabel, String operator, String value, String booleanOperator)
+   static void addQueryFilterInput(QSeleniumLib qSeleniumLib, int index, String fieldLabel, String operator, String value, String booleanOperator)
    {
       if(index > 0)
       {
@@ -164,7 +157,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       }
 
       Select fieldSelect = new Select(subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormColumnInput SELECT")));
-      fieldSelect.selectByVisibleText(fieldlabel);
+      fieldSelect.selectByVisibleText(fieldLabel);
 
       Select operatorSelect = new Select(subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormOperatorInput SELECT")));
       operatorSelect.selectByVisibleText(operator);
@@ -172,6 +165,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       WebElement valueInput = subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormValueInput INPUT"));
       valueInput.click();
       valueInput.sendKeys(value);
+      qSeleniumLib.waitForSeconds(1);
    }
 
 }

@@ -98,7 +98,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          {
             if (currentSavedFilter != null)
             {
-               let qFilter = FilterUtils.buildQFilterFromGridFilter(filterModel, columnSortModel);
+               let qFilter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
                setFilterIsModified(JSON.stringify(qFilter) !== currentSavedFilter.values.get("filterJson"));
             }
 
@@ -200,7 +200,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          else
          {
             formData.append("tableName", tableMetaData.name);
-            formData.append("filterJson", JSON.stringify(FilterUtils.buildQFilterFromGridFilter(filterModel, columnSortModel)));
+            formData.append("filterJson", JSON.stringify(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel)));
 
             if (isSaveFilterAs || isRenameFilter || currentSavedFilter == null)
             {

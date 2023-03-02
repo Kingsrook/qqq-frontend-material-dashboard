@@ -64,6 +64,8 @@ commands:
           paths:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
+      - store_artifacts:
+          path: /tmp/QSeleniumScreenshots
 
   mvn_deploy:
     steps:

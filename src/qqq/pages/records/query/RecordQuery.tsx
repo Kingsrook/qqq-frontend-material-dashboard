@@ -27,7 +27,7 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, TablePagination} from "@mui/material";
+import {Alert, Collapse, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -44,9 +44,9 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnOrderChangeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenu, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
-import React, {useContext, useEffect, useReducer, useRef, useState} from "react";
+import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
@@ -57,6 +57,7 @@ import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
 const COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT = "qqq.columnVisibility";
@@ -83,8 +84,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
    const [ searchParams ] = useSearchParams();
-   
+
    const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
+   const [successAlert, setSuccessAlert] = useState(null as string)
 
    const location = useLocation();
    const navigate = useNavigate();
@@ -175,6 +177,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [ countResults, setCountResults ] = useState({} as any);
    const [ receivedCountTimestamp, setReceivedCountTimestamp ] = useState(new Date());
    const [ queryResults, setQueryResults ] = useState({} as any);
+   const [ latestQueryResults, setLatestQueryResults ] = useState(null as QRecord[]);
    const [ receivedQueryTimestamp, setReceivedQueryTimestamp ] = useState(new Date());
    const [ queryErrors, setQueryErrors ] = useState({} as any);
    const [ receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp ] = useState(new Date());
@@ -221,7 +224,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             const parts = location.pathname.split("/");
             currentSavedFilterId = Number.parseInt(parts[parts.length - 1]);
          }
-         else
+         else if(!searchParams.has("filter"))
          {
             if (localStorage.getItem(currentSavedFilterLocalStorageKey))
             {
@@ -280,7 +283,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const buildQFilter = (filterModel: GridFilterModel) =>
    {
-      const filter = FilterUtils.buildQFilterFromGridFilter(filterModel, columnSortModel);
+      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
       return(filter);
    };
@@ -425,6 +428,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log(`Outputting results for query ${latestQueryId}...`);
       const results = queryResults[latestQueryId];
       delete queryResults[latestQueryId];
+      setLatestQueryResults(results);
 
       const {rows, columnsToRender} = DataGridUtils.makeRows(results, tableMetaData);
 
@@ -573,10 +577,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setFilterModel(filterModel);
       if (filterLocalStorageKey)
       {
-         localStorage.setItem(
-            filterLocalStorageKey,
-            JSON.stringify(filterModel),
-         );
+         localStorage.setItem(filterLocalStorageKey, JSON.stringify(filterModel));
       }
    };
 
@@ -877,7 +878,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       if(selectedSavedFilterId != null)
       {
          const qRecord = await fetchSavedFilter(selectedSavedFilterId);
-         const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null,null);
+         const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
          handleFilterChange(models.filter);
          handleSortChange(models.sort);
          localStorage.setItem(currentSavedFilterLocalStorageKey, selectedSavedFilterId.toString());
@@ -919,6 +920,71 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       return(qRecord);
    }
+
+   const copyColumnValues = async (column: GridColDef) =>
+   {
+      let data = "";
+      if(latestQueryResults && latestQueryResults.length)
+      {
+         let qFieldMetaData = tableMetaData.fields.get(column.field);
+         for(let i = 0; i < latestQueryResults.length; i++)
+         {
+            let record = latestQueryResults[i] as QRecord;
+            const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(qFieldMetaData.name), record.displayValues.get(qFieldMetaData.name));
+            data += value + "\n";
+         }
+
+         await navigator.clipboard.writeText(data)
+         setSuccessAlert("Copied " + latestQueryResults.length + " " + qFieldMetaData.label + " values.");
+         setTimeout(() => setSuccessAlert(null), 3000);
+      }
+   }
+
+   const CustomColumnMenu = forwardRef<HTMLUListElement, GridColumnMenuProps>(
+      function GridColumnMenu(props: GridColumnMenuProps, ref)
+      {
+         const {hideMenu, currentColumn} = props;
+
+         /*
+         const [copyMoreMenu, setCopyMoreMenu] = useState(null)
+         const openCopyMoreMenu = (event: any) =>
+         {
+            setCopyMoreMenu(event.currentTarget);
+            event.stopPropagation();
+         }
+         const closeCopyMoreMenu = () => setCopyMoreMenu(null);
+         */
+
+         return (
+            <GridColumnMenuContainer ref={ref} {...props}>
+               <SortGridMenuItems onClick={hideMenu} column={currentColumn!} />
+               <GridFilterMenuItem onClick={hideMenu} column={currentColumn!} />
+               <HideGridColMenuItem onClick={hideMenu} column={currentColumn!} />
+               <GridColumnsMenuItem onClick={hideMenu} column={currentColumn!} />
+
+               <Divider />
+               <GridColumnPinningMenuItems  onClick={hideMenu} column={currentColumn!} />
+               <Divider />
+
+               <MenuItem sx={{justifyContent: "space-between"}} onClick={(e) =>
+               {
+                  hideMenu(e);
+                  copyColumnValues(currentColumn)
+               }}>
+                  Copy values
+
+                  {/*
+                  <Button sx={{minHeight: "auto", minWidth: "auto", padding: 0}} onClick={(e) => openCopyMoreMenu(e)}>...</Button>
+                  <Menu anchorEl={copyMoreMenu} anchorOrigin={{vertical: "top", horizontal: "right"}} transformOrigin={{vertical: "top", horizontal: "left"}} open={Boolean(copyMoreMenu)} onClose={closeCopyMoreMenu} keepMounted>
+                     <MenuItem>Oh</MenuItem>
+                     <MenuItem>My</MenuItem>
+                  </Menu>
+                  */}
+               </MenuItem>
+
+            </GridColumnMenuContainer>
+         );
+      });
 
    function CustomToolbar()
    {
@@ -1167,6 +1233,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      </Alert>
                   ) : null
                }
+               {
+                  (successAlert) ? (
+                     <Collapse in={Boolean(successAlert)}>
+                        <Alert color="success" sx={{mb: 3}} onClose={() =>
+                        {
+                           setSuccessAlert(null);
+                        }}>
+                           {successAlert}
+                        </Alert>
+                     </Collapse>
+                  ) : null
+               }
                <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
                   <Box display="flex" marginRight="auto">
                      <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange}/>
@@ -1185,7 +1263,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <Card>
                   <Box height="100%">
                      <DataGridPro
-                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
+                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu}}
                         pinnedColumns={pinnedColumns}
                         onPinnedColumnsChange={handlePinnedColumnsChange}
                         pagination

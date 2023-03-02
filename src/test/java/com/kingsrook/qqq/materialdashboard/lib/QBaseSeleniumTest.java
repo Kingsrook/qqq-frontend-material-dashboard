@@ -1,11 +1,12 @@
-package com.kingsrook.qqq.materialdashbaord.lib;
+package com.kingsrook.qqq.materialdashboard.lib;
 
 
-import com.kingsrook.qqq.materialdashbaord.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -19,7 +20,7 @@ public class QBaseSeleniumTest
 {
    private static ChromeOptions chromeOptions;
 
-   private   WebDriver        driver;
+   protected WebDriver        driver;
    protected QSeleniumJavalin qSeleniumJavalin;
    protected QSeleniumLib     qSeleniumLib;
 
@@ -53,7 +54,7 @@ public class QBaseSeleniumTest
    void beforeEach()
    {
       driver = new ChromeDriver(chromeOptions);
-      driver.manage().window().setSize(new Dimension(1600, 1200));
+      driver.manage().window().setSize(new Dimension(1700, 1300));
       qSeleniumLib = new QSeleniumLib(driver);
 
       qSeleniumJavalin = new QSeleniumJavalin();
@@ -81,8 +82,10 @@ public class QBaseSeleniumTest
     **
     *******************************************************************************/
    @AfterEach
-   void afterEach()
+   void afterEach(TestInfo testInfo)
    {
+      qSeleniumLib.takeScreenshotToFile(getClass().getSimpleName() + "/" + testInfo.getDisplayName());
+
       if(driver != null)
       {
          driver.quit();

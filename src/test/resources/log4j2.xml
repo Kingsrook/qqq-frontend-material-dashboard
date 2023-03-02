@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+   <Appenders>
+      <Console name="SystemOutAppender" target="SYSTEM_OUT">
+         <LevelRangeFilter minLevel="ERROR" maxLevel="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+         <PatternLayout pattern="%highlight{%date{ISO8601} | %level | %threadName | %logger{1} | %message%n}"/>
+      </Console>
+      <File name="LogFileAppender" fileName="log/qqq.log">
+         <LevelRangeFilter minLevel="ERROR" maxLevel="all" onMatch="ACCEPT" onMismatch="DENY"/>
+         <PatternLayout pattern="%date{ISO8601} | %relative | %level | %threadName | %logger{1} | %message%n"/>
+      </File>
+   </Appenders>
+   <Loggers>
+      <Logger name="org.apache.log4j.xml" additivity="false">
+      </Logger>
+      <Root level="all">
+         <AppenderRef ref="SystemOutAppender"/>
+         <!-- <AppenderRef ref="LogFileAppender"/> -->
+      </Root>
+   </Loggers>
+</Configuration>

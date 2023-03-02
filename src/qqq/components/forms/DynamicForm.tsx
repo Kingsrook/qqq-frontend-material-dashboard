@@ -131,6 +131,7 @@ function QDynamicForm(props: Props): JSX.Element
                            <Grid item xs={12} sm={6} key={fieldName}>
                               <DynamicSelect
                                  tableName={field.possibleValueProps.tableName}
+                                 processName={field.possibleValueProps.processName}
                                  fieldName={fieldName}
                                  isEditable={field.isEditable}
                                  fieldLabel={field.label}

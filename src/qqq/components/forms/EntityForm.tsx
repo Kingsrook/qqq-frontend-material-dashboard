@@ -236,7 +236,7 @@ function EntityForm(props: Props): JSX.Element
                      ///////////////////////////////////////////////////////////////////////////////////////////
                      if (fieldMetaData.possibleValueSourceName)
                      {
-                        const results: QPossibleValue[] = await qController.possibleValues(tableName, fieldName, null, [initialValues[fieldName]]);
+                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
                         if (results && results.length > 0)
                         {
                            defaultDisplayValues.set(fieldName, results[0].label);
@@ -268,7 +268,7 @@ function EntityForm(props: Props): JSX.Element
             dynamicFormFields,
             formValidations,
          } = DynamicFormUtils.getFormData(fieldArray);
-         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, record ? record.displayValues : defaultDisplayValues);
+         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, null, record ? record.displayValues : defaultDisplayValues);
 
          if(disabledFields)
          {

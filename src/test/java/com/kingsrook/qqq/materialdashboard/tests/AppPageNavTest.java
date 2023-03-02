@@ -19,12 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashbaord.tests;
+package com.kingsrook.qqq.materialdashboard.tests;
 
 
-import com.kingsrook.qqq.materialdashbaord.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashbaord.lib.QQQMaterialDashboardSelectors;
-import com.kingsrook.qqq.materialdashbaord.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.materialdashboard.lib.QQQMaterialDashboardSelectors;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 
 
@@ -60,7 +60,6 @@ public class AppPageNavTest extends QBaseSeleniumTest
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/", "Greetings App");
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.SIDEBAR_ITEM, "People App").click();
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.SIDEBAR_ITEM, "Greetings App").click();
-      qSeleniumLib.takeScreenshotToFile();
    }
 
 
@@ -74,7 +73,6 @@ public class AppPageNavTest extends QBaseSeleniumTest
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp", "Greetings App");
       qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelectorContaining("a", "Person").click());
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER, "Person");
-      qSeleniumLib.takeScreenshotToFile();
    }
 
 }
