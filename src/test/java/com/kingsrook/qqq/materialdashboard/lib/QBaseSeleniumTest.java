@@ -54,7 +54,7 @@ public class QBaseSeleniumTest
    void beforeEach()
    {
       driver = new ChromeDriver(chromeOptions);
-      driver.manage().window().setSize(new Dimension(1600, 1200));
+      driver.manage().window().setSize(new Dimension(1700, 1300));
       qSeleniumLib = new QSeleniumLib(driver);
 
       qSeleniumJavalin = new QSeleniumJavalin();
