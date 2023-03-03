@@ -44,7 +44,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenu, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
@@ -526,7 +526,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          clearTimeout(instance.current.timer);
          instance.current.timer = setTimeout(() =>
          {
-            navigate(`${metaData.getTablePathByName(tableName)}/${params.id}`);
+            if(table.primaryKeyField !== "id")
+            {
+               navigate(`${metaData.getTablePathByName(tableName)}/${params.row[tableMetaData.primaryKeyField]}`);
+            }
+            else
+            {
+               navigate(`${metaData.getTablePathByName(tableName)}/${params.id}`);
+            }
          }, 100);
       }
       else
@@ -539,9 +546,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) =>
    {
       const newSelectedIds: string[] = [];
-      selectionModel.forEach((value: GridRowId) =>
+      selectionModel.forEach((value: GridRowId, index: number) =>
       {
-         newSelectedIds.push(value as string);
+         let valueToPush = value as string;
+         if(table.primaryKeyField !== "id")
+         {
+            valueToPush = latestQueryResults[index].values.get("number")
+         }
+         newSelectedIds.push(valueToPush as string);
       });
       setSelectedIds(newSelectedIds);
 
