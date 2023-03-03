@@ -28,13 +28,16 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import {DataGridPro} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridSortModel} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import React, {useEffect, useState} from "react";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
 {
@@ -51,33 +54,62 @@ const qController = Client.getInstance();
 function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 {
    const [statusString, setStatusString] = useState("Calculating statistics...");
-   const [isLoaded, setIsLoaded] = useState(false);
+   const [loading, setLoading] = useState(true);
    const [valueCounts, setValueCounts] = useState(null as QRecord[]);
+   const [statsRecord, setStatsRecord] = useState(null as QRecord);
+   const [orderBy, setOrderBy] = useState(null as string);
+   const [statsFields, setStatsFields] = useState([] as QFieldMetaData[]);
    const [countDistinct, setCountDistinct] = useState(null as number);
    const [rows, setRows] = useState([]);
    const [columns, setColumns] = useState([]);
 
    useEffect(() =>
    {
+      if(!loading)
+      {
+         return;
+      }
+
       (async () =>
       {
          const formData = new FormData();
          formData.append("tableName", tableMetaData.name);
          formData.append("fieldName", fieldMetaData.name);
          formData.append("filterJSON", JSON.stringify(filter));
+         if(orderBy)
+         {
+            formData.append("orderBy", orderBy);
+         }
          const processResult = await qController.processRun("tableStats", formData);
 
          setStatusString(null)
          if (processResult instanceof QJobError)
          {
             const jobError = processResult as QJobError;
-            // todo setErrorAlert();
-            console.error("Error fetching column stats" + jobError.error);
+            setStatusString("Error fetching column stats: " + jobError.error);
+            setLoading(false);
          }
          else
          {
             const result = processResult as QJobComplete;
-            setCountDistinct(result.values.countDistinct);
+
+            const statFieldObjects = result.values.statsFields;
+            if(statFieldObjects && statFieldObjects.length)
+            {
+               const newStatsFields = [] as QFieldMetaData[];
+               for(let i = 0; i<statFieldObjects.length; i++)
+               {
+                  newStatsFields.push(new QFieldMetaData(statFieldObjects[i]))
+               }
+               setStatsFields(newStatsFields);
+            }
+
+            let qRecord = new QRecord(result.values.statsRecord);
+            setStatsRecord(qRecord);
+            if(qRecord.values.has("countDistinct"))
+            {
+               setCountDistinct(qRecord.values.get("countDistinct"));
+            }
 
             const valueCounts = [] as QRecord[];
             for(let i = 0; i < result.values.valueCounts.length; i++)
@@ -95,41 +127,31 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 
             const {rows, columnsToRender} = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, columnsToRender);
-
-            columns[1].sortComparator = (v1, v2): number =>
-            {
-               const n1 = parseInt(v1.replaceAll(",", ""));
-               const n2 = parseInt(v2.replaceAll(",", ""));
-               return (n1 - n2);
-            }
+            columns[0].width = 200;
+            columns[1].width = 200;
 
             setRows(rows);
             setColumns(columns);
-
-            setIsLoaded(true);
+            setLoading(false);
          }
       })();
-   }, []);
-
-   // @ts-ignore
-   const defaultLabelDisplayedRows = ({from, to, count}) =>
-   {
-      // todo - not done
-      return ("Showing stuff");
-   };
+   }, [loading]);
 
    function CustomPagination()
    {
       return (
-         <TablePagination
-            component="div"
-            page={1}
-            count={1}
-            rowsPerPage={1000}
-            onPageChange={null}
-            labelDisplayedRows={defaultLabelDisplayedRows}
-         />
+         <Box pr={3}>
+            {rows && rows.length && countDistinct && rows.length < countDistinct ? <span>Showing the first {rows.length.toLocaleString()} of {countDistinct.toLocaleString()} values</span> : <></>}
+            {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length == 1 ? <span>Showing the only value</span> : <></>}
+            {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length > 1 ? <span>Showing all {rows.length.toLocaleString()} values</span> : <></>}
+         </Box>
       );
+   }
+
+   const refresh = () =>
+   {
+      setLoading(true)
+      setStatusString("Refreshing...")
    }
 
    function Loading()
@@ -139,43 +161,72 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
       );
    }
 
+   const handleSortChange = (gridSort: GridSortModel) =>
+   {
+      if (gridSort && gridSort.length > 0)
+      {
+         console.log("Sort: ", gridSort[0]);
+         setOrderBy(`${gridSort[0].field}.${gridSort[0].sort}`);
+         refresh();
+      }
+   };
+
    return (
       <Box>
          <Box p={3} display="flex" flexDirection="row" justifyContent="space-between" alignItems="flex-start">
             <Typography variant="h5" pb={3}>
-               Column Statistics for {tableMetaData.label}: {fieldMetaData.label}
+               Column Statistics for {fieldMetaData.label}
                <Typography fontSize={14}>
-                  {statusString}
+                  {statusString ?? <>&nbsp;</>}
                </Typography>
             </Typography>
+            <Button onClick={() => refresh()}>
+               Refresh
+            </Button>
          </Box>
-         <Box px={3} fontSize="1rem">
-            <div>
-               <div className="fieldLabel">Distinct Values: </div> <div className="fieldValue">{Number(countDistinct).toLocaleString()}</div>
-            </div>
-         </Box>
-
-         <Box sx={{overflow: "auto", height: "calc( 100vh - 19rem )", position: "relative"}} px={3}>
-            <DataGridPro
-               components={{LoadingOverlay: Loading, Pagination: CustomPagination}}
-               rows={rows}
-               disableSelectionOnClick
-               columns={columns}
-               loading={!isLoaded}
-               rowBuffer={10}
-               getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-               initialState={{
-                  sorting: {
-                     sortModel: [
-                        {
-                           field: "count",
-                           sort: "desc",
+         <Grid container>
+            <Grid item xs={8}>
+               <Box sx={{overflow: "auto", height: "calc( 100vh - 18rem )", position: "relative"}} px={3}>
+                  <DataGridPro
+                     components={{LoadingOverlay: Loading, Pagination: CustomPagination}}
+                     rows={rows}
+                     disableSelectionOnClick
+                     columns={columns}
+                     loading={loading}
+                     rowBuffer={10}
+                     getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+                     sortingMode={"server"}
+                     onSortModelChange={handleSortChange}
+                     sortingOrder={["desc", "asc"]}
+                     pagination={true}
+                     paginationMode={"server"}
+                     initialState={{
+                        sorting: {
+                           sortModel: [
+                              {
+                                 field: "count",
+                                 sort: "desc",
+                              },
+                           ],
                         },
-                     ],
-                  },
-               }}
-            />
-         </Box>
+                     }}
+                  />
+               </Box>
+            </Grid>
+            <Grid item xs={4} sx={{whiteSpace: "nowrap", overflowX: "auto"}}>
+               <Box px={3} fontSize="1rem">
+                  {
+                     statsFields && statsFields.map((field) =>
+                        (
+                           <Box key={field.name} pb={1}>
+                              <div className="fieldLabel">{field.label}: </div>
+                              <div className="fieldValue">{ValueUtils.getValueForDisplay(field, statsRecord?.values.get(field.name), statsRecord?.displayValues.get(field.name))}</div>
+                           </Box>
+                        ))
+                  }
+               </Box>
+            </Grid>
+         </Grid>
       </Box>);
 }
 

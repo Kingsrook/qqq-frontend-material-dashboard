@@ -57,6 +57,13 @@ export default class DataGridUtils
          if(!row["id"])
          {
             row["id"] = record.values.get(tableMetaData.primaryKeyField) ?? row[tableMetaData.primaryKeyField];
+            if(row["id"] === null || row["id"] === undefined)
+            {
+               /////////////////////////////////////////////////////////////////////////////////////////
+               // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
+               /////////////////////////////////////////////////////////////////////////////////////////
+               row["id"] = "--";
+            }
          }
 
          rows.push(row);
