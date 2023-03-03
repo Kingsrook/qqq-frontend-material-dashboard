@@ -549,9 +549,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       selectionModel.forEach((value: GridRowId, index: number) =>
       {
          let valueToPush = value as string;
-         if(table.primaryKeyField !== "id")
+         if(tableMetaData.primaryKeyField !== "id")
          {
-            valueToPush = latestQueryResults[index].values.get("number")
+            valueToPush = latestQueryResults[index].values.get(tableMetaData.primaryKeyField);
          }
          newSelectedIds.push(valueToPush as string);
       });
