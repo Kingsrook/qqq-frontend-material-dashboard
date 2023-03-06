@@ -20,6 +20,8 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
@@ -32,7 +34,6 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
-import Icon from "@mui/material/Icon";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
@@ -44,8 +45,12 @@ import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 import React, {useReducer, useState} from "react";
 import AceEditor from "react-ace";
+import {Link} from "react-router-dom";
 import TabPanel from "qqq/components/misc/TabPanel";
+import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptEditor, {ScriptEditorProps} from "qqq/components/scripts/ScriptEditor";
+import ScriptLogsView from "qqq/components/scripts/ScriptLogsView";
+import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import {LoadingState} from "qqq/models/LoadingState";
 import DeveloperModeUtils from "qqq/utils/DeveloperModeUtils";
@@ -63,19 +68,33 @@ const qController = Client.getInstance();
 // Declaring props types for ViewForm
 interface Props
 {
-   scriptId: number
+   scriptId: number,
+   associatedScriptTableName?: string,
+   associatedScriptFieldName?: string,
+   associatedScriptRecordId?: any,
+   testInputFields?: QFieldMetaData[],
+   testOutputFields?: QFieldMetaData[],
 }
 
 ScriptViewer.defaultProps =
    {
+      associatedScriptTableName: null,
+      associatedScriptFieldName: null,
+      associatedScriptRecordId: null,
+      testInputFields: null,
+      testOutputFields: null,
    };
 
-export default function ScriptViewer({scriptId}: Props): JSX.Element
+export default function ScriptViewer({scriptId, associatedScriptTableName, associatedScriptFieldName, associatedScriptRecordId, testInputFields, testOutputFields}: Props): JSX.Element
 {
+   const [metaData, setMetaData] = useState(null as QInstance);
    const [scriptRecord, setScriptRecord] = useState(null as QRecord);
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [versionRecordList, setVersionRecordList] = useState(null as QRecord[]);
    const [selectedVersionRecord, setSelectedVersionRecord] = useState(null as QRecord);
+   const [scriptLogs, setScriptLogs] = useState({} as any);
+   const [scriptTypeRecord, setScriptTypeRecord] = useState(null as QRecord)
+   const [testScriptDefinitionObject, setTestScriptDefinitionObject] = useState({} as any)
    const [currentVersionId , setCurrentVersionId] = useState(null as number);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [selectedTab, setSelectedTab] = useState(0);
@@ -94,8 +113,23 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
       {
          try
          {
+            setMetaData(await qController.loadMetaData());
+
             const scriptRecord = await qController.get("script", scriptId);
             setScriptRecord(scriptRecord);
+
+            setScriptTypeRecord(await qController.get("scriptType", scriptRecord.values.get("scriptTypeId")));
+
+            if(testInputFields !== null || testOutputFields !== null)
+            {
+               setTestScriptDefinitionObject({testInputFields: testInputFields, testOutputFields: testOutputFields});
+            }
+            else
+            {
+               setTestScriptDefinitionObject({testInputFields: [
+                  new QFieldMetaData({name: "recordPrimaryKeyList", label: "Record Primary Key List"})
+               ], testOutputFields: []})
+            }
 
             const criteria = [new QFilterCriteria("scriptId", QCriteriaOperator.EQUALS, [scriptId])];
             const orderBys = [new QFilterOrderBy("sequenceNo", false)];
@@ -181,11 +215,11 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
    {
       (async () =>
       {
-         // fetch the full version
-         setSelectedVersionRecord(version);
+         setCurrentVersionId(version.values.get("id"));
          loadingSelectedVersion.setLoading();
 
-         const selectedVersion = await qController.get("scriptVersion", version.values.get("id"));
+         // fetch the full version
+         const selectedVersion = await qController.get("scriptRevision", version.values.get("id"));
          console.log("Fetched selectedVersion:");
          console.log(selectedVersion);
          setSelectedVersionRecord(selectedVersion);
@@ -236,11 +270,38 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
       </List>;
    }
 
+   const getScriptLogs = (scriptRevisionId: number) =>
+   {
+      if(!scriptLogs[scriptRevisionId])
+      {
+         (async () =>
+         {
+            scriptLogs[scriptRevisionId] = await qController.query("scriptLog", new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])]), 100, 0);
+            setScriptLogs(scriptLogs);
+            forceUpdate();
+         })();
+         return <Typography variant="body2" p={3}>Loading...</Typography>;
+      }
+
+      const logs = scriptLogs[scriptRevisionId] as any[];
+      if (logs === null || logs === undefined)
+      {
+         return <Typography variant="body2" p={3}>Loading...</Typography>;
+      }
+
+      if (logs.length === 0)
+      {
+         return <Typography variant="body2" p={3}>No logs available for this version.</Typography>;
+      }
+
+      return (<ScriptLogsView logs={logs} />);
+   }
+
    let editButtonTooltip = "";
    let editButtonText = "Create New Version";
    if (currentVersionId)
    {
-      if (currentVersionId === selectedVersionRecord?.values?.get("id"))
+      if (currentVersionId === scriptRecord?.values?.get("currentScriptRevisionId"))
       {
          editButtonTooltip = "If you make any changes to this script, a new version will be created when you hit Save.";
          editButtonText = "Edit";
@@ -252,6 +313,17 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
          editButtonText = "Edit and Activate";
       }
    }
+
+   function buildScriptLogFilter(scriptRevisionId: any)
+   {
+      return JSON.stringify(new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])]));
+   }
+
+   /*
+    position: relative;
+    left: -356px;
+    width: calc(100% + 380px);
+   */
 
    return (
       <Grid container>
@@ -288,13 +360,15 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
                                  <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mt={-6}>
                                     <Typography variant="h5" p={2}></Typography>
                                     <Tabs
-                                       sx={{mr: 1}}
+                                       sx={{m: 1}}
                                        value={selectedTab}
                                        onChange={(event, newValue) => changeTab(newValue)}
                                        variant="standard"
                                     >
-                                       <Tab label="Raw Data" id="simple-tab-0" aria-controls="simple-tabpanel-0" sx={{width: "150px"}} />
-                                       <Tab label="Data Preview" id="simple-tab-1" aria-controls="simple-tabpanel-1" sx={{width: "150px"}} />
+                                       <Tab label="Code" id="simple-tab-0" aria-controls="simple-tabpanel-0" sx={{width: "100px"}} />
+                                       <Tab label="Logs" id="simple-tab-1" aria-controls="simple-tabpanel-1" sx={{width: "100px"}} />
+                                       <Tab label="Test" id="simple-tab-1" aria-controls="simple-tabpanel-2" sx={{width: "100px"}} />
+                                       <Tab label="Docs" id="simple-tab-1" aria-controls="simple-tabpanel-3" sx={{width: "100px"}} />
                                     </Tabs>
                                  </Box>
 
@@ -314,7 +388,7 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
                                                    <Typography variant="h6">
                                                       Version {selectedVersionRecord.values.get("sequenceNo")}
                                                       {
-                                                         currentVersionId === selectedVersionRecord.values.get("id")
+                                                         currentVersionId === scriptRecord.values.get("currentScriptRevisionId")
                                                             ? (<> (Current)</>)
                                                             : <></>
                                                       }
@@ -350,7 +424,7 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
                                        </Grid>
                                     </Grid>
                                  </TabPanel>
-                                 {/*
+
                                  <TabPanel index={1} value={selectedTab}>
                                     <Grid container height="440px">
                                        <Grid item xs={4}>
@@ -360,17 +434,34 @@ export default function ScriptViewer({scriptId}: Props): JSX.Element
                                           {getVersionsList(versionRecordList, selectedVersionRecord)}
                                        </Grid>
                                        <Grid item xs={8}>
-                                          <Box display="flex" alignItems="center" gap={2} pb={1} height="40px">
-                                             <Typography variant="h6" pl={3}>Data Preview (Version {selectedVersionRecord?.values?.get("sequenceNo")})</Typography>
-                                          </Box>
-                                          <Box height="400px" overflow="auto" ml={1} fontSize="14px">
-                                             {loadingSelectedVersion.isNotLoading() && selectedTab == 1 && selectedVersionRecord?.values?.get("data") && <ScriptPreview json={selectedVersionRecord?.values?.get("data")} /> }
-                                             {loadingSelectedVersion.isLoadingSlow() && <Box pl={3}>Loading...</Box>}
-                                          </Box>
+                                          {
+                                             selectedVersionRecord ? (
+                                                <>
+                                                   <Box display="flex" alignItems="center" gap={2} pb={1} height="40px">
+                                                      <Typography variant="h6">Script Logs (Version {selectedVersionRecord?.values.get("sequenceNo")})</Typography>
+                                                      <Link style={{fontSize: "1rem"}} to={`${metaData.getTablePathByName("scriptLog")}?filter=${buildScriptLogFilter(selectedVersionRecord?.values.get("id"))}`}>View All</Link>
+                                                   </Box>
+                                                   <Box height="400px" overflow="auto">
+                                                      {getScriptLogs(selectedVersionRecord.values.get("id"))}
+                                                   </Box>
+                                                </>
+                                             ) : <Box>Select a version to view logs</Box>
+                                          }
                                        </Grid>
                                     </Grid>
                                  </TabPanel>
-                                 */}
+
+                                 <TabPanel index={2} value={selectedTab}>
+                                    <Box sx={{height: "455px"}} px={2} pb={1}>
+                                       <ScriptTestForm scriptDefinition={testScriptDefinitionObject} tableName={associatedScriptTableName} fieldName={associatedScriptFieldName} recordId={associatedScriptRecordId} code={selectedVersionRecord?.values.get("contents")} />
+                                    </Box>
+                                 </TabPanel>
+
+                                 <TabPanel index={3} value={selectedTab}>
+                                    <Box sx={{height: "455px"}} px={2} pb={1}>
+                                       <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} />
+                                    </Box>
+                                 </TabPanel>
                               </>
                            </Grid>
                         </Grid>
