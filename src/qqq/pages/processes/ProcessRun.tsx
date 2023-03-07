@@ -27,6 +27,7 @@ import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaDat
 import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
@@ -68,6 +69,7 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
 interface Props
 {
    process?: QProcessMetaData;
+   table?: QTableMetaData;
    defaultProcessValues?: any;
    isModal?: boolean;
    isWidget?: boolean;
@@ -82,7 +84,7 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
+function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
@@ -102,7 +104,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [lastForcedReInit, setLastForcedReInit] = useState(null as number);
    const [processMetaData, setProcessMetaData] = useState(null);
-   const [tableMetaData, setTableMetaData] = useState(null);
+   const [tableMetaData, setTableMetaData] = useState(table);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
    const [qInstance, setQInstance] = useState(null as QInstance);
    const [processValues, setProcessValues] = useState({} as any);
@@ -728,7 +730,17 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
             const formData = DynamicFormUtils.getFormData(fullFieldList);
 
             const possibleValueDisplayValues = new Map<string, string>();
-            DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableMetaData?.name, processName, possibleValueDisplayValues);
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // ok - so - the addPossibleValueProps method wants to take either a tableName or a processName          //
+            // param - if it gets a tableName, then it'll point the PVS to the table - which is what we want         //
+            // (at this time, at least) only for the BULK_EDIT process (expected to change in future...)             //
+            // so, only pass a tableName into that method if this looks like a bulk edit (based on that component... //
+            // else, pass a processName and no table name.                                                           //
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+            const tableNameForPVProps = doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM) ? tableMetaData.name : null;
+            const processNameForPVProps = tableNameForPVProps ? null : processName;
+            DynamicFormUtils.addPossibleValueProps(formData.dynamicFormFields, fullFieldList, tableNameForPVProps, processNameForPVProps, possibleValueDisplayValues);
 
             dynamicFormFields = formData.dynamicFormFields;
             formValidations = formData.formValidations;
@@ -763,6 +775,12 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
             initialValues[fieldName] = initialValue;
             formValidations[fieldName] = validation;
          };
+
+         if(tableMetaData)
+         {
+            console.log("Adding table name field... ?", tableMetaData.name);
+            addField("tableName", {type: "hidden", omitFromQDynamicForm: true}, tableMetaData.name, null);
+         }
 
          if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
          {
@@ -1072,7 +1090,7 @@ function ProcessRun({process, defaultProcessValues, isModal, isWidget, isReport,
             const processMetaData = await Client.getInstance().loadProcessMetaData(processName);
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
-            if (processMetaData.tableName)
+            if (processMetaData.tableName && !tableMetaData)
             {
                try
                {
