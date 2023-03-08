@@ -48,6 +48,7 @@ interface Props
    isMultiple?: boolean;
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
+   otherValues?: Map<string, any>;
 }
 
 DynamicSelect.defaultProps = {
@@ -61,6 +62,7 @@ DynamicSelect.defaultProps = {
    isEditable: true,
    isMultiple: false,
    bulkEditMode: false,
+   otherValues: new Map<string, any>(),
    bulkEditSwitchChangeHandler: () =>
    {
    },
@@ -68,7 +70,7 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler}: Props)
+function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues}: Props)
 {
    const [ open, setOpen ] = useState(false);
    const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
@@ -112,7 +114,7 @@ function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, i
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "");
+         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "", null, otherValues);
 
          if(tableMetaData == null && tableName)
          {
@@ -236,8 +238,6 @@ function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, i
       setIsDisabled(!newSwitchValue);
       bulkEditSwitchChangeHandler(fieldName, newSwitchValue);
    };
-
-   console.log("multiple? " + isMultiple);
 
    const autocomplete = (
       <Autocomplete

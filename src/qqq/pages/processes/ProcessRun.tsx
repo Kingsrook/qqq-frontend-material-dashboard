@@ -366,14 +366,24 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       // initial value to display should be.                                            //
       // this **needs to be** the actual PVS LABEL - not the raw value (e.g, PVS ID)    //
       // but our first use case, they're the same, so... this needs fixed.              //
+      // they also need to know the 'otherValues' in this process - e.g., for filtering //
       ////////////////////////////////////////////////////////////////////////////////////
       if(formFields && processValues)
       {
          Object.keys(formFields).forEach((key) =>
          {
-            if(formFields[key].possibleValueProps && processValues[key])
+            if(formFields[key].possibleValueProps)
             {
-               formFields[key].possibleValueProps.initialDisplayValue = processValues[key]
+               if(processValues[key])
+               {
+                  formFields[key].possibleValueProps.initialDisplayValue = processValues[key]
+               }
+
+               formFields[key].possibleValueProps.otherValues = formFields[key].possibleValueProps.otherValues ?? new Map<string, any>();
+               Object.keys(formFields).forEach((otherKey) =>
+               {
+                  formFields[key].possibleValueProps.otherValues.set(otherKey, processValues[otherKey]);
+               });
             }
          })
       }
@@ -721,6 +731,35 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          let formValidations: any = {};
          let initialValues: any = {};
 
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // define an inner function here, for adding more fields to the form, if any components have form fields built into them //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const addField = (fieldName: string, dynamicFormValue: any, initialValue: any, validation: any) =>
+         {
+            dynamicFormFields[fieldName] = dynamicFormValue;
+            initialValues[fieldName] = initialValue;
+            formValidations[fieldName] = validation;
+         };
+
+         if(tableMetaData)
+         {
+            console.log("Adding table name field... ?", tableMetaData.name);
+            addField("tableName", {type: "hidden", omitFromQDynamicForm: true}, tableMetaData.name, null);
+         }
+
+         if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
+         {
+            addField("doFullValidation", {type: "radio"}, "true", null);
+            setOverrideOnLastStep(false);
+         }
+
+         if (doesStepHaveComponent(activeStep, QComponentType.GOOGLE_DRIVE_SELECT_FOLDER))
+         {
+            addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+            addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+            addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+         }
+
          ///////////////////////////////////////////////////
          // if this step has form fields, set up the form //
          ///////////////////////////////////////////////////
@@ -750,6 +789,21 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                initialValues[field.name] = processValues[field.name];
             });
 
+            ////////////////////////////////////////////////////////////////////////////////////
+            // set initial values in the possible value fields as otherValues (for filtering) //
+            ////////////////////////////////////////////////////////////////////////////////////
+            Object.keys(dynamicFormFields).forEach((key: any) =>
+            {
+               if(dynamicFormFields[key].possibleValueProps)
+               {
+                  dynamicFormFields[key].possibleValueProps.otherValues = dynamicFormFields[key].possibleValueProps.otherValues ?? new Map<string, any>();
+                  Object.keys(initialValues).forEach((ivKey: any) =>
+                  {
+                     dynamicFormFields[key].possibleValueProps.otherValues.set(ivKey, initialValues[ivKey]);
+                  })
+               }
+            })
+
             ////////////////////////////////////////////////////
             // disable all fields if this is a bulk edit form //
             ////////////////////////////////////////////////////
@@ -764,35 +818,6 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                });
                setDisabledBulkEditFields(newDisabledBulkEditFields);
             }
-         }
-
-         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // define an inner function here, for adding more fields to the form, if any components have form fields built into them //
-         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         const addField = (fieldName: string, dynamicFormValue: any, initialValue: any, validation: any) =>
-         {
-            dynamicFormFields[fieldName] = dynamicFormValue;
-            initialValues[fieldName] = initialValue;
-            formValidations[fieldName] = validation;
-         };
-
-         if(tableMetaData)
-         {
-            console.log("Adding table name field... ?", tableMetaData.name);
-            addField("tableName", {type: "hidden", omitFromQDynamicForm: true}, tableMetaData.name, null);
-         }
-
-         if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
-         {
-            addField("doFullValidation", {type: "radio"}, "true", null);
-            setOverrideOnLastStep(false);
-         }
-
-         if (doesStepHaveComponent(activeStep, QComponentType.GOOGLE_DRIVE_SELECT_FOLDER))
-         {
-            addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, "", null);
-            addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, "", null);
-            addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, "", null);
          }
 
          if (Object.keys(dynamicFormFields).length > 0)

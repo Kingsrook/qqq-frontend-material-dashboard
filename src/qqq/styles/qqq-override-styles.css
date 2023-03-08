@@ -357,3 +357,13 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    color: rgb(123, 128, 154);
    font-weight: 400;
 }
+
+.fullScreenWidget
+{
+   position: fixed !important;
+   left: 30px !important;
+   width: calc(100vw - 60px) !important;
+   top: 30px !important;
+   height: calc(100vh - 60px) !important;
+   z-index: 1300 !important;
+}

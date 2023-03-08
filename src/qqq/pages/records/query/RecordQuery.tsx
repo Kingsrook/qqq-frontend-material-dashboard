@@ -1135,11 +1135,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       );
    }
 
-   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
-
    const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
    {
-      console.log("Type: " + menuItems[menuItems.length - 1]);
       if(menuItems.length > 0)
       {
          menuItems.push(<Divider />);
