@@ -202,10 +202,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          if (pathParts[pathParts.length - 2] === tableName)
          {
             const processName = pathParts[pathParts.length - 1];
-            const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
+            const processList = allTableProcesses.filter(p => p.name == processName);
             if (processList.length > 0)
             {
                setActiveModalProcess(processList[0]);
+               return;
+            }
+            else if(metaData?.processes.has(processName))
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////
+               // check for generic processes - should this be a specific attribute on the process? //
+               ///////////////////////////////////////////////////////////////////////////////////////
+               setActiveModalProcess(metaData?.processes.get(processName));
                return;
             }
             else
@@ -1127,6 +1135,50 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       );
    }
 
+   const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
+   {
+      if(menuItems.length > 0)
+      {
+         menuItems.push(<Divider />);
+      }
+   }
+
+   const menuItems: JSX.Element[] = [];
+   if(table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+   {
+      menuItems.push(<MenuItem onClick={bulkLoadClicked}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>)
+   }
+   if(table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+   {
+      menuItems.push(<MenuItem onClick={bulkEditClicked}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>)
+   }
+   if(table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+   {
+      menuItems.push(<MenuItem onClick={bulkDeleteClicked}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>)
+   }
+
+   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
+   if(runRecordScriptProcess)
+   {
+      const process = runRecordScriptProcess;
+      menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+   }
+
+   if(tableProcesses && tableProcesses.length)
+   {
+      pushDividerIfNeeded(menuItems);
+   }
+
+   tableProcesses.map((process) =>
+   {
+      menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+   });
+
+   if(menuItems.length === 0)
+   {
+      menuItems.push(<MenuItem disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>)
+   }
+
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
@@ -1142,41 +1194,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          onClose={closeActionsMenu}
          keepMounted
       >
-         {
-            table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-            <MenuItem onClick={bulkLoadClicked}>
-               <ListItemIcon><Icon>library_add</Icon></ListItemIcon>
-               Bulk Load
-            </MenuItem>
-         }
-         {
-            table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission &&
-            <MenuItem onClick={bulkEditClicked}>
-               <ListItemIcon><Icon>edit</Icon></ListItemIcon>
-               Bulk Edit
-            </MenuItem>
-         }
-         {
-            table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission &&
-            <MenuItem onClick={bulkDeleteClicked}>
-               <ListItemIcon><Icon>delete</Icon></ListItemIcon>
-               Bulk Delete
-            </MenuItem>
-         }
-         {((table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission) || (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) ||  (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)) && tableProcesses.length > 0 && <Divider />}
-         {tableProcesses.map((process) => (
-            <MenuItem key={process.name} onClick={() => processClicked(process)}>
-               <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
-               {process.label}
-            </MenuItem>
-         ))}
-         {
-            tableProcesses.length == 0 && !(table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission) && !(table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) && !(table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission) &&
-            <MenuItem disabled>
-               <ListItemIcon><Icon>block</Icon></ListItemIcon>
-               <i>No actions available</i>
-            </MenuItem>
-         }
+         {menuItems}
       </Menu>
    );
 
@@ -1326,10 +1344,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </Box>
 
             {
-               activeModalProcess &&
+               activeModalProcess && tableMetaData &&
                <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                   <div className="modalProcess">
-                     <ProcessRun process={activeModalProcess} isModal={true} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
+                     <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
                   </div>
                </Modal>
             }

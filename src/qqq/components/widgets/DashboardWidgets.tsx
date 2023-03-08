@@ -38,6 +38,7 @@ import DividerWidget from "qqq/components/widgets/misc/Divider";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
 import RecordGridWidget from "qqq/components/widgets/misc/RecordGridWidget";
+import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import StepperCard from "qqq/components/widgets/misc/StepperCard";
 import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
@@ -386,6 +387,14 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   widgetData && widgetData[i] && widgetData[i].queryParams &&
                   <Widget widgetMetaData={widgetMetaData}>
                      <DataBagViewer dataBagId={widgetData[i].queryParams.id} />
+                  </Widget>
+               )
+            }
+            {
+               widgetMetaData.type === "scriptViewer" && (
+                  widgetData && widgetData[i] && widgetData[i].queryParams &&
+                  <Widget widgetMetaData={widgetMetaData}>
+                     <ScriptViewer scriptId={widgetData[i].queryParams.id} />
                   </Widget>
                )
             }

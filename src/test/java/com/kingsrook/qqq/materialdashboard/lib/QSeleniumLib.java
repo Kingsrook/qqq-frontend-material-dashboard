@@ -120,7 +120,11 @@ public class QSeleniumLib
     *******************************************************************************/
    public void waitForever()
    {
-      // todo - if env says we're in CIRCLECI, then... just do a hard fail (or just not wait forever?)
+      if(System.getenv("CIRCLECI") != null)
+      {
+         LOG.warn("A waitForever was found in CIRCLECI - so, we don't want to do that, so, returning immediately.");
+         return;
+      }
 
       LOG.warn("Going into a waitForever...");
       new WebDriverWait(driver, Duration.ofHours(1))

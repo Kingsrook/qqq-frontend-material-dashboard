@@ -35,6 +35,7 @@ public class QBaseSeleniumTest
       chromeOptions = new ChromeOptions();
       chromeOptions.setAcceptInsecureCerts(true);
       chromeOptions.addArguments("--ignore-certificate-errors");
+      chromeOptions.addArguments("--remote-allow-origins=*");
 
       String headless = System.getenv("QQQ_SELENIUM_HEADLESS");
       if("true".equals(headless))
@@ -84,7 +85,14 @@ public class QBaseSeleniumTest
    @AfterEach
    void afterEach(TestInfo testInfo)
    {
-      qSeleniumLib.takeScreenshotToFile(getClass().getSimpleName() + "/" + testInfo.getDisplayName());
+      if(qSeleniumLib == null)
+      {
+         System.err.println("Cannot take after-test screenshot, as qSeleniumLib is null.");
+      }
+      else
+      {
+         qSeleniumLib.takeScreenshotToFile(getClass().getSimpleName() + "/" + testInfo.getDisplayName());
+      }
 
       if(driver != null)
       {

@@ -73,7 +73,7 @@ function ScriptDocsForm({helpText, exampleCode, aceEditorHeight}: Props): JSX.El
    return (
       <Grid container spacing={2} height="100%">
          {oneBlock("helpText", "text", "Documentation", helpText)}
-         {oneBlock("exampleCode", "javascript", "ExampleCode", exampleCode)}
+         {oneBlock("exampleCode", "javascript", "Example Code", exampleCode)}
       </Grid>
    );
 }

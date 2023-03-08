@@ -127,6 +127,12 @@ function QDynamicForm(props: Props): JSX.Element
                      // possible values!!
                      if (field.possibleValueProps)
                      {
+                        const otherValuesMap = field.possibleValueProps.otherValues ?? new Map<string, any>();
+                        Object.keys(values).forEach((key) =>
+                        {
+                           otherValuesMap.set(key, values[key]);
+                        })
+
                         return (
                            <Grid item xs={12} sm={6} key={fieldName}>
                               <DynamicSelect
@@ -139,6 +145,7 @@ function QDynamicForm(props: Props): JSX.Element
                                  initialDisplayValue={field.possibleValueProps.initialDisplayValue}
                                  bulkEditMode={bulkEditMode}
                                  bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
+                                 otherValues={otherValuesMap}
                               />
                            </Grid>
                         );

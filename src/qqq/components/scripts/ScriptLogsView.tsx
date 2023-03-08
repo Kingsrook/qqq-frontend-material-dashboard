@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -31,7 +32,7 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
 {
-   logs: any;
+   logs: QRecord[];
 }
 
 ScriptLogsView.defaultProps = {
@@ -41,7 +42,7 @@ ScriptLogsView.defaultProps = {
 function ScriptLogsView({logs}: Props): JSX.Element
 {
    return (
-      <TableContainer sx={{boxShadow: "none"}}>
+      <TableContainer sx={{boxShadow: "none"}} className="scriptLogsView">
          <Table>
             <Box component="thead">
                <TableRow key="header">
@@ -55,29 +56,29 @@ function ScriptLogsView({logs}: Props): JSX.Element
             </Box>
             <TableBody>
                {
-                  logs.map((logRecord: any) =>
+                  logs?.map((logRecord: QRecord) =>
                   {
                      let logs = "";
-                     if (logRecord.values.scriptLogLine)
+                     if (logRecord.values.get("scriptLogLine"))
                      {
-                        for (let i = 0; i < logRecord.values.scriptLogLine.length; i++)
+                        for (let i = 0; i < logRecord.values.get("scriptLogLine").length; i++)
                         {
                            console.log(" += " + i);
-                           logs += (logRecord.values.scriptLogLine[i].values.text + "\n");
+                           logs += (logRecord.values.get("scriptLogLine")[i].values.text + "\n");
                         }
                      }
 
                      return (
-                        <TableRow key={logRecord.values.id}>
-                           <DataTableBodyCell>{ValueUtils.formatDateTime(logRecord.values.startTimestamp)}</DataTableBodyCell>
-                           <DataTableBodyCell align="right">{logRecord.values.runTimeMillis?.toLocaleString()}</DataTableBodyCell>
+                        <TableRow key={logRecord.values.get("id")}>
+                           <DataTableBodyCell>{ValueUtils.formatDateTime(logRecord.values.get("startTimestamp"))}</DataTableBodyCell>
+                           <DataTableBodyCell align="right">{logRecord.values.get("runTimeMillis")?.toLocaleString()}</DataTableBodyCell>
                            <DataTableBodyCell>
-                              <div style={{color: logRecord.values.hadError ? "red" : "auto"}}>{ValueUtils.formatBoolean(logRecord.values.hadError)}</div>
+                              <div style={{color: logRecord.values.get("hadError") ? "red" : "auto"}}>{ValueUtils.formatBoolean(logRecord.values.get("hadError"))}</div>
                            </DataTableBodyCell>
-                           <DataTableBodyCell>{logRecord.values.input}</DataTableBodyCell>
+                           <DataTableBodyCell>{logRecord.values.get("input")}</DataTableBodyCell>
                            <DataTableBodyCell>
-                              {logRecord.values.output}
-                              {logRecord.values.error}
+                              {logRecord.values.get("output")}
+                              {logRecord.values.get("error")}
                            </DataTableBodyCell>
                            <DataTableBodyCell>{logs}</DataTableBodyCell>
                         </TableRow>

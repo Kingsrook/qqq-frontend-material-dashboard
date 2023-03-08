@@ -332,6 +332,25 @@ export default function App()
                   });
                });
 
+               const runRecordScriptProcess = metaData.processes.get("runRecordScript")
+               if(runRecordScriptProcess)
+               {
+                  const process = runRecordScriptProcess;
+                  routeList.push({
+                     name: process.label,
+                     key: process.name,
+                     route: `${path}/${process.name}`,
+                     component: <RecordQuery table={table} launchProcess={process} />,
+                  });
+
+                  routeList.push({
+                     name: process.label,
+                     key: `${app.name}/${process.name}`,
+                     route: `${path}/:id/${process.name}`,
+                     component: <RecordView table={table} launchProcess={process} />,
+                  });
+               }
+
                const reportsForTable = ProcessUtils.getReportsForTable(metaData, table.name, true);
                reportsForTable.forEach((report) =>
                {

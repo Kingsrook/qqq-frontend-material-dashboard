@@ -1,0 +1,7 @@
+{
+   "type": "scriptViewer",
+   "queryParams": {
+      "id": "1",
+      "tableName": "script"
+   }
+}
