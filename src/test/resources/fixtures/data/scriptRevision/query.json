@@ -1,0 +1,32 @@
+{
+   "records": [
+      {
+         "tableName": "scriptRevision",
+         "values": {
+            "contents": "var hello;",
+            "id": 100,
+            "sequenceNo": 2,
+            "commitMessage": "2nd commit",
+            "author": "Jon Programmer",
+            "createDate": "2023-02-18T00:47:51Z",
+            "modifyDate": "2023-02-18T00:47:51Z"
+         },
+         "displayValues": {
+         }
+      },
+      {
+         "tableName": "scriptRevision",
+         "values": {
+            "contents": "var goodBye;",
+            "id": 99,
+            "sequenceNo": 1,
+            "commitMessage": "Initial checkin",
+            "author": "Jane Programmer",
+            "createDate": "2023-02-17T00:47:51Z",
+            "modifyDate": "2023-02-17T00:47:51Z"
+         },
+         "displayValues": {
+         }
+      }
+   ]
+}

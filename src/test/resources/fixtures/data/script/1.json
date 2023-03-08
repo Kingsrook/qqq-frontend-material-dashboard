@@ -4,6 +4,7 @@
    "values": {
       "name": "Hello, Script",
       "id": 1,
+      "currentScriptRevisionId": 100,
       "tableName": "client",
       "createDate": "2023-02-18T00:47:51Z",
       "modifyDate": "2023-02-18T00:47:51Z",
@@ -11,8 +12,9 @@
    },
    "displayValues": {
       "tableName": "Client",
-      "scriptTypeId": "Unknown",
+      "scriptTypeId": "Record Script",
       "name": "Hello, Script",
+      "currentScriptRevisionId": 100,
       "id": "1",
       "createDate": "2023-02-18T00:47:51Z",
       "modifyDate": "2023-02-18T00:47:51Z"
