@@ -171,6 +171,11 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       editorProps.title = (contents ? "Editing Code for Script: " : "Initializing Code for Script: ") + scriptRecord?.values?.get("name");
       editorProps.contents = contents;
       editorProps.scriptId = scriptId;
+      editorProps.tableName = associatedScriptTableName;
+      editorProps.fieldName = associatedScriptFieldName;
+      editorProps.recordId = associatedScriptRecordId;
+      editorProps.scriptDefinition = testScriptDefinitionObject;
+      editorProps.scriptTypeRecord = scriptTypeRecord;
       setEditorProps(editorProps);
    };
 

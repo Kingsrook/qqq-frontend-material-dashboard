@@ -20,6 +20,7 @@
  */
 
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -31,6 +32,8 @@ import FormData from "form-data";
 import React, {useReducer, useState} from "react";
 import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
+import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import Client from "qqq/utils/qqq/Client";
 
 export interface ScriptEditorProps
@@ -39,12 +42,17 @@ export interface ScriptEditorProps
    scriptId: number;
    contents: string;
    closeCallback: any;
+   tableName: string;
+   fieldName: string;
+   recordId: any;
+   scriptDefinition: any;
+   scriptTypeRecord: QRecord;
 }
 
 
 const qController = Client.getInstance();
 
-function ScriptEditor({title, scriptId, contents, closeCallback}: ScriptEditorProps): JSX.Element
+function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fieldName, recordId, scriptDefinition, scriptTypeRecord}: ScriptEditorProps): JSX.Element
 {
    const [closing, setClosing] = useState(false);
    const [updatedCode, setUpdatedCode] = useState(contents)
@@ -160,7 +168,8 @@ function ScriptEditor({title, scriptId, contents, closeCallback}: ScriptEditorPr
                      size="small"
                      sx={{pb: 1}}
                   >
-                     <ToggleButton value="preview">Preview</ToggleButton>
+                     <ToggleButton value="test">Test</ToggleButton>
+                     <ToggleButton value="docs">Docs</ToggleButton>
                   </ToggleButtonGroup>
                </Box>
             </Box>
@@ -179,17 +188,17 @@ function ScriptEditor({title, scriptId, contents, closeCallback}: ScriptEditorPr
                />
             </Box>
 
-            {/*
+            {
                openTool &&
                <Box sx={{height: "45%"}} pt={2}>
                   {
-                     openTool == "preview" &&
-                     <Box fontSize="14px" overflow="auto" height="100%" border="1px solid gray" pt={1}>
-                        <DataBagPreview json={updatedCode} />
-                     </Box>
+                     openTool == "test" && <ScriptTestForm scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} />
+                  }
+                  {
+                     openTool == "docs" && <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} aceEditorHeight="100%" />
                   }
                </Box>
-            */}
+            }
 
             <Box pt={1}>
                <Grid container alignItems="flex-end">
