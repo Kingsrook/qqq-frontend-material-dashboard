@@ -183,7 +183,6 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                     {
                                        associatedScripts && associatedScripts.map((object) =>
                                        {
-                                          console.log(object);
                                           let fieldName = object.associatedScript?.fieldName;
                                           let field = tableMetaData.fields.get(fieldName);
                                           let scriptId = record?.values.get(fieldName);

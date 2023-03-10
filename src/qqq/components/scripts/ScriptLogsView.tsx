@@ -63,7 +63,6 @@ function ScriptLogsView({logs}: Props): JSX.Element
                      {
                         for (let i = 0; i < logRecord.values.get("scriptLogLine").length; i++)
                         {
-                           console.log(" += " + i);
                            logs += (logRecord.values.get("scriptLogLine")[i].values.text + "\n");
                         }
                      }

@@ -192,7 +192,7 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                openTool &&
                <Box sx={{height: "45%"}} pt={2}>
                   {
-                     openTool == "test" && <ScriptTestForm scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} />
+                     openTool == "test" && <ScriptTestForm scriptId={scriptId} scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} />
                   }
                   {
                      openTool == "docs" && <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} aceEditorHeight="100%" />

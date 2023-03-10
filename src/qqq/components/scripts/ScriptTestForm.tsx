@@ -19,15 +19,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import FormData from "form-data";
 import React, {useState} from "react";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import DataTableBodyCell from "qqq/components/widgets/tables/cells/DataTableBodyCell";
+import DataTableHeadCell from "qqq/components/widgets/tables/cells/DataTableHeadCell";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -39,6 +50,7 @@ interface AssociatedScriptDefinition
 
 interface Props
 {
+   scriptId: number;
    scriptDefinition: AssociatedScriptDefinition;
    tableName: string;
    fieldName: string;
@@ -52,10 +64,11 @@ ScriptTestForm.defaultProps = {
 
 const qController = Client.getInstance();
 
-function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}: Props): JSX.Element
+function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recordId, code}: Props): JSX.Element
 {
    const [testInputValues, setTestInputValues] = useState({} as any);
    const [testOutputValues, setTestOutputValues] = useState({} as any);
+   const [logLines, setLogLines] = useState([] as any[])
    const [testException, setTestException] = useState(null as string)
    const [firstRender, setFirstRender] = useState(true);
 
@@ -68,7 +81,7 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
    {
       scriptDefinition.testInputFields.forEach((field: QFieldMetaData) =>
       {
-         testInputValues[field.name] = "";
+         testInputValues[field.name] = field.defaultValue ?? "";
       });
    }
 
@@ -84,26 +97,80 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
       }
 
       setTestOutputValues({});
+      setLogLines([]);
       setTestException(null);
 
       (async () =>
       {
-         const output = await qController.testScript(tableName, recordId, fieldName, code, inputValues);
-         console.log("got output:")
-         console.log(output);
-         console.log(Object.keys(output));
-         setTestOutputValues(output.outputObject);
-         if(output.exception)
+         try
          {
-            setTestException(output.exception.message)
-            console.log(`set test exception to ${output.exception.message}`);
+            let output;
+            if(tableName && recordId && fieldName)
+            {
+               /////////////////////////////////////////////////////////////////
+               // associated record scripts - run this way (at least for now) //
+               /////////////////////////////////////////////////////////////////
+               output = await qController.testScript(tableName, recordId, fieldName, code, inputValues);
+            }
+            else
+            {
+               const formData = new FormData();
+               formData.append("scriptId", scriptId);
+               formData.append("code", code);
+
+               for(let fieldName of inputValues.keys())
+               {
+                  formData.append(fieldName, inputValues.get(fieldName));
+               }
+
+               const processResult = await qController.processRun("testScript", formData, null, true);
+
+               if (processResult instanceof QJobError)
+               {
+                  const jobError = processResult as QJobError
+                  setTestException(jobError.userFacingError ?? jobError.error)
+                  return;
+               }
+
+               const jobComplete = processResult as QJobComplete
+               output = jobComplete.values;
+            }
+
+            console.log("got output:")
+            console.log(output);
+            console.log(Object.keys(output));
+            setTestOutputValues(output.outputObject ?? {});
+            if(output.exception)
+            {
+               setTestException(output.exception.message)
+               console.log(`set test exception to ${output.exception.message}`);
+            }
+
+            if(output.scriptLogLines && output.scriptLogLines.length)
+            {
+               const scriptLogLines = [];
+               for(var i = 0; i<output.scriptLogLines.length; i++)
+               {
+                  scriptLogLines.push(output.scriptLogLines[i].values);
+               }
+               setLogLines(scriptLogLines);
+            }
+         }
+         catch(e)
+         {
+            console.warn(e);
+            if(e instanceof QException)
+            {
+               const qe = e as QException;
+               setTestException(qe.code + ": " + qe.message);
+            }
+            else
+            {
+               setTestException(`${e}`);
+            }
          }
       })();
    };
-
-   // console.log("Rendering vvv");
-   // console.log(`${testOutputValues}`);
-   // console.log("Rendering ^^^");
 
    const handleInputChange = (fieldName: string, newValue: string) =>
    {
@@ -112,10 +179,8 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
       setTestInputValues(JSON.parse(JSON.stringify(testInputValues)));
    }
 
-   // console.log(testInputValues);
-
    return (
-      <Grid container spacing={2} height="100%">
+      <Grid container spacing={2} height="100%" className="scriptTestForm">
          <Grid item xs={6} height="100%">
             <Box gap={2} pb={1} pr={2} height="100%">
                <Card sx={{width: "100%", height: "100%", overflow: "auto"}}>
@@ -135,6 +200,8 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
                                  {
                                     handleInputChange(field.name, event.target.value);
                                  }}
+                                 multiline={field.type == QFieldType.TEXT}
+                                 maxRows={field.type == QFieldType.TEXT ? 5 : 1}
                                  fullWidth
                                  sx={{mb: 2}}
                               />);
@@ -160,11 +227,9 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
                         </Typography>
                      }
                      {
-                        scriptDefinition.testOutputFields && testOutputValues && scriptDefinition.testOutputFields.map((f: any) =>
+                        scriptDefinition.testOutputFields && scriptDefinition.testOutputFields.map((f: any) =>
                         {
                            const field = new QFieldMetaData(f);
-                           console.log(field.name);
-                           console.log(testOutputValues[field.name]);
                            return (
                               <Box key={field.name} flexDirection="row" pr={2}>
                                  <Typography variant="button" fontWeight="bold" pr={1}>
@@ -176,6 +241,33 @@ function ScriptTestForm({scriptDefinition, tableName, fieldName, recordId, code}
                               </Box>
                            );
                         })
+                     }
+                     {
+                        logLines && logLines.length ?
+                           <>
+                              <Typography variant="h6" p={2} pl={0} pb={1}>Test Log Lines</Typography>
+                              <TableContainer sx={{boxShadow: "none"}} className="scriptLogLines">
+                                 <Table>
+                                    <Box component="thead">
+                                       <TableRow key="header">
+                                          <DataTableHeadCell sorted={false} width="140px">Timestamp</DataTableHeadCell>
+                                          <DataTableHeadCell sorted={false}>Log Line</DataTableHeadCell>
+                                       </TableRow>
+                                    </Box>
+                                    <TableBody>
+                                       {
+                                          logLines.map((logLine: any, i: number) =>
+                                             (
+                                                <TableRow key={i}>
+                                                   <DataTableBodyCell><span style={{whiteSpace: "nowrap", paddingRight: "1rem"}}>{ValueUtils.formatTime(logLine["timestamp"])}</span></DataTableBodyCell>
+                                                   <DataTableBodyCell>{logLine["text"]}</DataTableBodyCell>
+                                                </TableRow>
+                                             ))
+                                       }
+                                    </TableBody>
+                                 </Table>
+                              </TableContainer>
+                           </> : <></>
                      }
                   </Box>
                </Card>

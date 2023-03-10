@@ -458,7 +458,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
                                  <TabPanel index={2} value={selectedTab}>
                                     <Box sx={{height: "455px"}} px={2} pb={1}>
-                                       <ScriptTestForm scriptDefinition={testScriptDefinitionObject} tableName={associatedScriptTableName} fieldName={associatedScriptFieldName} recordId={associatedScriptRecordId} code={selectedVersionRecord?.values.get("contents")} />
+                                       <ScriptTestForm scriptId={scriptId} scriptDefinition={testScriptDefinitionObject} tableName={associatedScriptTableName} fieldName={associatedScriptFieldName} recordId={associatedScriptRecordId} code={selectedVersionRecord?.values.get("contents")} />
                                     </Box>
                                  </TabPanel>
 

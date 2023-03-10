@@ -367,3 +367,15 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    height: calc(100vh - 60px) !important;
    z-index: 1300 !important;
 }
+
+.scriptTestForm TEXTAREA
+{
+   resize: vertical !important;
+}
+
+.scriptTestForm .scriptLogLines TD,
+.scriptTestForm .scriptLogLines TH
+{
+   padding-left: 0;
+   padding-right: 0;
+}

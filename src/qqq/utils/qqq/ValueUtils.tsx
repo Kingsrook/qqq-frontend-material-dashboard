@@ -253,6 +253,16 @@ class ValueUtils
       return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
    }
 
+   public static formatTime(date: Date)
+   {
+      if(!(date instanceof Date))
+      {
+         date = new Date(date)
+      }
+      // @ts-ignore
+      return (`${date.toString("hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
+   }
+
    public static formatDateTimeISO8601(date: Date)
    {
       if(!(date instanceof Date))

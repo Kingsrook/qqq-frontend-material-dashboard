@@ -289,7 +289,7 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
                                  <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mt={-6}>
                                     <Typography variant="h5" p={2}></Typography>
                                     <Tabs
-                                       sx={{mr: 1}}
+                                       sx={{m: 1}}
                                        value={selectedTab}
                                        onChange={(event, newValue) => changeTab(newValue)}
                                        variant="standard"
