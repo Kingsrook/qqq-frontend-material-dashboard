@@ -19,10 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Theme} from "@mui/material";
+import {Collapse, Theme} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import {SxProps} from "@mui/system";
+import {Field, Form, Formik, useFormik} from "formik";
+import React, {useState} from "react";
+import MDInput from "qqq/components/legacy/MDInput";
 
 
 export interface DropdownOption
@@ -36,6 +40,7 @@ export interface DropdownOption
 /////////////////////////
 interface Props
 {
+   name: string;
    defaultValue?: any;
    label?: string;
    dropdownOptions?: DropdownOption[];
@@ -43,23 +48,98 @@ interface Props
    sx?: SxProps<Theme>;
 }
 
-function DropdownMenu({defaultValue, label, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
+function parseCustomTimeValuesFromDefaultValue(defaultValue: any): any
 {
+   const customTimeValues: { [key: string]: string } = {};
+   if(defaultValue && defaultValue.id)
+   {
+      var parts = defaultValue.id.split(",");
+      if(parts.length >= 2)
+      {
+         customTimeValues["startDate"] = parts[1];
+      }
+      if(parts.length >= 3)
+      {
+         customTimeValues["endDate"] = parts[2];
+      }
+   }
+
+   return (customTimeValues);
+}
+
+function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
+{
+   const [customTimesVisible, setCustomTimesVisible] = useState(defaultValue && defaultValue.id && defaultValue.id.startsWith("custom,"));
+   const [customTimeValues, setCustomTimeValues] = useState(parseCustomTimeValuesFromDefaultValue(defaultValue) as any);
+
    const handleOnChange = (event: any, newValue: any, reason: string) =>
    {
-      onChangeCallback(label, newValue);
+      const isTimeframeCustom = name == "timeframe" && newValue && newValue.id == "custom"
+      setCustomTimesVisible(isTimeframeCustom);
+
+      if(isTimeframeCustom)
+      {
+         callOnChangeCallbackIfCustomTimeframeHasDateValues();
+      }
+      else
+      {
+         onChangeCallback(label, newValue);
+      }
+   };
+
+   const callOnChangeCallbackIfCustomTimeframeHasDateValues = () =>
+   {
+      if(customTimeValues["startDate"] && customTimeValues["endDate"])
+      {
+         onChangeCallback(label, {id: `custom,${customTimeValues["startDate"]},${customTimeValues["endDate"]}`, label: "Custom"});
+      }
+   }
+
+   let customTimes = <></>;
+   if (name == "timeframe")
+   {
+      const handleSubmit = async (values: any, actions: any) =>
+      {
+      };
+
+      const dateChanged = (fieldName: string, event: any) =>
+      {
+         console.log(event.target.value);
+         customTimeValues[fieldName] = event.target.value;
+         console.log(customTimeValues);
+
+         callOnChangeCallbackIfCustomTimeframeHasDateValues();
+      };
+
+      customTimes = <Box sx={{display: "inline-block", position: "relative", top: "-7px"}}>
+         <Collapse orientation="horizontal" in={customTimesVisible}>
+            <Formik initialValues={customTimeValues} onSubmit={handleSubmit}>
+               {({
+                  values,
+                  errors,
+                  touched,
+                  isSubmitting,
+               }) => (
+                  <Form id="timeframe-form" autoComplete="off">
+                     <Field name="startDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe Start" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 1}} onChange={(event: any) => dateChanged("startDate", event)} />
+                     <Field name="endDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe End" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 1}} onChange={(event: any) => dateChanged("endDate", event)} />
+                  </Form>
+               )}
+            </Formik>
+         </Collapse>
+      </Box>;
    }
 
    return (
       dropdownOptions ? (
-         <span style={{whiteSpace: "nowrap"}}>
+         <span style={{whiteSpace: "nowrap", display: "flex"}}>
             <Autocomplete
                defaultValue={defaultValue}
                size="small"
                disablePortal
                id={`${label}-combo-box`}
                options={dropdownOptions}
-               sx={{...sx, cursor: "pointer"}}
+               sx={{...sx, cursor: "pointer", display: "inline-block"}}
                onChange={handleOnChange}
                isOptionEqualToValue={(option, value) => option.id === value.id}
                renderInput={(params: any) => <TextField {...params} label={label} />}
@@ -67,9 +147,10 @@ function DropdownMenu({defaultValue, label, dropdownOptions, onChangeCallback, s
                   <li {...props} style={{whiteSpace: "normal"}}>{option.label}</li>
                )}
             />
+            {customTimes}
          </span>
       ) : null
-   )
+   );
 }
 
 export default DropdownMenu;
