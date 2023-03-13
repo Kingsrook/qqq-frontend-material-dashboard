@@ -80,7 +80,7 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
          {
             formData.append("orderBy", orderBy);
          }
-         const processResult = await qController.processRun("tableStats", formData);
+         const processResult = await qController.processRun("columnStats", formData);
 
          setStatusString(null)
          if (processResult instanceof QJobError)
@@ -127,8 +127,12 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 
             const {rows, columnsToRender} = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, columnsToRender);
-            columns[0].width = 200;
-            columns[1].width = 200;
+            columns.forEach((c) =>
+            {
+               c.width = 200;
+               c.filterable = false;
+               c.hideable = false;
+            })
 
             setRows(rows);
             setColumns(columns);
@@ -192,6 +196,8 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
                      rows={rows}
                      disableSelectionOnClick
                      columns={columns}
+                     disableColumnSelector={true}
+                     disableColumnPinning={true}
                      loading={loading}
                      rowBuffer={10}
                      getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
