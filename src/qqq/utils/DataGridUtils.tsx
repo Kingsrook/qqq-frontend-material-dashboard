@@ -175,7 +175,10 @@ export default class DataGridUtils
             filterOperators: filterOperators,
          };
 
-         if (columnsToRender[field.name])
+         /////////////////////////////////////////////////////////////////////////////////////////
+         // looks like, maybe we can just always render all columns, and remove this parameter? //
+         /////////////////////////////////////////////////////////////////////////////////////////
+         if (columnsToRender == null || columnsToRender[field.name])
          {
             column.renderCell = (cellValues: any) => (
                (cellValues.value)

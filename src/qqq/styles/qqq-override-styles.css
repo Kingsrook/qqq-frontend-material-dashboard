@@ -379,3 +379,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    padding-left: 0;
    padding-right: 0;
 }
+
+.dashboardDropdownMenu #timeframe-form label
+{
+   font-size: 0.875rem;
+}

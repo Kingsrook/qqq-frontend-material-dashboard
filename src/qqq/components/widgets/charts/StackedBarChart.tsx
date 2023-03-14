@@ -46,6 +46,8 @@ export const options = {
    scales: {
       x: {
          stacked: true,
+         grid: {offset: false},
+         ticks: {autoSkip: false, maxRotation: 90}
       },
       y: {
          stacked: true,

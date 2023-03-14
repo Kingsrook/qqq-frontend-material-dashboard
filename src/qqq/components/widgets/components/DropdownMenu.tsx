@@ -24,9 +24,11 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import {SxProps} from "@mui/system";
-import {Field, Form, Formik, useFormik} from "formik";
+import {Field, Form, Formik} from "formik";
 import React, {useState} from "react";
 import MDInput from "qqq/components/legacy/MDInput";
+import FilterUtils from "qqq/utils/qqq/FilterUtils";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 
 export interface DropdownOption
@@ -48,29 +50,51 @@ interface Props
    sx?: SxProps<Theme>;
 }
 
-function parseCustomTimeValuesFromDefaultValue(defaultValue: any): any
+interface StartAndEndDate
 {
-   const customTimeValues: { [key: string]: string } = {};
+   startDate?: string,
+   endDate?: string
+}
+
+function parseCustomTimeValuesFromDefaultValue(defaultValue: any): StartAndEndDate
+{
+   const customTimeValues: StartAndEndDate = {};
    if(defaultValue && defaultValue.id)
    {
       var parts = defaultValue.id.split(",");
       if(parts.length >= 2)
       {
-         customTimeValues["startDate"] = parts[1];
+         customTimeValues["startDate"] = ValueUtils.formatDateTimeValueForForm(parts[1]);
       }
       if(parts.length >= 3)
       {
-         customTimeValues["endDate"] = parts[2];
+         customTimeValues["endDate"] = ValueUtils.formatDateTimeValueForForm(parts[2]);
       }
    }
 
    return (customTimeValues);
 }
 
+function makeBackendValuesFromFrontendValues(frontendDefaultValues: StartAndEndDate): StartAndEndDate
+{
+   const backendTimeValues: StartAndEndDate = {};
+   if(frontendDefaultValues && frontendDefaultValues.startDate)
+   {
+      backendTimeValues.startDate = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.startDate);
+   }
+   if(frontendDefaultValues && frontendDefaultValues.endDate)
+   {
+      backendTimeValues.endDate = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.endDate);
+   }
+   return (backendTimeValues);
+}
+
 function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
 {
    const [customTimesVisible, setCustomTimesVisible] = useState(defaultValue && defaultValue.id && defaultValue.id.startsWith("custom,"));
-   const [customTimeValues, setCustomTimeValues] = useState(parseCustomTimeValuesFromDefaultValue(defaultValue) as any);
+   const [customTimeValuesFrontend, setCustomTimeValuesFrontend] = useState(parseCustomTimeValuesFromDefaultValue(defaultValue) as StartAndEndDate);
+   const [customTimeValuesBackend, setCustomTimeValuesBackend] = useState(makeBackendValuesFromFrontendValues(customTimeValuesFrontend) as StartAndEndDate);
+   const [debounceTimeout, setDebounceTimeout] = useState(null as any);
 
    const handleOnChange = (event: any, newValue: any, reason: string) =>
    {
@@ -89,9 +113,9 @@ function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallb
 
    const callOnChangeCallbackIfCustomTimeframeHasDateValues = () =>
    {
-      if(customTimeValues["startDate"] && customTimeValues["endDate"])
+      if(customTimeValuesBackend["startDate"] && customTimeValuesBackend["endDate"])
       {
-         onChangeCallback(label, {id: `custom,${customTimeValues["startDate"]},${customTimeValues["endDate"]}`, label: "Custom"});
+         onChangeCallback(label, {id: `custom,${customTimeValuesBackend["startDate"]},${customTimeValuesBackend["endDate"]}`, label: "Custom"});
       }
    }
 
@@ -102,27 +126,26 @@ function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallb
       {
       };
 
-      const dateChanged = (fieldName: string, event: any) =>
+      const dateChanged = (fieldName: "startDate" | "endDate", event: any) =>
       {
-         console.log(event.target.value);
-         customTimeValues[fieldName] = event.target.value;
-         console.log(customTimeValues);
+         customTimeValuesFrontend[fieldName] = event.target.value;
+         customTimeValuesBackend[fieldName] = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(event.target.value);
 
-         callOnChangeCallbackIfCustomTimeframeHasDateValues();
+         clearTimeout(debounceTimeout);
+         const newDebounceTimeout = setTimeout(() =>
+         {
+            callOnChangeCallbackIfCustomTimeframeHasDateValues();
+         }, 500);
+         setDebounceTimeout(newDebounceTimeout);
       };
 
       customTimes = <Box sx={{display: "inline-block", position: "relative", top: "-7px"}}>
          <Collapse orientation="horizontal" in={customTimesVisible}>
-            <Formik initialValues={customTimeValues} onSubmit={handleSubmit}>
-               {({
-                  values,
-                  errors,
-                  touched,
-                  isSubmitting,
-               }) => (
+            <Formik initialValues={customTimeValuesFrontend} onSubmit={handleSubmit}>
+               {({}) => (
                   <Form id="timeframe-form" autoComplete="off">
-                     <Field name="startDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe Start" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 1}} onChange={(event: any) => dateChanged("startDate", event)} />
-                     <Field name="endDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe End" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 1}} onChange={(event: any) => dateChanged("endDate", event)} />
+                     <Field name="startDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe Start" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 2, width: 198}} onChange={(event: any) => dateChanged("startDate", event)} />
+                     <Field name="endDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe End" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 2, width: 198}} onChange={(event: any) => dateChanged("endDate", event)} />
                   </Form>
                )}
             </Formik>
@@ -132,7 +155,7 @@ function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallb
 
    return (
       dropdownOptions ? (
-         <span style={{whiteSpace: "nowrap", display: "flex"}}>
+         <span style={{whiteSpace: "nowrap", display: "flex"}} className="dashboardDropdownMenu">
             <Autocomplete
                defaultValue={defaultValue}
                size="small"

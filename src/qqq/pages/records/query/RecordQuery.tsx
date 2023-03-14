@@ -289,7 +289,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
 
 
-   const buildQFilter = (filterModel: GridFilterModel) =>
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   // note - important to take tableMetaData as a param, even though it's a state var, as the          //
+   // first time we call in here, we may not yet have set it in state (but will have fetched it async) //
+   // so we'll pass in the local version of it!                                                        //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   const buildQFilter = (tableMetaData: QTableMetaData, filterModel: GridFilterModel) =>
    {
       const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
@@ -337,6 +342,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
+
+         if(columnsModel.length == 0)
+         {
+            let linkBase = metaData.getTablePath(table)
+            linkBase += linkBase.endsWith("/") ? "" : "/";
+            const columns = DataGridUtils.setupGridColumns(tableMetaData, null, linkBase);
+            setColumnsModel(columns);
+         }
+
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
@@ -346,7 +360,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             setColumnSortModel(columnSortModel);
          }
 
-         const qFilter = buildQFilter(localFilterModel);
+         const qFilter = buildQFilter(tableMetaData, localFilterModel);
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
          // assign a new query id to the query being issued here.  then run both the count & query async //
@@ -439,14 +453,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setLatestQueryResults(results);
 
       const {rows, columnsToRender} = DataGridUtils.makeRows(results, tableMetaData);
-
-      if(columnsModel.length == 0)
-      {
-         let linkBase = metaData.getTablePath(table)
-         linkBase += linkBase.endsWith("/") ? "" : "/";
-         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, linkBase);
-         setColumnsModel(columns);
-      }
 
       setRows(rows);
 
@@ -616,6 +622,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       (async () =>
       {
+         setTableMetaData(null);
          setTableState(tableName);
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
@@ -675,7 +682,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                const d = new Date();
                const dateString = `${d.getFullYear()}-${zp(d.getMonth()+1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(filterModel)))}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}&fields=${visibleFields.join(",")}`;
 
                //////////////////////////////////////////////////////////////////////////////////////
                // open a window (tab) with a little page that says the file is being generated.    //
@@ -742,7 +749,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(filterModel))}`;
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(tableMetaData, filterModel))}`;
       }
 
       if (selectedIds.length > 0)
@@ -757,7 +764,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         setRecordIdsForProcess(buildQFilter(filterModel));
+         setRecordIdsForProcess(buildQFilter(tableMetaData, filterModel));
       }
       else if (selectedIds.length > 0)
       {
