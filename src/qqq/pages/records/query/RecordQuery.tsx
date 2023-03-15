@@ -285,9 +285,23 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       // if we didn't open a process... not sure what we do in the table/query use-case //
       ////////////////////////////////////////////////////////////////////////////////////
       setActiveModalProcess(null);
-   }, [ location , tableMetaData]);
 
+   }, [location , tableMetaData]);
 
+   ///////////////////////////////////////////////////////////////////////
+   // any time these are out of sync, it means we need to reload things //
+   ///////////////////////////////////////////////////////////////////////
+   if(tableMetaData && tableMetaData.name !== tableName)
+   {
+      console.log("  it looks like we changed tables - try to reload the things");
+      setTableMetaData(null)
+      setColumnSortModel([]);
+      setColumnVisibilityModel({});
+      setColumnsModel([]);
+      setFilterModel({items: []});
+      setDefaultFilterLoaded(false);
+      setRows([]);
+   }
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    // note - important to take tableMetaData as a param, even though it's a state var, as the          //
@@ -301,27 +315,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return(filter);
    };
 
-
-   const getTableMetaData = async (): Promise<QTableMetaData> =>
-   {
-      if(tableMetaData !== null)
-      {
-         return(new Promise((resolve) =>
-         {
-            resolve(tableMetaData)
-         }));
-      }
-
-      return (qController.loadTableMetaData(tableName));
-   }
-
    const updateTable = () =>
    {
       setLoading(true);
       setRows([]);
       (async () =>
       {
-         const tableMetaData = await getTableMetaData();
+         const tableMetaData = await qController.loadTableMetaData(tableName);
          setPageHeader(tableMetaData.label);
 
          ////////////////////////////////////////////////////////////////////////////////////////////////
