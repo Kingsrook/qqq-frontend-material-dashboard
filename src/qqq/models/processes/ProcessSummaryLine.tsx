@@ -38,7 +38,6 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
  ** Entity that corresponds to qqq backend's ProcessSummaryLine - with methods
  ** to help display properly in a process review screen.
  *******************************************************************************/
-// eslint-disable-next-line import/prefer-default-export
 export class ProcessSummaryLine
 {
    status: "OK" | "INFO" | "WARNING" | "ERROR";
@@ -49,6 +48,7 @@ export class ProcessSummaryLine
 
    tableName: string;
    recordId: any;
+   filter: any;
    linkPreText: string;
    linkText: string;
    linkPostText: string;
@@ -65,19 +65,21 @@ export class ProcessSummaryLine
       this.linkPreText = processSummaryLine.linkPreText;
       this.linkText = processSummaryLine.linkText;
       this.linkPostText = processSummaryLine.linkPostText;
+
+      this.filter = processSummaryLine.filter;
    }
 
    getProcessSummaryListItem(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
    {
-      if (this.tableName != undefined && this.recordId != undefined)
+      if (this.tableName != undefined && (this.recordId != undefined || this.filter != undefined))
       {
-         return (this.getProcessSummaryListItemForTableRecordLink(i, table, qInstance, isResultScreen));
+         return (this.getProcessSummaryListItemForTableRecordOrFilterLink(i, table, qInstance, isResultScreen));
       }
 
       return (this.getProcessSummaryListItemForCountAndMessage(i, table, qInstance, isResultScreen));
    }
 
-   private getProcessSummaryListItemForTableRecordLink(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
+   private getProcessSummaryListItemForTableRecordOrFilterLink(i: number, table: QTableMetaData, qInstance: QInstance, isResultScreen: boolean = false): JSX.Element
    {
       const tablePath = qInstance.getTablePathByName(this.tableName);
 
@@ -87,7 +89,11 @@ export class ProcessSummaryLine
                <Icon fontSize="medium" sx={{mr: 1}} color={this.getColor()}>{this.getIcon(isResultScreen)}</Icon>
                <ListItemText primaryTypographyProps={{fontSize: 16}}>
                   {this.linkPreText ?? ""}
-                  <Link to={`${tablePath}/${this.recordId}`}>{this.linkText}</Link>
+                  {
+                     this.recordId
+                        ? <Link to={`${tablePath}/${this.recordId}`}>{this.linkText}</Link>
+                        : <Link to={`${tablePath}?filter=${JSON.stringify(this.filter)}`}>{this.linkText}</Link>
+                  }
                   {this.linkPostText ?? ""}
                </ListItemText>
             </Box>
