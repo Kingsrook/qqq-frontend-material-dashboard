@@ -314,11 +314,7 @@ class FilterUtils
             {
                try
                {
-                  let localDate = new Date(param[i]);
-                  let month = (1 + localDate.getUTCMonth());
-                  let zp = FilterUtils.zeroPad;
-                  let toPush = localDate.getUTCFullYear() + "-" + zp(month) + "-" + zp(localDate.getUTCDate()) + "T" + zp(localDate.getUTCHours()) + ":" + zp(localDate.getUTCMinutes()) + ":" + zp(localDate.getUTCSeconds()) + "Z";
-                  console.log(`Input date was ${localDate}.  Sending to backend as ${toPush}`);
+                  let toPush = this.frontendLocalZoneDateTimeStringToUTCStringForBackend(param[i]);
                   rs.push(toPush);
                }
                catch (e)
@@ -335,6 +331,22 @@ class FilterUtils
       }
       return (rs);
    };
+
+
+   /*******************************************************************************
+    ** Take a string date (w/o a timezone) like that our calendar widgets make,
+    ** and convert it to UTC, e.g., for submitting to the backend.
+    *******************************************************************************/
+   public static frontendLocalZoneDateTimeStringToUTCStringForBackend(param: string)
+   {
+      let localDate = new Date(param);
+      let month = (1 + localDate.getUTCMonth());
+      let zp = FilterUtils.zeroPad;
+      let toPush = localDate.getUTCFullYear() + "-" + zp(month) + "-" + zp(localDate.getUTCDate()) + "T" + zp(localDate.getUTCHours()) + ":" + zp(localDate.getUTCMinutes()) + ":" + zp(localDate.getUTCSeconds()) + "Z";
+      console.log(`Input date was ${localDate}.  Sending to backend as ${toPush}`);
+      return toPush;
+   }
+
 
    /*******************************************************************************
     ** Convert a filter field's value from the style that qqq uses, to the style that

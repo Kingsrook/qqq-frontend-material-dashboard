@@ -130,6 +130,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    const navigate = useNavigate();
    const [dropdownData, setDropdownData] = useState([]);
    const [counter, setCounter] = useState(0);
+   const [fullScreenWidgetClassName, setFullScreenWidgetClassName] = useState("");
 
    function openEditForm(table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any)
    {
@@ -175,6 +176,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          return (
             <Box my={2} sx={{float: "right"}}>
                <DropdownMenu
+                  name={dropdownName}
                   defaultValue={defaultValue}
                   sx={{width: 200, marginLeft: "15px"}}
                   label={`Select ${dropdown.label}`}
@@ -283,6 +285,18 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       }
    }, [counter]);
 
+   const toggleFullScreenWidget = () =>
+   {
+      if(fullScreenWidgetClassName)
+      {
+         setFullScreenWidgetClassName("");
+      }
+      else
+      {
+         setFullScreenWidgetClassName("fullScreenWidget");
+      }
+   }
+
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
    const widgetContent =
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
@@ -336,17 +350,22 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                   // first look for a label in the widget data, which would override that in the metadata //
                   //////////////////////////////////////////////////////////////////////////////////////////
                   hasPermission && props.widgetData?.label? (
-                     <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={2} display="inline">
+                     <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={2} display="inline-block">
                         {props.widgetData.label}
                      </Typography>
                   ) : (
                      hasPermission && props.widgetMetaData?.label && (
-                        <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={3} display="inline">
+                        <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={3} display="inline-block">
                            {props.widgetMetaData.label}
                         </Typography>
                      )
                   )
                }
+               {/*
+               <Button onClick={() => toggleFullScreenWidget()}>
+                  {fullScreenWidgetClassName ? "-" : "+"}
+               </Button>
+               */}
                {
                   hasPermission && (
                      props.labelAdditionalComponentsLeft.map((component, i) =>
@@ -384,7 +403,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
       </Box>;
 
-   return props.widgetMetaData?.isCard ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%"}}>{widgetContent}</Card> : widgetContent;
+   return props.widgetMetaData?.isCard ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%"}} className={fullScreenWidgetClassName}>{widgetContent}</Card> : widgetContent;
 }
 
 export default Widget;

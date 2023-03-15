@@ -353,6 +353,21 @@ class ValueUtils
          //////////////////////////////////////////////////////////////////
          return (value + "T00:00");
       }
+      else if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/))
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         // If the passed in string has a Z on the end (e.g., in UTC) - make a Date object - the browser will //
+         // shift the value into the user's time zone, so it will display correctly for them                  //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         const date = new Date(value);
+
+         // @ts-ignore
+         const formattedDate = `${date.toString("yyyy-MM-ddTHH:mm")}`
+
+         console.log(`Converted UTC date value string [${value}] to local time value for form [${formattedDate}]`)
+
+         return (formattedDate);
+      }
       else if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*/))
       {
          ///////////////////////////////////////////////////////////////////////////////////
