@@ -29,12 +29,16 @@ import Grid from "@mui/material/Grid";
 import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
 import FormData from "form-data";
-import React, {useReducer, useState} from "react";
+import React, {useEffect, useReducer, useState} from "react";
 import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import Client from "qqq/utils/qqq/Client";
+
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/theme-github";
+import "ace-builds/src-noconflict/ext-language_tools";
 
 export interface ScriptEditorProps
 {
@@ -49,7 +53,6 @@ export interface ScriptEditorProps
    scriptTypeRecord: QRecord;
 }
 
-
 const qController = Client.getInstance();
 
 function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fieldName, recordId, scriptDefinition, scriptTypeRecord}: ScriptEditorProps): JSX.Element
@@ -60,6 +63,54 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
    const [openTool, setOpenTool] = useState(null);
    const [errorAlert, setErrorAlert] = useState("")
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+   useEffect(() =>
+   {
+      // @ts-ignore
+      // eslint-disable-next-line import/namespace
+      const langTools = ace.require("ace/ext/language_tools");
+      const myCompleter =
+         {
+            // @ts-ignore
+            getCompletions: function (editor, session, pos, prefix, callback)
+            {
+               // @ts-ignore
+               let completions = [];
+
+               // todo - get from backend, based on the script type
+               completions.push({value: "api.query(", meta: "Search for records in a table."});
+               completions.push({value: "api.insert(", meta: "Create one or more records in a table."});
+               completions.push({value: "api.update(", meta: "Update one or more records in a table."});
+               completions.push({value: "api.delete(", meta: "Remove one or more records from a table."});
+               completions.push({value: "api.newRecord(", meta: "Create a new QRecord object."});
+               completions.push({value: "api.newQueryInput(", meta: "Create a new QueryInput object."});
+               completions.push({value: "api.newQueryFilter(", meta: "Create a new QueryFilter object."});
+               completions.push({value: "api.newFilterCriteria(", meta: "Create a new FilterCriteria object."});
+               completions.push({value: "api.newFilterOrderBy(", meta: "Create a new FilterOrderBy object."});
+               completions.push({value: "getValue(", meta: "Get a value from a record"});
+               completions.push({value: "logger.log(", meta: "Write a Script Log Line"});
+
+               // @ts-ignore
+               callback(null, completions);
+            }
+         };
+      langTools.addCompleter(myCompleter);
+
+      const preventUnload = (event: BeforeUnloadEvent) =>
+      {
+         // NOTE: This message isn't used in modern browsers, but is required
+         const message = "Are you sure you want to leave?";
+         event.preventDefault();
+         event.returnValue = message;
+      };
+
+      window.addEventListener("beforeunload", preventUnload);
+      return () =>
+      {
+         window.removeEventListener("beforeunload", preventUnload);
+      };
+   }, []);
+
 
    const changeOpenTool = (event: React.MouseEvent<HTMLElement>, newValue: string | null) =>
    {
@@ -180,6 +231,10 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                   theme="github"
                   name="editor"
                   editorProps={{$blockScrolling: true}}
+                  setOptions={{
+                     enableBasicAutocompletion: true,
+                     enableLiveAutocompletion: true,
+                  }}
                   onChange={updateCode}
                   width="100%"
                   height="100%"
