@@ -119,6 +119,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    {
       let ampersand = "";
       let params = "";
+
       if(entityPrimaryKey)
       {
          params += `${ampersand}id=${entityPrimaryKey}`;
@@ -134,30 +135,28 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          params += `${ampersand}${extraParams}`;
          ampersand = "&";
       }
-      if(childUrlParams)
-      {
-         params += `${ampersand}${childUrlParams}`;
-         ampersand = "&";
-      }
 
       /////////////////////////////////////////////////////////////////////////////
       // see if local storage is used for any widget dropdowns, if so, look them //
       // up and append to the query string                                       //
       /////////////////////////////////////////////////////////////////////////////
-      let thisWidgetHasDropdowns = widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns;
-      let parentWidgetHasDropdowns = parentWidgetMetaData && parentWidgetMetaData.storeDropdownSelections && parentWidgetMetaData.dropdowns;
-      if(thisWidgetHasDropdowns || parentWidgetHasDropdowns)
+      if(params === "")
       {
-         const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
-         for(let i = 0; i< metaDataToUse.dropdowns.length; i++)
+         let thisWidgetHasDropdowns = widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns;
+         let parentWidgetHasDropdowns = parentWidgetMetaData && parentWidgetMetaData.storeDropdownSelections && parentWidgetMetaData.dropdowns;
+         if (thisWidgetHasDropdowns || parentWidgetHasDropdowns)
          {
-            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
-            const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
-            const json = JSON.parse(localStorage.getItem(localStorageKey));
-            if(json)
+            const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
+            for (let i = 0; i < metaDataToUse.dropdowns.length; i++)
             {
-               params += `${ampersand}${dropdownName}=${json.id}`;
-               ampersand = "&";
+               const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
+               const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
+               const json = JSON.parse(localStorage.getItem(localStorageKey));
+               if (json)
+               {
+                  params += `${ampersand}${dropdownName}=${json.id}`;
+                  ampersand = "&";
+               }
             }
          }
       }
