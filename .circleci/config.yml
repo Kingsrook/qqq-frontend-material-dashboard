@@ -49,6 +49,7 @@ commands:
           name: Run react app and mvn verify
           command: |
             echo "HTTPS=true" >> ./.env
+            npm run build
             export REACT_APP_PROXY_LOCALHOST_PORT=8001; export PORT=3001; npm run start &
             dockerize -wait tcp://localhost:3001 -timeout 3m
             export QQQ_SELENIUM_HEADLESS=true; mvn verify
