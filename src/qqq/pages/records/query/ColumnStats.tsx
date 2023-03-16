@@ -30,6 +30,7 @@ import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
+import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import {DataGridPro, GridSortModel} from "@mui/x-data-grid-pro";
@@ -184,7 +185,7 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
                   {statusString ?? <>&nbsp;</>}
                </Typography>
             </Typography>
-            <Button onClick={() => refresh()}>
+            <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
                Refresh
             </Button>
          </Box>

@@ -996,7 +996,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const openColumnStatistics = async (column: GridColDef) =>
    {
-      setFilterForColumnStats(buildQFilter(filterModel));
+      setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
       setColumnStatsFieldName(column.field);
    }
 
