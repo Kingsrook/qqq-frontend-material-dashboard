@@ -135,6 +135,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          params += `${ampersand}${extraParams}`;
          ampersand = "&";
       }
+      if(childUrlParams)
+      {
+         params += `${ampersand}${childUrlParams}`;
+         ampersand = "&";
+      }
 
       /////////////////////////////////////////////////////////////////////////////
       // see if local storage is used for any widget dropdowns, if so, look them //
