@@ -1171,6 +1171,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    }
 
+   menuItems.push(<MenuItem onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+
    if(tableProcesses && tableProcesses.length)
    {
       pushDividerIfNeeded(menuItems);

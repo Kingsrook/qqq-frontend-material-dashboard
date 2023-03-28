@@ -52,4 +52,5 @@ module.exports = function (app)
    app.use("/processes", getRequestHandler());
    app.use("/reports", getRequestHandler());
    app.use("/images", getRequestHandler());
+   app.use("/api", getRequestHandler());
 };

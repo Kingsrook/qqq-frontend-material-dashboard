@@ -44,6 +44,7 @@ import NoApps from "qqq/pages/apps/NoApps";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import ReportRun from "qqq/pages/processes/ReportRun";
 import EntityCreate from "qqq/pages/records/create/RecordCreate";
+import TableDeveloperView from "qqq/pages/records/developer/TableDeveloperView";
 import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
@@ -279,6 +280,13 @@ export default function App()
                   component: <EntityCreate table={table} />,
                });
 
+               routeList.push({
+                  name: `${app.label}`,
+                  key: `${app.name}.dev`,
+                  route: `${path}/dev`,
+                  component: <TableDeveloperView table={table} />,
+               });
+
                ///////////////////////////////////////////////////////////////////////////////////////////////////////
                // this is the path to open a modal-form when viewing a record, to create a different (child) record //
                // it can also be done with a hash like: #/createChild=:childTableName                               //
@@ -332,8 +340,8 @@ export default function App()
                   });
                });
 
-               const runRecordScriptProcess = metaData.processes.get("runRecordScript")
-               if(runRecordScriptProcess)
+               const runRecordScriptProcess = metaData.processes.get("runRecordScript");
+               if (runRecordScriptProcess)
                {
                   const process = runRecordScriptProcess;
                   routeList.push({
@@ -403,7 +411,7 @@ export default function App()
                }
                if (metaData.branding.accentColor)
                {
-                  setAccentColor(metaData.branding.accentColor)
+                  setAccentColor(metaData.branding.accentColor);
                }
             }
 
