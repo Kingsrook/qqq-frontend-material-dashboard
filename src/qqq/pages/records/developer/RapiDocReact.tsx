@@ -20,11 +20,11 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, {DetailedHTMLProps, forwardRef, useEffect, useRef} from "react";
 import "rapidoc";
 
 interface RapiDocProps
-   extends React.DetailedHTMLProps<
+   extends DetailedHTMLProps<
       React.HTMLAttributes<HTMLDivElement>,
       HTMLDivElement
    >
@@ -113,7 +113,7 @@ declare global
    }
 }
 
-export const RapiDocReact = React.forwardRef<HTMLDivElement, RapiDocProps>(
+export const RapiDocReact = forwardRef<HTMLDivElement, RapiDocProps>(
    (
       {
          beforeRender,
@@ -127,9 +127,9 @@ export const RapiDocReact = React.forwardRef<HTMLDivElement, RapiDocProps>(
       ref
    ) =>
    {
-      const localRef = React.useRef<HTMLDivElement>(null);
+      const localRef = useRef<HTMLDivElement>(null);
 
-      React.useEffect(() =>
+      useEffect(() =>
       {
          const rapiDocRef =
             typeof ref === "object" && ref?.current
