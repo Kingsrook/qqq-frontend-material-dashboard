@@ -150,6 +150,7 @@ function TableDeveloperView({table}: Props): JSX.Element
                               allow-authentication={false}
                               allow-server-selection={false}
                               allow-spec-file-download={true}
+                              sort-endpoints-by="method"
                               beforeTry={beforeTry}
                               css-file={"/api/rapi-doc.css"}
                               css-classes={"qqq-rapi-doc"}
