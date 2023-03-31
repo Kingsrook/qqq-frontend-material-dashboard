@@ -26,8 +26,9 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs"; // https://github.com/datejs/Datejs
 import {Box, Chip, Icon} from "@mui/material";
+import Button from "@mui/material/Button";
 import parse from "html-react-parser";
-import React, {Fragment} from "react";
+import React, {Fragment, useState} from "react";
 import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
 import Client from "qqq/utils/qqq/Client";
@@ -157,20 +158,9 @@ class ValueUtils
             mode = adornmentValues.get("languageMode");
          }
 
-         if(usage === "view")
+         if (usage === "view")
          {
-            return (<AceEditor
-               mode={mode}
-               theme="github"
-               name={field.name}
-               editorProps={{$blockScrolling: true}}
-               value={rawValue}
-               readOnly
-               highlightActiveLine={false}
-               width="100%"
-               showPrintMargin={false}
-               height="200px"
-            />);
+            return (<CodeViewer name={field.name} mode={mode} code={rawValue} />);
          }
          else
          {
@@ -201,7 +191,7 @@ class ValueUtils
     *******************************************************************************/
    public static getUnadornedValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any): string | JSX.Element
    {
-      if(! displayValue && field.defaultValue)
+      if (!displayValue && field.defaultValue)
       {
          displayValue = field.defaultValue;
       }
@@ -245,9 +235,9 @@ class ValueUtils
 
    public static formatDateTime(date: Date)
    {
-      if(!(date instanceof Date))
+      if (!(date instanceof Date))
       {
-         date = new Date(date)
+         date = new Date(date);
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
@@ -255,9 +245,9 @@ class ValueUtils
 
    public static formatTime(date: Date)
    {
-      if(!(date instanceof Date))
+      if (!(date instanceof Date))
       {
-         date = new Date(date)
+         date = new Date(date);
       }
       // @ts-ignore
       return (`${date.toString("hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
@@ -265,9 +255,9 @@ class ValueUtils
 
    public static formatDateTimeISO8601(date: Date)
    {
-      if(!(date instanceof Date))
+      if (!(date instanceof Date))
       {
-         date = new Date(date)
+         date = new Date(date);
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-ddTHH:mm:ssZ")}`);
@@ -275,9 +265,9 @@ class ValueUtils
 
    public static getFullWeekday(date: Date)
    {
-      if(!(date instanceof Date))
+      if (!(date instanceof Date))
       {
-         date = new Date(date)
+         date = new Date(date);
       }
       // @ts-ignore
       return (`${date.toString("dddd")}`);
@@ -285,11 +275,11 @@ class ValueUtils
 
    public static formatBoolean(value: any)
    {
-      if(value === true)
+      if (value === true)
       {
          return ("Yes");
       }
-      else if(value === false)
+      else if (value === false)
       {
          return ("No");
       }
@@ -317,7 +307,7 @@ class ValueUtils
 
    public static breakTextIntoLines(value: string): JSX.Element
    {
-      if(!value)
+      if (!value)
       {
          return <Fragment />;
       }
@@ -362,9 +352,9 @@ class ValueUtils
          const date = new Date(value);
 
          // @ts-ignore
-         const formattedDate = `${date.toString("yyyy-MM-ddTHH:mm")}`
+         const formattedDate = `${date.toString("yyyy-MM-ddTHH:mm")}`;
 
-         console.log(`Converted UTC date value string [${value}] to local time value for form [${formattedDate}]`)
+         console.log(`Converted UTC date value string [${value}] to local time value for form [${formattedDate}]`);
 
          return (formattedDate);
       }
@@ -384,5 +374,72 @@ class ValueUtils
       }
    }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// little private component here, for rendering an AceEditor with some buttons/controls/state //
+////////////////////////////////////////////////////////////////////////////////////////////////
+function CodeViewer({name, mode, code}: {name: string; mode: string; code: string;}): JSX.Element
+{
+   const [activeCode, setActiveCode] = useState(code);
+   const [isFormatted, setIsFormatted] = useState(false);
+   const [isExpanded, setIsExpanded] = useState(false);
+   const [errorMessage, setErrorMessage] = useState(null as string);
+   const [resetErrorTimeout, setResetErrorTimeout] = useState(null as any);
+
+   const formatJson = () =>
+   {
+      if (isFormatted)
+      {
+         setActiveCode(code);
+         setIsFormatted(false);
+      }
+      else
+      {
+         try
+         {
+            let formatted = JSON.stringify(JSON.parse(activeCode), null, 3);
+            setActiveCode(formatted);
+            setIsFormatted(true);
+         }
+         catch (e)
+         {
+            setErrorMessage("Error formatting json: " + e);
+            clearTimeout(resetErrorTimeout);
+            setResetErrorTimeout(setTimeout(() =>
+            {
+               setErrorMessage(null);
+            }, 5000));
+            console.log("Error formatting json: " + e);
+         }
+      }
+   };
+
+   const toggleSize = () =>
+   {
+      setIsExpanded(!isExpanded);
+   };
+
+   return (
+      <>
+         {mode == "json" && code && <Button onClick={() => formatJson()}>{isFormatted ? "Reset Format" : "Format JSON"}</Button>}
+         {code && <Button onClick={() => toggleSize()}>{isExpanded ? "Collapse" : "Expand"}</Button>}
+         {errorMessage}
+         <br />
+         <AceEditor
+            mode={mode}
+            theme="github"
+            name={name}
+            editorProps={{$blockScrolling: true}}
+            value={activeCode}
+            readOnly
+            highlightActiveLine={false}
+            width="100%"
+            showPrintMargin={false}
+            height={isExpanded ? "80vh" : code ? "200px" : "50px"}
+         />
+      </>);
+}
+
+
 
 export default ValueUtils;
