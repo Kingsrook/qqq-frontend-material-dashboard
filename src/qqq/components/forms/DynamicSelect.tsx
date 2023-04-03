@@ -198,7 +198,7 @@ function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, i
             if(adornment)
             {
                const color = adornment.getValue("color." + option.id) ?? "default"
-               const iconName = adornment.getValue("icon." + option.id) ?? "circle";
+               const iconName = adornment.getValue("icon." + option.id) ?? null;
                const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
                content = (<Chip label={option.label} color={color} icon={iconElement} size="small" variant="outlined" sx={{fontWeight: 500}} />);
             }
