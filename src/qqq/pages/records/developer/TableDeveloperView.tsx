@@ -54,10 +54,12 @@ function TableDeveloperView({table}: Props): JSX.Element
 
    const tableName = table.name;
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
+   const [noApis, setNoApis] = useState(null as boolean);
    const [tableMetaData, setTableMetaData] = useState(null);
    const [metaData, setMetaData] = useState(null as QInstance);
+   const [supportedApis, setSupportedApis] = useState([] as any)
    const [supportedVersions, setSupportedVersions] = useState([] as string[]);
-   const [currentVersion, setCurrentVersion] = useState(null as string);
+   const [selectedApi, setSelectedApi] = useState(null as any);
    const [selectedVersion, setSelectedVersion] = useState(null as string);
 
    const {setPageHeader} = useContext(QContext);
@@ -74,17 +76,6 @@ function TableDeveloperView({table}: Props): JSX.Element
 
       (async () =>
       {
-         const versionsResponse = await fetch("/api/versions.json");
-         const versionsJson = await versionsResponse.json();
-         console.log(versionsJson);
-
-         setSupportedVersions(versionsJson.supportedVersions);
-         if (versionsJson.currentVersion)
-         {
-            setCurrentVersion(versionsJson.currentVersion);
-            setSelectedVersion(versionsJson.currentVersion);
-         }
-
          /////////////////////////////////////////////////////////////////////
          // load the full table meta-data (the one we took in is a partial) //
          /////////////////////////////////////////////////////////////////////
@@ -99,13 +90,63 @@ function TableDeveloperView({table}: Props): JSX.Element
 
          setPageHeader(tableMetaData.label + " Developer Mode");
 
-         // forceUpdate();
+         const apisResponse = await fetch("/apis.json?tableName=" + tableName);
+         const apisJson = await apisResponse.json();
+         console.log(apisJson);
+
+         if(!apisJson["apis"] || apisJson["apis"].length == 0)
+         {
+            setNoApis(true);
+            return;
+         }
+
+         setSupportedApis(apisJson["apis"]);
+
+         const selectedApi = apisJson["apis"][0];
+         setSelectedApi(selectedApi);
+
+         const versionsResponse = await fetch(selectedApi["path"] + "versions.json");
+         const versionsJson = await versionsResponse.json();
+         console.log(versionsJson);
+
+         setSupportedVersions(versionsJson.supportedVersions);
+         if (versionsJson.currentVersion)
+         {
+            setSelectedVersion(versionsJson.currentVersion);
+         }
       })();
    }
 
    const beforeTry = (e: any) =>
    {
       e.detail.request.headers.append("Authorization", "Bearer " + accessToken);
+   };
+
+   const selectApi = async (event: SelectChangeEvent) =>
+   {
+      setSelectedApi(null);
+      setSelectedVersion(null);
+
+      const name = event.target.value;
+      for(let i = 0; i < supportedApis.length; i++)
+      {
+         if(name == supportedApis[i].name)
+         {
+            const selectedApi = supportedApis[i];
+            setSelectedApi(selectedApi);
+
+            const versionsResponse = await fetch(selectedApi["path"] + "versions.json");
+            const versionsJson = await versionsResponse.json();
+            console.log(versionsJson);
+
+            setSupportedVersions(versionsJson.supportedVersions);
+            if (versionsJson.currentVersion)
+            {
+               setSelectedVersion(versionsJson.currentVersion);
+            }
+            break;
+         }
+      }
    };
 
    const selectVersion = (event: SelectChangeEvent) =>
@@ -120,41 +161,62 @@ function TableDeveloperView({table}: Props): JSX.Element
                <Grid item xs={12}>
                   <Box mb={3}>
                      {
-                        accessToken && metaData && selectedVersion &&
                         <Card sx={{pb: 1}}>
                            <Box display="flex" alignItems="center">
                               <Typography variant="h6" p={2} pl={3} pb={1}>API Docs & Playground</Typography>
-                              <Box display="inline-block" pl={2}>
-                                 <Typography fontSize="0.875rem" display="inline-block" pr={0.5} position="relative" top="2px">Version:</Typography>
-                                 <Select
-                                    native
-                                    value={selectedVersion}
-                                    onChange={selectVersion}
-                                    size="small"
-                                    inputProps={{
-                                       id: "select-native",
-                                    }}
-                                 >
-                                    {supportedVersions.map((v) => (<option key={v} value={v}>{v}</option>))}
-                                 </Select>
-                              </Box>
+
+                              {
+                                 supportedApis?.length > 0 &&
+                                 <Box display="inline-block" pl={2}>
+                                    <Typography fontSize="0.875rem" display="inline-block" pr={0.5} position="relative" top="2px">API:</Typography>
+                                    <Select
+                                       native
+                                       value={selectedApi?.name}
+                                       onChange={selectApi}
+                                       size="small"
+                                       inputProps={{id: "select-native"}}>
+                                       {supportedApis.map((api: any) => (<option key={api.name} value={api.name}>{api.label}</option>))}
+                                    </Select>
+                                 </Box>
+                              }
+
+                              {
+                                 supportedVersions?.length > 0 &&
+                                 <Box display="inline-block" pl={2}>
+                                    <Typography fontSize="0.875rem" display="inline-block" pr={0.5} position="relative" top="2px">Version:</Typography>
+                                    <Select
+                                       native
+                                       value={selectedVersion}
+                                       onChange={selectVersion}
+                                       size="small"
+                                       inputProps={{id: "select-native",}}>
+                                       {supportedVersions.map((v) => (<option key={v} value={v}>{v}</option>))}
+                                    </Select>
+                                 </Box>
+                              }
                            </Box>
-                           <RapiDocReact
-                              spec-url={`/api/${selectedVersion}/${tableName}/openapi.json`}
-                              regular-font="Roboto,Helvetica,Arial,sans-serif"
-                              mono-font="Monaco, Menlo, Consolas, source-code-pro, monospace"
-                              primary-color={metaData.branding.accentColor || "blue"}
-                              font-size="large"
-                              render-style="view"
-                              show-header={false}
-                              allow-authentication={false}
-                              allow-server-selection={false}
-                              allow-spec-file-download={true}
-                              sort-endpoints-by="method"
-                              beforeTry={beforeTry}
-                              css-file={"/api/rapi-doc.css"}
-                              css-classes={"qqq-rapi-doc"}
-                           ></RapiDocReact>
+
+                           {noApis == true && <Box p={3}>This table is not available in any APIs.</Box>}
+
+                           {
+                              accessToken && metaData && selectedApi && selectedVersion &&
+                              <RapiDocReact
+                                 spec-url={`${selectedApi?.path}${selectedVersion}/${tableName}/openapi.json`}
+                                 regular-font="Roboto,Helvetica,Arial,sans-serif"
+                                 mono-font="Monaco, Menlo, Consolas, source-code-pro, monospace"
+                                 primary-color={metaData.branding.accentColor || "blue"}
+                                 font-size="large"
+                                 render-style="view"
+                                 show-header={false}
+                                 allow-authentication={false}
+                                 allow-server-selection={false}
+                                 allow-spec-file-download={true}
+                                 sort-endpoints-by="method"
+                                 beforeTry={beforeTry}
+                                 css-file={"/api/rapi-doc.css"}
+                                 css-classes={"qqq-rapi-doc"}
+                              ></RapiDocReact>
+                           }
                         </Card>
                      }
                   </Box>
