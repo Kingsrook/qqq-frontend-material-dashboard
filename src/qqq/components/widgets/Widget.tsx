@@ -129,7 +129,6 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 {
    const navigate = useNavigate();
    const [dropdownData, setDropdownData] = useState([]);
-   const [counter, setCounter] = useState(0);
    const [fullScreenWidgetClassName, setFullScreenWidgetClassName] = useState("");
 
    function openEditForm(table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any)
@@ -170,6 +169,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             // see if an existing value is stored in local storage, and if so set it in dropdown //
             ///////////////////////////////////////////////////////////////////////////////////////
             defaultValue = JSON.parse(localStorage.getItem(localStorageKey));
+            dropdownData[index] = defaultValue?.id;
          }
 
          const dropdown = component as Dropdown
@@ -235,7 +235,6 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
          dropdownData[index] = (changedData) ? changedData.id : null;
          setDropdownData(dropdownData);
-         setCounter(counter + 1);
 
          /////////////////////////////////////////////////
          // if should store in local storage, do so now //
@@ -252,38 +251,36 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                localStorage.removeItem(`${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${props.widgetMetaData.name}.${dropdownName}`);
             }
          }
+
+         reloadWidget(dropdownData)
       }
    }
 
-   useEffect(() =>
+   const reloadWidget = (dropdownData: any[]) =>
    {
-      if(dropdownData && counter > 0)
+      let params = "";
+      for (let i = 0; i < dropdownData.length; i++)
       {
-         let params = "";
-         for (let i = 0; i < dropdownData.length; i++)
+         if (i > 0)
          {
-            if (i > 0)
-            {
-               params += "&";
-            }
-            params += `${props.widgetData.dropdownNameList[i]}=`;
-            if(dropdownData[i])
-            {
-               params += `${dropdownData[i]}`;
-
-            }
+            params += "&";
          }
-
-         if(props.reloadWidgetCallback)
+         params += `${props.widgetData.dropdownNameList[i]}=`;
+         if (dropdownData[i])
          {
-            props.reloadWidgetCallback(params);
-         }
-         else
-         {
-            console.log(`No reload widget callback in ${props.widgetMetaData.label}`)
+            params += `${dropdownData[i]}`;
          }
       }
-   }, [counter]);
+
+      if (props.reloadWidgetCallback)
+      {
+         props.reloadWidgetCallback(params);
+      }
+      else
+      {
+         console.log(`No reload widget callback in ${props.widgetMetaData.label}`);
+      }
+   }
 
    const toggleFullScreenWidget = () =>
    {

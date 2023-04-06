@@ -109,7 +109,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    {
       (async() =>
       {
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, getQueryParams(null, data));
+         const urlParams = getQueryParams(widgetMetaDataList[index], data);
+         setCurrentUrlParams(urlParams);
+
+         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, urlParams);
+         setWidgetCounter(widgetCounter + 1);
          setWidgetData(widgetData);
          forceUpdate();
       })();
@@ -117,56 +121,72 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
    {
-      let ampersand = "";
-      let params = "";
-
-      if(entityPrimaryKey)
-      {
-         params += `${ampersand}id=${entityPrimaryKey}`;
-         ampersand = "&";
-      }
-      if(tableName)
-      {
-         params += `${ampersand}tableName=${tableName}`;
-         ampersand = "&";
-      }
-      if(extraParams)
-      {
-         params += `${ampersand}${extraParams}`;
-         ampersand = "&";
-      }
-      if(childUrlParams)
-      {
-         params += `${ampersand}${childUrlParams}`;
-         ampersand = "&";
-      }
+      let paramMap = new Map<string, string>();
 
       /////////////////////////////////////////////////////////////////////////////
       // see if local storage is used for any widget dropdowns, if so, look them //
       // up and append to the query string                                       //
       /////////////////////////////////////////////////////////////////////////////
-      if(params === "")
+      let thisWidgetHasDropdowns = widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns;
+      let parentWidgetHasDropdowns = parentWidgetMetaData && parentWidgetMetaData.storeDropdownSelections && parentWidgetMetaData.dropdowns;
+      if (thisWidgetHasDropdowns || parentWidgetHasDropdowns)
       {
-         let thisWidgetHasDropdowns = widgetMetaData && widgetMetaData.storeDropdownSelections && widgetMetaData.dropdowns;
-         let parentWidgetHasDropdowns = parentWidgetMetaData && parentWidgetMetaData.storeDropdownSelections && parentWidgetMetaData.dropdowns;
-         if (thisWidgetHasDropdowns || parentWidgetHasDropdowns)
+         const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
+         for (let i = 0; i < metaDataToUse.dropdowns.length; i++)
          {
-            const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
-            for (let i = 0; i < metaDataToUse.dropdowns.length; i++)
+            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
+            const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
+            const json = JSON.parse(localStorage.getItem(localStorageKey));
+            if (json)
             {
-               const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
-               const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
-               const json = JSON.parse(localStorage.getItem(localStorageKey));
-               if (json)
-               {
-                  params += `${ampersand}${dropdownName}=${json.id}`;
-                  ampersand = "&";
-               }
+               paramMap.set(dropdownName, json.id);
             }
          }
       }
 
-      return params;
+      if(entityPrimaryKey)
+      {
+         paramMap.set("id", entityPrimaryKey);
+      }
+
+      if(tableName)
+      {
+         paramMap.set("tableName", tableName);
+      }
+
+      if(extraParams)
+      {
+         let pairs = extraParams.split("&");
+         for (let i = 0; i < pairs.length; i++)
+         {
+            let nameValue = pairs[i].split("=");
+            if(nameValue.length == 2)
+            {
+               paramMap.set(nameValue[0], nameValue[1]);
+            }
+         }
+      }
+
+      if(childUrlParams)
+      {
+         let pairs = childUrlParams.split("&");
+         for (let i = 0; i < pairs.length; i++)
+         {
+            let nameValue = pairs[i].split("=");
+            if(nameValue.length == 2)
+            {
+               paramMap.set(nameValue[0], nameValue[1]);
+            }
+         }
+      }
+
+      let paramsFromMap = "";
+      for (let key of paramMap.keys())
+      {
+         paramsFromMap += `${key}=${paramMap.get(key)}&`;
+      }
+
+      return paramsFromMap;
    }
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;

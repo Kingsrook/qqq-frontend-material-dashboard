@@ -175,14 +175,6 @@ function AppHome({app}: Props): JSX.Element
    // eslint-disable-next-line no-nested-ternary
    const tileSizeLg = 3;
 
-   const handleDropdownOnChange = (value: string, index: number) =>
-   {
-      setTimeout(async () =>
-      {
-         widgets[index] = await qController.widget(app.widgets[index]);
-      }, 1);
-   };
-
    const hasTablePermission = (tableName: string) =>
    {
       return tables.find(t => t.name === tableName && (t.readPermission || t.insertPermission || t.editPermission || t.deletePermission));
