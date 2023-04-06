@@ -20,6 +20,7 @@
  */
 
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
@@ -55,7 +56,14 @@ export default class DataGridUtils
 
          if(!row["id"])
          {
-            row["id"] = row[tableMetaData.primaryKeyField];
+            row["id"] = record.values.get(tableMetaData.primaryKeyField) ?? row[tableMetaData.primaryKeyField];
+            if(row["id"] === null || row["id"] === undefined)
+            {
+               /////////////////////////////////////////////////////////////////////////////////////////
+               // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
+               /////////////////////////////////////////////////////////////////////////////////////////
+               row["id"] = "--";
+            }
          }
 
          rows.push(row);
@@ -101,89 +109,7 @@ export default class DataGridUtils
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
-
-         let columnType = "string";
-         let columnWidth = 200;
-         let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
-
-         if (field.possibleValueSourceName)
-         {
-            filterOperators = buildQGridPvsOperators(tableMetaData.name, field);
-         }
-         else
-         {
-            switch (field.type)
-            {
-               case QFieldType.DECIMAL:
-               case QFieldType.INTEGER:
-                  columnType = "number";
-                  columnWidth = 100;
-
-                  if (key === tableMetaData.primaryKeyField && field.label.length < 3)
-                  {
-                     columnWidth = 75;
-                  }
-
-                  filterOperators = QGridNumericOperators;
-                  break;
-               case QFieldType.DATE:
-                  columnType = "date";
-                  columnWidth = 100;
-                  filterOperators = getGridDateOperators();
-                  break;
-               case QFieldType.DATE_TIME:
-                  columnType = "dateTime";
-                  columnWidth = 200;
-                  filterOperators = getGridDateOperators(true);
-                  break;
-               case QFieldType.BOOLEAN:
-                  columnType = "string"; // using boolean gives an odd 'no' for nulls.
-                  columnWidth = 75;
-                  filterOperators = QGridBooleanOperators;
-                  break;
-               default:
-               // noop - leave as string
-            }
-         }
-
-         if (field.hasAdornment(AdornmentType.SIZE))
-         {
-            const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
-            const width: string = sizeAdornment.getValue("width");
-            const widths: Map<string, number> = new Map<string, number>([
-               ["small", 100],
-               ["medium", 200],
-               ["large", 400],
-               ["xlarge", 600]
-            ]);
-            if (widths.has(width))
-            {
-               columnWidth = widths.get(width);
-            }
-            else
-            {
-               console.log("Unrecognized size.width adornment value: " + width);
-            }
-         }
-
-         const column = {
-            field: field.name,
-            type: columnType,
-            headerName: field.label,
-            width: columnWidth,
-            renderCell: null as any,
-            filterOperators: filterOperators,
-         };
-
-         /////////////////////////////////////////////////////////////////////////////////////////
-         // looks like, maybe we can just always render all columns, and remove this parameter? //
-         /////////////////////////////////////////////////////////////////////////////////////////
-         if (columnsToRender == null || columnsToRender[field.name])
-         {
-            column.renderCell = (cellValues: any) => (
-               (cellValues.value)
-            );
-         }
+         const column = this.makeColumnFromField(field, tableMetaData, columnsToRender);
 
          if (key === tableMetaData.primaryKeyField && linkBase)
          {
@@ -201,5 +127,97 @@ export default class DataGridUtils
       return (columns);
    };
 
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static makeColumnFromField = (field: QFieldMetaData, tableMetaData: QTableMetaData, columnsToRender: any): GridColDef =>
+   {
+      let columnType = "string";
+      let columnWidth = 200;
+      let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
+
+      if (field.possibleValueSourceName)
+      {
+         filterOperators = buildQGridPvsOperators(tableMetaData.name, field);
+      }
+      else
+      {
+         switch (field.type)
+         {
+            case QFieldType.DECIMAL:
+            case QFieldType.INTEGER:
+               columnType = "number";
+               columnWidth = 100;
+
+               if (field.name === tableMetaData.primaryKeyField && field.label.length < 3)
+               {
+                  columnWidth = 75;
+               }
+
+               filterOperators = QGridNumericOperators;
+               break;
+            case QFieldType.DATE:
+               columnType = "date";
+               columnWidth = 100;
+               filterOperators = getGridDateOperators();
+               break;
+            case QFieldType.DATE_TIME:
+               columnType = "dateTime";
+               columnWidth = 200;
+               filterOperators = getGridDateOperators(true);
+               break;
+            case QFieldType.BOOLEAN:
+               columnType = "string"; // using boolean gives an odd 'no' for nulls.
+               columnWidth = 75;
+               filterOperators = QGridBooleanOperators;
+               break;
+            default:
+            // noop - leave as string
+         }
+      }
+
+      if (field.hasAdornment(AdornmentType.SIZE))
+      {
+         const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
+         const width: string = sizeAdornment.getValue("width");
+         const widths: Map<string, number> = new Map<string, number>([
+            ["small", 100],
+            ["medium", 200],
+            ["large", 400],
+            ["xlarge", 600]
+         ]);
+         if (widths.has(width))
+         {
+            columnWidth = widths.get(width);
+         }
+         else
+         {
+            console.log("Unrecognized size.width adornment value: " + width);
+         }
+      }
+
+      const column = {
+         field: field.name,
+         type: columnType,
+         headerName: field.label,
+         width: columnWidth,
+         renderCell: null as any,
+         filterOperators: filterOperators,
+      };
+
+      /////////////////////////////////////////////////////////////////////////////////////////
+      // looks like, maybe we can just always render all columns, and remove this parameter? //
+      /////////////////////////////////////////////////////////////////////////////////////////
+      if (columnsToRender == null || columnsToRender[field.name])
+      {
+         column.renderCell = (cellValues: any) => (
+            (cellValues.value)
+         );
+      }
+
+      return (column);
+   }
 }
 

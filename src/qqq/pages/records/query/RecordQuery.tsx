@@ -49,10 +49,11 @@ import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
-import {QActionsMenuButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
+import {QActionsMenuButton, QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
 import SavedFilters from "qqq/components/misc/SavedFilters";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
+import ColumnStats from "qqq/pages/records/query/ColumnStats";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
@@ -167,6 +168,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
+   const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string)
+   const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter)
 
    const instance = useRef({timer: null});
 
@@ -779,6 +782,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       closeActionsMenu();
    };
 
+   const closeColumnStats = (event: object, reason: string) =>
+   {
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
+      {
+         return;
+      }
+
+      setColumnStatsFieldName(null);
+   };
+
    const closeModalProcess = (event: object, reason: string) =>
    {
       if (reason === "backdropClick" || reason === "escapeKeyDown")
@@ -981,6 +994,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }
 
+   const openColumnStatistics = async (column: GridColDef) =>
+   {
+      setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
+      setColumnStatsFieldName(column.field);
+   }
+
    const CustomColumnMenu = forwardRef<HTMLUListElement, GridColumnMenuProps>(
       function GridColumnMenu(props: GridColumnMenuProps, ref)
       {
@@ -1021,6 +1040,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <MenuItem>My</MenuItem>
                   </Menu>
                   */}
+               </MenuItem>
+
+               <MenuItem onClick={(e) =>
+               {
+                  hideMenu(e);
+                  openColumnStatistics(currentColumn);
+               }}>
+                  Column statistics
                </MenuItem>
 
             </GridColumnMenuContainer>
@@ -1357,6 +1384,24 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                   <div className="modalProcess">
                      <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={recordIdsForProcess} closeModalHandler={closeModalProcess} />
+                  </div>
+               </Modal>
+            }
+
+            {
+               columnStatsFieldName &&
+               <Modal open={columnStatsFieldName !== null} onClose={(event, reason) => closeColumnStats(event, reason)}>
+                  <div className="columnStatsModal">
+                     <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+                        <Card sx={{my: 5, mx: "auto", pb: 0, maxWidth: "1024px"}}>
+                           <Box component="div">
+                              <ColumnStats tableMetaData={tableMetaData} fieldMetaData={tableMetaData?.fields.get(columnStatsFieldName)} filter={filterForColumnStats} />
+                              <Box p={3} display="flex" flexDirection="row" justifyContent="flex-end">
+                                 <QCancelButton label="Close" onClickHandler={() => closeColumnStats(null, null)} disabled={false} />
+                              </Box>
+                           </Box>
+                        </Card>
+                     </Box>
                   </div>
                </Modal>
             }

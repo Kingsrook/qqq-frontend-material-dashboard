@@ -350,12 +350,14 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    color: rgb(52, 71, 103);
    font-weight: 700;
    padding-right: .5em;
+   display: inline;
 }
 
 .fieldValue
 {
    color: rgb(123, 128, 154);
    font-weight: 400;
+   display: inline;
 }
 
 .fullScreenWidget

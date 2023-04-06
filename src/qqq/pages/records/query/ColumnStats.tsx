@@ -1,0 +1,240 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {TablePagination} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import Icon from "@mui/material/Icon";
+import LinearProgress from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
+import {DataGridPro, GridSortModel} from "@mui/x-data-grid-pro";
+import FormData from "form-data";
+import React, {useEffect, useState} from "react";
+import DataGridUtils from "qqq/utils/DataGridUtils";
+import Client from "qqq/utils/qqq/Client";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
+
+interface Props
+{
+   tableMetaData: QTableMetaData;
+   fieldMetaData: QFieldMetaData;
+   filter: QQueryFilter;
+}
+
+ColumnStats.defaultProps = {
+};
+
+const qController = Client.getInstance();
+
+function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
+{
+   const [statusString, setStatusString] = useState("Calculating statistics...");
+   const [loading, setLoading] = useState(true);
+   const [valueCounts, setValueCounts] = useState(null as QRecord[]);
+   const [statsRecord, setStatsRecord] = useState(null as QRecord);
+   const [orderBy, setOrderBy] = useState(null as string);
+   const [statsFields, setStatsFields] = useState([] as QFieldMetaData[]);
+   const [countDistinct, setCountDistinct] = useState(null as number);
+   const [rows, setRows] = useState([]);
+   const [columns, setColumns] = useState([]);
+
+   useEffect(() =>
+   {
+      if(!loading)
+      {
+         return;
+      }
+
+      (async () =>
+      {
+         const formData = new FormData();
+         formData.append("tableName", tableMetaData.name);
+         formData.append("fieldName", fieldMetaData.name);
+         formData.append("filterJSON", JSON.stringify(filter));
+         if(orderBy)
+         {
+            formData.append("orderBy", orderBy);
+         }
+         const processResult = await qController.processRun("columnStats", formData);
+
+         setStatusString(null)
+         if (processResult instanceof QJobError)
+         {
+            const jobError = processResult as QJobError;
+            setStatusString("Error fetching column stats: " + jobError.error);
+            setLoading(false);
+         }
+         else
+         {
+            const result = processResult as QJobComplete;
+
+            const statFieldObjects = result.values.statsFields;
+            if(statFieldObjects && statFieldObjects.length)
+            {
+               const newStatsFields = [] as QFieldMetaData[];
+               for(let i = 0; i<statFieldObjects.length; i++)
+               {
+                  newStatsFields.push(new QFieldMetaData(statFieldObjects[i]))
+               }
+               setStatsFields(newStatsFields);
+            }
+
+            let qRecord = new QRecord(result.values.statsRecord);
+            setStatsRecord(qRecord);
+            if(qRecord.values.has("countDistinct"))
+            {
+               setCountDistinct(qRecord.values.get("countDistinct"));
+            }
+
+            const valueCounts = [] as QRecord[];
+            for(let i = 0; i < result.values.valueCounts.length; i++)
+            {
+               valueCounts.push(new QRecord(result.values.valueCounts[i]));
+            }
+            setValueCounts(valueCounts);
+
+            const fakeTableMetaData = new QTableMetaData({primaryKeyField: fieldMetaData.name});
+            fakeTableMetaData.fields = new Map<string, QFieldMetaData>();
+            fakeTableMetaData.fields.set(fieldMetaData.name, fieldMetaData);
+            fakeTableMetaData.fields.set("count", new QFieldMetaData({name: "count", label: "Count", type: "INTEGER"}));
+            fakeTableMetaData.sections = [] as QTableSection[];
+            fakeTableMetaData.sections.push(new QTableSection({fieldNames: [fieldMetaData.name, "count"]}));
+
+            const {rows, columnsToRender} = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
+            const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, columnsToRender);
+            columns.forEach((c) =>
+            {
+               c.width = 200;
+               c.filterable = false;
+               c.hideable = false;
+            })
+
+            setRows(rows);
+            setColumns(columns);
+            setLoading(false);
+         }
+      })();
+   }, [loading]);
+
+   function CustomPagination()
+   {
+      return (
+         <Box pr={3}>
+            {rows && rows.length && countDistinct && rows.length < countDistinct ? <span>Showing the first {rows.length.toLocaleString()} of {countDistinct.toLocaleString()} values</span> : <></>}
+            {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length == 1 ? <span>Showing the only value</span> : <></>}
+            {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length > 1 ? <span>Showing all {rows.length.toLocaleString()} values</span> : <></>}
+         </Box>
+      );
+   }
+
+   const refresh = () =>
+   {
+      setLoading(true)
+      setStatusString("Refreshing...")
+   }
+
+   function Loading()
+   {
+      return (
+         <LinearProgress color="info" />
+      );
+   }
+
+   const handleSortChange = (gridSort: GridSortModel) =>
+   {
+      if (gridSort && gridSort.length > 0)
+      {
+         console.log("Sort: ", gridSort[0]);
+         setOrderBy(`${gridSort[0].field}.${gridSort[0].sort}`);
+         refresh();
+      }
+   };
+
+   return (
+      <Box>
+         <Box p={3} display="flex" flexDirection="row" justifyContent="space-between" alignItems="flex-start">
+            <Typography variant="h5" pb={3}>
+               Column Statistics for {fieldMetaData.label}
+               <Typography fontSize={14}>
+                  {statusString ?? <>&nbsp;</>}
+               </Typography>
+            </Typography>
+            <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
+               Refresh
+            </Button>
+         </Box>
+         <Grid container>
+            <Grid item xs={8}>
+               <Box sx={{overflow: "auto", height: "calc( 100vh - 18rem )", position: "relative"}} px={3}>
+                  <DataGridPro
+                     components={{LoadingOverlay: Loading, Pagination: CustomPagination}}
+                     rows={rows}
+                     disableSelectionOnClick
+                     columns={columns}
+                     disableColumnSelector={true}
+                     disableColumnPinning={true}
+                     loading={loading}
+                     rowBuffer={10}
+                     getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+                     sortingMode={"server"}
+                     onSortModelChange={handleSortChange}
+                     sortingOrder={["desc", "asc"]}
+                     pagination={true}
+                     paginationMode={"server"}
+                     initialState={{
+                        sorting: {
+                           sortModel: [
+                              {
+                                 field: "count",
+                                 sort: "desc",
+                              },
+                           ],
+                        },
+                     }}
+                  />
+               </Box>
+            </Grid>
+            <Grid item xs={4} sx={{whiteSpace: "nowrap", overflowX: "auto"}}>
+               <Box px={3} fontSize="1rem">
+                  {
+                     statsFields && statsFields.map((field) =>
+                        (
+                           <Box key={field.name} pb={1}>
+                              <div className="fieldLabel">{field.label}: </div>
+                              <div className="fieldValue">{ValueUtils.getValueForDisplay(field, statsRecord?.values.get(field.name), statsRecord?.displayValues.get(field.name))}</div>
+                           </Box>
+                        ))
+                  }
+               </Box>
+            </Grid>
+         </Grid>
+      </Box>);
+}
+
+export default ColumnStats;
