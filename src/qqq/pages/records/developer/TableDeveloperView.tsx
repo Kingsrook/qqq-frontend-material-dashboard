@@ -213,6 +213,7 @@ function TableDeveloperView({table}: Props): JSX.Element
                                  allow-spec-file-download={true}
                                  sort-endpoints-by="method"
                                  beforeTry={beforeTry}
+                                 schema-description-expanded={true}
                                  css-file={"/api/rapi-doc.css"}
                                  css-classes={"qqq-rapi-doc"}
                               ></RapiDocReact>
