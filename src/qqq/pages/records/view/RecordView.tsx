@@ -388,9 +388,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                else
                {
                   sectionFieldElements.set(section.name,
-                     <Grid id={section.name} key={section.name} item lg={12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                     <Grid id={section.name} key={section.name} item lg={section.gridColumns ?? 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         <Box width="100%">
-                           <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}}>
+                           <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px", height: "100%"}}>
                               <Typography variant="h6" p={3} pb={1}>
                                  {section.label}
                               </Typography>
