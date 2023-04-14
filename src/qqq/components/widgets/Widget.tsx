@@ -142,7 +142,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          const link = component as HeaderLink
          return (
-            <Typography variant="body2" p={2} display="inline" fontSize=".875rem">
+            <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative" top="-0.25rem">
                {link.to ? <Link to={link.to}>{link.label}</Link> : null}
             </Typography>
          );
@@ -152,7 +152,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          const addNewRecordButton = component as AddNewRecordButton
          return (
-            <Typography variant="body2" p={2} pr={1} display="inline">
+            <Typography variant="body2" p={2} pr={0} display="inline" position="relative" top="0.25rem">
                <Button sx={{mt: 0.75}} onClick={() => openEditForm(addNewRecordButton.table, null, addNewRecordButton.defaultValues, addNewRecordButton.disabledFields)}>{addNewRecordButton.label}</Button>
             </Typography>
          );
@@ -297,8 +297,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
    const widgetContent =
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
-         <Box pr={3} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}}>
-            <Box pt={2}>
+         <Box pr={2} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}}>
+            <Box pt={2} pb={1}>
                {
                   hasPermission ?
                      props.widgetMetaData?.icon && (
