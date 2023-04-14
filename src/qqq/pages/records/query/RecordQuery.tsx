@@ -38,13 +38,19 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import Typography from "@mui/material/Typography";
+import {DataGridPro, GridCallbackDetails, GridColDef, gridColumnGroupingSelector, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
+import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
@@ -104,7 +110,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
-   let defaultVisibility = {};
+   let defaultVisibility = {} as { [index: string]: boolean };
    let defaultRowsPerPage = 10;
    let defaultDensity = "standard" as GridDensity;
    let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
@@ -184,6 +190,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [ receivedQueryTimestamp, setReceivedQueryTimestamp ] = useState(new Date());
    const [ queryErrors, setQueryErrors ] = useState({} as any);
    const [ receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp ] = useState(new Date());
+
 
    const {setPageHeader} = useContext(QContext);
    const [ , forceUpdate ] = useReducer((x) => x + 1, 0);
@@ -667,7 +674,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                columnsModel.forEach((gridColumn) =>
                {
                   const fieldName = gridColumn.field;
-                  // @ts-ignore
                   if (columnVisibilityModel[fieldName] !== false)
                   {
                      visibleFields.push(fieldName);
@@ -1054,6 +1060,94 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          );
       });
 
+   const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
+      function MyCustomColumnsPanel(props: GridColumnsPanelProps, ref)
+      {
+         const apiRef = useGridApiContext();
+         const columns = useGridSelector(apiRef, gridColumnDefinitionsSelector);
+         const columnVisibilityModel = useGridSelector(apiRef, gridColumnVisibilityModelSelector);
+
+         const [openGroups, setOpenGroups] = useState({} as {[name: string]: boolean});
+
+         const groups = ["Order", "Line Item"];
+
+         const onColumnVisibilityChange = (fieldName: string) =>
+         {
+            /*
+            if(columnVisibilityModel[fieldName] === undefined)
+            {
+               columnVisibilityModel[fieldName] = true;
+            }
+            columnVisibilityModel[fieldName] = !columnVisibilityModel[fieldName];
+            setColumnVisibilityModel(JSON.parse(JSON.stringify(columnVisibilityModel)))
+            */
+
+            console.log(`${fieldName} = ${columnVisibilityModel[fieldName]}`)
+            // columnVisibilityModel[fieldName] = Math.random() < 0.5;
+            apiRef.current.setColumnVisibility(fieldName, columnVisibilityModel[fieldName] === false);
+            // handleColumnVisibilityChange(JSON.parse(JSON.stringify(columnVisibilityModel)));
+         }
+
+         const toggleColumnGroup = (groupName: string) =>
+         {
+            if(openGroups[groupName] === undefined)
+            {
+               openGroups[groupName] = true;
+            }
+            openGroups[groupName] = !openGroups[groupName];
+            setOpenGroups(JSON.parse(JSON.stringify(openGroups)));
+         }
+
+         console.log("re-render");
+         return (
+            <div ref={ref} className="custom-columns-panel" style={{width: "350px", height: "450px"}}>
+               <Box height="55px" padding="5px">
+                  <TextField label="Find column" placeholder="Column title" variant="standard" fullWidth={true}></TextField>
+               </Box>
+               <Box overflow="auto" height="calc( 100% - 105px )">
+
+                  <Stack direction="column" spacing={1} pl="0.5rem">
+
+                     {groups.map((groupName: string) =>
+                        (
+                           <>
+                              <IconButton
+                                 key={groupName}
+                                 size="small"
+                                 onClick={() => toggleColumnGroup(groupName)}
+                                 sx={{width: "100%", justifyContent: "flex-start", fontSize: "0.875rem"}}
+                                 disableRipple={true}
+                              >
+                                 <Icon>{openGroups[groupName] === false ? "expand_less" : "expand_more"}</Icon>
+                                 <Box sx={{pl: "0.25rem", fontWeight: "bold"}} textAlign="left">{groupName} fields</Box>
+                              </IconButton>
+
+                              {openGroups[groupName] !== false && columnsModel.map((gridColumn: any) => (
+                                 <IconButton
+                                    key={gridColumn.field}
+                                    size="small"
+                                    onClick={() => onColumnVisibilityChange(gridColumn.field)}
+                                    sx={{width: "100%", justifyContent: "flex-start", fontSize: "0.875rem", pl: "1.375rem"}}
+                                    disableRipple={true}
+                                 >
+                                    <Icon>{columnVisibilityModel[gridColumn.field] === false ? "visibility_off" : "visibility"}</Icon>
+                                    <Box sx={{pl: "0.25rem"}} textAlign="left">{gridColumn.headerName}</Box>
+                                 </IconButton>
+                              ))}
+                           </>
+                        ))}
+
+                  </Stack>
+               </Box>
+               <Box height="50px" padding="5px" display="flex" justifyContent="space-between">
+                  <Button>hide all</Button>
+                  <Button>show all</Button>
+               </Box>
+            </div>
+         );
+      }
+   )
+
    function CustomToolbar()
    {
       const handleMouseDown: GridEventListener<"cellMouseDown"> = (
@@ -1344,7 +1438,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <Card>
                   <Box height="100%">
                      <DataGridPro
-                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu}}
+                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu, ColumnsPanel: CustomColumnsPanel}}
                         pinnedColumns={pinnedColumns}
                         onPinnedColumnsChange={handlePinnedColumnsChange}
                         pagination
