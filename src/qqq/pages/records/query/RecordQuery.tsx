@@ -1205,6 +1205,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       pushDividerIfNeeded(menuItems);
    }
 
+   tableProcesses.sort((a, b) => a.name.localeCompare(b.name));
    tableProcesses.map((process) =>
    {
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
