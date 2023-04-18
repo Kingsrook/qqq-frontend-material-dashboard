@@ -1077,7 +1077,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          else if (urlSearchParams.get("filterJSON"))
          {
             queryStringPairsForInit.push("recordsParam=filterJSON");
-            queryStringPairsForInit.push(`filterJSON=${urlSearchParams.get("filterJSON")}`);
+            queryStringPairsForInit.push(`filterJSON=${encodeURIComponent(urlSearchParams.get("filterJSON"))}`);
          }
          // todo once saved filters exist
          //else if(urlSearchParams.get("filterId")) {
