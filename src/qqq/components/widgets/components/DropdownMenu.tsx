@@ -80,11 +80,11 @@ function makeBackendValuesFromFrontendValues(frontendDefaultValues: StartAndEndD
    const backendTimeValues: StartAndEndDate = {};
    if(frontendDefaultValues && frontendDefaultValues.startDate)
    {
-      backendTimeValues.startDate = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.startDate);
+      backendTimeValues.startDate = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.startDate);
    }
    if(frontendDefaultValues && frontendDefaultValues.endDate)
    {
-      backendTimeValues.endDate = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.endDate);
+      backendTimeValues.endDate = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.endDate);
    }
    return (backendTimeValues);
 }
@@ -129,7 +129,7 @@ function DropdownMenu({name, defaultValue, label, dropdownOptions, onChangeCallb
       const dateChanged = (fieldName: "startDate" | "endDate", event: any) =>
       {
          customTimeValuesFrontend[fieldName] = event.target.value;
-         customTimeValuesBackend[fieldName] = FilterUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(event.target.value);
+         customTimeValuesBackend[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(event.target.value);
 
          clearTimeout(debounceTimeout);
          const newDebounceTimeout = setTimeout(() =>

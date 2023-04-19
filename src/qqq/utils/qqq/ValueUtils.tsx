@@ -373,6 +373,33 @@ class ValueUtils
          return (value);
       }
    }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static zeroPad = (n: number): string =>
+   {
+      if (n < 10)
+      {
+         return ("0" + n);
+      }
+      return (`${n}`);
+   };
+
+   /*******************************************************************************
+    ** Take a string date (w/o a timezone) like that our calendar widgets make,
+    ** and convert it to UTC, e.g., for submitting to the backend.
+    *******************************************************************************/
+   public static frontendLocalZoneDateTimeStringToUTCStringForBackend(param: string)
+   {
+      let localDate = new Date(param);
+      let month = (1 + localDate.getUTCMonth());
+      let zp = ValueUtils.zeroPad;
+      let toPush = localDate.getUTCFullYear() + "-" + zp(month) + "-" + zp(localDate.getUTCDate()) + "T" + zp(localDate.getUTCHours()) + ":" + zp(localDate.getUTCMinutes()) + ":" + zp(localDate.getUTCSeconds()) + "Z";
+      console.log(`Input date was ${localDate}.  Sending to backend as ${toPush}`);
+      return toPush;
+   }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

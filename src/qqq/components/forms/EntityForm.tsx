@@ -378,6 +378,32 @@ function EntityForm(props: Props): JSX.Element
       actions.setSubmitting(true);
       await (async () =>
       {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // (1) convert date-time fields from user's time-zone into UTC                                              //
+         // (2) if there's an initial value which matches the value (e.g., from the form), then remove that field    //
+         // from the set of values that we'll submit to the backend.  This is to deal with the fact that our         //
+         // date-times in the UI (e.g., the form field) only go to the minute - so they kinda always end up          //
+         // changing from, say, 12:15:30 to just 12:15:00... this seems to get around that, for cases when the       //
+         // user didn't change the value in the field (but if the user did change the value, then we will submit it) //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         for(let fieldName of tableMetaData.fields.keys())
+         {
+            const fieldMetaData = tableMetaData.fields.get(fieldName);
+            if(fieldMetaData.type === QFieldType.DATE_TIME && values[fieldName])
+            {
+               console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${values[fieldName]}]`)
+               if (initialValues[fieldName] == values[fieldName])
+               {
+                  console.log(" - Is the same, so, deleting from the post");
+                  delete (values[fieldName]);
+               }
+               else
+               {
+                  values[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(values[fieldName]);
+               }
+            }
+         }
+
          if (props.id !== null)
          {
             await qController
