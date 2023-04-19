@@ -263,6 +263,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          setMetaData(metaData);
          ValueUtils.qInstance = metaData;
          const processesForTable = ProcessUtils.getProcessesForTable(metaData, tableName);
+         processesForTable.sort((a, b) => a.label.localeCompare(b.label));
          setTableProcesses(processesForTable);
          setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
 
