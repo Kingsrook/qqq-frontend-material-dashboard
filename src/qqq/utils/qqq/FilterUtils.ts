@@ -118,6 +118,11 @@ class FilterUtils
                case QFieldType.DATE:
                case QFieldType.TIME:
                case QFieldType.DATE_TIME:
+               case QFieldType.STRING:
+               case QFieldType.TEXT:
+               case QFieldType.HTML:
+               case QFieldType.PASSWORD:
+               case QFieldType.BLOB:
                   return ("equals");
                case QFieldType.BOOLEAN:
                   if (criteriaValues && criteriaValues[0] === true)
@@ -129,11 +134,6 @@ class FilterUtils
                      return ("isFalse");
                   }
                   return ("is");
-               case QFieldType.STRING:
-               case QFieldType.TEXT:
-               case QFieldType.HTML:
-               case QFieldType.PASSWORD:
-               case QFieldType.BLOB:
                default:
                   return ("is");
             }
