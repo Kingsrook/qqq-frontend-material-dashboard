@@ -26,7 +26,8 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import Typography from "@mui/material/Typography";
-import React, {useEffect, useState} from "react";
+import parse from "html-react-parser";
+import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import colors from "qqq/components/legacy/colors";
 import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/DropdownMenu";
@@ -54,6 +55,7 @@ interface Props
    children: JSX.Element;
    reloadWidgetCallback?: (params: string) => void;
    isChild?: boolean;
+   footerHTML?: string;
    storeDropdownSelections?: boolean;
 }
 
@@ -396,6 +398,11 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                ) : (
                   <Box mt={2} mb={5} sx={{display: "flex", justifyContent: "center"}}><Typography variant="body2">You do not have permission to view this data.</Typography></Box>
                )
+            )
+         }
+         {
+            props?.footerHTML && (
+               <Box mt={1} ml={3} mr={3} mb={2} sx={{fontWeight: 300, color: "#7b809a", display: "flex", alignContent: "flex-end", fontSize: "14px"}}>{parse(props.footerHTML)}</Box>
             )
          }
       </Box>;

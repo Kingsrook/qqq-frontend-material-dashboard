@@ -225,6 +225,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     footerHTML={widgetData[i]?.footerHTML}
                      isChild={areChildren}
                   >
                      <TableCard
