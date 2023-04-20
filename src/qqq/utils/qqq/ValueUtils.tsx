@@ -457,6 +457,7 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
             theme="github"
             name={name}
             editorProps={{$blockScrolling: true}}
+            setOptions={{useWorker: false}}
             value={activeCode}
             readOnly
             highlightActiveLine={false}

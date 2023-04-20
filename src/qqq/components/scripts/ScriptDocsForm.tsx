@@ -55,6 +55,7 @@ function ScriptDocsForm({helpText, exampleCode, aceEditorHeight}: Props): JSX.El
                            theme="github"
                            name={name}
                            editorProps={{$blockScrolling: true}}
+                           setOptions={{useWorker: false}}
                            value={code}
                            readOnly
                            highlightActiveLine={false}

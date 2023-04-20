@@ -232,6 +232,7 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                   name="editor"
                   editorProps={{$blockScrolling: true}}
                   setOptions={{
+                     useWorker: false,
                      enableBasicAutocompletion: true,
                      enableLiveAutocompletion: true,
                   }}

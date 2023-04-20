@@ -172,6 +172,7 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                           theme="github"
                                           name="recordJSON"
                                           editorProps={{$blockScrolling: true}}
+                                          setOptions={{useWorker: false}}
                                           value={recordJSONString}
                                           readOnly
                                           width="100%"

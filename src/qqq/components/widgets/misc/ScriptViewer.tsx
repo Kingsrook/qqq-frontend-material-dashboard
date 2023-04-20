@@ -416,6 +416,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                                       readOnly
                                                       highlightActiveLine={false}
                                                       editorProps={{$blockScrolling: true}}
+                                                      setOptions={{useWorker: false}}
                                                       width="100%"
                                                       height="400px"
                                                       value={selectedVersionRecord?.values?.get("contents")}

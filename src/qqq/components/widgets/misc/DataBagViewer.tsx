@@ -337,6 +337,7 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
                                                       name={"viewData"}
                                                       readOnly
                                                       highlightActiveLine={false}
+                                                      setOptions={{useWorker: false}}
                                                       editorProps={{$blockScrolling: true}}
                                                       width="100%"
                                                       height="400px"

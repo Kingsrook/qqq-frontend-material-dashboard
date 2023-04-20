@@ -170,6 +170,7 @@ function DataBagDataEditor({title, dataBagId, data, closeCallback}: DataBagDataE
                   theme="github"
                   name="editor"
                   editorProps={{$blockScrolling: true}}
+                  setOptions={{useWorker: false}}
                   onChange={updateCode}
                   width="100%"
                   height="100%"

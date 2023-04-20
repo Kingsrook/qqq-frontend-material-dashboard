@@ -111,6 +111,7 @@ function QDynamicFormField({
                {
                   setFieldValue(name, value, false);
                }}
+               setOptions={{useWorker: false}}
                width="100%"
                height="300px"
                value={value}
