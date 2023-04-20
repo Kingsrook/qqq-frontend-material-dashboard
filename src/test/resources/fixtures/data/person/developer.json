@@ -128,7 +128,7 @@
             "fieldName": "deposcoOrderOptimizationCoolingScriptId",
             "scriptTypeId": 2,
             "scriptTester": {
-               "name": "com.nutrifresh.one.processes.deposco.RunDeposcoOrderOptimizationCoolingScript",
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationCoolingScript",
                "codeType": "JAVA",
                "codeUsage": "SCRIPT_TESTER"
             }
@@ -197,7 +197,7 @@
             "fieldName": "deposcoOrderOptimizationBatchNameScriptId",
             "scriptTypeId": 1,
             "scriptTester": {
-               "name": "com.nutrifresh.one.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
                "codeType": "JAVA",
                "codeUsage": "SCRIPT_TESTER"
             }
@@ -266,7 +266,7 @@
             "fieldName": "deposcoOrderOptimizationCartonizationScriptId",
             "scriptTypeId": 1,
             "scriptTester": {
-               "name": "com.nutrifresh.one.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
                "codeType": "JAVA",
                "codeUsage": "SCRIPT_TESTER"
             }
