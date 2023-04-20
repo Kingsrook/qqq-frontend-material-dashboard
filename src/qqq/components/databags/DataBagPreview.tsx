@@ -107,7 +107,7 @@ function DataBagPreview({data, json}: Props): JSX.Element
                                     childIsObject && openPreviewDivs.has(divId) && <Box>{previewObject(object[key], `${path}.${key}`)}</Box>
                                  }
                                  {
-                                    !childIsObject && <span className="fieldValue">{object[key]}</span>
+                                    !childIsObject && <span className="fieldValue">{String(object[key])}</span>
                                  }
                               </Box>
                            </React.Fragment>
