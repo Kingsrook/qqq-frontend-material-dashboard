@@ -36,23 +36,34 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData): {rows: GridRowsProp[], columnsToRender: any} =>
+   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData): GridRowsProp[] =>
    {
       const fields = [ ...tableMetaData.fields.values() ];
       const rows = [] as any[];
-      const columnsToRender = {} as any;
       results.forEach((record: QRecord) =>
       {
          const row: any = {};
+         row.__qRowIndex =  record.values.get("__qRowIndex");
+
          fields.forEach((field) =>
          {
-            const value = ValueUtils.getDisplayValue(field, record, "query");
-            if (typeof value !== "string")
-            {
-               columnsToRender[field.name] = true;
-            }
-            row[field.name] = value;
+            row[field.name] = ValueUtils.getDisplayValue(field, record, "query");
          });
+
+         if(tableMetaData.exposedJoins)
+         {
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+            {
+               const join = tableMetaData.exposedJoins[i];
+
+               const fields = [ ...join.joinTable.fields.values() ];
+               fields.forEach((field) =>
+               {
+                  let fieldName = join.joinTable.name + "." + field.name;
+                  row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName);
+               });
+            }
+         }
 
          if(!row["id"])
          {
@@ -69,33 +80,41 @@ export default class DataGridUtils
          rows.push(row);
       });
 
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // do this secondary check for columnsToRender - in case we didn't have any rows above, and our check for string isn't enough. //
-      // ... shouldn't this be just based on the field definition anyway... ?  plus adornments?                                      //
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      fields.forEach((field) =>
-      {
-         if(field.possibleValueSourceName)
-         {
-            columnsToRender[field.name] = true;
-         }
-      });
-
-      return ({rows, columnsToRender});
+      return (rows);
    }
 
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static setupGridColumns = (tableMetaData: QTableMetaData, columnsToRender: any, linkBase: string = ""): GridColDef[] =>
+   public static setupGridColumns = (tableMetaData: QTableMetaData, linkBase: string = ""): GridColDef[] =>
    {
       const columns = [] as GridColDef[];
-      const sortedKeys: string[] = [];
+      this.addColumnsForTable(tableMetaData, linkBase, columns, null);
 
+      if(tableMetaData.exposedJoins)
+      {
+         for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+         {
+            const join = tableMetaData.exposedJoins[i];
+            // todo - link base here - link to the join table
+            this.addColumnsForTable(join.joinTable, null, columns, join.joinTable.name + ".", join.label + ": ");
+         }
+      }
+
+      return (columns);
+   };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static addColumnsForTable(tableMetaData: QTableMetaData, linkBase: string, columns: GridColDef[], namePrefix?: string, labelPrefix?: string)
+   {
+      const sortedKeys: string[] = [];
       for (let i = 0; i < tableMetaData.sections.length; i++)
       {
          const section = tableMetaData.sections[i];
-         if(!section.fieldNames)
+         if (!section.fieldNames)
          {
             continue;
          }
@@ -109,7 +128,7 @@ export default class DataGridUtils
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
-         const column = this.makeColumnFromField(field, tableMetaData, columnsToRender);
+         const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
          if (key === tableMetaData.primaryKeyField && linkBase)
          {
@@ -123,16 +142,12 @@ export default class DataGridUtils
             columns.push(column);
          }
       });
-
-      return (columns);
-   };
-
-
+   }
 
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeColumnFromField = (field: QFieldMetaData, tableMetaData: QTableMetaData, columnsToRender: any): GridColDef =>
+   public static makeColumnFromField = (field: QFieldMetaData, tableMetaData: QTableMetaData, namePrefix?: string, labelPrefix?: string): GridColDef =>
    {
       let columnType = "string";
       let columnWidth = 200;
@@ -198,24 +213,21 @@ export default class DataGridUtils
          }
       }
 
+      let headerName = labelPrefix ? labelPrefix + field.label : field.label;
+      let fieldName = namePrefix ? namePrefix + field.name : field.name;
+
       const column = {
-         field: field.name,
+         field: fieldName,
          type: columnType,
-         headerName: field.label,
+         headerName: headerName,
          width: columnWidth,
          renderCell: null as any,
          filterOperators: filterOperators,
       };
 
-      /////////////////////////////////////////////////////////////////////////////////////////
-      // looks like, maybe we can just always render all columns, and remove this parameter? //
-      /////////////////////////////////////////////////////////////////////////////////////////
-      if (columnsToRender == null || columnsToRender[field.name])
-      {
-         column.renderCell = (cellValues: any) => (
-            (cellValues.value)
-         );
-      }
+      column.renderCell = (cellValues: any) => (
+         (cellValues.value)
+      );
 
       return (column);
    }

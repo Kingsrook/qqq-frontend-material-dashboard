@@ -27,6 +27,7 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Collapse, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -48,7 +49,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridColDef, gridColumnGroupingSelector, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
 import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
 import FormData from "form-data";
@@ -57,6 +58,7 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
 import SavedFilters from "qqq/components/misc/SavedFilters";
+import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import ColumnStats from "qqq/pages/records/query/ColumnStats";
@@ -90,10 +92,10 @@ const qController = Client.getInstance();
 function RecordQuery({table, launchProcess}: Props): JSX.Element
 {
    const tableName = table.name;
-   const [ searchParams ] = useSearchParams();
+   const [searchParams] = useSearchParams();
 
    const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
-   const [successAlert, setSuccessAlert] = useState(null as string)
+   const [successAlert, setSuccessAlert] = useState(null as string);
 
    const location = useLocation();
    const navigate = useNavigate();
@@ -111,6 +113,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {} as { [index: string]: boolean };
+   let didDefaultVisibilityComeFromLocalStorage = false;
    let defaultRowsPerPage = 10;
    let defaultDensity = "standard" as GridDensity;
    let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
@@ -127,6 +130,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if (localStorage.getItem(columnVisibilityLocalStorageKey))
    {
       defaultVisibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
+      didDefaultVisibilityComeFromLocalStorage = true;
    }
    if (localStorage.getItem(pinnedColumnsLocalStorageKey))
    {
@@ -144,6 +148,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
+   const [didDefaultVisibilityModelComeFromLocalStorage, setDidDefaultVisibilityModelComeFromLocalStorage] = useState(didDefaultVisibilityComeFromLocalStorage);
+   const [visibleJoinTables, setVisibleJoinTables] = useState(new Set<string>());
    const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
    const [density, setDensity] = useState(defaultDensity);
    const [pinnedColumns, setPinnedColumns] = useState(defaultPinnedColumns);
@@ -157,6 +163,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [pageNumber, setPageNumber] = useState(0);
    const [totalRecords, setTotalRecords] = useState(null);
+   const [distinctRecords, setDistinctRecords] = useState(null);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
    const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
@@ -174,26 +181,26 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
-   const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string)
-   const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter)
+   const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string);
+   const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter);
 
    const instance = useRef({timer: null});
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // use all these states to avoid showing results from an "old" query, that finishes loading after a newer one //
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   const [ latestQueryId, setLatestQueryId ] = useState(0);
-   const [ countResults, setCountResults ] = useState({} as any);
-   const [ receivedCountTimestamp, setReceivedCountTimestamp ] = useState(new Date());
-   const [ queryResults, setQueryResults ] = useState({} as any);
-   const [ latestQueryResults, setLatestQueryResults ] = useState(null as QRecord[]);
-   const [ receivedQueryTimestamp, setReceivedQueryTimestamp ] = useState(new Date());
-   const [ queryErrors, setQueryErrors ] = useState({} as any);
-   const [ receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp ] = useState(new Date());
+   const [latestQueryId, setLatestQueryId] = useState(0);
+   const [countResults, setCountResults] = useState({} as any);
+   const [receivedCountTimestamp, setReceivedCountTimestamp] = useState(new Date());
+   const [queryResults, setQueryResults] = useState({} as any);
+   const [latestQueryResults, setLatestQueryResults] = useState(null as QRecord[]);
+   const [receivedQueryTimestamp, setReceivedQueryTimestamp] = useState(new Date());
+   const [queryErrors, setQueryErrors] = useState({} as any);
+   const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
 
 
    const {setPageHeader} = useContext(QContext);
-   const [ , forceUpdate ] = useReducer((x) => x + 1, 0);
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -218,7 +225,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                setActiveModalProcess(processList[0]);
                return;
             }
-            else if(metaData?.processes.has(processName))
+            else if (metaData?.processes.has(processName))
             {
                ///////////////////////////////////////////////////////////////////////////////////////
                // check for generic processes - should this be a specific attribute on the process? //
@@ -237,12 +244,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          // so if path has '/savedFilter/' get last parsed string           //
          /////////////////////////////////////////////////////////////////////
          let currentSavedFilterId = null as number;
-         if(location.pathname.indexOf("/savedFilter/") != -1)
+         if (location.pathname.indexOf("/savedFilter/") != -1)
          {
             const parts = location.pathname.split("/");
             currentSavedFilterId = Number.parseInt(parts[parts.length - 1]);
          }
-         else if(!searchParams.has("filter"))
+         else if (!searchParams.has("filter"))
          {
             if (localStorage.getItem(currentSavedFilterLocalStorageKey))
             {
@@ -255,7 +262,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
          }
 
-         if(currentSavedFilterId != null)
+         if (currentSavedFilterId != null)
          {
             (async () =>
             {
@@ -296,15 +303,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ////////////////////////////////////////////////////////////////////////////////////
       setActiveModalProcess(null);
 
-   }, [location , tableMetaData]);
+   }, [location, tableMetaData]);
 
    ///////////////////////////////////////////////////////////////////////
    // any time these are out of sync, it means we need to reload things //
    ///////////////////////////////////////////////////////////////////////
-   if(tableMetaData && tableMetaData.name !== tableName)
+   if (tableMetaData && tableMetaData.name !== tableName)
    {
       console.log("  it looks like we changed tables - try to reload the things");
-      setTableMetaData(null)
+      setTableMetaData(null);
       setColumnSortModel([]);
       setColumnVisibilityModel({});
       setColumnsModel([]);
@@ -322,7 +329,90 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
-      return(filter);
+      return (filter);
+   };
+
+   const getVisibleJoinTables = (): Set<string> =>
+   {
+      const visibleJoinTables = new Set<string>();
+      columnsModel.forEach((gridColumn) =>
+      {
+         const fieldName = gridColumn.field;
+         if (columnVisibilityModel[fieldName] !== false)
+         {
+            if (fieldName.indexOf(".") > -1)
+            {
+               visibleJoinTables.add(fieldName.split(".")[0]);
+            }
+         }
+      });
+      return (visibleJoinTables);
+   };
+
+   const isJoinMany = (tableMetaData: QTableMetaData, visibleJoinTables: Set<string>): boolean =>
+   {
+      if (tableMetaData?.exposedJoins)
+      {
+         for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+         {
+            const join = tableMetaData.exposedJoins[i];
+            if (visibleJoinTables.has(join.joinTable.name))
+            {
+               if(join.isMany)
+               {
+                  return (true);
+               }
+            }
+         }
+      }
+      return (false);
+   }
+
+   const getPageHeader = (tableMetaData: QTableMetaData, visibleJoinTables: Set<string>): string | JSX.Element =>
+   {
+      if (visibleJoinTables.size > 0)
+      {
+         let joinLabels = [];
+         if (tableMetaData?.exposedJoins)
+         {
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+            {
+               const join = tableMetaData.exposedJoins[i];
+               if (visibleJoinTables.has(join.joinTable.name))
+               {
+                  joinLabels.push(join.label);
+               }
+            }
+         }
+
+         let joinLabelsString = joinLabels.join(", ");
+         if(joinLabels.length == 2)
+         {
+            let lastCommaIndex = joinLabelsString.lastIndexOf(",");
+            joinLabelsString = joinLabelsString.substring(0, lastCommaIndex) + " and " + joinLabelsString.substring(lastCommaIndex + 1);
+         }
+         if(joinLabels.length > 2)
+         {
+            let lastCommaIndex = joinLabelsString.lastIndexOf(",");
+            joinLabelsString = joinLabelsString.substring(0, lastCommaIndex) + ", and " + joinLabelsString.substring(lastCommaIndex + 1);
+         }
+
+         let tooltipHTML = <div>
+            You are viewing results from the {tableMetaData.label} table joined with the {joinLabelsString} table{joinLabels.length == 1 ? "" : "s"}
+         </div>
+
+         return(
+            <div>
+               {tableMetaData?.label}
+               <CustomWidthTooltip title={tooltipHTML}>
+                  <IconButton sx={{p: 0, fontSize: "0.5rem", mb: 1, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">emergency</Icon></IconButton>
+               </CustomWidthTooltip>
+            </div>);
+      }
+      else
+      {
+         return (tableMetaData?.label);
+      }
    };
 
    const updateTable = () =>
@@ -332,7 +422,29 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       (async () =>
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
-         setPageHeader(tableMetaData.label);
+
+         const visibleJoinTables = getVisibleJoinTables();
+         setPageHeader(getPageHeader(tableMetaData, visibleJoinTables));
+
+         if (!didDefaultVisibilityModelComeFromLocalStorage)
+         {
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // if we didn't load the column visibility from local storage, then by default, it'll be an empty array, and all fields will be visible. //
+            // but - if the table has join tables, we don't want them on by default, so, flip them off!                                              //
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if (tableMetaData?.exposedJoins)
+            {
+               for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+               {
+                  const join = tableMetaData.exposedJoins[i];
+                  for (let fieldName of join.joinTable.fields.keys())
+                  {
+                     columnVisibilityModel[`${join.joinTable.name}.${fieldName}`] = false;
+                  }
+               }
+            }
+            setColumnVisibilityModel(columnVisibilityModel);
+         }
 
          ////////////////////////////////////////////////////////////////////////////////////////////////
          // we need the table meta data to look up the default filter (if it comes from query string), //
@@ -353,14 +465,37 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
 
-         if(columnsModel.length == 0)
+         if (columnsModel.length == 0)
          {
-            let linkBase = metaData.getTablePath(table)
+            let linkBase = metaData.getTablePath(table);
             linkBase += linkBase.endsWith("/") ? "" : "/";
-            const columns = DataGridUtils.setupGridColumns(tableMetaData, null, linkBase);
+            const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase);
             setColumnsModel(columns);
          }
 
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // make sure that any if any sort columns are from a join table, that the join table is visible //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         let resetColumnSortModel = false;
+         for (let i = 0; i < columnSortModel.length; i++)
+         {
+            const gridSortItem = columnSortModel[i];
+            if (gridSortItem.field.indexOf(".") > -1)
+            {
+               const tableName = gridSortItem.field.split(".")[0];
+               if (!visibleJoinTables?.has(tableName))
+               {
+                  columnSortModel.splice(i, 1);
+                  setColumnSortModel(columnSortModel);
+                  resetColumnSortModel = true;
+                  i--;
+               }
+            }
+         }
+
+         ///////////////////////////////////////////////////////////
+         // if there's no column sort, make a default - pkey desc //
+         ///////////////////////////////////////////////////////////
          if (columnSortModel.length === 0)
          {
             columnSortModel.push({
@@ -368,9 +503,47 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                sort: "desc",
             });
             setColumnSortModel(columnSortModel);
+            resetColumnSortModel = true;
+         }
+
+         if (resetColumnSortModel && latestQueryId > 0)
+         {
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // let the next render (since columnSortModel is watched below) build the filter, using the new columnSort //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            return;
          }
 
          const qFilter = buildQFilter(tableMetaData, localFilterModel);
+
+         //////////////////////////////////////////
+         // figure out joins to use in the query //
+         //////////////////////////////////////////
+         let queryJoins = null;
+         if (tableMetaData?.exposedJoins)
+         {
+            const visibleJoinTables = getVisibleJoinTables();
+
+            queryJoins = [];
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+            {
+               const join = tableMetaData.exposedJoins[i];
+               if (visibleJoinTables.has(join.joinTable.name))
+               {
+                  queryJoins.push(new QueryJoin(join.joinTable.name, true, "LEFT"));
+               }
+            }
+         }
+
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         // before we can issue the query, we must have the columns model (to figure out if we need to join). //
+         // so, if we don't have it, then return and let a later call do it.                                  //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(!columnsModel || columnsModel.length == 0)
+         {
+            console.log("Returning before issuing query, because no columnsModel.");
+            return;
+         }
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
          // assign a new query id to the query being issued here.  then run both the count & query async //
@@ -382,15 +555,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          console.log(`Issuing query: ${thisQueryId}`);
          if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
-            qController.count(tableName, qFilter).then((count) =>
+            let includeDistinct = isJoinMany(tableMetaData, getVisibleJoinTables());
+            qController.count(tableName, qFilter, queryJoins, includeDistinct).then(([count, distinctCount]) =>
             {
-               countResults[thisQueryId] = count;
+               console.log(`Received count results for query ${thisQueryId}: ${count} ${distinctCount}`);
+               countResults[thisQueryId] = [];
+               countResults[thisQueryId].push(count);
+               countResults[thisQueryId].push(distinctCount);
                setCountResults(countResults);
                setReceivedCountTimestamp(new Date());
             });
          }
 
-         qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage).then((results) =>
+         qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage, queryJoins).then((results) =>
          {
             console.log(`Received results for query ${thisQueryId}`);
             queryResults[thisQueryId] = results;
@@ -430,7 +607,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////
    useEffect(() =>
    {
-      if (countResults[latestQueryId] === null)
+      if (countResults[latestQueryId] == null || countResults[latestQueryId].length == 0)
       {
          ///////////////////////////////////////////////
          // see same idea in displaying query results //
@@ -438,9 +615,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          console.log(`No count results for id ${latestQueryId}...`);
          return;
       }
-      setTotalRecords(countResults[latestQueryId]);
-      delete countResults[latestQueryId];
-   }, [ receivedCountTimestamp ]);
+      try
+      {
+         setTotalRecords(countResults[latestQueryId][0]);
+         setDistinctRecords(countResults[latestQueryId][1]);
+         delete countResults[latestQueryId];
+      }
+      catch(e)
+      {
+         console.log(e);
+      }
+   }, [receivedCountTimestamp]);
 
    ///////////////////////////
    // display query results //
@@ -462,14 +647,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       delete queryResults[latestQueryId];
       setLatestQueryResults(results);
 
-      const {rows, columnsToRender} = DataGridUtils.makeRows(results, tableMetaData);
-
+      const rows = DataGridUtils.makeRows(results, tableMetaData);
       setRows(rows);
 
       setLoading(false);
       setAlertContent(null);
       forceUpdate();
-   }, [ receivedQueryTimestamp ]);
+   }, [receivedQueryTimestamp]);
 
    /////////////////////////
    // display query error //
@@ -491,7 +675,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setLoading(false);
       setAlertContent(errorMessage);
 
-   }, [ receivedQueryErrorTimestamp ]);
+   }, [receivedQueryErrorTimestamp]);
 
 
    const handlePageChange = (page: number) =>
@@ -550,7 +734,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          clearTimeout(instance.current.timer);
          instance.current.timer = setTimeout(() =>
          {
-            if(table.primaryKeyField !== "id")
+            if (table.primaryKeyField !== "id")
             {
                navigate(`${metaData.getTablePathByName(tableName)}/${params.row[tableMetaData.primaryKeyField]}`);
             }
@@ -573,7 +757,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       selectionModel.forEach((value: GridRowId, index: number) =>
       {
          let valueToPush = value as string;
-         if(tableMetaData.primaryKeyField !== "id")
+         if (tableMetaData.primaryKeyField !== "id")
          {
             valueToPush = latestQueryResults[index].values.get(tableMetaData.primaryKeyField);
          }
@@ -602,6 +786,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          );
       }
    };
+
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if, after a column was turned on or off, the set of visibleJoinTables is changed, then update the table //
+   // check this on each render - it should only be different if there was a change.  note that putting this  //
+   // in handleColumnVisibilityChange "didn't work" - it was always "behind by one" (like, maybe data grid    //
+   // calls that function before it updates the visible model or some-such).                                  //
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const newVisibleJoinTables = getVisibleJoinTables();
+   if (JSON.stringify([...newVisibleJoinTables.keys()]) != JSON.stringify([...visibleJoinTables.keys()]))
+   {
+      updateTable();
+      setVisibleJoinTables(newVisibleJoinTables);
+   }
 
    const handleColumnOrderChange = (columnOrderChangeParams: GridColumnOrderChangeParams) =>
    {
@@ -689,7 +886,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                // construct the url for the export //
                //////////////////////////////////////
                const d = new Date();
-               const dateString = `${d.getFullYear()}-${zp(d.getMonth()+1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+               const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
                const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}&fields=${visibleFields.join(",")}`;
 
@@ -748,9 +945,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
+         // todo - distinct?
          return (totalRecords);
       }
 
+      // todo - distinct?
       return (selectedIds.length);
    }
 
@@ -866,13 +1065,25 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // @ts-ignore
    const defaultLabelDisplayedRows = ({from, to, count}) =>
    {
-      if(tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+      const tooltipHTML = <>
+         The number of rows shown on this screen may be greater than the number of {tableMetaData?.label} records
+         that match your query, because you have included fields from other tables which may have
+         more than one record associated with each {tableMetaData?.label}.
+      </>
+      let distinctPart = isJoinMany(tableMetaData, getVisibleJoinTables()) ? (<Box display="inline" textAlign="right">
+         &nbsp;({distinctRecords} distinct<CustomWidthTooltip title={tooltipHTML}>
+            <IconButton sx={{p: 0, pl: 0.0, mb: 0.25}}><Icon fontSize="small" sx={{fontSize: "1.125rem !important", color: "#9f9f9f"}}>info_outlined</Icon></IconButton>
+         </CustomWidthTooltip>
+         )
+      </Box>) : <></>;
+
+      if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
       {
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // to avoid a non-countable table showing (this is what data-grid did) 91-100 even if there were only 95 records, //
          // we'll do this... not quite good enough, but better than the original                                           //
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         if(rows.length > 0 && rows.length < to - from)
+         if (rows.length > 0 && rows.length < to - from)
          {
             to = from + rows.length;
          }
@@ -886,13 +1097,21 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          if (count === 0)
          {
-            return (loading ? "Counting records..." : "No rows");
+            return (loading ? "Counting..." : "No rows");
          }
-         return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${count !== -1 ? `${count.toLocaleString()} records` : `more than ${to.toLocaleString()} records`}`);
+
+         return <>
+            Showing {from.toLocaleString()} to {to.toLocaleString()} of
+            {
+               count == -1 ?
+                  <>more than {to.toLocaleString()}</>
+                  : <> {count.toLocaleString()}{distinctPart}</>
+            }
+         </>;
       }
       else
       {
-         return ("Counting records...");
+         return ("Counting...");
       }
    };
 
@@ -903,9 +1122,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             component="div"
             // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
             // so pass some sentinel value...
+            // todo - distinct?
             count={totalRecords === null || totalRecords === undefined ? -1 : totalRecords}
             page={pageNumber}
-            rowsPerPageOptions={[ 10, 25, 50, 100, 250 ]}
+            rowsPerPageOptions={[10, 25, 50, 100, 250]}
             rowsPerPage={rowsPerPage}
             onPageChange={(event, value) => handlePageChange(value)}
             onRowsPerPageChange={(event) => handleRowsPerPageChange(Number(event.target.value))}
@@ -923,7 +1143,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    async function handleSavedFilterChange(selectedSavedFilterId: number)
    {
-      if(selectedSavedFilterId != null)
+      if (selectedSavedFilterId != null)
       {
          const qRecord = await fetchSavedFilter(selectedSavedFilterId);
          const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
@@ -939,7 +1159,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }
 
-   async function fetchSavedFilter(filterId: number):Promise<QRecord>
+   async function fetchSavedFilter(filterId: number): Promise<QRecord>
    {
       let qRecord = null;
       const formData = new FormData();
@@ -966,30 +1186,30 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          qRecord = new QRecord(result.values.savedFilterList[0]);
       }
 
-      return(qRecord);
+      return (qRecord);
    }
 
    const copyColumnValues = async (column: GridColDef) =>
    {
       let data = "";
       let counter = 0;
-      if(latestQueryResults && latestQueryResults.length)
+      if (latestQueryResults && latestQueryResults.length)
       {
          let qFieldMetaData = tableMetaData.fields.get(column.field);
-         for(let i = 0; i < latestQueryResults.length; i++)
+         for (let i = 0; i < latestQueryResults.length; i++)
          {
             let record = latestQueryResults[i] as QRecord;
             const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(qFieldMetaData.name), record.displayValues.get(qFieldMetaData.name));
-            if(value !== null && value !== undefined && String(value) !== "")
+            if (value !== null && value !== undefined && String(value) !== "")
             {
                data += value + "\n";
                counter++;
             }
          }
 
-         if(counter > 0)
+         if (counter > 0)
          {
-            await navigator.clipboard.writeText(data)
+            await navigator.clipboard.writeText(data);
             setSuccessAlert(`Copied ${counter} ${qFieldMetaData.label} value${counter == 1 ? "" : "s"}.`);
          }
          else
@@ -998,13 +1218,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
          setTimeout(() => setSuccessAlert(null), 3000);
       }
-   }
+   };
 
    const openColumnStatistics = async (column: GridColDef) =>
    {
       setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
       setColumnStatsFieldName(column.field);
-   }
+   };
 
    const CustomColumnMenu = forwardRef<HTMLUListElement, GridColumnMenuProps>(
       function GridColumnMenu(props: GridColumnMenuProps, ref)
@@ -1029,13 +1249,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <GridColumnsMenuItem onClick={hideMenu} column={currentColumn!} />
 
                <Divider />
-               <GridColumnPinningMenuItems  onClick={hideMenu} column={currentColumn!} />
+               <GridColumnPinningMenuItems onClick={hideMenu} column={currentColumn!} />
                <Divider />
 
                <MenuItem sx={{justifyContent: "space-between"}} onClick={(e) =>
                {
                   hideMenu(e);
-                  copyColumnValues(currentColumn)
+                  copyColumnValues(currentColumn);
                }}>
                   Copy values
 
@@ -1067,7 +1287,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          const columns = useGridSelector(apiRef, gridColumnDefinitionsSelector);
          const columnVisibilityModel = useGridSelector(apiRef, gridColumnVisibilityModelSelector);
 
-         const [openGroups, setOpenGroups] = useState({} as {[name: string]: boolean});
+         const [openGroups, setOpenGroups] = useState({} as { [name: string]: boolean });
 
          const groups = ["Order", "Line Item"];
 
@@ -1082,21 +1302,21 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             setColumnVisibilityModel(JSON.parse(JSON.stringify(columnVisibilityModel)))
             */
 
-            console.log(`${fieldName} = ${columnVisibilityModel[fieldName]}`)
+            console.log(`${fieldName} = ${columnVisibilityModel[fieldName]}`);
             // columnVisibilityModel[fieldName] = Math.random() < 0.5;
             apiRef.current.setColumnVisibility(fieldName, columnVisibilityModel[fieldName] === false);
             // handleColumnVisibilityChange(JSON.parse(JSON.stringify(columnVisibilityModel)));
-         }
+         };
 
          const toggleColumnGroup = (groupName: string) =>
          {
-            if(openGroups[groupName] === undefined)
+            if (openGroups[groupName] === undefined)
             {
                openGroups[groupName] = true;
             }
             openGroups[groupName] = !openGroups[groupName];
             setOpenGroups(JSON.parse(JSON.stringify(openGroups)));
-         }
+         };
 
          console.log("re-render");
          return (
@@ -1146,7 +1366,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </div>
          );
       }
-   )
+   );
 
    function CustomToolbar()
    {
@@ -1235,6 +1455,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         records on this page are selected.
                         <Button onClick={() => setSelectFullFilterState("filter")}>
                            Select all
+                           {/*todo - distinct?*/}
                            {` ${totalRecords ? totalRecords.toLocaleString() : ""} `}
                            records matching this query
                         </Button>
@@ -1245,6 +1466,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   selectFullFilterState === "filter" && (
                      <div className="selectionTool">
                         All
+                        {/* todo - distinct? */}
                         <strong>{` ${totalRecords ? totalRecords.toLocaleString() : ""} `}</strong>
                         records matching this query are selected.
                         <Button onClick={() => setSelectFullFilterState("checked")}>
@@ -1265,28 +1487,28 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
    {
-      if(menuItems.length > 0)
+      if (menuItems.length > 0)
       {
          menuItems.push(<Divider />);
       }
-   }
+   };
 
    const menuItems: JSX.Element[] = [];
-   if(table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+   if (table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
    {
-      menuItems.push(<MenuItem onClick={bulkLoadClicked}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>)
+      menuItems.push(<MenuItem onClick={bulkLoadClicked}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
    }
-   if(table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+   if (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
    {
-      menuItems.push(<MenuItem onClick={bulkEditClicked}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>)
+      menuItems.push(<MenuItem onClick={bulkEditClicked}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
    }
-   if(table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+   if (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
    {
-      menuItems.push(<MenuItem onClick={bulkDeleteClicked}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>)
+      menuItems.push(<MenuItem onClick={bulkDeleteClicked}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
    }
 
    const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
-   if(runRecordScriptProcess)
+   if (runRecordScriptProcess)
    {
       const process = runRecordScriptProcess;
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
@@ -1294,7 +1516,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    menuItems.push(<MenuItem onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
 
-   if(tableProcesses && tableProcesses.length)
+   if (tableProcesses && tableProcesses.length)
    {
       pushDividerIfNeeded(menuItems);
    }
@@ -1305,9 +1527,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    });
 
-   if(menuItems.length === 0)
+   if (menuItems.length === 0)
    {
-      menuItems.push(<MenuItem disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>)
+      menuItems.push(<MenuItem disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>);
    }
 
    const renderActionsMenu = (
@@ -1335,7 +1557,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if(latestQueryId > 0)
+      if (latestQueryId > 0)
       {
          ////////////////////////////////////////////////////////////////////////////////////////
          // to avoid both this useEffect and the one below from both doing an "initial query", //
@@ -1343,7 +1565,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          ////////////////////////////////////////////////////////////////////////////////////////
          updateTable();
       }
-   }, [ pageNumber, rowsPerPage, columnSortModel, currentSavedFilter ]);
+   }, [pageNumber, rowsPerPage, columnSortModel, currentSavedFilter]);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for state changes that DO change the filter, call to update the table - and DO clear out the totalRecords //
@@ -1351,16 +1573,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    useEffect(() =>
    {
       setTotalRecords(null);
+      setDistinctRecords(null);
       updateTable();
-   }, [ tableState, filterModel]);
+   }, [tableState, filterModel]);
 
    useEffect(() =>
    {
       document.documentElement.scrollTop = 0;
       document.scrollingElement.scrollTop = 0;
-   }, [ pageNumber, rowsPerPage ]);
+   }, [pageNumber, rowsPerPage]);
 
-   if(tableMetaData && !tableMetaData.readPermission)
+   if (tableMetaData && !tableMetaData.readPermission)
    {
       return (
          <BaseLayout>
@@ -1422,7 +1645,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                }
                <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
                   <Box display="flex" marginRight="auto">
-                     <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange}/>
+                     <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange} />
                   </Box>
 
                   <Box display="flex" width="150px">
@@ -1438,7 +1661,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <Card>
                   <Box height="100%">
                      <DataGridPro
-                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu, ColumnsPanel: CustomColumnsPanel}}
+                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu/*, ColumnsPanel: CustomColumnsPanel*/}}
                         pinnedColumns={pinnedColumns}
                         onPinnedColumnsChange={handlePinnedColumnsChange}
                         pagination
@@ -1453,7 +1676,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                         columns={columnsModel}
                         rowBuffer={10}
-                        rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
+                        rowCount={/*todo - distinct?*/totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
                         onPageSizeChange={handleRowsPerPageChange}
                         onRowClick={handleRowClick}
                         onStateChange={handleStateChange}
@@ -1466,9 +1689,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         onColumnOrderChange={handleColumnOrderChange}
                         onSelectionModelChange={selectionChanged}
                         onSortModelChange={handleSortChange}
-                        sortingOrder={[ "asc", "desc" ]}
+                        sortingOrder={["asc", "desc"]}
                         sortModel={columnSortModel}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+                        getRowId={(row) => row.__qRowIndex}
                      />
                   </Box>
                </Card>
