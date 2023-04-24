@@ -471,6 +471,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             linkBase += linkBase.endsWith("/") ? "" : "/";
             const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase);
             setColumnsModel(columns);
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // let the next render (since columnsModel is watched below) build the filter, using the new columnsModel (in case of joins) //
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            return;
          }
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -533,16 +538,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   queryJoins.push(new QueryJoin(join.joinTable.name, true, "LEFT"));
                }
             }
-         }
-
-         ///////////////////////////////////////////////////////////////////////////////////////////////////////
-         // before we can issue the query, we must have the columns model (to figure out if we need to join). //
-         // so, if we don't have it, then return and let a later call do it.                                  //
-         ///////////////////////////////////////////////////////////////////////////////////////////////////////
-         if(!columnsModel || columnsModel.length == 0)
-         {
-            console.log("Returning before issuing query, because no columnsModel.");
-            return;
          }
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1575,7 +1570,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setTotalRecords(null);
       setDistinctRecords(null);
       updateTable();
-   }, [tableState, filterModel]);
+   }, [columnsModel, tableState, filterModel]);
 
    useEffect(() =>
    {
@@ -1692,7 +1687,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         sortingOrder={["asc", "desc"]}
                         sortModel={columnSortModel}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-                        getRowId={(row) => row.__qRowIndex}
+                        getRowId={(row) => row.__rowIndex}
                      />
                   </Box>
                </Card>

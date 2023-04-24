@@ -40,10 +40,11 @@ export default class DataGridUtils
    {
       const fields = [ ...tableMetaData.fields.values() ];
       const rows = [] as any[];
+      let rowIndex = 0;
       results.forEach((record: QRecord) =>
       {
          const row: any = {};
-         row.__qRowIndex =  record.values.get("__qRowIndex");
+         row.__rowIndex = rowIndex++;
 
          fields.forEach((field) =>
          {
