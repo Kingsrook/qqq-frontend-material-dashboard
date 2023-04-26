@@ -146,6 +146,7 @@ export default class DataGridUtils
          ///////////////////////////
          // sort by labels... mmm //
          ///////////////////////////
+         sortedKeys.push(...tableMetaData.fields.keys())
          sortedKeys.sort((a: string, b: string): number =>
          {
             return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label))
