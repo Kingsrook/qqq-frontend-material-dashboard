@@ -22,10 +22,12 @@
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {getGridDateOperators, GridColDef, GridRowsProp} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
+import React from "react";
 import {Link} from "react-router-dom";
 import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -87,7 +89,7 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static setupGridColumns = (tableMetaData: QTableMetaData, linkBase: string = ""): GridColDef[] =>
+   public static setupGridColumns = (tableMetaData: QTableMetaData, linkBase: string = "", metaData?: QInstance): GridColDef[] =>
    {
       const columns = [] as GridColDef[];
       this.addColumnsForTable(tableMetaData, linkBase, columns, null);
@@ -97,8 +99,15 @@ export default class DataGridUtils
          for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
          {
             const join = tableMetaData.exposedJoins[i];
-            // todo - link base here - link to the join table
-            this.addColumnsForTable(join.joinTable, null, columns, join.joinTable.name + ".", join.label + ": ");
+
+            let joinLinkBase = null;
+            if(metaData)
+            {
+               joinLinkBase = metaData.getTablePath(join.joinTable);
+               joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
+            }
+
+            this.addColumnsForTable(join.joinTable, joinLinkBase, columns, join.joinTable.name + ".", join.label + ": ");
          }
       }
 
@@ -111,6 +120,10 @@ export default class DataGridUtils
     *******************************************************************************/
    private static addColumnsForTable(tableMetaData: QTableMetaData, linkBase: string, columns: GridColDef[], namePrefix?: string, labelPrefix?: string)
    {
+      /*
+      ////////////////////////////////////////////////////////////////////////
+      // this sorted by sections - e.g., manual sorting by the meta-data... //
+      ////////////////////////////////////////////////////////////////////////
       const sortedKeys: string[] = [];
       for (let i = 0; i < tableMetaData.sections.length; i++)
       {
@@ -125,22 +138,36 @@ export default class DataGridUtils
             sortedKeys.push(section.fieldNames[j]);
          }
       }
+      */
+
+      ///////////////////////////
+      // sort by labels... mmm //
+      ///////////////////////////
+      const sortedKeys = [...tableMetaData.fields.keys()];
+      sortedKeys.sort((a: string, b: string): number =>
+      {
+         return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label))
+      })
 
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
          const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
-         if (key === tableMetaData.primaryKeyField && linkBase)
+         if(key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
          {
             columns.splice(0, 0, column);
-            column.renderCell = (cellValues: any) => (
-               <Link to={`${linkBase}${cellValues.value}`}>{cellValues.value}</Link>
-            );
          }
          else
          {
             columns.push(column);
+         }
+
+         if (key === tableMetaData.primaryKeyField && linkBase)
+         {
+            column.renderCell = (cellValues: any) => (
+               <Link to={`${linkBase}${cellValues.value}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link>
+            );
          }
       });
    }

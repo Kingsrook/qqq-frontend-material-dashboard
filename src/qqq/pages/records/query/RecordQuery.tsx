@@ -48,15 +48,16 @@ import Modal from "@mui/material/Modal";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowProps, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
 import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
+import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
-import {QActionsMenuButton, QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
+import {QActionsMenuButton, QCancelButton, QCreateNewButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import MenuButton from "qqq/components/buttons/MenuButton";
 import SavedFilters from "qqq/components/misc/SavedFilters";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -165,7 +166,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [totalRecords, setTotalRecords] = useState(null);
    const [distinctRecords, setDistinctRecords] = useState(null);
    const [selectedIds, setSelectedIds] = useState([] as string[]);
-   const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter");
+   const [distinctRecordsOnPageCount, setDistinctRecordsOnPageCount] = useState(null as number);
+   const [selectionSubsetSize, setSelectionSubsetSize] = useState(null as number);
+   const [selectionSubsetSizePromptOpen, setSelectionSubsetSizePromptOpen] = useState(false);
+   const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter" | "filterSubset");
+   const [rowSelectionModel, setRowSelectionModel] = useState<GridSelectionModel>([]);
    const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
    const [rows, setRows] = useState([] as GridRowsProp[]);
    const [loading, setLoading] = useState(true);
@@ -325,9 +330,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // first time we call in here, we may not yet have set it in state (but will have fetched it async) //
    // so we'll pass in the local version of it!                                                        //
    //////////////////////////////////////////////////////////////////////////////////////////////////////
-   const buildQFilter = (tableMetaData: QTableMetaData, filterModel: GridFilterModel) =>
+   const buildQFilter = (tableMetaData: QTableMetaData, filterModel: GridFilterModel, limit?: number) =>
    {
-      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel);
+      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, limit);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
       return (filter);
    };
@@ -469,7 +474,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             let linkBase = metaData.getTablePath(table);
             linkBase += linkBase.endsWith("/") ? "" : "/";
-            const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase);
+            const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase, metaData);
             setColumnsModel(columns);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -520,6 +525,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
 
          const qFilter = buildQFilter(tableMetaData, localFilterModel);
+         qFilter.skip = pageNumber * rowsPerPage;
+         qFilter.limit = rowsPerPage;
 
          //////////////////////////////////////////
          // figure out joins to use in the query //
@@ -562,7 +569,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             });
          }
 
-         qController.query(tableName, qFilter, rowsPerPage, pageNumber * rowsPerPage, queryJoins).then((results) =>
+         qController.query(tableName, qFilter, queryJoins).then((results) =>
          {
             console.log(`Received results for query ${thisQueryId}`);
             queryResults[thisQueryId] = results;
@@ -642,6 +649,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       delete queryResults[latestQueryId];
       setLatestQueryResults(results);
 
+      ///////////////////////////////////////////////////////////
+      // count how many distinct primary keys are on this page //
+      ///////////////////////////////////////////////////////////
+      let distinctPrimaryKeySet = new Set<string>();
+      for(let i = 0; i < results.length; i++)
+      {
+         distinctPrimaryKeySet.add(results[i].values.get(tableMetaData.primaryKeyField) as string);
+      }
+      setDistinctRecordsOnPageCount(distinctPrimaryKeySet.size);
+
+      ////////////////////////////////
+      // make the rows for the grid //
+      ////////////////////////////////
       const rows = DataGridUtils.makeRows(results, tableMetaData);
       setRows(rows);
 
@@ -748,19 +768,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const selectionChanged = (selectionModel: GridSelectionModel, details: GridCallbackDetails) =>
    {
-      const newSelectedIds: string[] = [];
+      ////////////////////////////////////////////////////
+      // since we manage this object, we must re-set it //
+      ////////////////////////////////////////////////////
+      setRowSelectionModel(selectionModel);
+
+      let checkboxesChecked = 0;
+      let selectedPrimaryKeys = new Set<string>();
       selectionModel.forEach((value: GridRowId, index: number) =>
       {
-         let valueToPush = value as string;
-         if (tableMetaData.primaryKeyField !== "id")
-         {
-            valueToPush = latestQueryResults[index].values.get(tableMetaData.primaryKeyField);
-         }
-         newSelectedIds.push(valueToPush as string);
+         checkboxesChecked++
+         const valueToPush = latestQueryResults[value as number].values.get(tableMetaData.primaryKeyField);
+         selectedPrimaryKeys.add(valueToPush as string);
       });
-      setSelectedIds(newSelectedIds);
+      setSelectedIds([...selectedPrimaryKeys.values()]);
 
-      if (newSelectedIds.length === rowsPerPage)
+      if (checkboxesChecked === rowsPerPage)
       {
          setSelectFullFilterState("checked");
       }
@@ -940,11 +963,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         // todo - distinct?
+         if(isJoinMany(tableMetaData, getVisibleJoinTables()))
+         {
+            return (distinctRecords);
+         }
          return (totalRecords);
       }
 
-      // todo - distinct?
       return (selectedIds.length);
    }
 
@@ -953,6 +978,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       if (selectFullFilterState === "filter")
       {
          return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(tableMetaData, filterModel))}`;
+      }
+
+      if (selectFullFilterState === "filterSubset")
+      {
+         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(tableMetaData, filterModel, selectionSubsetSize))}`;
       }
 
       if (selectedIds.length > 0)
@@ -968,6 +998,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       if (selectFullFilterState === "filter")
       {
          setRecordIdsForProcess(buildQFilter(tableMetaData, filterModel));
+      }
+      else if (selectFullFilterState === "filterSubset")
+      {
+         setRecordIdsForProcess(buildQFilter(tableMetaData, filterModel, selectionSubsetSize));
       }
       else if (selectedIds.length > 0)
       {
@@ -1067,7 +1101,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       </>
       let distinctPart = isJoinMany(tableMetaData, getVisibleJoinTables()) ? (<Box display="inline" textAlign="right">
          &nbsp;({distinctRecords} distinct<CustomWidthTooltip title={tooltipHTML}>
-            <IconButton sx={{p: 0, pl: 0.0, mb: 0.25}}><Icon fontSize="small" sx={{fontSize: "1.125rem !important", color: "#9f9f9f"}}>info_outlined</Icon></IconButton>
+            <IconButton sx={{p: 0, pl: 0.25, mb: 0.25}}><Icon fontSize="small" sx={{fontSize: "1.125rem !important", color: "#9f9f9f"}}>info_outlined</Icon></IconButton>
          </CustomWidthTooltip>
          )
       </Box>) : <></>;
@@ -1116,8 +1150,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          <TablePagination
             component="div"
             // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
-            // so pass some sentinel value...
-            // todo - distinct?
+            // so pass a sentinel value of -1...
             count={totalRecords === null || totalRecords === undefined ? -1 : totalRecords}
             page={pageNumber}
             rowsPerPageOptions={[10, 25, 50, 100, 250]}
@@ -1275,6 +1308,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          );
       });
 
+   ////////////////////////////////////////////////////////////////////////////
+   // this is a WIP example of how we could do a custom "columns" panel/menu //
+   ////////////////////////////////////////////////////////////////////////////
    const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       function MyCustomColumnsPanel(props: GridColumnsPanelProps, ref)
       {
@@ -1313,7 +1349,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             setOpenGroups(JSON.parse(JSON.stringify(openGroups)));
          };
 
-         console.log("re-render");
          return (
             <div ref={ref} className="custom-columns-panel" style={{width: "350px", height: "450px"}}>
                <Box height="55px" padding="5px">
@@ -1395,14 +1430,84 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setGridPreferencesWindow(preferencePanelState.openedPanelValue);
       });
 
+      const joinIsMany = isJoinMany(tableMetaData, visibleJoinTables);
+
+      const safeToLocaleString = (n: Number): string =>
+      {
+         if(n != null && n != undefined)
+         {
+            return (n.toLocaleString());
+         }
+         return ("");
+      }
+
+      const selectionMenuOptions: string[] = [];
+      selectionMenuOptions.push(`This page (${safeToLocaleString(distinctRecordsOnPageCount)} ${joinIsMany ? "distinct " : ""}record${distinctRecordsOnPageCount == 1 ? "" : "s"})`);
+      selectionMenuOptions.push(`Full query result (${joinIsMany ? safeToLocaleString(distinctRecords) + ` distinct record${distinctRecords == 1 ? "" : "s"}` : safeToLocaleString(totalRecords) + ` record${totalRecords == 1 ? "" : "s"}`})`);
+      selectionMenuOptions.push(`Subset of the query result ${selectionSubsetSize ? `(${safeToLocaleString(selectionSubsetSize)} ${joinIsMany ? "distinct " : ""}record${selectionSubsetSize == 1 ? "" : "s"})` : "..."}`);
+      selectionMenuOptions.push("Clear selection");
+
+      function programmaticallySelectSomeOrAllRows(max?: number)
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         // any time the user selects one of the options from our selection menu,                 //
+         // we want to check all the boxes on the screen - and - "select" all of the primary keys //
+         // unless they did the subset option - then we'll only go up to a 'max' number           //
+         ///////////////////////////////////////////////////////////////////////////////////////////
+         const rowSelectionModel: GridSelectionModel = [];
+         let selectedPrimaryKeys = new Set<string>();
+         rows.forEach((value: GridRowModel, index: number) =>
+         {
+            const primaryKeyValue = latestQueryResults[index].values.get(tableMetaData.primaryKeyField);
+            if(max)
+            {
+               if(selectedPrimaryKeys.size < max)
+               {
+                  if(!selectedPrimaryKeys.has(primaryKeyValue))
+                  {
+                     rowSelectionModel.push(value.__rowIndex);
+                     selectedPrimaryKeys.add(primaryKeyValue as string);
+                  }
+               }
+            }
+            else
+            {
+               rowSelectionModel.push(value.__rowIndex);
+               selectedPrimaryKeys.add(primaryKeyValue as string);
+            }
+         });
+         setRowSelectionModel(rowSelectionModel);
+         setSelectedIds([...selectedPrimaryKeys.values()]);
+      }
+
+      const selectionMenuCallback = (selectedIndex: number) =>
+      {
+         if(selectedIndex == 0)
+         {
+            programmaticallySelectSomeOrAllRows();
+            setSelectFullFilterState("checked")
+         }
+         else if(selectedIndex == 1)
+         {
+            programmaticallySelectSomeOrAllRows();
+            setSelectFullFilterState("filter")
+         }
+         else if(selectedIndex == 2)
+         {
+            setSelectionSubsetSizePromptOpen(true);
+         }
+         else if(selectedIndex == 3)
+         {
+            setSelectFullFilterState("n/a")
+            setRowSelectionModel([]);
+            setSelectedIds([]);
+         }
+      };
+
       return (
          <GridToolbarContainer>
             <div>
-               <Button
-                  id="refresh-button"
-                  onClick={updateTable}
-                  startIcon={<Icon>refresh</Icon>}
-               >
+               <Button id="refresh-button" onClick={updateTable} startIcon={<Icon>refresh</Icon>} sx={{pr: "1.25rem"}}>
                   Refresh
                </Button>
             </div>
@@ -1416,19 +1521,27 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         <Tooltip title="Clear All Filters">
                            <Icon sx={{cursor: "pointer"}} onClick={() => setShowClearFiltersWarning(true)}>clear</Icon>
                         </Tooltip>
-                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)}>
-                           <DialogTitle id="alert-dialog-title">Confirm </DialogTitle>
+                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)} onKeyPress={(e) =>
+                        {
+                           if (e.key == "Enter")
+                           {
+                              setShowClearFiltersWarning(false)
+                              navigate(metaData.getTablePathByName(tableName));
+                              handleFilterChange({items: []} as GridFilterModel);
+                           }
+                        }}>
+                           <DialogTitle id="alert-dialog-title">Confirm</DialogTitle>
                            <DialogContent>
                               <DialogContentText>Are you sure you want to clear all filters?</DialogContentText>
                            </DialogContent>
                            <DialogActions>
-                              <Button onClick={() => setShowClearFiltersWarning(false)}>No</Button>
-                              <Button onClick={() =>
+                              <QCancelButton label="No" disabled={false} onClickHandler={() => setShowClearFiltersWarning(false)} />
+                              <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() =>
                               {
                                  setShowClearFiltersWarning(false);
                                  navigate(metaData.getTablePathByName(tableName));
                                  handleFilterChange({items: []} as GridFilterModel);
-                              }}>Yes</Button>
+                              }}/>
                            </DialogActions>
                         </Dialog>
                      </div>
@@ -1441,34 +1554,67 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   <ExportMenuItem format="json" />
                </GridToolbarExportContainer>
             </div>
+
+            <div>
+               <MenuButton label="Selection" iconName={selectedIds.length == 0 ? "check_box_outline_blank" : "check_box"} disabled={totalRecords == 0} options={selectionMenuOptions} callback={selectionMenuCallback}/>
+               <SelectionSubsetDialog isOpen={selectionSubsetSizePromptOpen} initialValue={selectionSubsetSize} closeHandler={(value) =>
+               {
+                  setSelectionSubsetSizePromptOpen(false);
+
+                  if(value !== undefined)
+                  {
+                     if(typeof value === "number" && value > 0)
+                     {
+                        programmaticallySelectSomeOrAllRows(value);
+                        setSelectionSubsetSize(value);
+                        setSelectFullFilterState("filterSubset")
+                     }
+                     else
+                     {
+                        setAlertContent("Unexpected value: " + value);
+                     }
+                  }
+               }} />
+            </div>
+
             <div>
                {
                   selectFullFilterState === "checked" && (
                      <div className="selectionTool">
                         The
                         <strong>{` ${selectedIds.length.toLocaleString()} `}</strong>
-                        records on this page are selected.
-                        <Button onClick={() => setSelectFullFilterState("filter")}>
-                           Select all
-                           {/*todo - distinct?*/}
-                           {` ${totalRecords ? totalRecords.toLocaleString() : ""} `}
-                           records matching this query
-                        </Button>
+                        {joinIsMany ? " distinct " : ""}
+                        record{selectedIds.length == 1 ? "" : "s"} on this page {selectedIds.length == 1 ? "is" : "are"} selected.
                      </div>
                   )
                }
                {
                   selectFullFilterState === "filter" && (
                      <div className="selectionTool">
-                        All
-                        {/* todo - distinct? */}
-                        <strong>{` ${totalRecords ? totalRecords.toLocaleString() : ""} `}</strong>
-                        records matching this query are selected.
-                        <Button onClick={() => setSelectFullFilterState("checked")}>
-                           Select the
-                           {` ${selectedIds.length.toLocaleString()} `}
-                           records on this page
-                        </Button>
+                        {
+                           (joinIsMany
+                              ? (
+                                 distinctRecords == 1
+                                    ? (<>The <strong>only 1</strong> distinct record matching this query is selected.</>)
+                                    : (<>All <strong>{(distinctRecords ? distinctRecords.toLocaleString() : "")}</strong> distinct records matching this query are selected.</>)
+                              )
+                              : (<>All <strong>{totalRecords ? totalRecords.toLocaleString() : ""}</strong> records matching this query are selected.</>)
+                           )
+                        }
+                     </div>
+                  )
+               }
+               {
+                  selectFullFilterState === "filterSubset" && (
+                     <div className="selectionTool">
+                        The <a onClick={() => setSelectionSubsetSizePromptOpen(true)} style={{cursor: "pointer"}}><strong>first {safeToLocaleString(selectionSubsetSize)}</strong></a> {joinIsMany ? "distinct" : ""} record{selectionSubsetSize == 1 ? "" : "s"} matching this query {selectionSubsetSize == 1 ? "is" : "are"} selected.
+                     </div>
+                  )
+               }
+               {
+                  (selectFullFilterState === "n/a" && selectedIds.length > 0) && (
+                     <div className="selectionTool">
+                        <strong>{safeToLocaleString(selectedIds.length)}</strong> {joinIsMany ? "distinct" : ""} {selectedIds.length == 1 ? "record is" : "records are"} selected.
                      </div>
                   )
                }
@@ -1671,7 +1817,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                         columns={columnsModel}
                         rowBuffer={10}
-                        rowCount={/*todo - distinct?*/totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
+                        rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
                         onPageSizeChange={handleRowsPerPageChange}
                         onRowClick={handleRowClick}
                         onStateChange={handleStateChange}
@@ -1688,6 +1834,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         sortModel={columnSortModel}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                         getRowId={(row) => row.__rowIndex}
+                        selectionModel={rowSelectionModel}
+                        hideFooterSelectedRowCount={true}
                      />
                   </Box>
                </Card>
@@ -1723,5 +1871,50 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       </BaseLayout>
    );
 }
+
+//////////////////////////////////////////////////////////////////////////////////
+// mini-component that is the dialog for the user to enter the selection-subset //
+//////////////////////////////////////////////////////////////////////////////////
+function SelectionSubsetDialog(props: {isOpen: boolean; initialValue: number; closeHandler: (value?: number) => void})
+{
+   const [value, setValue] = useState(props.initialValue)
+
+   const handleChange = (newValue: string) =>
+   {
+      setValue(parseInt(newValue))
+   }
+
+   const keyPressed = (e: React.KeyboardEvent<HTMLDivElement>) =>
+   {
+      if(e.key == "Enter" && value)
+      {
+         props.closeHandler(value);
+      }
+   }
+
+   return (
+      <Dialog open={props.isOpen} onClose={() => props.closeHandler()} onKeyPress={(e) => keyPressed(e)}>
+         <DialogTitle>Subset of the Query Result</DialogTitle>
+         <DialogContent>
+            <DialogContentText>How many records do you want to select?</DialogContentText>
+            <TextField
+               autoFocus
+               name="selection-subset-size"
+               inputProps={{width: "100%", type: "number", min: 1}}
+               onChange={(e) => handleChange(e.target.value)}
+               value={value}
+               sx={{width: "100%"}}
+               onFocus={event => event.target.select()}
+            />
+         </DialogContent>
+         <DialogActions>
+            <QCancelButton disabled={false} onClickHandler={() => props.closeHandler()} />
+            <QSaveButton label="OK" iconName="check" disabled={value == undefined || isNaN(value)} onClickHandler={() => props.closeHandler(value)} />
+         </DialogActions>
+      </Dialog>
+   )
+}
+
+
 
 export default RecordQuery;
