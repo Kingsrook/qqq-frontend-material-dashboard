@@ -474,7 +474,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             let linkBase = metaData.getTablePath(table);
             linkBase += linkBase.endsWith("/") ? "" : "/";
-            const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase, metaData);
+            const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase, metaData, "alphabetical");
             setColumnsModel(columns);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -89,10 +89,10 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static setupGridColumns = (tableMetaData: QTableMetaData, linkBase: string = "", metaData?: QInstance): GridColDef[] =>
+   public static setupGridColumns = (tableMetaData: QTableMetaData, linkBase: string = "", metaData?: QInstance, columnSort: "bySection" | "alphabetical" = "alphabetical"): GridColDef[] =>
    {
       const columns = [] as GridColDef[];
-      this.addColumnsForTable(tableMetaData, linkBase, columns, null);
+      this.addColumnsForTable(tableMetaData, linkBase, columns, columnSort, null, null);
 
       if(tableMetaData.exposedJoins)
       {
@@ -107,7 +107,7 @@ export default class DataGridUtils
                joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
             }
 
-            this.addColumnsForTable(join.joinTable, joinLinkBase, columns, join.joinTable.name + ".", join.label + ": ");
+            this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, join.joinTable.name + ".", join.label + ": ");
          }
       }
 
@@ -118,36 +118,39 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   private static addColumnsForTable(tableMetaData: QTableMetaData, linkBase: string, columns: GridColDef[], namePrefix?: string, labelPrefix?: string)
+   private static addColumnsForTable(tableMetaData: QTableMetaData, linkBase: string, columns: GridColDef[], columnSort: "bySection" | "alphabetical" = "alphabetical", namePrefix?: string, labelPrefix?: string)
    {
-      /*
+      const sortedKeys: string[] = [];
+
       ////////////////////////////////////////////////////////////////////////
       // this sorted by sections - e.g., manual sorting by the meta-data... //
       ////////////////////////////////////////////////////////////////////////
-      const sortedKeys: string[] = [];
-      for (let i = 0; i < tableMetaData.sections.length; i++)
+      if(columnSort === "bySection")
       {
-         const section = tableMetaData.sections[i];
-         if (!section.fieldNames)
+         for (let i = 0; i < tableMetaData.sections.length; i++)
          {
-            continue;
-         }
+            const section = tableMetaData.sections[i];
+            if (!section.fieldNames)
+            {
+               continue;
+            }
 
-         for (let j = 0; j < section.fieldNames.length; j++)
-         {
-            sortedKeys.push(section.fieldNames[j]);
+            for (let j = 0; j < section.fieldNames.length; j++)
+            {
+               sortedKeys.push(section.fieldNames[j]);
+            }
          }
       }
-      */
-
-      ///////////////////////////
-      // sort by labels... mmm //
-      ///////////////////////////
-      const sortedKeys = [...tableMetaData.fields.keys()];
-      sortedKeys.sort((a: string, b: string): number =>
+      else // columnSort = "alphabetical"
       {
-         return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label))
-      })
+         ///////////////////////////
+         // sort by labels... mmm //
+         ///////////////////////////
+         sortedKeys.sort((a: string, b: string): number =>
+         {
+            return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label))
+         })
+      }
 
       sortedKeys.forEach((key) =>
       {

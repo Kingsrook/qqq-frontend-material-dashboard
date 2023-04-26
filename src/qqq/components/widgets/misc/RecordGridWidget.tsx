@@ -66,7 +66,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          // note - tablePath may be null, if the user doesn't have access to the table. //
          /////////////////////////////////////////////////////////////////////////////////
          const childTablePath = data.tablePath ? data.tablePath + (data.tablePath.endsWith("/") ? "" : "/") : data.tablePath;
-         const columns = DataGridUtils.setupGridColumns(tableMetaData, childTablePath);
+         const columns = DataGridUtils.setupGridColumns(tableMetaData, childTablePath, null, "bySection");
 
          ////////////////////////////////////////////////////////////////
          // do not not show the foreign-key column of the parent table //
