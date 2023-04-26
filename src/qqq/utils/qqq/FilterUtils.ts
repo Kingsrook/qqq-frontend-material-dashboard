@@ -514,7 +514,7 @@ class FilterUtils
    /*******************************************************************************
     ** build a qqq filter from a grid and column sort model
     *******************************************************************************/
-   public static buildQFilterFromGridFilter(tableMetaData: QTableMetaData, filterModel: GridFilterModel, columnSortModel: GridSortItem[]): QQueryFilter
+   public static buildQFilterFromGridFilter(tableMetaData: QTableMetaData, filterModel: GridFilterModel, columnSortModel: GridSortItem[], limit?: number): QQueryFilter
    {
       console.log("Building q filter with model:");
       console.log(filterModel);
@@ -526,6 +526,12 @@ class FilterUtils
          {
             qFilter.addOrderBy(new QFilterOrderBy(gridSortItem.field, gridSortItem.sort === "asc"));
          });
+      }
+
+      if (limit)
+      {
+         console.log("Setting limit to: " + limit);
+         qFilter.limit = limit;
       }
 
       if (filterModel)

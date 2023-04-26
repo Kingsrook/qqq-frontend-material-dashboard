@@ -133,8 +133,8 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
             const criteria = [new QFilterCriteria("scriptId", QCriteriaOperator.EQUALS, [scriptId])];
             const orderBys = [new QFilterOrderBy("sequenceNo", false)];
-            const filter = new QQueryFilter(criteria, orderBys);
-            const versions = await qController.query("scriptRevision", filter, 25, 0);
+            const filter = new QQueryFilter(criteria, orderBys, "AND", 0, 25);
+            const versions = await qController.query("scriptRevision", filter);
             console.log("Fetched versions:");
             console.log(versions);
             setVersionRecordList(versions);
@@ -281,7 +281,8 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       {
          (async () =>
          {
-            scriptLogs[scriptRevisionId] = await qController.query("scriptLog", new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])]), 100, 0);
+            let filter = new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])], [new QFilterOrderBy("id", false)], "AND", 0, 100);
+            scriptLogs[scriptRevisionId] = await qController.query("scriptLog", filter);
             setScriptLogs(scriptLogs);
             forceUpdate();
          })();

@@ -100,8 +100,8 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
 
             const criteria = [new QFilterCriteria("dataBagId", QCriteriaOperator.EQUALS, [dataBagId])];
             const orderBys = [new QFilterOrderBy("sequenceNo", false)];
-            const filter = new QQueryFilter(criteria, orderBys);
-            const versions = await qController.query("dataBagVersion", filter, 25, 0);
+            const filter = new QQueryFilter(criteria, orderBys, "AND", 0, 25);
+            const versions = await qController.query("dataBagVersion", filter);
             console.log("Fetched versions:");
             console.log(versions);
             setVersionRecordList(versions);
