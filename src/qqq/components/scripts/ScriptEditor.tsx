@@ -19,19 +19,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
 import FormData from "form-data";
-import React, {useEffect, useReducer, useState} from "react";
+import React, {useEffect, useReducer, useRef, useState} from "react";
 import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import Client from "qqq/utils/qqq/Client";
@@ -44,7 +51,7 @@ export interface ScriptEditorProps
 {
    title: string;
    scriptId: number;
-   contents: string;
+   scriptRevisionRecord: QRecord;
    closeCallback: any;
    tableName: string;
    fieldName: string;
@@ -55,14 +62,22 @@ export interface ScriptEditorProps
 
 const qController = Client.getInstance();
 
-function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fieldName, recordId, scriptDefinition, scriptTypeRecord}: ScriptEditorProps): JSX.Element
+function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tableName, fieldName, recordId, scriptDefinition, scriptTypeRecord}: ScriptEditorProps): JSX.Element
 {
    const [closing, setClosing] = useState(false);
-   const [updatedCode, setUpdatedCode] = useState(contents)
+
+   const [updatedCode, setUpdatedCode] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("contents") : "");
+   const [apiName, setApiName] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiName") : null)
+   const [apiNameLabel, setApiNameLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiName") : null)
+   const [apiVersion, setApiVersion] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiVersion") : null)
+   const [apiVersionLabel, setApiVersionLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiVersion") : null)
+
    const [commitMessage, setCommitMessage] = useState("")
    const [openTool, setOpenTool] = useState(null);
    const [errorAlert, setErrorAlert] = useState("")
+   const [promptForCommitMessageOpen, setPromptForCommitMessageOpen] = useState(false);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const ref = useRef();
 
    useEffect(() =>
    {
@@ -78,16 +93,20 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                let completions = [];
 
                // todo - get from backend, based on the script type
+               completions.push({value: "api.get(", meta: "Get a records in a table."});
                completions.push({value: "api.query(", meta: "Search for records in a table."});
-               completions.push({value: "api.insert(", meta: "Create one or more records in a table."});
-               completions.push({value: "api.update(", meta: "Update one or more records in a table."});
-               completions.push({value: "api.delete(", meta: "Remove one or more records from a table."});
-               completions.push({value: "api.newRecord(", meta: "Create a new QRecord object."});
-               completions.push({value: "api.newQueryInput(", meta: "Create a new QueryInput object."});
-               completions.push({value: "api.newQueryFilter(", meta: "Create a new QueryFilter object."});
-               completions.push({value: "api.newFilterCriteria(", meta: "Create a new FilterCriteria object."});
-               completions.push({value: "api.newFilterOrderBy(", meta: "Create a new FilterOrderBy object."});
-               completions.push({value: "getValue(", meta: "Get a value from a record"});
+               completions.push({value: "api.insert(", meta: "Create one record in a table."});
+               completions.push({value: "api.update(", meta: "Update one record in a table."});
+               completions.push({value: "api.delete(", meta: "Remove one record from a table."});
+               completions.push({value: "api.bulkInsert(", meta: "Create multiple records in a table."});
+               completions.push({value: "api.bulkUpdate(", meta: "Update multiple records in a table."});
+               completions.push({value: "api.bulkDelete(", meta: "Remove multiple records from a table."});
+               // completions.push({value: "api.newRecord(", meta: "Create a new QRecord object."});
+               // completions.push({value: "api.newQueryInput(", meta: "Create a new QueryInput object."});
+               // completions.push({value: "api.newQueryFilter(", meta: "Create a new QueryFilter object."});
+               // completions.push({value: "api.newFilterCriteria(", meta: "Create a new FilterCriteria object."});
+               // completions.push({value: "api.newFilterOrderBy(", meta: "Create a new FilterOrderBy object."});
+               // completions.push({value: "getValue(", meta: "Get a value from a record"});
                completions.push({value: "logger.log(", meta: "Write a Script Log Line"});
 
                // @ts-ignore
@@ -98,7 +117,9 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
 
       const preventUnload = (event: BeforeUnloadEvent) =>
       {
-         // NOTE: This message isn't used in modern browsers, but is required
+         ///////////////////////////////////////////////////////////////////////
+         // NOTE: This message isn't used in modern browsers, but is required //
+         ///////////////////////////////////////////////////////////////////////
          const message = "Are you sure you want to leave?";
          event.preventDefault();
          event.returnValue = message;
@@ -109,8 +130,43 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
       {
          window.removeEventListener("beforeunload", preventUnload);
       };
+
    }, []);
 
+   /*
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+   // nice idea here, but we can't figure out how to call the function in the child component :( //
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+   const handleCommandT = () =>
+   {
+      console.log("Command-T pressed!");
+      if(openTool != "test")
+      {
+         console.log("Setting open tool to 'test'")
+         setOpenTool("test");
+         return;
+      }
+
+      if(runTestCallback)
+      {
+         console.log("Trying to call triggerTestScript...")
+         runTestCallback();
+      }
+      // @ts-ignore
+      // ref.current?.triggerTestScript();
+   };
+
+   useEffect(() =>
+   {
+      const editor = getAceInstance().edit("editor");
+      editor.commands.removeCommand("customCommandT");
+      editor.commands.addCommand({
+         name: "customCommandT",
+         bindKey: {win: "Ctrl-T", mac: "Command-T"},
+         exec: handleCommandT,
+      });
+   }, [openTool]);
+   */
 
    const changeOpenTool = (event: React.MouseEvent<HTMLElement>, newValue: string | null) =>
    {
@@ -123,8 +179,20 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
       }, 100);
    };
 
-   const saveClicked = () =>
+   const saveClicked = (overrideCommitMessage?: string) =>
    {
+      if(!apiName || !apiVersion)
+      {
+         setErrorAlert("You must select a value for both API Name and API Version.")
+         return;
+      }
+
+      if(!commitMessage && !overrideCommitMessage)
+      {
+         setPromptForCommitMessageOpen(true);
+         return;
+      }
+
       setClosing(true);
 
       (async () =>
@@ -132,20 +200,26 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
          const formData = new FormData();
          formData.append("scriptId", scriptId);
          formData.append("contents", updatedCode);
-         formData.append("commitMessage", commitMessage);
+         formData.append("commitMessage", overrideCommitMessage ?? commitMessage);
+
+         if(apiName)
+         {
+            formData.append("apiName", apiName);
+         }
+
+         if(apiVersion)
+         {
+            formData.append("apiVersion", apiVersion);
+         }
 
          //////////////////////////////////////////////////////////////////
          // we don't want this job to go async, so, pass a large timeout //
          //////////////////////////////////////////////////////////////////
-         formData.append("_qStepTimeoutMillis", 60 * 1000);
-
-         const formDataHeaders = {
-            "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-         };
+         formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
 
          try
          {
-            const processResult = await qController.processInit("storeScriptRevision", formData, formDataHeaders);
+            const processResult = await qController.processInit("storeScriptRevision", formData, qController.defaultMultipartFormDataHeaders());
             console.log("process result");
             console.log(processResult);
 
@@ -184,6 +258,45 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
    const updateCommitMessage = (event: React.ChangeEvent<HTMLInputElement>) =>
    {
       setCommitMessage(event.target.value);
+   }
+
+   const closePromptForCommitMessage = (wasSaveClicked: boolean, message?: string) =>
+   {
+      setPromptForCommitMessageOpen(false);
+
+      if(wasSaveClicked)
+      {
+         setCommitMessage(message)
+         saveClicked(message);
+      }
+      else
+      {
+         setClosing(false);
+      }
+   }
+
+   const changeApiName = (apiNamePossibleValue?: QPossibleValue) =>
+   {
+      if(apiNamePossibleValue)
+      {
+         setApiName(apiNamePossibleValue.id);
+      }
+      else
+      {
+         setApiName(null);
+      }
+   }
+
+   const changeApiVersion = (apiVersionPossibleValue?: QPossibleValue) =>
+   {
+      if(apiVersionPossibleValue)
+      {
+         setApiVersion(apiVersionPossibleValue.id);
+      }
+      else
+      {
+         setApiVersion(null);
+      }
    }
 
    return (
@@ -226,6 +339,14 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
             </Box>
 
             <Box sx={{height: openTool ? "45%" : "100%"}}>
+               <Grid container alignItems="flex-end">
+                  <Box maxWidth={"50%"} minWidth={300}>
+                     <DynamicSelect fieldName={"apiName"} initialValue={apiName} initialDisplayValue={apiNameLabel} fieldLabel={"API Name *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiName} />
+                  </Box>
+                  <Box maxWidth={"50%"} minWidth={300} pl={2}>
+                     <DynamicSelect fieldName={"apiVersion"} initialValue={apiVersion} initialDisplayValue={apiVersionLabel} fieldLabel={"API Version *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiVersion} />
+                  </Box>
+               </Grid>
                <AceEditor
                   mode="javascript"
                   theme="github"
@@ -238,7 +359,7 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                   }}
                   onChange={updateCode}
                   width="100%"
-                  height="100%"
+                  height="calc(100% - 58px)"
                   value={updatedCode}
                   style={{border: "1px solid gray"}}
                />
@@ -248,7 +369,7 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
                openTool &&
                <Box sx={{height: "45%"}} pt={2}>
                   {
-                     openTool == "test" && <ScriptTestForm scriptId={scriptId} scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} />
+                     openTool == "test" && <ScriptTestForm scriptId={scriptId} scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} apiName={apiName} apiVersion={apiVersion} />
                   }
                   {
                      openTool == "docs" && <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} aceEditorHeight="100%" />
@@ -259,17 +380,72 @@ function ScriptEditor({title, scriptId, contents, closeCallback, tableName, fiel
             <Box pt={1}>
                <Grid container alignItems="flex-end">
                   <Box width="50%">
-                     <TextField id="commitMessage" label="Commit Message" variant="standard" fullWidth value={commitMessage} onChange={updateCommitMessage} />
+                     <TextField id="commitMessage" label="Commit Message" variant="standard" fullWidth value={commitMessage} onChange={updateCommitMessage} style={{visibility: "hidden"}} />
                   </Box>
                   <Grid container justifyContent="flex-end" spacing={3}>
                      <QCancelButton disabled={closing} onClickHandler={cancelClicked} />
-                     <QSaveButton disabled={closing} onClickHandler={saveClicked} />
+                     <QSaveButton disabled={closing} onClickHandler={() => saveClicked()} />
                   </Grid>
                </Grid>
             </Box>
+
+            <CommitMessagePrompt isOpen={promptForCommitMessageOpen} closeHandler={closePromptForCommitMessage}/>
          </Card>
       </Box>
+
    );
+}
+
+function CommitMessagePrompt(props: {isOpen: boolean, closeHandler: (wasSaveClicked: boolean, message?: string) => void})
+{
+   const [commitMessage, setCommitMessage] = useState("No commit message given")
+
+   const updateCommitMessage = (event: React.ChangeEvent<HTMLInputElement>) =>
+   {
+      setCommitMessage(event.target.value);
+   }
+
+   const keyPressHandler = (e: React.KeyboardEvent<HTMLDivElement>) =>
+   {
+      if(e.key === "Enter")
+      {
+         props.closeHandler(true, commitMessage);
+      }
+   }
+
+   return (
+      <Dialog
+         open={props.isOpen}
+         onClose={() => props.closeHandler(false)}
+         aria-labelledby="alert-dialog-title"
+         aria-describedby="alert-dialog-description"
+         onKeyPress={e => keyPressHandler(e)}
+      >
+         <DialogTitle id="alert-dialog-title">Please Enter a Commit Message</DialogTitle>
+         <DialogContent sx={{width: "500px"}}>
+            <Box pt={1}>
+               <TextField
+                  autoFocus
+                  name="commit-message"
+                  placeholder="Commit message"
+                  label="Commit message"
+                  inputProps={{width: "100%", maxLength: 250}}
+                  value={commitMessage}
+                  sx={{width: "100%"}}
+                  onChange={updateCommitMessage}
+                  onFocus={event =>
+                  {
+                     event.target.select();
+                  }}
+               />
+            </Box>
+         </DialogContent>
+         <DialogActions>
+            <QCancelButton onClickHandler={() => props.closeHandler(false)} disabled={false} />
+            <QSaveButton label="Save" onClickHandler={() => props.closeHandler(true, commitMessage)} disabled={false}/>
+         </DialogActions>
+      </Dialog>
+   )
 }
 
 export default ScriptEditor;

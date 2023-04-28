@@ -48,7 +48,7 @@ interface AssociatedScriptDefinition
    testOutputFields: QFieldMetaData[];
 }
 
-interface Props
+export interface ScriptTestFormProps
 {
    scriptId: number;
    scriptDefinition: AssociatedScriptDefinition;
@@ -56,15 +56,13 @@ interface Props
    fieldName: string;
    recordId: any;
    code: string;
+   apiName: string;
+   apiVersion: string;
 }
-
-ScriptTestForm.defaultProps = {
-   // foo: null,
-};
 
 const qController = Client.getInstance();
 
-function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recordId, code}: Props): JSX.Element
+function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recordId, code, apiName, apiVersion}: ScriptTestFormProps): JSX.Element
 {
    const [testInputValues, setTestInputValues] = useState({} as any);
    const [testOutputValues, setTestOutputValues] = useState({} as any);
@@ -74,16 +72,16 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
 
    if(firstRender)
    {
-      setFirstRender(false)
-   }
-
-   if(firstRender)
-   {
       scriptDefinition.testInputFields.forEach((field: QFieldMetaData) =>
       {
          testInputValues[field.name] = field.defaultValue ?? "";
       });
    }
+
+   const buildFullExceptionMessage = (exception: any): string =>
+   {
+      return (exception.message + (exception.cause ? "\ncaused by: " + buildFullExceptionMessage(exception.cause) : ""));
+   };
 
    const testScript = () =>
    {
@@ -116,6 +114,8 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
             {
                const formData = new FormData();
                formData.append("scriptId", scriptId);
+               formData.append("apiName", apiName);
+               formData.append("apiVersion", apiVersion);
                formData.append("code", code);
 
                for(let fieldName of inputValues.keys())
@@ -142,8 +142,8 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
             setTestOutputValues(output.outputObject ?? {});
             if(output.exception)
             {
-               setTestException(output.exception.message)
-               console.log(`set test exception to ${output.exception.message}`);
+               const exceptionMessage = buildFullExceptionMessage(output.exception);
+               setTestException(exceptionMessage)
             }
 
             if(output.scriptLogLines && output.scriptLogLines.length)

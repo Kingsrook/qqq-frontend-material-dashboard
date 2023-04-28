@@ -165,11 +165,11 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       })();
    }
 
-   const editData = (contents: string) =>
+   const editData = (selectedVersionRecord: QRecord) =>
    {
       const editorProps = {} as ScriptEditorProps;
-      editorProps.title = (contents ? "Editing Code for Script: " : "Initializing Code for Script: ") + scriptRecord?.values?.get("name");
-      editorProps.contents = contents;
+      editorProps.title = (selectedVersionRecord ? "Editing Code for Script: " : "Initializing Code for Script: ") + scriptRecord?.values?.get("name");
+      editorProps.scriptRevisionRecord = selectedVersionRecord;
       editorProps.scriptId = scriptId;
       editorProps.tableName = associatedScriptTableName;
       editorProps.fieldName = associatedScriptFieldName;
@@ -244,33 +244,45 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                : <></>
          }
          {
-            versionRecordList?.map((version: any) => (
-               <React.Fragment key={version.values.get("id")}>
-                  <ListItem sx={{p: 1}} alignItems="flex-start" selected={selectedVersionRecord?.values?.get("id") == version.values.get("id")} onClick={(event) => selectVersion(version)}>
-                     <ListItemAvatar>
-                        <Avatar sx={{bgcolor: DeveloperModeUtils.revToColor("", scriptId, version.values.get("sequenceNo"))}}>{`${version.values.get("sequenceNo")}`}</Avatar>
-                     </ListItemAvatar>
-                     <ListItemText
-                        primaryTypographyProps={{fontSize: "1rem"}}
-                        secondaryTypographyProps={{fontSize: ".85rem"}}
-                        primary={
-                           <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}} title={version.values.get("commitMessage")}>
-                              {currentVersionId == version?.values?.get("id") && <Chip label="CURRENT" color="success" variant="outlined" size="small" sx={{mr: 1, fontSize: "0.75rem"}} />}
-                              {version.values.get("commitMessage")}
-                           </div>
-                        }
-                        secondary={
-                           <>
-                              {ValueUtils.formatDateTime(version.values.get("createDate"))}
-                              <br />
-                              {version.values.get("author")}
-                           </>
-                        }
-                     />
-                  </ListItem>
-                  <Divider sx={{my: 0.5}} variant="inset" component="li" />
-               </React.Fragment>
-            ))
+            versionRecordList?.map((version: any) =>
+            {
+               const timeAuthorLine = `${ValueUtils.formatDateTime(version.values.get("createDate"))} by ${version.values.get("author")}`;
+               const apiLine = `API: ${version.displayValues.get("apiName") ?? "None"} version ${version.displayValues.get("apiVersion") ?? "None"}`;
+
+               return (
+                  <React.Fragment key={version.values.get("id")}>
+                     <ListItem sx={{p: 1}} alignItems="flex-start" selected={selectedVersionRecord?.values?.get("id") == version.values.get("id")} onClick={(event) => selectVersion(version)}>
+                        <ListItemAvatar>
+                           <Avatar sx={{bgcolor: DeveloperModeUtils.revToColor("", scriptId, version.values.get("sequenceNo"))}}>{`${version.values.get("sequenceNo")}`}</Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                           primaryTypographyProps={{fontSize: "1rem"}}
+                           secondaryTypographyProps={{fontSize: ".85rem"}}
+                           primary={
+                              <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}} title={version.values.get("commitMessage")}>
+                                 {scriptRecord.values.get("currentScriptRevisionId") == version?.values?.get("id") && <Chip label="CURRENT" color="success" variant="outlined" size="small" sx={{mr: 1, fontSize: "0.75rem"}} />}
+                                 {version.values.get("commitMessage")}
+                              </div>
+                           }
+                           secondary={
+                              <>
+                                 <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}} title={timeAuthorLine}>
+                                    {timeAuthorLine}
+                                 </div>
+                                 {
+                                    (version.displayValues.get("apiName") || version.displayValues.get("apiVersion")) &&
+                                    <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}} title={apiLine}>
+                                       {apiLine}
+                                    </div>
+                                 }
+                              </>
+                           }
+                        />
+                     </ListItem>
+                     <Divider sx={{my: 0.5}} variant="inset" component="li" />
+                  </React.Fragment>
+               );
+            })
          }
       </List>;
    }
@@ -401,7 +413,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                                    : <></>
                                              }
                                              <CustomWidthTooltip title={editButtonTooltip}>
-                                                <Button sx={{py: 0}} onClick={() => editData(selectedVersionRecord?.values?.get("contents"))}>
+                                                <Button sx={{py: 0}} onClick={() => editData(selectedVersionRecord)}>
                                                    {editButtonText}
                                                 </Button>
                                              </CustomWidthTooltip>
@@ -459,7 +471,14 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
                                  <TabPanel index={2} value={selectedTab}>
                                     <Box sx={{height: "455px"}} px={2} pb={1}>
-                                       <ScriptTestForm scriptId={scriptId} scriptDefinition={testScriptDefinitionObject} tableName={associatedScriptTableName} fieldName={associatedScriptFieldName} recordId={associatedScriptRecordId} code={selectedVersionRecord?.values.get("contents")} />
+                                       <ScriptTestForm scriptId={scriptId}
+                                          scriptDefinition={testScriptDefinitionObject}
+                                          tableName={associatedScriptTableName}
+                                          fieldName={associatedScriptFieldName}
+                                          recordId={associatedScriptRecordId}
+                                          code={selectedVersionRecord?.values.get("contents")}
+                                          apiName={selectedVersionRecord?.values.get("apiName")}
+                                          apiVersion={selectedVersionRecord?.values.get("apiVersion")} />
                                     </Box>
                                  </TabPanel>
 
