@@ -72,6 +72,11 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
 
    if(firstRender)
    {
+      setFirstRender(false);
+   }
+
+   if(firstRender)
+   {
       scriptDefinition.testInputFields.forEach((field: QFieldMetaData) =>
       {
          testInputValues[field.name] = field.defaultValue ?? "";
@@ -108,6 +113,8 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
                /////////////////////////////////////////////////////////////////
                // associated record scripts - run this way (at least for now) //
                /////////////////////////////////////////////////////////////////
+               inputValues.set("apiName", apiName);
+               inputValues.set("apiVersion", apiVersion);
                output = await qController.testScript(tableName, recordId, fieldName, code, inputValues);
             }
             else
