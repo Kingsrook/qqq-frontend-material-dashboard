@@ -26,6 +26,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Collapse, TablePagination} from "@mui/material";
@@ -52,6 +53,7 @@ import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, G
 import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
 import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
+import {finance} from "faker";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
@@ -351,6 +353,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
          }
       });
+
+      filterModel.items.forEach((item) =>
+      {
+         // todo - some test if there is a value?  see FilterUtils.buildQFilterFromGridFilter (re-use if needed)
+
+         const fieldName = item.columnField;
+         if(fieldName.indexOf(".") > -1)
+         {
+            visibleJoinTables.add(fieldName.split(".")[0]);
+         }
+      });
+
       return (visibleJoinTables);
    };
 
@@ -403,7 +417,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
 
          let tooltipHTML = <div>
-            You are viewing results from the {tableMetaData.label} table joined with the {joinLabelsString} table{joinLabels.length == 1 ? "" : "s"}
+            You are viewing results from the {tableMetaData.label} table joined with {joinLabels.length} other table{joinLabels.length == 1 ? "" : "s"}:
+            <ul style={{marginLeft: "1rem"}}>
+               {joinLabels.map((name) => <li key={name}>{name}</li>)}
+            </ul>
          </div>
 
          return(

@@ -59,12 +59,15 @@ export default class DataGridUtils
             {
                const join = tableMetaData.exposedJoins[i];
 
-               const fields = [ ...join.joinTable.fields.values() ];
-               fields.forEach((field) =>
+               if(join?.joinTable?.fields?.values())
                {
-                  let fieldName = join.joinTable.name + "." + field.name;
-                  row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName);
-               });
+                  const fields = [...join.joinTable.fields.values()];
+                  fields.forEach((field) =>
+                  {
+                     let fieldName = join.joinTable.name + "." + field.name;
+                     row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName);
+                  });
+               }
             }
          }
 
@@ -107,7 +110,10 @@ export default class DataGridUtils
                joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
             }
 
-            this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, join.joinTable.name + ".", join.label + ": ");
+            if(join?.joinTable?.fields?.values())
+            {
+               this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, join.joinTable.name + ".", join.label + ": ");
+            }
          }
       }
 
