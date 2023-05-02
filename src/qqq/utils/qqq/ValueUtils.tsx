@@ -69,10 +69,12 @@ class ValueUtils
     ** When you have a field, and a record - call this method to get a string or
     ** element back to display the field's value.
     *******************************************************************************/
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view"): string | JSX.Element | JSX.Element[]
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view", overrideFieldName?: string): string | JSX.Element | JSX.Element[]
    {
-      const displayValue = record.displayValues ? record.displayValues.get(field.name) : undefined;
-      const rawValue = record.values ? record.values.get(field.name) : undefined;
+      const fieldName = overrideFieldName ?? field.name;
+
+      const displayValue = record.displayValues ? record.displayValues.get(fieldName) : undefined;
+      const rawValue = record.values ? record.values.get(fieldName) : undefined;
 
       return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage);
    }

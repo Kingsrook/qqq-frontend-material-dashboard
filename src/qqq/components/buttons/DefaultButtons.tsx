@@ -50,18 +50,20 @@ export function QCreateNewButton({tablePath}: QCreateNewButtonProps): JSX.Elemen
 interface QSaveButtonProps
 {
    label?: string;
+   iconName?: string;
    onClickHandler?: any,
    disabled: boolean
 }
 QSaveButton.defaultProps = {
-   label: "Save"
+   label: "Save",
+   iconName: "save"
 };
 
-export function QSaveButton({label, onClickHandler, disabled}: QSaveButtonProps): JSX.Element
+export function QSaveButton({label, iconName, onClickHandler, disabled}: QSaveButtonProps): JSX.Element
 {
    return (
       <Box ml={3} width={standardWidth}>
-         <MDButton type="submit" variant="gradient" color="info" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>save</Icon>} disabled={disabled}>
+         <MDButton type="submit" variant="gradient" color="info" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>{iconName}</Icon>} disabled={disabled}>
             {label}
          </MDButton>
       </Box>

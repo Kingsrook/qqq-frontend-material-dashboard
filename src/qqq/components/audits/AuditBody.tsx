@@ -194,7 +194,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
             new QFilterOrderBy("timestamp", sortDirection),
             new QFilterOrderBy("id", sortDirection),
             new QFilterOrderBy("auditDetail.id", true)
-         ]);
+         ], "AND", 0, limit);
 
          ///////////////////////////////
          // fetch audits in try-catch //
@@ -202,7 +202,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          let audits = [] as QRecord[]
          try
          {
-            audits = await qController.query("audit", filter, limit, 0, [new QueryJoin("auditDetail", true, "LEFT")]);
+            audits = await qController.query("audit", filter, [new QueryJoin("auditDetail", true, "LEFT")]);
             setAudits(audits);
          }
          catch(e)
@@ -222,8 +222,8 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          // if we fetched the limit
          if (audits.length == limit)
          {
-            const count = await qController.count("audit", filter);
-            setTotal(count);
+            const [count, distinctCount] = await qController.count("audit", filter, null, true); // todo validate distinct working here!
+            setTotal(distinctCount);
          }
 
          //////////////////////////////////////////////////////////////////////////////////////////////////////////

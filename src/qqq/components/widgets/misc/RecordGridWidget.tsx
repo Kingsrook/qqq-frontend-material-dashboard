@@ -60,13 +60,13 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          }
 
          const tableMetaData = new QTableMetaData(data.childTableMetaData);
-         const {rows, columnsToRender} = DataGridUtils.makeRows(records, tableMetaData);
+         const rows = DataGridUtils.makeRows(records, tableMetaData);
 
          /////////////////////////////////////////////////////////////////////////////////
          // note - tablePath may be null, if the user doesn't have access to the table. //
          /////////////////////////////////////////////////////////////////////////////////
          const childTablePath = data.tablePath ? data.tablePath + (data.tablePath.endsWith("/") ? "" : "/") : data.tablePath;
-         const columns = DataGridUtils.setupGridColumns(tableMetaData, columnsToRender, childTablePath);
+         const columns = DataGridUtils.setupGridColumns(tableMetaData, childTablePath, null, "bySection");
 
          ////////////////////////////////////////////////////////////////
          // do not not show the foreign-key column of the parent table //
