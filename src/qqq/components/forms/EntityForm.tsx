@@ -26,9 +26,8 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert} from "@mui/material";
+import {Alert, Box} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
@@ -80,6 +79,7 @@ function EntityForm(props: Props): JSX.Element
    const [nonT1Sections, setNonT1Sections] = useState([] as QTableSection[]);
 
    const [alertContent, setAlertContent] = useState("");
+   const [warningContent, setWarningContent] = useState("");
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [formValues, setFormValues] = useState({} as { [key: string]: string });
@@ -424,7 +424,16 @@ function EntityForm(props: Props): JSX.Element
                {
                   console.log("Caught:");
                   console.log(error);
-                  setAlertContent(error.message);
+
+                  if(error.message.toLowerCase().startsWith("warning"))
+                  {
+                     const path = `${location.pathname.replace(/\/edit$/, "")}?updateSuccess=true&warning=${encodeURIComponent(error.message)}`;
+                     navigate(path);
+                  }
+                  else
+                  {
+                     setAlertContent(error.message);
+                  }
                });
          }
          else
@@ -445,7 +454,15 @@ function EntityForm(props: Props): JSX.Element
                })
                .catch((error) =>
                {
-                  setAlertContent(error.message);
+                  if(error.message.toLowerCase().startsWith("warning"))
+                  {
+                     const path = `${location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField))}?createSuccess=true&warning=${encodeURIComponent(error.message)}`;
+                     navigate(path);
+                  }
+                  else
+                  {
+                     setAlertContent(error.message);
+                  }
                });
          }
       })();
@@ -483,6 +500,11 @@ function EntityForm(props: Props): JSX.Element
                   {alertContent ? (
                      <Box mb={3}>
                         <Alert severity="error">{alertContent}</Alert>
+                     </Box>
+                  ) : ("")}
+                  {warningContent ? (
+                     <Box mb={3}>
+                        <Alert severity="warning">{warningContent}</Alert>
                      </Box>
                   ) : ("")}
                </Grid>
