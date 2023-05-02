@@ -127,7 +127,7 @@ function AppHome({app}: Props): JSX.Element
             let countResult = null;
             if(tableMetaData.capabilities.has(Capability.TABLE_COUNT) && tableMetaData.readPermission)
             {
-               countResult = await qController.count(table.name);
+               [countResult] = await qController.count(table.name);
 
                if (countResult !== null && countResult !== undefined)
                {

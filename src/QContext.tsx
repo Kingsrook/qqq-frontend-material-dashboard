@@ -24,8 +24,8 @@ import {createContext} from "react";
 
 interface QContext
 {
-   pageHeader: string;
-   setPageHeader?: (header: string) => void;
+   pageHeader: string | JSX.Element;
+   setPageHeader?: (header: string | JSX.Element) => void;
    accentColor: string;
    setAccentColor?: (header: string) => void;
 }

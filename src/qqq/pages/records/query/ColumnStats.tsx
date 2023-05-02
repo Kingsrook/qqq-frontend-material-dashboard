@@ -126,8 +126,8 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
             fakeTableMetaData.sections = [] as QTableSection[];
             fakeTableMetaData.sections.push(new QTableSection({fieldNames: [fieldMetaData.name, "count"]}));
 
-            const {rows, columnsToRender} = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
-            const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, columnsToRender);
+            const rows = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
+            const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, null, null, "bySection");
             columns.forEach((c) =>
             {
                c.width = 200;

@@ -549,7 +549,7 @@ export default function App()
       },
    );
 
-   const [pageHeader, setPageHeader] = useState("");
+   const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
    return (
 
@@ -557,7 +557,7 @@ export default function App()
          <QContext.Provider value={{
             pageHeader: pageHeader,
             accentColor: accentColor,
-            setPageHeader: (header: string) => setPageHeader(header),
+            setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor)
          }}>
             <ThemeProvider theme={theme}>

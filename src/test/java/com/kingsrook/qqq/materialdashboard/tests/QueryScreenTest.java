@@ -128,7 +128,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       String expectedFilterContents1 = """
          {"fieldName":"firstName","operator":"CONTAINS","values":["Jam"]}""";
       String expectedFilterContents2 = """
-         "booleanOperator":"OR"}""";
+         "booleanOperator":"OR\"""";
 
       qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents0);
       qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents1);
