@@ -140,11 +140,12 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
             // onPinnedColumnsChange={handlePinnedColumnsChange}
             // pagination
             // paginationMode="server"
+            // rowsPerPageOptions={[20]}
             // sortingMode="server"
             // filterMode="server"
             // page={pageNumber}
             // checkboxSelection
-            // rowCount={totalRecords === null ? 0 : totalRecords}
+            rowCount={data && data.totalRows}
             // onPageSizeChange={handleRowsPerPageChange}
             // onStateChange={handleStateChange}
             // density={density}
