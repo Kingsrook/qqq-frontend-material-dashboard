@@ -386,3 +386,9 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    font-size: 0.875rem;
 }
+
+.MuiGrid-root > .MuiBox-root > .material-icons-round,
+.MuiBox-root > .MuiBox-root > .material-icons-round
+{
+   font-size: 2rem !important;
+}

@@ -25,10 +25,11 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs"; // https://github.com/datejs/Datejs
-import {Box, Chip, Icon} from "@mui/material";
+import {Box, Chip, ClickAwayListener, Icon} from "@mui/material";
 import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
-import React, {Fragment, useState} from "react";
+import React, {Fragment, useReducer, useState} from "react";
 import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
 import Client from "qqq/utils/qqq/Client";
@@ -76,6 +77,7 @@ class ValueUtils
 
       return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage);
    }
+
 
    /*******************************************************************************
     ** When you have a field and a value (either just a raw value, or a raw and
@@ -128,6 +130,11 @@ class ValueUtils
          {
             return (<Link target={adornment.getValue("target") ?? "_self"} to={href} onClick={(e) => e.stopPropagation()}>{displayValue ?? rawValue}</Link>);
          }
+      }
+
+      if (field.hasAdornment(AdornmentType.REVEAL))
+      {
+         return (<RevealComponent fieldName={field.name} value={displayValue} usage={usage} />);
       }
 
       if (field.hasAdornment(AdornmentType.RENDER_HTML))
@@ -466,6 +473,68 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
             height={isExpanded ? "80vh" : code ? "200px" : "50px"}
          />
       </>);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// little private component here, for rendering an AceEditor with some buttons/controls/state //
+////////////////////////////////////////////////////////////////////////////////////////////////
+function RevealComponent({fieldName, value, usage}: {fieldName: string, value: string, usage: string;}): JSX.Element
+{
+   const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const [tooltipOpen, setToolTipOpen] = React.useState(false);
+   const [displayValue, setDisplayValue] = React.useState(value.replace(/./g, "*"));
+
+   const handleTooltipClose = () =>
+   {
+      setToolTipOpen(false);
+   };
+
+   const handleTooltipOpen = () =>
+   {
+      setToolTipOpen(true);
+   };
+
+   const handleRevealIconClick = (fieldName: string) =>
+   {
+      const displayValue = (adornmentFieldsMap.get(fieldName)) ? value.replace(/./g, "*") : value;
+      setDisplayValue(displayValue);
+      adornmentFieldsMap.set(fieldName, !adornmentFieldsMap.get(fieldName));
+      setAdornmentFieldsMap(adornmentFieldsMap);
+      forceUpdate();
+   };
+
+   const copyToClipboard = (value: string) =>
+   {
+      navigator.clipboard.writeText(value);
+      setToolTipOpen(true);
+   };
+
+   return (
+      usage === "view" && adornmentFieldsMap.get(fieldName) === true ? (
+         <Box>
+            <Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_on</Icon>
+            {displayValue}
+            <ClickAwayListener onClickAway={handleTooltipClose}>
+               <Tooltip
+                  PopperProps={{
+                     disablePortal: true,
+                  }}
+                  onClose={handleTooltipClose}
+                  open={tooltipOpen}
+                  disableFocusListener
+                  disableHoverListener
+                  disableTouchListener
+                  title="Copied To Clipboard"
+               >
+                  <Icon onClick={() => copyToClipboard(value)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginLeft: "5px"}}>copy</Icon>
+               </Tooltip>
+            </ClickAwayListener>
+         </Box>
+      ):(
+         <Box><Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
+      )
+   );
 }
 
 
