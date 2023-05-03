@@ -216,6 +216,7 @@ function TableDeveloperView({table}: Props): JSX.Element
                                  schema-description-expanded={true}
                                  css-file={"/api/rapi-doc.css"}
                                  css-classes={"qqq-rapi-doc"}
+                                 show-curl-before-try={true}
                               ></RapiDocReact>
                            }
                         </Card>
