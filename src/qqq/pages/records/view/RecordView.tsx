@@ -26,9 +26,8 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Typography} from "@mui/material";
+import {Alert, Box, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -43,7 +42,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
-import React, {useContext, useEffect, useReducer, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import AuditBody from "qqq/components/audits/AuditBody";
@@ -86,6 +85,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
+   const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null);
    const [metaData, setMetaData] = useState(null as QInstance);
@@ -99,10 +99,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [actionsMenu, setActionsMenu] = useState(null);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [successMessage, setSuccessMessage] = useState(null as string);
+   const [warningMessage, setWarningMessage] = useState(null as string);
    const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
-   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const [reloadCounter, setReloadCounter] = useState(0);
 
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
@@ -368,8 +369,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                   <Box key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
                      {
                         section.fieldNames.map((fieldName: string) => (
-                           <Box  key={fieldName} flexDirection="row" pr={2}>
-                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
+                           <Box display="flex" key={fieldName} flexDirection="row" pb={2} pr={2}>
+                              <Typography sx={{display: "flex"}} variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
                                  {tableMetaData.fields.get(fieldName).label}:
                                  <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
                               </Typography>
@@ -426,8 +427,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          {
             setSuccessMessage(`${tableMetaData.label} successfully ${searchParams.get("createSuccess") ? "created" : "updated"}`);
          }
-
-         forceUpdate();
+         if (searchParams.get("warning"))
+         {
+            setWarningMessage(searchParams.get("warning"));
+         }
       })();
    }
 
@@ -454,6 +457,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             });
       })();
    };
+
+   function handleRevealIconClick(fieldName: string)
+   {
+      adornmentFieldsMap.set(fieldName, !adornmentFieldsMap.get(fieldName));
+      setAdornmentFieldsMap(adornmentFieldsMap);
+      setReloadCounter(reloadCounter + 1);
+   }
 
    function processClicked(process: QProcessMetaData)
    {
@@ -643,6 +653,16 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                        setSuccessMessage(null);
                                     }}>
                                        {successMessage}
+                                    </Alert>
+                                    : ("")
+                              }
+                              {
+                                 warningMessage ?
+                                    <Alert color="warning" sx={{mb: 3}} onClose={() =>
+                                    {
+                                       setWarningMessage(null);
+                                    }}>
+                                       {warningMessage}
                                     </Alert>
                                     : ("")
                               }
