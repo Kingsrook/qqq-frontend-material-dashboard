@@ -77,6 +77,7 @@ const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 const PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT = "qqq.pinnedColumns";
+const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 
 interface Props
@@ -112,6 +113,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const rowsPerPageLocalStorageKey = `${ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const pinnedColumnsLocalStorageKey = `${PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const seenJoinTablesLocalStorageKey = `${SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
@@ -120,6 +122,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    let defaultRowsPerPage = 10;
    let defaultDensity = "standard" as GridDensity;
    let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
+   let seenJoinTables: {[tableName: string]: boolean} = {};
 
    ////////////////////////////////////////////////////////////////////////////////////
    // set the to be not per table (do as above if we want per table) at a later port //
@@ -147,11 +150,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       defaultDensity = JSON.parse(localStorage.getItem(densityLocalStorageKey));
    }
+   if (localStorage.getItem(seenJoinTablesLocalStorageKey))
+   {
+      seenJoinTables = JSON.parse(localStorage.getItem(seenJoinTablesLocalStorageKey));
+   }
 
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
-   const [didDefaultVisibilityModelComeFromLocalStorage, setDidDefaultVisibilityModelComeFromLocalStorage] = useState(didDefaultVisibilityComeFromLocalStorage);
+   const [shouldSetAllNewJoinFieldsToHidden, setShouldSetAllNewJoinFieldsToHidden] = useState(!didDefaultVisibilityComeFromLocalStorage)
    const [visibleJoinTables, setVisibleJoinTables] = useState(new Set<string>());
    const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
    const [density, setDensity] = useState(defaultDensity);
@@ -448,24 +455,43 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          const visibleJoinTables = getVisibleJoinTables();
          setPageHeader(getPageHeader(tableMetaData, visibleJoinTables));
 
-         if (!didDefaultVisibilityModelComeFromLocalStorage)
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if there's an exposedJoin that we haven't seen before, we want to make sure that all of its fields //
+         // don't immediately become visible to the user, so, turn them all off!                               //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (tableMetaData?.exposedJoins)
          {
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // if we didn't load the column visibility from local storage, then by default, it'll be an empty array, and all fields will be visible. //
-            // but - if the table has join tables, we don't want them on by default, so, flip them off!                                              //
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if (tableMetaData?.exposedJoins)
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
             {
-               for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+               const join = tableMetaData.exposedJoins[i];
+               const joinTableName = join.joinTable.name;
+               if(!seenJoinTables[joinTableName] || shouldSetAllNewJoinFieldsToHidden)
                {
-                  const join = tableMetaData.exposedJoins[i];
                   for (let fieldName of join.joinTable.fields.keys())
                   {
                      columnVisibilityModel[`${join.joinTable.name}.${fieldName}`] = false;
                   }
                }
             }
-            setColumnVisibilityModel(columnVisibilityModel);
+            handleColumnVisibilityChange(columnVisibilityModel);
+            setShouldSetAllNewJoinFieldsToHidden(false);
+         }
+
+         setColumnVisibilityModel(columnVisibilityModel);
+
+         ///////////////////////////////////////////////////////////////////////////////////////////////////
+         // store the set of join tables that the user has "seen" (e.g, have been in the table meta data) //
+         // this is part of the turning-off of new joins seen above                                       //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////
+         if(tableMetaData?.exposedJoins)
+         {
+            const newSeenJoins: {[tableName: string]: boolean} = {};
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+            {
+               const join = tableMetaData.exposedJoins[i];
+               newSeenJoins[join.joinTable.name] = true;
+            }
+            localStorage.setItem(seenJoinTablesLocalStorageKey, JSON.stringify(newSeenJoins));
          }
 
          ////////////////////////////////////////////////////////////////////////////////////////////////
