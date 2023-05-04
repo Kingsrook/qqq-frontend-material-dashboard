@@ -294,13 +294,8 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          //////////////////////////////////////////////////////////////////
          // we don't want this job to go async, so, pass a large timeout //
          //////////////////////////////////////////////////////////////////
-         formData.append("_qStepTimeoutMillis", 60 * 1000);
-
-         const formDataHeaders = {
-            "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-         };
-
-         const processResult = await qController.processInit(processName, formData, formDataHeaders);
+         formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
+         const processResult = await qController.processInit(processName, formData, qController.defaultMultipartFormDataHeaders());
          if (processResult instanceof QJobError)
          {
             const jobError = processResult as QJobError;
@@ -346,7 +341,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          onClose={closeSavedFiltersMenu}
          keepMounted
       >
-         <MenuItem sx={{width: "300px"}}><b>Filter Actions</b></MenuItem>
+         <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>Filter Actions</b></MenuItem>
          {
             hasStorePermission &&
             <MenuItem onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
@@ -382,7 +377,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
             </MenuItem>
          }
          <Divider/>
-         <MenuItem><b>Your Filters</b></MenuItem>
+         <MenuItem disabled style={{"opacity": "initial"}}><b>Your Filters</b></MenuItem>
          {
             savedFilters && savedFilters.length > 0 ? (
                savedFilters.map((record: QRecord, index: number) =>
@@ -413,7 +408,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                               {currentSavedFilter.values.get("label")}
                               {
                                  filterIsModified && (
-                                    <Tooltip sx={{cursor: "pointer"}} title={"The current filter has been modified, click \"Save...\" to save the changes."}>
+                                    <Tooltip sx={{cursor: "pointer"}} title={"The current filter has been modified. Click \"Save...\" to save the changes."}>
                                        <FiberManualRecord sx={{color: "orange", paddingLeft: "2px", paddingTop: "4px"}} />
                                     </Tooltip>
                                  )
@@ -430,6 +425,13 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                   onClose={handleSaveFilterPopupClose}
                   aria-labelledby="alert-dialog-title"
                   aria-describedby="alert-dialog-description"
+                  onKeyPress={(e) =>
+                  {
+                     if (e.key == "Enter")
+                     {
+                        handleFilterDialogButtonOnClick();
+                     }
+                  }}
                >
                   {
                      currentSavedFilter ? (
@@ -479,7 +481,6 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
                         ):(
                            isDeleteFilter ? (
                               <Box>Are you sure you want to delete the filter {`'${currentSavedFilter?.values.get("label")}'`}?</Box>
-
                            ):(
                               <Box>Are you sure you want to update the filter {`'${currentSavedFilter?.values.get("label")}'`} with the current filter criteria?</Box>
                            )

@@ -360,7 +360,7 @@ class FilterUtils
       let defaultFilter = {items: []} as GridFilterModel;
       let defaultSort = [] as GridSortItem[];
 
-      if (tableMetaData.fields !== undefined)
+      if (tableMetaData && tableMetaData.fields !== undefined)
       {
          if (filterString != null || (searchParams && searchParams.has("filter")))
          {
@@ -376,7 +376,33 @@ class FilterUtils
                for (let i = 0; i < qQueryFilter?.criteria?.length; i++)
                {
                   const criteria = qQueryFilter.criteria[i];
-                  const field = tableMetaData.fields.get(criteria.fieldName);
+                  let fieldTable = tableMetaData;
+                  let field = null;
+                  if (criteria.fieldName.indexOf(".") > -1)
+                  {
+                     const nameParts = criteria.fieldName.split(".", 2);
+                     for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
+                     {
+                        const joinTable = tableMetaData.exposedJoins[i].joinTable;
+                        if (joinTable.name == nameParts[0])
+                        {
+                           fieldTable = joinTable;
+                           field = joinTable.fields.get(nameParts[1]);
+                           break;
+                        }
+                     }
+                  }
+                  else
+                  {
+                     field = tableMetaData.fields.get(criteria.fieldName);
+                  }
+
+                  if (field == null)
+                  {
+                     console.log("Couldn't find field for filter: " + criteria.fieldName);
+                     continue;
+                  }
+
                   let values = criteria.values;
                   if (field.possibleValueSourceName)
                   {
@@ -388,7 +414,7 @@ class FilterUtils
                      //////////////////////////////////////////////////////////////////////////////////
                      if (values && values.length > 0)
                      {
-                        values = await qController.possibleValues(tableMetaData.name, null, field.name, "", values);
+                        values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
                      }
 
                      ////////////////////////////////////////////

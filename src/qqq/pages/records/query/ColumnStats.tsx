@@ -44,6 +44,7 @@ interface Props
 {
    tableMetaData: QTableMetaData;
    fieldMetaData: QFieldMetaData;
+   fieldTableName: string;
    filter: QQueryFilter;
 }
 
@@ -52,7 +53,7 @@ ColumnStats.defaultProps = {
 
 const qController = Client.getInstance();
 
-function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
+function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Props): JSX.Element
 {
    const [statusString, setStatusString] = useState("Calculating statistics...");
    const [loading, setLoading] = useState(true);
@@ -73,9 +74,11 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 
       (async () =>
       {
+         const fullFieldName = (fieldTableName == tableMetaData.name ? "" : `${fieldTableName}.`) + fieldMetaData.name;
+
          const formData = new FormData();
          formData.append("tableName", tableMetaData.name);
-         formData.append("fieldName", fieldMetaData.name);
+         formData.append("fieldName", fullFieldName);
          formData.append("filterJSON", JSON.stringify(filter));
          if(orderBy)
          {
@@ -115,7 +118,16 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
             const valueCounts = [] as QRecord[];
             for(let i = 0; i < result.values.valueCounts.length; i++)
             {
-               valueCounts.push(new QRecord(result.values.valueCounts[i]));
+               let valueRecord = new QRecord(result.values.valueCounts[i]);
+
+               ////////////////////////////////////////////////////////////////////////////////////////////////
+               // for a field from a join, the backend will have sent it as table.field (e.g., lineItem.sku) //
+               // but we'll have a "better time" in the rest of this code if we have it as just the field    //
+               // name, so, copy it there...                                                                 //
+               ////////////////////////////////////////////////////////////////////////////////////////////////
+               valueRecord.displayValues.set(fieldMetaData.name, valueRecord.displayValues.get(fullFieldName));
+               valueRecord.values.set(fieldMetaData.name, valueRecord.values.get(fullFieldName));
+               valueCounts.push(valueRecord);
             }
             setValueCounts(valueCounts);
 
@@ -128,6 +140,7 @@ function ColumnStats({tableMetaData, fieldMetaData, filter}: Props): JSX.Element
 
             const rows = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, null, null, "bySection");
+
             columns.forEach((c) =>
             {
                c.width = 200;

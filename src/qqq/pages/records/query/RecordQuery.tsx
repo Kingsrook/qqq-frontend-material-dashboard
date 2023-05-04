@@ -19,14 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Box, Collapse, TablePagination} from "@mui/material";
@@ -194,6 +195,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
    const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string);
+   const [columnStatsField, setColumnStatsField] = useState(null as QFieldMetaData);
+   const [columnStatsFieldTableName, setColumnStatsFieldTableName] = useState(null as string)
    const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter);
 
    const instance = useRef({timer: null});
@@ -280,17 +283,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             {
                const formData = new FormData();
                formData.append("id", currentSavedFilterId);
-
-               //////////////////////////////////////////////////////////////////
-               // we don't want this job to go async, so, pass a large timeout //
-               //////////////////////////////////////////////////////////////////
-               formData.append("_qStepTimeoutMillis", 60 * 1000);
-
-               const formDataHeaders = {
-                  "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-               };
-
-               const processResult = await qController.processInit("querySavedFilter", formData, formDataHeaders);
+               formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
+               const processResult = await qController.processInit("querySavedFilter", formData, qController.defaultMultipartFormDataHeaders());
                if (processResult instanceof QJobError)
                {
                   const jobError = processResult as QJobError;
@@ -1065,6 +1059,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
 
       setColumnStatsFieldName(null);
+      setColumnStatsFieldTableName(null);
+      setColumnStatsField(null);
    };
 
    const closeModalProcess = (event: object, reason: string) =>
@@ -1140,8 +1136,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          that match your query, because you have included fields from other tables which may have
          more than one record associated with each {tableMetaData?.label}.
       </>
-      let distinctPart = isJoinMany(tableMetaData, getVisibleJoinTables()) ? (<Box display="inline" textAlign="right">
-         &nbsp;({distinctRecords} distinct<CustomWidthTooltip title={tooltipHTML}>
+      let distinctPart = isJoinMany(tableMetaData, getVisibleJoinTables()) ? (<Box display="inline" component="span" textAlign="right">
+         &nbsp;({safeToLocaleString(distinctRecords)} distinct<CustomWidthTooltip title={tooltipHTML}>
             <IconButton sx={{p: 0, pl: 0.25, mb: 0.25}}><Icon fontSize="small" sx={{fontSize: "1.125rem !important", color: "#9f9f9f"}}>info_outlined</Icon></IconButton>
          </CustomWidthTooltip>
          )
@@ -1170,14 +1166,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             return (loading ? "Counting..." : "No rows");
          }
 
-         return <>
+         return <span>
             Showing {from.toLocaleString()} to {to.toLocaleString()} of
             {
                count == -1 ?
                   <>more than {to.toLocaleString()}</>
                   : <> {count.toLocaleString()}{distinctPart}</>
             }
-         </>;
+         </span>;
       }
       else
       {
@@ -1215,6 +1211,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       if (selectedSavedFilterId != null)
       {
          const qRecord = await fetchSavedFilter(selectedSavedFilterId);
+         setCurrentSavedFilter(qRecord); // this fixed initial load not showing filter name
+
          const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
          handleFilterChange(models.filter);
          handleSortChange(models.sort);
@@ -1233,17 +1231,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       let qRecord = null;
       const formData = new FormData();
       formData.append("id", filterId);
-
-      //////////////////////////////////////////////////////////////////
-      // we don't want this job to go async, so, pass a large timeout //
-      //////////////////////////////////////////////////////////////////
-      formData.append("_qStepTimeoutMillis", 60 * 1000);
-
-      const formDataHeaders = {
-         "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-      };
-
-      const processResult = await qController.processInit("querySavedFilter", formData, formDataHeaders);
+      formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
+      const processResult = await qController.processInit("querySavedFilter", formData, qController.defaultMultipartFormDataHeaders());
       if (processResult instanceof QJobError)
       {
          const jobError = processResult as QJobError;
@@ -1293,6 +1282,25 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
       setColumnStatsFieldName(column.field);
+
+      if(column.field.indexOf(".") > -1)
+      {
+         const nameParts = column.field.split(".", 2);
+         for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
+         {
+            const join = tableMetaData?.exposedJoins[i];
+            if(join?.joinTable.name == nameParts[0])
+            {
+               setColumnStatsField(join.joinTable.fields.get(nameParts[1]));
+               setColumnStatsFieldTableName(nameParts[0]);
+            }
+         }
+      }
+      else
+      {
+         setColumnStatsField(tableMetaData.fields.get(column.field));
+         setColumnStatsFieldTableName(tableMetaData.name);
+      }
    };
 
    const CustomColumnMenu = forwardRef<HTMLUListElement, GridColumnMenuProps>(
@@ -1439,6 +1447,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    );
 
+   const safeToLocaleString = (n: Number): string =>
+   {
+      if(n != null && n != undefined)
+      {
+         return (n.toLocaleString());
+      }
+      return ("");
+   }
+
    function CustomToolbar()
    {
       const handleMouseDown: GridEventListener<"cellMouseDown"> = (
@@ -1472,15 +1489,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       });
 
       const joinIsMany = isJoinMany(tableMetaData, visibleJoinTables);
-
-      const safeToLocaleString = (n: Number): string =>
-      {
-         if(n != null && n != undefined)
-         {
-            return (n.toLocaleString());
-         }
-         return ("");
-      }
 
       const selectionMenuOptions: string[] = [];
       selectionMenuOptions.push(`This page (${safeToLocaleString(distinctRecordsOnPageCount)} ${joinIsMany ? "distinct " : ""}record${distinctRecordsOnPageCount == 1 ? "" : "s"})`);
@@ -1552,9 +1560,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   Refresh
                </Button>
             </div>
-            <GridToolbarColumnsButton nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
+            {/* @ts-ignore */}
+            <GridToolbarColumnsButton nonce={undefined} />
             <div style={{position: "relative"}}>
-               <GridToolbarFilterButton nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
+               {/* @ts-ignore */}
+               <GridToolbarFilterButton nonce={undefined} />
                {
                   hasValidFilters && (
 
@@ -1567,7 +1577,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                            if (e.key == "Enter")
                            {
                               setShowClearFiltersWarning(false)
-                              navigate(metaData.getTablePathByName(tableName));
                               handleFilterChange({items: []} as GridFilterModel);
                            }
                         }}>
@@ -1580,7 +1589,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                               <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() =>
                               {
                                  setShowClearFiltersWarning(false);
-                                 navigate(metaData.getTablePathByName(tableName));
                                  handleFilterChange({items: []} as GridFilterModel);
                               }}/>
                            </DialogActions>
@@ -1588,8 +1596,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      </div>
                   )
                }
-               <GridToolbarDensitySelector nonce={undefined} onResize={undefined} onResizeCapture={undefined} />
-               <GridToolbarExportContainer nonce={undefined} onResize={undefined} onResizeCapture={undefined}>
+               {/* @ts-ignore */}
+               <GridToolbarDensitySelector nonce={undefined} />
+               {/* @ts-ignore */}
+               <GridToolbarExportContainer nonce={undefined}>
                   <ExportMenuItem format="csv" />
                   <ExportMenuItem format="xlsx" />
                   <ExportMenuItem format="json" />
@@ -1671,22 +1681,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (menuItems.length > 0)
       {
-         menuItems.push(<Divider />);
+         menuItems.push(<Divider key="divider" />);
       }
    };
 
    const menuItems: JSX.Element[] = [];
    if (table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
    {
-      menuItems.push(<MenuItem onClick={bulkLoadClicked}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
+      menuItems.push(<MenuItem key="bulkLoad" onClick={bulkLoadClicked}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
    }
    if (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
    {
-      menuItems.push(<MenuItem onClick={bulkEditClicked}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
+      menuItems.push(<MenuItem key="bulkEdit" onClick={bulkEditClicked}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
    }
    if (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
    {
-      menuItems.push(<MenuItem onClick={bulkDeleteClicked}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
+      menuItems.push(<MenuItem key="bulkDelete" onClick={bulkDeleteClicked}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
    }
 
    const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
@@ -1696,7 +1706,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    }
 
-   menuItems.push(<MenuItem onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
 
    if (tableProcesses && tableProcesses.length)
    {
@@ -1711,7 +1721,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    if (menuItems.length === 0)
    {
-      menuItems.push(<MenuItem disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>);
+      menuItems.push(<MenuItem key="notAvaialableNow" disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>);
    }
 
    const renderActionsMenu = (
@@ -1898,7 +1908,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
                         <Card sx={{my: 5, mx: "auto", pb: 0, maxWidth: "1024px"}}>
                            <Box component="div">
-                              <ColumnStats tableMetaData={tableMetaData} fieldMetaData={tableMetaData?.fields.get(columnStatsFieldName)} filter={filterForColumnStats} />
+                              <ColumnStats tableMetaData={tableMetaData} fieldMetaData={columnStatsField} fieldTableName={columnStatsFieldTableName} filter={filterForColumnStats} />
                               <Box p={3} display="flex" flexDirection="row" justifyContent="flex-end">
                                  <QCancelButton label="Close" onClickHandler={() => closeColumnStats(null, null)} disabled={false} />
                               </Box>
