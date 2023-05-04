@@ -456,7 +456,7 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
    };
 
    return (
-      <>
+      <Box component="span">
          {mode == "json" && code && <Button onClick={() => formatJson()}>{isFormatted ? "Reset Format" : "Format JSON"}</Button>}
          {code && <Button onClick={() => toggleSize()}>{isExpanded ? "Collapse" : "Expand"}</Button>}
          {errorMessage}
@@ -471,10 +471,11 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
             readOnly
             highlightActiveLine={false}
             width="100%"
+            style={{border: "1px solid gray", marginBottom: "1rem"}}
             showPrintMargin={false}
             height={isExpanded ? "80vh" : code ? "200px" : "50px"}
          />
-      </>);
+      </Box>);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -514,7 +515,7 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
 
    return (
       usage === "view" && adornmentFieldsMap.get(fieldName) === true ? (
-         <Box>
+         <Box component="span">
             <Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_on</Icon>
             {displayValue}
             <ClickAwayListener onClickAway={handleTooltipClose}>
@@ -534,7 +535,7 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
             </ClickAwayListener>
          </Box>
       ):(
-         <Box><Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
+         <Box component="span"><Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
       )
    );
 }

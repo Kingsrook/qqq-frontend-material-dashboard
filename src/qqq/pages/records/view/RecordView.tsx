@@ -369,8 +369,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                   <Box key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
                      {
                         section.fieldNames.map((fieldName: string) => (
-                           <Box display="flex" key={fieldName} flexDirection="row" pb={2} pr={2}>
-                              <Typography sx={{display: "flex"}} variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
+                           <Box  key={fieldName} flexDirection="row" pr={2}>
+                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
                                  {tableMetaData.fields.get(fieldName).label}:
                                  <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
                               </Typography>
