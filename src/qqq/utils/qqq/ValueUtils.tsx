@@ -456,7 +456,7 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
    };
 
    return (
-      <>
+      <Box component="span">
          {mode == "json" && code && <Button onClick={() => formatJson()}>{isFormatted ? "Reset Format" : "Format JSON"}</Button>}
          {code && <Button onClick={() => toggleSize()}>{isExpanded ? "Collapse" : "Expand"}</Button>}
          {errorMessage}
@@ -471,10 +471,11 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
             readOnly
             highlightActiveLine={false}
             width="100%"
+            style={{border: "1px solid gray", marginBottom: "1rem"}}
             showPrintMargin={false}
             height={isExpanded ? "80vh" : code ? "200px" : "50px"}
          />
-      </>);
+      </Box>);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

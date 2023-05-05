@@ -41,7 +41,7 @@ interface Props
 
 QRecordSidebar.defaultProps = {
    light: false,
-   stickyTop: "100px",
+   stickyTop: "110px",
 };
 
 interface SidebarEntry
