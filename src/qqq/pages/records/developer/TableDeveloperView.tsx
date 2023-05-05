@@ -117,11 +117,6 @@ function TableDeveloperView({table}: Props): JSX.Element
       })();
    }
 
-   const beforeTry = (e: any) =>
-   {
-      e.detail.request.headers.append("Authorization", "Bearer " + accessToken);
-   };
-
    const selectApi = async (event: SelectChangeEvent) =>
    {
       setSelectedApi(null);
@@ -208,11 +203,11 @@ function TableDeveloperView({table}: Props): JSX.Element
                                  font-size="large"
                                  render-style="view"
                                  show-header={false}
-                                 allow-authentication={false}
+                                 allow-authentication={true}
+                                 persist-auth={true}
                                  allow-server-selection={false}
                                  allow-spec-file-download={true}
                                  sort-endpoints-by="method"
-                                 beforeTry={beforeTry}
                                  schema-description-expanded={true}
                                  css-file={"/api/rapi-doc.css"}
                                  css-classes={"qqq-rapi-doc"}
