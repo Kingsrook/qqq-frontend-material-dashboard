@@ -485,7 +485,7 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
    const [tooltipOpen, setToolTipOpen] = useState(false);
-   const [displayValue, setDisplayValue] = useState(value.replace(/./g, "*"));
+   const [displayValue, setDisplayValue] = useState(value ? value.replace(/./g, "*") : "");
 
    const handleTooltipClose = () =>
    {
@@ -497,8 +497,9 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
       setToolTipOpen(true);
    };
 
-   const handleRevealIconClick = (fieldName: string) =>
+   const handleRevealIconClick = (event: React.MouseEvent<HTMLSpanElement>, fieldName: string) =>
    {
+      event.stopPropagation();
       const displayValue = (adornmentFieldsMap.get(fieldName)) ? value.replace(/./g, "*") : value;
       setDisplayValue(displayValue);
       adornmentFieldsMap.set(fieldName, !adornmentFieldsMap.get(fieldName));
@@ -506,36 +507,44 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
       forceUpdate();
    };
 
-   const copyToClipboard = (value: string) =>
+   const copyToClipboard = (event: React.MouseEvent<HTMLSpanElement>, value: string) =>
    {
+      event.stopPropagation();
       navigator.clipboard.writeText(value);
       setToolTipOpen(true);
    };
 
    return (
-      usage === "view" && adornmentFieldsMap.get(fieldName) === true ? (
-         <Box>
-            <Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_on</Icon>
-            {displayValue}
-            <ClickAwayListener onClickAway={handleTooltipClose}>
-               <Tooltip
-                  PopperProps={{
-                     disablePortal: true,
-                  }}
-                  onClose={handleTooltipClose}
-                  open={tooltipOpen}
-                  disableFocusListener
-                  disableHoverListener
-                  disableTouchListener
-                  title="Copied To Clipboard"
-               >
-                  <Icon onClick={() => copyToClipboard(value)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginLeft: "5px"}}>copy</Icon>
-               </Tooltip>
-            </ClickAwayListener>
-         </Box>
-      ):(
-         <Box><Icon onClick={() => handleRevealIconClick(fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
-      )
+      <>
+         {
+            displayValue && (
+               adornmentFieldsMap.get(fieldName) === true ? (
+                  <Box>
+                     <Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_on</Icon>
+                     {displayValue}
+                     <ClickAwayListener onClickAway={handleTooltipClose}>
+                        <Tooltip
+                           sx={{zIndex: 1000}}
+                           PopperProps={{
+                              disablePortal: true,
+                           }}
+                           onClose={handleTooltipClose}
+                           open={tooltipOpen}
+                           disableFocusListener
+                           disableHoverListener
+                           disableTouchListener
+                           title="Copied To Clipboard"
+                        >
+                           <Icon onClick={(e) => copyToClipboard(e, value)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginLeft: "5px"}}>copy</Icon>
+                        </Tooltip>
+                     </ClickAwayListener>
+                  </Box>
+               ):(
+                  <Box><Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
+               )
+            )
+         }
+      </>
    );
 }
 
