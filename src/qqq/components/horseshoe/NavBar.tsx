@@ -30,8 +30,9 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
+import QContext from "QContext";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/horseshoe/Breadcrumbs";
 import {navbar, navbarContainer, navbarIconButton, navbarRow,} from "qqq/components/horseshoe/Styles";
 import {setTransparentNavbar, useMaterialUIController,} from "qqq/context";
@@ -60,6 +61,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const [openMenu, setOpenMenu] = useState<any>(false);
    const [history, setHistory] = useState<any>([] as HistoryEntry[]);
    const [autocompleteValue, setAutocompleteValue] = useState<any>(null);
+   const fullPath = useLocation().pathname;
    const route = useLocation().pathname.split("/").slice(1);
    const navigate = useNavigate();
 
@@ -206,7 +208,18 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       },
    });
 
-   const breadcrumbTitle = routeToLabel(route[route.length - 1]);
+   const {pathToLabelMap} = useContext(QContext);
+   const fullPathToLabel = (fullPath: string, route: string): string =>
+   {
+      if(pathToLabelMap && pathToLabelMap[fullPath])
+      {
+         return pathToLabelMap[fullPath];
+      }
+
+      return (routeToLabel(route));
+   }
+
+   const breadcrumbTitle = fullPathToLabel(fullPath, route[route.length - 1]);
 
    return (
       <AppBar

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {createContext} from "react";
 
 
@@ -28,11 +29,14 @@ interface QContext
    setPageHeader?: (header: string | JSX.Element) => void;
    accentColor: string;
    setAccentColor?: (header: string) => void;
+   pathToLabelMap?: {[path: string]: string};
+   branding?: QBrandingMetaData;
 }
 
 const defaultState = {
    pageHeader: "",
-   accentColor: "#0062FF"
+   accentColor: "#0062FF",
+   pathToLabelMap: {},
 };
 
 const QContext = createContext<QContext>(defaultState);

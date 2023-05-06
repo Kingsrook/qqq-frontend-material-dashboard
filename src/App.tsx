@@ -31,7 +31,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
-import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
+import React, {JSXElementConstructor, Key, ReactElement, useContext, useEffect, useState,} from "react";
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
@@ -146,6 +146,7 @@ export default function App()
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
    const [sideNavRoutes, setSideNavRoutes] = useState([]);
    const [appRoutes, setAppRoutes] = useState(null as any);
+   const [pathToLabelMap, setPathToLabelMap] = useState({} as {[path: string]: string});
 
    ////////////////////////////////////////////
    // load qqq meta data to make more routes //
@@ -456,6 +457,14 @@ export default function App()
                });
             }
 
+            const pathToLabelMap: {[path: string]: string} = {}
+            for(let i =0; i<appRoutesList.length; i++)
+            {
+               const route = appRoutesList[i];
+               pathToLabelMap[route.route] = route.name;
+            }
+            setPathToLabelMap(pathToLabelMap);
+
             const newSideNavRoutes = [];
             // @ts-ignore
             newSideNavRoutes.unshift(profileRoutes);
@@ -558,7 +567,9 @@ export default function App()
             pageHeader: pageHeader,
             accentColor: accentColor,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
-            setAccentColor: (accentColor: string) => setAccentColor(accentColor)
+            setAccentColor: (accentColor: string) => setAccentColor(accentColor),
+            pathToLabelMap: pathToLabelMap,
+            branding: branding
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />
@@ -568,6 +579,7 @@ export default function App()
                   logo={branding.logo}
                   appName={branding.appName}
                   routes={sideNavRoutes}
+                  pathToLabelMap={pathToLabelMap}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}
                />
