@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import static com.kingsrook.qqq.materialdashboard.tests.QueryScreenTest.addQueryFilterInput;
@@ -69,7 +68,6 @@ public class SavedFiltersTest extends QBaseSeleniumTest
     **
     *******************************************************************************/
    @Test
-   @Disabled
    void testNavigatingBackAndForth()
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
