@@ -97,25 +97,28 @@ export default class DataGridUtils
       const columns = [] as GridColDef[];
       this.addColumnsForTable(tableMetaData, linkBase, columns, columnSort, null, null);
 
-      if(tableMetaData.exposedJoins)
+      if(metaData)
       {
-         for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+         if(tableMetaData.exposedJoins)
          {
-            const join = tableMetaData.exposedJoins[i];
-
-            let joinLinkBase = null;
-            if(metaData)
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
             {
-               joinLinkBase = metaData.getTablePath(join.joinTable);
-               if(joinLinkBase)
+               const join = tableMetaData.exposedJoins[i];
+               let joinTableName = join.joinTable.name;
+               if(metaData.tables.has(joinTableName) && metaData.tables.get(joinTableName).readPermission)
                {
-                  joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
-               }
-            }
+                  let joinLinkBase = null;
+                  joinLinkBase = metaData.getTablePath(join.joinTable);
+                  if(joinLinkBase)
+                  {
+                     joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
+                  }
 
-            if(join?.joinTable?.fields?.values())
-            {
-               this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, join.joinTable.name + ".", join.label + ": ");
+                  if(join?.joinTable?.fields?.values())
+                  {
+                     this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, joinTableName + ".", join.label + ": ");
+                  }
+               }
             }
          }
       }
