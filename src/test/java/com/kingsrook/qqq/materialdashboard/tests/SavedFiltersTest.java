@@ -29,7 +29,6 @@ import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import static com.kingsrook.qqq.materialdashboard.tests.QueryScreenTest.addQueryFilterInput;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -159,12 +158,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.takeScreenshotToFile("before-johnny-click");
-      WebElement webElement = qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com");
-      qSeleniumLib.highlightElement(webElement);
-      qSeleniumLib.takeScreenshotToFile("after-johnny-highlight");
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
-      qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////
