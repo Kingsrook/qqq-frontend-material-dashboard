@@ -107,7 +107,10 @@ export default class DataGridUtils
             if(metaData)
             {
                joinLinkBase = metaData.getTablePath(join.joinTable);
-               joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
+               if(joinLinkBase)
+               {
+                  joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
+               }
             }
 
             if(join?.joinTable?.fields?.values())
