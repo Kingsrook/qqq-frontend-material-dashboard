@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
@@ -80,6 +81,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
          formData.append("tableName", tableMetaData.name);
          formData.append("fieldName", fullFieldName);
          formData.append("filterJSON", JSON.stringify(filter));
+         formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 300 * 1000);
          if(orderBy)
          {
             formData.append("orderBy", orderBy);
