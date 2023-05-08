@@ -94,13 +94,8 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.takeScreenshotToFile("before-johnny-click");
       qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
-      WebElement webElement = qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com");
-      qSeleniumLib.highlightElement(webElement);
-      qSeleniumLib.takeScreenshotToFile("after-johnny-highlight");
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
-      qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////
@@ -125,7 +120,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
+      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////////////////////////////////
@@ -164,7 +159,12 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
+      qSeleniumLib.takeScreenshotToFile("before-johnny-click");
+      WebElement webElement = qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com");
+      qSeleniumLib.highlightElement(webElement);
+      qSeleniumLib.takeScreenshotToFile("after-johnny-highlight");
+      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
+      qSeleniumLib.takeScreenshotToFile("after-johnny-click");
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////
