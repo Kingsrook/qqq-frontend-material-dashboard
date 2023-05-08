@@ -25,7 +25,8 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs"; // https://github.com/datejs/Datejs
-import {Box, Chip, ClickAwayListener, Icon} from "@mui/material";
+import {Chip, ClickAwayListener, Icon} from "@mui/material";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
@@ -525,15 +526,13 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
                      {displayValue}
                      <ClickAwayListener onClickAway={handleTooltipClose}>
                         <Tooltip
-                           sx={{zIndex: 1000}}
-                           PopperProps={{
-                              disablePortal: true,
-                           }}
+                           sx={{zIndex: 1000, border: "1px solid red"}}
                            onClose={handleTooltipClose}
                            open={tooltipOpen}
                            disableFocusListener
                            disableHoverListener
                            disableTouchListener
+                           placement="right"
                            title="Copied To Clipboard"
                         >
                            <Icon onClick={(e) => copyToClipboard(e, value)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginLeft: "5px"}}>copy</Icon>
