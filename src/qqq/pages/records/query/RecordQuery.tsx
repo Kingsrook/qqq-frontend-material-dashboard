@@ -97,11 +97,30 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const tableName = table.name;
    const [searchParams] = useSearchParams();
 
-   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
+   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(false);
+   const [warningAlert, setWarningAlert] = useState(null as string);
    const [successAlert, setSuccessAlert] = useState(null as string);
 
    const location = useLocation();
    const navigate = useNavigate();
+
+   if(location.state)
+   {
+      let state: any = location.state;
+      if(state["deleteSuccess"])
+      {
+         setShowSuccessfullyDeletedAlert(true);
+         delete state["deleteSuccess"];
+      }
+
+      if(state["warning"])
+      {
+         setWarningAlert(state["warning"]);
+         delete state["warning"];
+      }
+
+      window.history.replaceState(state, "");
+   }
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
@@ -1815,23 +1834,20 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                )}
                {
                   (tableLabel && showSuccessfullyDeletedAlert) ? (
-                     <Alert color="success" sx={{mb: 3}} onClose={() =>
-                     {
-                        setShowSuccessfullyDeletedAlert(false);
-                     }}>
-                        {`${tableLabel} successfully deleted`}
-                     </Alert>
+                     <Alert color="success" sx={{mb: 3}} onClose={() => setShowSuccessfullyDeletedAlert(false)}>{`${tableLabel} successfully deleted`}</Alert>
                   ) : null
                }
                {
                   (successAlert) ? (
                      <Collapse in={Boolean(successAlert)}>
-                        <Alert color="success" sx={{mb: 3}} onClose={() =>
-                        {
-                           setSuccessAlert(null);
-                        }}>
-                           {successAlert}
-                        </Alert>
+                        <Alert color="success" sx={{mb: 3}} onClose={() => setSuccessAlert(null)}>{successAlert}</Alert>
+                     </Collapse>
+                  ) : null
+               }
+               {
+                  (warningAlert) ? (
+                     <Collapse in={Boolean(warningAlert)}>
+                        <Alert color="warning" sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
                }
