@@ -97,9 +97,19 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          widgetData[i] = {};
          (async () =>
          {
-            widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
-            setWidgetData(widgetData);
-            setWidgetCounter(widgetCounter + 1);
+            try
+            {
+               widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
+               setWidgetData(widgetData);
+               setWidgetCounter(widgetCounter + 1);
+               widgetData[i]["errorLoading"] = false;
+            }
+            catch(e)
+            {
+               console.error(e);
+               widgetData[i]["errorLoading"] = true;
+            }
+
             forceUpdate();
          })();
       }
@@ -112,9 +122,19 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          const urlParams = getQueryParams(widgetMetaDataList[index], data);
          setCurrentUrlParams(urlParams);
 
-         widgetData[index] = await qController.widget(widgetMetaDataList[index].name, urlParams);
-         setWidgetCounter(widgetCounter + 1);
-         setWidgetData(widgetData);
+         try
+         {
+            widgetData[index] = await qController.widget(widgetMetaDataList[index].name, urlParams);
+            setWidgetCounter(widgetCounter + 1);
+            setWidgetData(widgetData);
+            widgetData[index]["errorLoading"] = false;
+         }
+         catch(e)
+         {
+            console.error(e);
+            widgetData[index]["errorLoading"] = true;
+         }
+
          forceUpdate();
       })();
    };
