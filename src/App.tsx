@@ -567,6 +567,7 @@ export default function App()
                   icon={branding.icon}
                   logo={branding.logo}
                   appName={branding.appName}
+                  branding={branding}
                   routes={sideNavRoutes}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}
