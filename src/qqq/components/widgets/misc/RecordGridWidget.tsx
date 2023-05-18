@@ -123,6 +123,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    return (
       <Widget
          widgetMetaData={widgetMetaData}
+         widgetData={data}
          labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
       >
