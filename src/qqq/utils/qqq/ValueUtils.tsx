@@ -273,6 +273,14 @@ class ValueUtils
       return (`${date.toString("yyyy-MM-ddTHH:mm:ssZ")}`);
    }
 
+   public static formatDateTimeForFileName(date: Date)
+   {
+      const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
+      const d = new Date();
+      const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+      return (date);
+   }
+
    public static getFullWeekday(date: Date)
    {
       if (!(date instanceof Date))

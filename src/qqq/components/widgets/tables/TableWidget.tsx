@@ -56,8 +56,21 @@ function download(filename: string, text: string)
 
 function TableWidget(props: Props): JSX.Element
 {
+   const [isExportDisabled, setIsExportDisabled] = useState(true);
+
    const rows = props.widgetData?.rows;
    const columns = props.widgetData?.columns;
+
+   useEffect(() =>
+   {
+      let isExportDisabled = true;
+      if (props.widgetData && columns && rows && rows.length > 0)
+      {
+         isExportDisabled = false;
+      }
+      setIsExportDisabled(isExportDisabled);
+
+   }, [props.widgetMetaData, props.widgetData]);
 
    const exportCallback = () =>
    {
@@ -101,39 +114,14 @@ function TableWidget(props: Props): JSX.Element
 
          console.log(csv);
 
-         const fileName = props.widgetData.label + "-" + ValueUtils.formatDateTimeISO8601(new Date()) + ".csv";
+         const fileName = (props.widgetData.label ?? props.widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
          download(fileName, csv);
       }
       else
       {
-         alert("Error exporting widget data.");
+         alert("There is no data available to export.");
       }
    };
-
-
-   const [exportDataButton, setExportDataButton] = useState(new ExportDataButton(() => exportCallback(), true));
-   const [isExportDisabled, setIsExportDisabled] = useState(true);
-   const [componentLeft, setComponentLeft] = useState([exportDataButton])
-
-   useEffect(() =>
-   {
-      if (props.widgetData && columns && rows && rows.length > 0)
-      {
-         console.log("Setting export disabled false")
-         setIsExportDisabled(false);
-      }
-      else
-      {
-         console.log("Setting export disabled true")
-         setIsExportDisabled(true);
-      }
-   }, [props.widgetData])
-
-   useEffect(() =>
-   {
-      console.log("Setting new export button with disabled=" + isExportDisabled)
-      setComponentLeft([new ExportDataButton(() => exportCallback(), isExportDisabled)]);
-   }, [isExportDisabled])
 
    return (
       <Widget
@@ -142,7 +130,7 @@ function TableWidget(props: Props): JSX.Element
          reloadWidgetCallback={(data) => props.reloadWidgetCallback(data)}
          footerHTML={props.widgetData?.footerHTML}
          isChild={props.isChild}
-         labelAdditionalComponentsLeft={componentLeft}
+         labelAdditionalComponentsLeft={props.widgetMetaData?.showExportButton ? [new ExportDataButton(() => exportCallback(), isExportDisabled)] : []}
       >
          <TableCard
             noRowsFoundHTML={props.widgetData?.noRowsFoundHTML}

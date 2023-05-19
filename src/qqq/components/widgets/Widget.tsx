@@ -26,10 +26,12 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import LinearProgress from "@mui/material/LinearProgress";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import {Link, useNavigate, NavigateFunction} from "react-router-dom";
+import {bool} from "yup";
 import colors from "qqq/components/legacy/colors";
 import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/DropdownMenu";
 
@@ -166,8 +168,8 @@ export class ExportDataButton extends LabelComponent
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
       return (
-         <Typography variant="body2" py={2} px={1} display="inline" position="relative" top="-0.25rem">
-            <Button sx={{px: 1}} onClick={() => this.callbackToExport()} disabled={this.isDisabled}><Icon>save_alt</Icon>&nbsp;{this.label}</Button>
+         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
+            <Tooltip title="Export"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callbackToExport()} disabled={this.isDisabled}><Icon>save_alt</Icon></Button></Tooltip>
          </Typography>
       );
    }
@@ -231,8 +233,8 @@ export class ReloadControl extends LabelComponent
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
       return (
-         <Typography variant="body2" py={2} px={1} display="inline" position="relative" top="-0.25rem">
-            <Button sx={{px: 1}} onClick={() => this.callback()}><Icon>refresh</Icon> Refresh</Button>
+         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
+            <Tooltip title="Refresh"><Button sx={{px: 1, py:0, minWidth: "initial"}} onClick={() => this.callback()}><Icon>refresh</Icon></Button></Tooltip>
          </Typography>
       );
    }
@@ -283,14 +285,13 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    }, [props.widgetData]);
 
    const effectiveLabelAdditionalComponentsLeft: LabelComponent[] = [];
+   if(props.reloadWidgetCallback && props.widgetData && props.showReloadControl && props.widgetMetaData.showReloadButton)
+   {
+      effectiveLabelAdditionalComponentsLeft.push(new ReloadControl(doReload))
+   }
    if(props.labelAdditionalComponentsLeft)
    {
       props.labelAdditionalComponentsLeft.map((component) => effectiveLabelAdditionalComponentsLeft.push(component));
-   }
-
-   if(props.reloadWidgetCallback && props.widgetData && props.showReloadControl)
-   {
-      effectiveLabelAdditionalComponentsLeft.push(new ReloadControl(doReload))
    }
 
    function handleDataChange(dropdownLabel: string, changedData: any)
@@ -380,8 +381,29 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    }
 
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
+
+   const isSet = (v: any): boolean =>
+   {
+      return(v !== null && v !== undefined);
+   }
+
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // to avoid taking up the space of the Box with the label and icon and label-components (since it has a height), only output that box if we need any of the components //
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   let needLabelBox = false;
+   if(hasPermission)
+   {
+      needLabelBox ||= (effectiveLabelAdditionalComponentsLeft && effectiveLabelAdditionalComponentsLeft.length > 0);
+      needLabelBox ||= (effectiveLabelAdditionalComponentsRight && effectiveLabelAdditionalComponentsRight.length > 0);
+      needLabelBox ||= isSet(props.widgetMetaData?.icon);
+      needLabelBox ||= isSet(props.widgetData?.label);
+      needLabelBox ||= isSet(props.widgetMetaData?.label);
+   }
+
    const widgetContent =
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
+         {
+            needLabelBox &&
          <Box pr={2} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} height={"3.5rem"}>
             <Box pt={2} pb={1}>
                {
@@ -468,6 +490,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                }
             </Box>
          </Box>
+         }
          {
             props.widgetMetaData?.isCard && (reloading ? <LinearProgress color="info" sx={{overflow: "hidden", borderRadius: "0"}} /> : <Box height="0.375rem"/>)
          }
