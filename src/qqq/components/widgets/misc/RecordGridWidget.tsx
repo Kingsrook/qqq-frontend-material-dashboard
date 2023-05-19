@@ -25,9 +25,11 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {DataGridPro, GridCallbackDetails, GridRowParams, MuiEvent} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import Widget, {AddNewRecordButton, HeaderLink, LabelComponent} from "qqq/components/widgets/Widget";
+import Widget, {AddNewRecordButton, ExportDataButton, HeaderLink, LabelComponent} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
 {
@@ -42,7 +44,9 @@ const qController = Client.getInstance();
 function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
 {
    const [rows, setRows] = useState([]);
+   const [records, setRecords] = useState([] as QRecord[])
    const [columns, setColumns] = useState([]);
+   const [allColumns, setAllColumns] = useState([])
    const navigate = useNavigate();
 
    useEffect(() =>
@@ -68,6 +72,11 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          const childTablePath = data.tablePath ? data.tablePath + (data.tablePath.endsWith("/") ? "" : "/") : data.tablePath;
          const columns = DataGridUtils.setupGridColumns(tableMetaData, childTablePath, null, "bySection");
 
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // capture all-columns to use for the export (before we might splice some away from the on-screen display) //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         setAllColumns(JSON.parse(JSON.stringify(columns)));
+
          ////////////////////////////////////////////////////////////////
          // do not not show the foreign-key column of the parent table //
          ////////////////////////////////////////////////////////////////
@@ -84,16 +93,67 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          }
 
          setRows(rows);
+         setRecords(records)
          setColumns(columns);
       }
    }, [data]);
 
+   const exportCallback = () =>
+   {
+      let csv = "";
+      for (let i = 0; i < allColumns.length; i++)
+      {
+         csv += `${i > 0 ? "," : ""}"${ValueUtils.cleanForCsv(allColumns[i].headerName)}"`
+      }
+      csv += "\n";
+
+      for (let i = 0; i < records.length; i++)
+      {
+         for (let j = 0; j < allColumns.length; j++)
+         {
+            const value = records[i].displayValues.get(allColumns[j].field) ?? records[i].values.get(allColumns[j].field)
+            csv += `${j > 0 ? "," : ""}"${ValueUtils.cleanForCsv(value)}"`
+         }
+         csv += "\n";
+      }
+
+      const fileName = (data?.label ?? widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
+      HtmlUtils.download(fileName, csv);
+   }
+
+   ///////////////////
+   // view all link //
+   ///////////////////
    const labelAdditionalComponentsLeft: LabelComponent[] = []
    if(data && data.viewAllLink)
    {
       labelAdditionalComponentsLeft.push(new HeaderLink("View All", data.viewAllLink));
    }
 
+   ///////////////////
+   // export button //
+   ///////////////////
+   let isExportDisabled = true;
+   let tooltipTitle = "Export";
+   if (data && data.childTableMetaData && data.queryOutput && data.queryOutput.records && data.queryOutput.records.length > 0)
+   {
+      isExportDisabled = false;
+
+      if(data.totalRows && data.queryOutput.records.length < data.totalRows)
+      {
+         tooltipTitle = "Export these " + data.queryOutput.records.length + " records."
+         if(data.viewAllLink)
+         {
+            tooltipTitle += "\nClick View All to export all records.";
+         }
+      }
+   }
+
+   labelAdditionalComponentsLeft.push(new ExportDataButton(() => exportCallback(), isExportDisabled, tooltipTitle))
+
+   ////////////////////
+   // add new button //
+   ////////////////////
    const labelAdditionalComponentsRight: LabelComponent[] = []
    if(data && data.canAddChildRecord)
    {

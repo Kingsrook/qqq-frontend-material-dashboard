@@ -26,6 +26,7 @@ import {htmlToText} from "html-to-text";
 import React, {useEffect, useState} from "react";
 import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {ExportDataButton, WidgetData} from "qqq/components/widgets/Widget";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
@@ -37,22 +38,7 @@ interface Props
 }
 
 TableWidget.defaultProps = {
-   foo: null,
 };
-
-function download(filename: string, text: string)
-{
-   var element = document.createElement("a");
-   element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
-   element.setAttribute("download", filename);
-
-   element.style.display = "none";
-   document.body.appendChild(element);
-
-   element.click();
-
-   document.body.removeChild(element);
-}
 
 function TableWidget(props: Props): JSX.Element
 {
@@ -115,7 +101,7 @@ function TableWidget(props: Props): JSX.Element
          console.log(csv);
 
          const fileName = (props.widgetData.label ?? props.widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
-         download(fileName, csv);
+         HtmlUtils.download(fileName, csv);
       }
       else
       {

@@ -27,7 +27,6 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
@@ -38,6 +37,7 @@ import {DataGridPro, GridSortModel} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import React, {useEffect, useState} from "react";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -53,21 +53,6 @@ ColumnStats.defaultProps = {
 };
 
 const qController = Client.getInstance();
-
-// todo - merge w/ same function in TableWidget
-function download(filename: string, text: string)
-{
-   var element = document.createElement("a");
-   element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
-   element.setAttribute("download", filename);
-
-   element.style.display = "none";
-   document.body.appendChild(element);
-
-   element.click();
-
-   document.body.removeChild(element);
-}
 
 function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Props): JSX.Element
 {
@@ -202,7 +187,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
       }
 
       const fileName = tableMetaData.label + " - " + fieldMetaData.label + " Column Stats " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
-      download(fileName, csv);
+      HtmlUtils.download(fileName, csv);
    }
 
    function Loading()
