@@ -384,7 +384,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          </Box>
          {
             errorLoading ? (
-               <Box p={3} sx={{display: "flex", justifyContent: "center", alignItems: "flex-start"}}>
+               <Box pb={3} sx={{display: "flex", justifyContent: "center", alignItems: "flex-start"}}>
                   <Icon color="error">error</Icon>
                   <Typography sx={{paddingLeft: "4px", textTransform: "revert"}} variant="button">An error occurred loading widget content.</Typography>
                </Box>
