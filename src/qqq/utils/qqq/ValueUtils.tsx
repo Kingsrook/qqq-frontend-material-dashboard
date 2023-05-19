@@ -278,7 +278,7 @@ class ValueUtils
       const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
       const d = new Date();
       const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
-      return (date);
+      return (dateString);
    }
 
    public static getFullWeekday(date: Date)
