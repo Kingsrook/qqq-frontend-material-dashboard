@@ -65,7 +65,7 @@ class FilterUtils
             return QCriteriaOperator.EQUALS;
          case "isNot":
          case "!=":
-            return QCriteriaOperator.NOT_EQUALS;
+            return QCriteriaOperator.NOT_EQUALS_OR_IS_NULL;
          case "after":
          case ">":
             return QCriteriaOperator.GREATER_THAN;
@@ -138,6 +138,7 @@ class FilterUtils
                   return ("is");
             }
          case QCriteriaOperator.NOT_EQUALS:
+         case QCriteriaOperator.NOT_EQUALS_OR_IS_NULL:
 
             if (field.possibleValueSourceName)
             {

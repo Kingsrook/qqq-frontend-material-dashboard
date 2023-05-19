@@ -19,6 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*******************************************************************************
+ ** Utility functions for basic html/webpage/browser things.
+ *******************************************************************************/
 export default class HtmlUtils
 {
 
@@ -37,6 +40,23 @@ export default class HtmlUtils
          window.scrollTo({top: top, left: left, behavior: "auto"});
          htmlElement.style.scrollBehavior = initialScrollBehavior;
       });
+   };
+
+   /*******************************************************************************
+    ** Download a client-side generated file (e.g., csv).
+    *******************************************************************************/
+   static download = (filename: string, text: string) =>
+   {
+      var element = document.createElement("a");
+      element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+      element.setAttribute("download", filename);
+
+      element.style.display = "none";
+      document.body.appendChild(element);
+
+      element.click();
+
+      document.body.removeChild(element);
    };
 
 }

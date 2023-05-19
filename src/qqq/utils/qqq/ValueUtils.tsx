@@ -273,6 +273,14 @@ class ValueUtils
       return (`${date.toString("yyyy-MM-ddTHH:mm:ssZ")}`);
    }
 
+   public static formatDateTimeForFileName(date: Date)
+   {
+      const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
+      const d = new Date();
+      const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+      return (dateString);
+   }
+
    public static getFullWeekday(date: Date)
    {
       if (!(date instanceof Date))
@@ -410,6 +418,19 @@ class ValueUtils
       return toPush;
    }
 
+
+   /*******************************************************************************
+    ** for building CSV in frontends, cleanse null & undefined, and escape "'s
+    *******************************************************************************/
+   public static cleanForCsv(param: any): string
+   {
+      if(param === undefined || param === null)
+      {
+         return ("");
+      }
+
+      return (String(param).replaceAll(/"/g, "\"\""));
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
