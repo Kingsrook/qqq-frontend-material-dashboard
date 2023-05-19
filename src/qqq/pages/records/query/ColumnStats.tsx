@@ -54,6 +54,21 @@ ColumnStats.defaultProps = {
 
 const qController = Client.getInstance();
 
+// todo - merge w/ same function in TableWidget
+function download(filename: string, text: string)
+{
+   var element = document.createElement("a");
+   element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+   element.setAttribute("download", filename);
+
+   element.style.display = "none";
+   document.body.appendChild(element);
+
+   element.click();
+
+   document.body.removeChild(element);
+}
+
 function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Props): JSX.Element
 {
    const [statusString, setStatusString] = useState("Calculating statistics...");
@@ -97,6 +112,8 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
          }
          else
          {
+            // todo - job running!
+
             const result = processResult as QJobComplete;
 
             const statFieldObjects = result.values.statsFields;
@@ -174,6 +191,20 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
       setStatusString("Refreshing...")
    }
 
+   const doExport = () =>
+   {
+      let csv = `"${ValueUtils.cleanForCsv(fieldMetaData.label)}","Count"\n`;
+      for (let i = 0; i < valueCounts.length; i++)
+      {
+         const fieldValue = valueCounts[i].displayValues.get(fieldMetaData.name);
+         const count = valueCounts[i].values.get("count");
+         csv += `"${ValueUtils.cleanForCsv(fieldValue)}",${count}\n`;
+      }
+
+      const fileName = tableMetaData.label + " - " + fieldMetaData.label + " Column Stats " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
+      download(fileName, csv);
+   }
+
    function Loading()
    {
       return (
@@ -200,9 +231,14 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
                   {statusString ?? <>&nbsp;</>}
                </Typography>
             </Typography>
-            <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
-               Refresh
-            </Button>
+            <Box>
+               <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
+                  Refresh
+               </Button>
+               <Button onClick={() => doExport()} startIcon={<Icon>save_alt</Icon>} disabled={valueCounts == null || valueCounts.length == 0}>
+                  Export
+               </Button>
+            </Box>
          </Box>
          <Grid container>
             <Grid item xs={8}>

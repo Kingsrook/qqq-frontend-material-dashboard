@@ -44,10 +44,10 @@ import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
-import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
+import TableWidget from "./tables/TableWidget";
 
 
 const qController = Client.getInstance();
@@ -255,20 +255,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "table" && (
-                  <Widget
+                  <TableWidget
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
-                     footerHTML={widgetData[i]?.footerHTML}
                      isChild={areChildren}
-                  >
-                     <TableCard
-                        noRowsFoundHTML={widgetData[i]?.noRowsFoundHTML}
-                        rowsPerPage={widgetData[i]?.rowsPerPage}
-                        hidePaginationDropdown={widgetData[i]?.hidePaginationDropdown}
-                        data={widgetData[i]}
-                     />
-                  </Widget>
+                  />
                )
             }
             {
@@ -288,7 +280,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   <Widget
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
-                     reloadWidgetCallback={(data) => reloadWidget(i, data)}>
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     showReloadControl={false}
+                  >
                      <div className="widgetProcessMidDiv" style={{height: "100%"}}>
                         <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} forceReInit={widgetCounter} />
                      </div>
@@ -299,7 +293,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetMetaData.type === "stepper" && (
                   <Widget
                      widgetMetaData={widgetMetaData}
-                     widgetData={widgetData[i]}>
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                  >
                      <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                         <Box padding="1rem" sx={{width: "100%"}}>
                            <StepperCard data={widgetData[i]} />
@@ -310,7 +306,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
             {
                widgetMetaData.type === "html" && (
-                  <Widget widgetMetaData={widgetMetaData}>
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     widgetData={widgetData[i]}
+                  >
                      <Box px={3} pt={0} pb={2}>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
                            {
@@ -340,8 +340,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      isChild={areChildren}
-
-                     // reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
                   >
                      <StatisticsCard
                         data={widgetData[i]}
@@ -380,6 +379,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   <Widget
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
                   >
                      <div>
@@ -413,7 +413,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   <Widget
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
-                     isChild={areChildren}>
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                  >
                      <DefaultLineChart sx={{alignItems: "center"}}
                         data={widgetData[i]?.chartData}
                         isYAxisCurrency={widgetData[i]?.isYAxisCurrency}
