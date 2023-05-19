@@ -107,7 +107,7 @@ function TableWidget(props: Props): JSX.Element
                         {selector: ".button", format: "skip"}
                      ]
                   });
-               csv += `"${text}"`;
+               csv += `"${ValueUtils.cleanForCsv(text)}"`;
             }
             csv += "\n";
          }

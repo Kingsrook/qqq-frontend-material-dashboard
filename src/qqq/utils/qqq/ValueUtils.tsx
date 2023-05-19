@@ -418,6 +418,19 @@ class ValueUtils
       return toPush;
    }
 
+
+   /*******************************************************************************
+    ** for building CSV in frontends, cleanse null & undefined, and escape "'s
+    *******************************************************************************/
+   public static cleanForCsv(param: any): string
+   {
+      if(param === undefined || param === null)
+      {
+         return ("");
+      }
+
+      return (String(param).replaceAll(/"/g, "\"\""));
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -193,16 +193,12 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
 
    const doExport = () =>
    {
-      let csv = `"${fieldMetaData.label}","Count"\n`;
+      let csv = `"${ValueUtils.cleanForCsv(fieldMetaData.label)}","Count"\n`;
       for (let i = 0; i < valueCounts.length; i++)
       {
-         let fieldValue = valueCounts[i].displayValues.get(fieldMetaData.name);
-         if(fieldValue === undefined)
-         {
-            fieldValue = "";
-         }
-
-         csv += `"${fieldValue}",${valueCounts[i].values.get("count")}\n`;
+         const fieldValue = valueCounts[i].displayValues.get(fieldMetaData.name);
+         const count = valueCounts[i].values.get("count");
+         csv += `"${ValueUtils.cleanForCsv(fieldValue)}",${count}\n`;
       }
 
       const fileName = tableMetaData.label + " - " + fieldMetaData.label + " Column Stats " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
