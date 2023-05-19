@@ -46,6 +46,7 @@ export interface WidgetData
    }[][];
    dropdownNeedsSelectedText?: string;
    hasPermission?: boolean;
+   errorLoading?: boolean;
    [other: string]: any;
 }
 
@@ -400,6 +401,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       needLabelBox ||= isSet(props.widgetMetaData?.label);
    }
 
+   const errorLoading = props.widgetData?.errorLoading !== undefined && props.widgetData?.errorLoading === true;
    const widgetContent =
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          {
@@ -465,11 +467,6 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                      )
                   )
                }
-               {/*
-               <Button onClick={() => toggleFullScreenWidget()}>
-                  {fullScreenWidgetClassName ? "-" : "+"}
-               </Button>
-               */}
                {
                   hasPermission && (
                      effectiveLabelAdditionalComponentsLeft.map((component, i) =>
@@ -495,22 +492,29 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             props.widgetMetaData?.isCard && (reloading ? <LinearProgress color="info" sx={{overflow: "hidden", borderRadius: "0"}} /> : <Box height="0.375rem"/>)
          }
          {
-            hasPermission && props.widgetData?.dropdownNeedsSelectedText ? (
-               <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
-                  <Typography variant="body2">
-                     {props.widgetData?.dropdownNeedsSelectedText}
-                  </Typography>
+            errorLoading ? (
+               <Box pb={3} sx={{display: "flex", justifyContent: "center", alignItems: "flex-start"}}>
+                  <Icon color="error">error</Icon>
+                  <Typography sx={{paddingLeft: "4px", textTransform: "revert"}} variant="button">An error occurred loading widget content.</Typography>
                </Box>
             ) : (
-               hasPermission ? (
-                  props.children
+               hasPermission && props.widgetData?.dropdownNeedsSelectedText ? (
+                  <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
+                     <Typography variant="body2">
+                        {props.widgetData?.dropdownNeedsSelectedText}
+                     </Typography>
+                  </Box>
                ) : (
-                  <Box mt={2} mb={5} sx={{display: "flex", justifyContent: "center"}}><Typography variant="body2">You do not have permission to view this data.</Typography></Box>
+                  hasPermission ? (
+                     props.children
+                  ) : (
+                     <Box mt={2} mb={5} sx={{display: "flex", justifyContent: "center"}}><Typography variant="body2">You do not have permission to view this data.</Typography></Box>
+                  )
                )
             )
          }
          {
-            props?.footerHTML && (
+            ! errorLoading && props?.footerHTML && (
                <Box mt={1} ml={3} mr={3} mb={2} sx={{fontWeight: 300, color: "#7b809a", display: "flex", alignContent: "flex-end", fontSize: "14px"}}>{parse(props.footerHTML)}</Box>
             )
          }

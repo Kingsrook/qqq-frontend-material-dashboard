@@ -26,7 +26,8 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QReportMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QReportMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Box, Icon, Typography} from "@mui/material";
+import {Icon, Typography} from "@mui/material";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
@@ -316,7 +317,7 @@ function AppHome({app}: Props): JSX.Element
                                                    <Grid key={table.name} item xs={12} md={12} lg={tileSizeLg}>
                                                       {hasTablePermission(tableName) ?
                                                          <Link to={table.name}>
-                                                            <Box mb={3}>
+                                                            <Box className="big-icon" mb={3}>
                                                                <MiniStatisticsCard
                                                                   title={{fontWeight: "bold", text: table.label}}
                                                                   count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
