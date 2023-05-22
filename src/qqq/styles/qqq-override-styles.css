@@ -398,3 +398,11 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    top: -5px;
    margin-right: 8px;
 }
+
+.custom-columns-panel .MuiSwitch-thumb
+{
+   width: 15px !important;
+   height: 15px !important;
+   position: relative;
+   top: 3px;
+}
