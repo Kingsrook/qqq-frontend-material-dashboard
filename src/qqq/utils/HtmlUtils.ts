@@ -19,6 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Client from "qqq/utils/qqq/Client";
+
 /*******************************************************************************
  ** Utility functions for basic html/webpage/browser things.
  *******************************************************************************/
@@ -58,5 +60,73 @@ export default class HtmlUtils
 
       document.body.removeChild(element);
    };
+
+   /*******************************************************************************
+    ** Download a server-side generated file.
+    *******************************************************************************/
+   static downloadUrlViaIFrame = (url: string) =>
+   {
+      if (document.getElementById("downloadIframe"))
+      {
+         document.body.removeChild(document.getElementById("downloadIframe"));
+      }
+
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("id", "downloadIframe");
+      iframe.setAttribute("name", "downloadIframe");
+      iframe.style.display = "none";
+      // todo - onload event handler to let us know when done?
+      document.body.appendChild(iframe);
+
+      const form = document.createElement("form");
+      form.setAttribute("method", "post");
+      form.setAttribute("action", url);
+      form.setAttribute("target", "downloadIframe");
+      iframe.appendChild(form);
+
+      const authorizationInput = document.createElement("input");
+      authorizationInput.setAttribute("type", "hidden");
+      authorizationInput.setAttribute("id", "authorizationInput");
+      authorizationInput.setAttribute("name", "Authorization");
+      authorizationInput.setAttribute("value", Client.getInstance().getAuthorizationHeaderValue());
+      form.appendChild(authorizationInput);
+
+      const downloadInput = document.createElement("input");
+      downloadInput.setAttribute("type", "hidden");
+      downloadInput.setAttribute("name", "download");
+      downloadInput.setAttribute("value", "1");
+      form.appendChild(downloadInput);
+
+      form.submit();
+   };
+
+   /*******************************************************************************
+    ** Open a server-side generated file from a url in a new window.
+    *******************************************************************************/
+   static openInNewWindow = (url: string, filename: string) =>
+   {
+      const openInWindow = window.open("", "_blank");
+      openInWindow.document.write(`<html lang="en">
+            <head>
+               <style>
+                  * { font-family: "Roboto","Helvetica","Arial",sans-serif; }
+               </style>
+               <title>${filename}</title>
+               <script>
+                  setTimeout(() =>
+                  {
+                     document.getElementById("exportForm").submit();
+                  }, 1);
+               </script>
+            </head>
+            <body>
+               Opening ${filename}...
+               <form id="exportForm" method="post" action="${url}" >
+                  <input type="hidden" name="Authorization" value="${Client.getInstance().getAuthorizationHeaderValue()}">
+               </form>
+            </body>
+         </html>`);
+   };
+
 
 }

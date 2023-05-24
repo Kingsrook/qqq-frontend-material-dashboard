@@ -168,6 +168,23 @@ export default class DataGridUtils
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
+         if(field.isHeavy)
+         {
+            if(field.type == QFieldType.BLOB)
+            {
+               ////////////////////////////////////////////////////////
+               // assume we DO want heavy blobs - as download links. //
+               ////////////////////////////////////////////////////////
+            }
+            else
+            {
+               ///////////////////////////////////////////////////
+               // otherwise, skip heavy fields on query screen. //
+               ///////////////////////////////////////////////////
+               return;
+            }
+         }
+
          const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
          if(key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
@@ -244,6 +261,7 @@ export default class DataGridUtils
          const widths: Map<string, number> = new Map<string, number>([
             ["small", 100],
             ["medium", 200],
+            ["medlarge", 300],
             ["large", 400],
             ["xlarge", 600]
          ]);
@@ -260,7 +278,7 @@ export default class DataGridUtils
       let headerName = labelPrefix ? labelPrefix + field.label : field.label;
       let fieldName = namePrefix ? namePrefix + field.name : field.name;
 
-      const column = {
+      const column: GridColDef = {
          field: fieldName,
          type: columnType,
          headerName: headerName,
@@ -268,6 +286,11 @@ export default class DataGridUtils
          renderCell: null as any,
          filterOperators: filterOperators,
       };
+
+      if(field.type == QFieldType.BLOB)
+      {
+         column.filterable = false;
+      }
 
       column.renderCell = (cellValues: any) => (
          (cellValues.value)

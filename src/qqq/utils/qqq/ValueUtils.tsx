@@ -28,11 +28,14 @@ import "datejs"; // https://github.com/datejs/Datejs
 import {Chip, ClickAwayListener, Icon} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import {makeStyles} from "@mui/styles";
 import parse from "html-react-parser";
 import React, {Fragment, useReducer, useState} from "react";
 import AceEditor from "react-ace";
 import {Link} from "react-router-dom";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 
 /*******************************************************************************
@@ -190,6 +193,11 @@ class ValueUtils
                </Box>
             </Box>
          );
+      }
+
+      if (field.type == QFieldType.BLOB)
+      {
+         return (<BlobComponent url={rawValue} filename={displayValue} />);
       }
 
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
@@ -500,9 +508,9 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
       </Box>);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-// little private component here, for rendering an AceEditor with some buttons/controls/state //
-////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// little private component here, for rendering "secret-ish" values, that you can click to reveal or copy //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function RevealComponent({fieldName, value, usage}: {fieldName: string, value: string, usage: string;}): JSX.Element
 {
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
@@ -561,11 +569,58 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
                      </ClickAwayListener>
                   </Box>
                ):(
-                  <Box><Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
+                  <Box display="inline"><Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
                )
             )
          }
       </>
+   );
+}
+
+
+interface BlobComponentProps
+{
+   url: string;
+   filename: string;
+}
+
+BlobComponent.defaultProps = {
+   foo: null,
+};
+
+function BlobComponent({url, filename}: BlobComponentProps): JSX.Element
+{
+   const download = (event: React.MouseEvent<HTMLSpanElement>) =>
+   {
+      event.stopPropagation();
+      HtmlUtils.downloadUrlViaIFrame(url);
+   };
+
+   const open = (event: React.MouseEvent<HTMLSpanElement>) =>
+   {
+      event.stopPropagation();
+      HtmlUtils.openInNewWindow(url, filename);
+   };
+
+   const useBlobIconStyles = makeStyles({
+      blobIcon: {
+         marginLeft: "0.25rem",
+         marginRight: "0.25rem",
+         cursor: "pointer"
+      }
+   })
+   const classes = useBlobIconStyles();
+
+   return (
+      <Box display="inline-flex">
+         {filename}
+         <Tooltip placement="right" title="Open file">
+            <Icon className={classes.blobIcon} fontSize="small" onClick={(e) => open(e)}>open_in_new</Icon>
+         </Tooltip>
+         <Tooltip placement="right" title="Download file">
+            <Icon className={classes.blobIcon} fontSize="small" onClick={(e) => download(e)}>save_alt</Icon>
+         </Tooltip>
+      </Box>
    );
 }
 
