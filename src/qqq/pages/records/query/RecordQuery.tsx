@@ -1516,7 +1516,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                </GridToolbarExportContainer>
             </div>
 
-            <div>
+            <div style={{zIndex: 10}}>
                <MenuButton label="Selection" iconName={selectedIds.length == 0 ? "check_box_outline_blank" : "check_box"} disabled={totalRecords == 0} options={selectionMenuOptions} callback={selectionMenuCallback}/>
                <SelectionSubsetDialog isOpen={selectionSubsetSizePromptOpen} initialValue={selectionSubsetSize} closeHandler={(value) =>
                {
