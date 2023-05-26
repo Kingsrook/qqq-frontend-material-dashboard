@@ -30,7 +30,8 @@ import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobEr
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
-import {Alert, Box, Collapse, TablePagination} from "@mui/material";
+import {Alert, Collapse, TablePagination} from "@mui/material";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -48,7 +49,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowProps, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -314,6 +315,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    }, [location, tableMetaData]);
 
+   const updateColumnVisibilityModel = () =>
+   {
+      if (localStorage.getItem(columnVisibilityLocalStorageKey))
+      {
+         const visibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
+         setColumnVisibilityModel(visibility);
+         didDefaultVisibilityComeFromLocalStorage = true;
+      }
+   }
+
    ///////////////////////////////////////////////////////////////////////
    // any time these are out of sync, it means we need to reload things //
    ///////////////////////////////////////////////////////////////////////
@@ -321,7 +332,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setTableMetaData(null);
       setColumnSortModel([]);
-      setColumnVisibilityModel({});
+      updateColumnVisibilityModel();
       setColumnsModel([]);
       setFilterModel({items: []});
       setDefaultFilterLoaded(false);
