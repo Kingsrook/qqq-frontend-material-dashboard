@@ -197,7 +197,7 @@ class ValueUtils
 
       if (field.type == QFieldType.BLOB)
       {
-         return (<BlobComponent url={rawValue} filename={displayValue} />);
+         return (<BlobComponent field={field} url={rawValue} filename={displayValue} usage={usage} />);
       }
 
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
@@ -580,15 +580,17 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
 
 interface BlobComponentProps
 {
+   field: QFieldMetaData;
    url: string;
    filename: string;
+   usage: "view" | "query";
 }
 
 BlobComponent.defaultProps = {
-   foo: null,
+   usage: "view",
 };
 
-function BlobComponent({url, filename}: BlobComponentProps): JSX.Element
+function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.Element
 {
    const download = (event: React.MouseEvent<HTMLSpanElement>) =>
    {
@@ -602,24 +604,29 @@ function BlobComponent({url, filename}: BlobComponentProps): JSX.Element
       HtmlUtils.openInNewWindow(url, filename);
    };
 
-   const useBlobIconStyles = makeStyles({
-      blobIcon: {
-         marginLeft: "0.25rem",
-         marginRight: "0.25rem",
-         cursor: "pointer"
-      }
-   })
-   const classes = useBlobIconStyles();
+   if(!filename || !url)
+   {
+      return (<React.Fragment />);
+   }
 
+   const tooltipPlacement = usage == "view" ? "bottom" : "right";
+
+   // todo - thumbnails if adorned?
+   // challenge is - must post (for auth header)...
    return (
       <Box display="inline-flex">
-         {filename}
-         <Tooltip placement="right" title="Open file">
-            <Icon className={classes.blobIcon} fontSize="small" onClick={(e) => open(e)}>open_in_new</Icon>
+         {
+            usage == "view" && filename
+         }
+         <Tooltip placement={tooltipPlacement} title="Open file">
+            <Icon className={"blobIcon"} fontSize="small" onClick={(e) => open(e)}>open_in_new</Icon>
          </Tooltip>
-         <Tooltip placement="right" title="Download file">
-            <Icon className={classes.blobIcon} fontSize="small" onClick={(e) => download(e)}>save_alt</Icon>
+         <Tooltip placement={tooltipPlacement} title="Download file">
+            <Icon className={"blobIcon"} fontSize="small" onClick={(e) => download(e)}>save_alt</Icon>
          </Tooltip>
+         {
+            usage == "query" && filename
+         }
       </Box>
    );
 }

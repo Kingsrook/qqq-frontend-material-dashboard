@@ -29,7 +29,7 @@ import {getGridDateOperators, GridColDef, GridRowsProp} from "@mui/x-data-grid-p
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React from "react";
 import {Link} from "react-router-dom";
-import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
+import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 export default class DataGridUtils
@@ -249,6 +249,9 @@ export default class DataGridUtils
                columnWidth = 75;
                filterOperators = QGridBooleanOperators;
                break;
+            case QFieldType.BLOB:
+               filterOperators = QGridBlobOperators;
+               break;
             default:
             // noop - leave as string
          }
@@ -286,11 +289,6 @@ export default class DataGridUtils
          renderCell: null as any,
          filterOperators: filterOperators,
       };
-
-      if(field.type == QFieldType.BLOB)
-      {
-         column.filterable = false;
-      }
 
       column.renderCell = (cellValues: any) => (
          (cellValues.value)

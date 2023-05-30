@@ -139,7 +139,7 @@ function EntityForm(props: Props): JSX.Element
       {
          return <div>Loading...</div>;
       }
-      return <QDynamicForm formData={formData} />;
+      return <QDynamicForm formData={formData} record={record} />;
    }
 
    if (!asyncLoadInited)
@@ -378,17 +378,18 @@ function EntityForm(props: Props): JSX.Element
       actions.setSubmitting(true);
       await (async () =>
       {
-         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // (1) convert date-time fields from user's time-zone into UTC                                              //
-         // (2) if there's an initial value which matches the value (e.g., from the form), then remove that field    //
-         // from the set of values that we'll submit to the backend.  This is to deal with the fact that our         //
-         // date-times in the UI (e.g., the form field) only go to the minute - so they kinda always end up          //
-         // changing from, say, 12:15:30 to just 12:15:00... this seems to get around that, for cases when the       //
-         // user didn't change the value in the field (but if the user did change the value, then we will submit it) //
-         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
          for(let fieldName of tableMetaData.fields.keys())
          {
             const fieldMetaData = tableMetaData.fields.get(fieldName);
+
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // (1) convert date-time fields from user's time-zone into UTC                                              //
+            // (2) if there's an initial value which matches the value (e.g., from the form), then remove that field    //
+            // from the set of values that we'll submit to the backend.  This is to deal with the fact that our         //
+            // date-times in the UI (e.g., the form field) only go to the minute - so they kinda always end up          //
+            // changing from, say, 12:15:30 to just 12:15:00... this seems to get around that, for cases when the       //
+            // user didn't change the value in the field (but if the user did change the value, then we will submit it) //
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
             if(fieldMetaData.type === QFieldType.DATE_TIME && values[fieldName])
             {
                console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${values[fieldName]}]`)
@@ -400,6 +401,22 @@ function EntityForm(props: Props): JSX.Element
                else
                {
                   values[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(values[fieldName]);
+               }
+            }
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // for BLOB fields, there are 3 possible cases:                                                               //
+            // 1) they are a File object - in which case, cool, send them through to the backend to have bytes stored.    //
+            // 2) they are null - in which case, cool, send them through to the backend to be set to null.                //
+            // 3) they are a String, which is their URL path to download them... in that case, don't submit them to       //
+            // the backend at all, so they'll stay what they were.  do that by deleting them from the values object here. //
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if(fieldMetaData.type === QFieldType.BLOB)
+            {
+               if(typeof values[fieldName] === "string")
+               {
+                  console.log(`${fieldName} value was a string, so, we're deleting it from the values array, to not submit it to the backend, to not change it.`);
+                  delete(values[fieldName]);
                }
             }
          }
