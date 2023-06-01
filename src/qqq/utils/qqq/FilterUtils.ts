@@ -27,7 +27,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
+import {GridFilterItem, GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
@@ -256,7 +256,7 @@ class FilterUtils
       }
       else if (operator === QCriteriaOperator.IN || operator === QCriteriaOperator.NOT_IN || operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN)
       {
-         if (value == null && (operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN))
+         if ((value == null || value.length < 2) && (operator === QCriteriaOperator.BETWEEN || operator === QCriteriaOperator.NOT_BETWEEN))
          {
             /////////////////////////////////////////////////////////////////////////////////////////////////
             // if we send back null, we get a 500 - bad look every time you try to set up a BETWEEN filter //
@@ -535,6 +535,63 @@ class FilterUtils
       }
 
       return ({filter: defaultFilter, sort: defaultSort});
+   }
+
+
+   /*******************************************************************************
+    ** build a grid filter from a qqq filter
+    *******************************************************************************/
+   public static buildGridFilterFromQFilter(tableMetaData: QTableMetaData, queryFilter: QQueryFilter): GridFilterModel
+   {
+      const gridItems: GridFilterItem[] = [];
+
+      for (let i = 0; i < queryFilter.criteria.length; i++)
+      {
+         const criteria = queryFilter.criteria[i];
+         const [field, fieldTable] = FilterUtils.getField(tableMetaData, criteria.fieldName);
+         if (field)
+         {
+            gridItems.push({columnField: criteria.fieldName, id: i, operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, criteria.values), value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, field)});
+         }
+      }
+
+      const gridFilter: GridFilterModel = {items: gridItems, linkOperator: queryFilter.booleanOperator == "AND" ? GridLinkOperator.And : GridLinkOperator.Or};
+      return (gridFilter);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getField(tableMetaData: QTableMetaData, fieldName: string): [QFieldMetaData, QTableMetaData]
+   {
+      if (fieldName == null)
+      {
+         return ([null, null]);
+      }
+
+      if (fieldName.indexOf(".") > -1)
+      {
+         let parts = fieldName.split(".", 2);
+         if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length)
+         {
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+            {
+               const joinTable = tableMetaData.exposedJoins[i].joinTable;
+               if (joinTable.name == parts[0])
+               {
+                  return ([joinTable.fields.get(parts[1]), joinTable]);
+               }
+            }
+         }
+
+         console.log(`Failed to find join field: ${fieldName}`);
+         return ([null, null]);
+      }
+      else
+      {
+         return ([tableMetaData.fields.get(fieldName), tableMetaData]);
+      }
    }
 
 

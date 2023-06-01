@@ -406,3 +406,71 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    position: relative;
    top: 3px;
 }
+
+.blobIcon
+{
+   margin-left: 0.25rem;
+   margin-right: 0.25rem;
+   cursor: pointer;
+}
+
+/* move the columns & filter panels on the query screen data grid up to not be below the column headers row */
+/* todo - add a class to the query screen and qualify this like that */
+.MuiDataGrid-panel
+{
+   top: -60px !important;
+}
+
+.customFilterPanel .MuiAutocomplete-paper
+{
+   line-height: 1.375;
+}
+
+.customFilterPanel .MuiAutocomplete-groupLabel
+{
+   line-height: 1.75;
+}
+
+.customFilterPanel .MuiAutocomplete-listbox
+{
+   max-height: 60vh;
+}
+
+.customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard,
+.customFilterPanel .MuiSvgIcon-root
+{
+   font-size: 14px !important;
+}
+
+.customFilterPanel .booleanOperatorColumn .MuiSvgIcon-root
+{
+   display: inline-block !important;
+}
+
+.customFilterPanel .booleanOperatorColumn .MuiInputBase-formControl
+{
+   padding-bottom: calc(0.25rem + 1px);
+}
+
+.customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard
+{
+   top: calc(50% - 0.75rem);
+}
+
+.customFilterPanel .filterValuesColumn .MuiChip-root
+{
+   background: none;
+   color: black;
+   border: 1px solid gray;
+}
+
+.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
+{
+   color: gray;
+}
+
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag
+{
+   color: #191919;
+   background: none;
+}
