@@ -41,6 +41,7 @@ import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -82,7 +83,6 @@ function EntityForm(props: Props): JSX.Element
    const [warningContent, setWarningContent] = useState("");
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
-   const [formValues, setFormValues] = useState({} as { [key: string]: string });
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
@@ -184,8 +184,6 @@ function EntityForm(props: Props): JSX.Element
             {
                initialValues[key] = record.values.get(key);
             });
-
-            //? safe to delete? setFormValues(formValues);
 
             if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
             {
@@ -416,8 +414,8 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
-                     const path = `${location.pathname.replace(/\/edit$/, "")}?updateSuccess=true`;
-                     navigate(path);
+                     const path = location.pathname.replace(/\/edit$/, "");
+                     navigate(path, {state: {updateSuccess: true}});
                   }
                })
                .catch((error) =>
@@ -427,12 +425,13 @@ function EntityForm(props: Props): JSX.Element
 
                   if(error.message.toLowerCase().startsWith("warning"))
                   {
-                     const path = `${location.pathname.replace(/\/edit$/, "")}?updateSuccess=true&warning=${encodeURIComponent(error.message)}`;
-                     navigate(path);
+                     const path = location.pathname.replace(/\/edit$/, "");
+                     navigate(path, {state: {updateSuccess: true, warning: error.message}});
                   }
                   else
                   {
                      setAlertContent(error.message);
+                     HtmlUtils.autoScroll(0);
                   }
                });
          }
@@ -448,20 +447,22 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
-                     const path = `${location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField))}?createSuccess=true`;
-                     navigate(path);
+                     const path = location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
+                     navigate(path, {state: {createSuccess: true}});
                   }
                })
                .catch((error) =>
                {
                   if(error.message.toLowerCase().startsWith("warning"))
                   {
-                     const path = `${location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField))}?createSuccess=true&warning=${encodeURIComponent(error.message)}`;
+                     const path = location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
                      navigate(path);
+                     navigate(path, {state: {createSuccess: true, warning: error.message}});
                   }
                   else
                   {
                      setAlertContent(error.message);
+                     HtmlUtils.autoScroll(0);
                   }
                });
          }
@@ -499,12 +500,12 @@ function EntityForm(props: Props): JSX.Element
                <Grid item xs={12}>
                   {alertContent ? (
                      <Box mb={3}>
-                        <Alert severity="error">{alertContent}</Alert>
+                        <Alert severity="error" onClose={() => setAlertContent(null)}>{alertContent}</Alert>
                      </Box>
                   ) : ("")}
                   {warningContent ? (
                      <Box mb={3}>
-                        <Alert severity="warning">{warningContent}</Alert>
+                        <Alert severity="warning" onClose={() => setWarningContent(null)}>{warningContent}</Alert>
                      </Box>
                   ) : ("")}
                </Grid>
