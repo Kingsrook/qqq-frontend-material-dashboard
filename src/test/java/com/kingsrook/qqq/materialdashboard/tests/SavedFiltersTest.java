@@ -46,7 +46,6 @@ public class SavedFiltersTest extends QBaseSeleniumTest
    protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
    {
       addStandardRoutesForThisTest(qSeleniumJavalin);
-      qSeleniumJavalin.withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 
 
