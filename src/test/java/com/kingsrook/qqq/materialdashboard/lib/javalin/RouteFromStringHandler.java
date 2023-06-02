@@ -3,7 +3,6 @@ package com.kingsrook.qqq.materialdashboard.lib.javalin;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,11 +24,11 @@ public class RouteFromStringHandler implements Handler
     ** Constructor
     **
     *******************************************************************************/
-   public RouteFromStringHandler(QSeleniumJavalin qSeleniumJavalin, Pair<String, String> routeToStringPath)
+   public RouteFromStringHandler(QSeleniumJavalin qSeleniumJavalin, String route, String responseString)
    {
       this.qSeleniumJavalin = qSeleniumJavalin;
-      this.route = routeToStringPath.getKey();
-      this.responseString = routeToStringPath.getValue();
+      this.route = route;
+      this.responseString = responseString;
    }
 
 

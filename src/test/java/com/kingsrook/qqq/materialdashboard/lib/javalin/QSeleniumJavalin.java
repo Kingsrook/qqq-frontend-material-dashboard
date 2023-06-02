@@ -3,10 +3,11 @@ package com.kingsrook.qqq.materialdashboard.lib.javalin;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import com.kingsrook.qqq.materialdashboard.lib.QSeleniumLib;
 import io.javalin.Javalin;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Connector;
@@ -25,8 +26,8 @@ public class QSeleniumJavalin
 
    private long WAIT_SECONDS = 10;
 
-   private List<Pair<String, String>> routesToFiles   = new ArrayList<>();
-   private List<Pair<String, String>> routesToStrings = new ArrayList<>();
+   private Map<String, String> routesToFiles   = new LinkedHashMap<>();
+   private Map<String, String> routesToStrings = new LinkedHashMap<>();
 
    private Javalin javalin;
 
@@ -71,9 +72,9 @@ public class QSeleniumJavalin
    {
       if(this.routesToFiles == null)
       {
-         this.routesToFiles = new ArrayList<>();
+         this.routesToFiles = new LinkedHashMap<>();
       }
-      this.routesToFiles.add(Pair.of(path, fixtureFilePath));
+      this.routesToFiles.put(path, fixtureFilePath);
       return (this);
    }
 
@@ -86,9 +87,9 @@ public class QSeleniumJavalin
    {
       if(this.routesToStrings == null)
       {
-         this.routesToStrings = new ArrayList<>();
+         this.routesToStrings = new LinkedHashMap<>();
       }
-      this.routesToStrings.add(Pair.of(path, responseString));
+      this.routesToStrings.put(path, responseString);
       return (this);
    }
 
@@ -105,11 +106,11 @@ public class QSeleniumJavalin
       {
          javalin.routes(() ->
          {
-            for(Pair<String, String> routeToFile : routesToFiles)
+            for(Map.Entry<String, String> routeToFile : routesToFiles.entrySet())
             {
                LOG.debug("Setting up route for [" + routeToFile.getKey() + "] => [" + routeToFile.getValue() + "]");
-               get(routeToFile.getKey(), new RouteFromFileHandler(this, routeToFile));
-               post(routeToFile.getKey(), new RouteFromFileHandler(this, routeToFile));
+               get(routeToFile.getKey(), new RouteFromFileHandler(this, routeToFile.getKey(), routeToFile.getValue()));
+               post(routeToFile.getKey(), new RouteFromFileHandler(this, routeToFile.getKey(), routeToFile.getValue()));
             }
          });
       }
@@ -118,11 +119,11 @@ public class QSeleniumJavalin
       {
          javalin.routes(() ->
          {
-            for(Pair<String, String> routeToString : routesToStrings)
+            for(Map.Entry<String, String> routeToString : routesToStrings.entrySet())
             {
                LOG.debug("Setting up route for [" + routeToString.getKey() + "] => [" + routeToString.getValue() + "]");
-               get(routeToString.getKey(), new RouteFromStringHandler(this, routeToString));
-               post(routeToString.getKey(), new RouteFromStringHandler(this, routeToString));
+               get(routeToString.getKey(), new RouteFromStringHandler(this, routeToString.getKey(), routeToString.getValue()));
+               post(routeToString.getKey(), new RouteFromStringHandler(this, routeToString.getKey(), routeToString.getValue()));
             }
          });
       }

@@ -6,7 +6,6 @@ import java.util.List;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,11 +27,11 @@ public class RouteFromFileHandler implements Handler
     ** Constructor
     **
     *******************************************************************************/
-   public RouteFromFileHandler(QSeleniumJavalin qSeleniumJavalin, Pair<String, String> routeToFilePath)
+   public RouteFromFileHandler(QSeleniumJavalin qSeleniumJavalin, String route, String filePath)
    {
       this.qSeleniumJavalin = qSeleniumJavalin;
-      this.route = routeToFilePath.getKey();
-      this.filePath = routeToFilePath.getValue();
+      this.route = route;
+      this.filePath = filePath;
    }
 
 
