@@ -970,7 +970,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                const d = new Date();
                const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}`;
+
+               const encodedFilterJSON = encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)));
 
                //////////////////////////////////////////////////////////////////////////////////////
                // open a window (tab) with a little page that says the file is being generated.    //
@@ -987,6 +989,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <script>
                         setTimeout(() =>
                         {
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           // need to encode and decode this value, so set it in the form here, instead of literally below //
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           document.getElementById("filter").value = decodeURIComponent("${encodedFilterJSON}");
+                           
                            document.getElementById("exportForm").submit();
                         }, 1);
                      </script>
@@ -995,6 +1002,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...
                      <form id="exportForm" method="post" action="${url}" >
                         <input type="hidden" name="Authorization" value="${qController.getAuthorizationHeaderValue()}">
+                        <input type="hidden" name="fields" value="${visibleFields.join(",")}">
+                        <input type="hidden" name="filter" id="filter">
                      </form>
                   </body>
                </html>`);
