@@ -31,10 +31,11 @@ import React, {forwardRef, useReducer} from "react";
 import {FilterCriteriaRow} from "qqq/components/query/FilterCriteriaRow";
 
 
-
-
 declare module "@mui/x-data-grid"
 {
+   ///////////////////////////////////////////////////////////////////////
+   // this lets these props be passed in via <DataGrid componentsProps> //
+   ///////////////////////////////////////////////////////////////////////
    interface FilterPanelPropsOverrides
    {
       tableMetaData: QTableMetaData;

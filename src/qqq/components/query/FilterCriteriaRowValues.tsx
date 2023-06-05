@@ -20,12 +20,14 @@
  */
 
 
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {Chip} from "@mui/material";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import React, {SyntheticEvent} from "react";
+import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {OperatorOption, ValueMode} from "qqq/components/query/FilterCriteriaRow";
 
@@ -33,14 +35,15 @@ interface Props
 {
    operatorOption: OperatorOption;
    criteria: QFilterCriteriaWithId;
-   fieldType?: QFieldType;
+   field: QFieldMetaData;
+   table: QTableMetaData;
    valueChangeHandler: (event: React.ChangeEvent | SyntheticEvent, valueIndex?: number | "all", newValue?: any) => void;
 }
 
 FilterCriteriaRowValues.defaultProps = {
 };
 
-function FilterCriteriaRowValues({operatorOption, criteria, fieldType, valueChangeHandler}: Props): JSX.Element
+function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler}: Props): JSX.Element
 {
    if(!operatorOption)
    {
@@ -52,16 +55,16 @@ function FilterCriteriaRowValues({operatorOption, criteria, fieldType, valueChan
       let type = "search"
       const inputLabelProps: any = {};
 
-      if(fieldType == QFieldType.INTEGER)
+      if(field.type == QFieldType.INTEGER)
       {
          type = "number";
       }
-      else if(fieldType == QFieldType.DATE)
+      else if(field.type == QFieldType.DATE)
       {
          type = "date";
          inputLabelProps.shrink = true;
       }
-      else if(fieldType == QFieldType.DATE_TIME)
+      else if(field.type == QFieldType.DATE_TIME)
       {
          type = "datetime-local";
          inputLabelProps.shrink = true;
@@ -117,10 +120,37 @@ function FilterCriteriaRowValues({operatorOption, criteria, fieldType, valueChan
             value={values}
             onChange={(event, value) => valueChangeHandler(event, "all", value)}
          />
+         // todo - need the Paste button
       case ValueMode.PVS_SINGLE:
-         break;
+         let selectedPossibleValue = null;
+         if(criteria.values && criteria.values.length > 0)
+         {
+            selectedPossibleValue = criteria.values[0];
+         }
+         return <Box mb={-1.5}>
+            <DynamicSelect
+               tableName={table.name}
+               fieldName={field.name}
+               fieldLabel="Value"
+               initialValue={selectedPossibleValue?.id}
+               initialDisplayValue={selectedPossibleValue?.label}
+               inForm={false}
+               onChange={(value: any) => valueChangeHandler(null, 0, value)}
+            />
+         </Box>
       case ValueMode.PVS_MULTI:
-         break;
+         // todo - values not sticking when re-opening filter panel
+         return <Box mb={-1.5}>
+            <DynamicSelect
+               tableName={table.name}
+               fieldName={field.name}
+               isMultiple
+               fieldLabel="Values"
+               initialValues={criteria.values || []}
+               inForm={false}
+               onChange={(value: any) => valueChangeHandler(null, "all", value)}
+            />
+         </Box>
    }
 
    return (<br />);

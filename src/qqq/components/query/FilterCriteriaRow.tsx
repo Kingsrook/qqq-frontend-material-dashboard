@@ -308,13 +308,13 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
       updateCriteria(criteria, false);
    };
 
-   ////////////////////////////////////////
-   // event handler for value text field //
-   ////////////////////////////////////////
+   //////////////////////////////////////////////////
+   // event handler for value field (of all types) //
+   //////////////////////////////////////////////////
    const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any) =>
    {
       // @ts-ignore
-      const value = newValue ? newValue : event.target.value
+      const value = newValue ? newValue : event ? event.target.value : null;
 
       if(!criteria.values)
       {
@@ -489,7 +489,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
             <FilterCriteriaRowValues
                operatorOption={operatorSelectedValue}
                criteria={{id: id, ...criteria}}
-               fieldType={field?.type}
+               field={field}
+               table={fieldTable}
                valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
             />
          </Box>
