@@ -39,7 +39,6 @@ public class BulkEditTest extends QBaseSeleniumTest
    @Override
    protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
    {
-      super.addJavalinRoutes(qSeleniumJavalin);
       addCommonRoutesForThisTest(qSeleniumJavalin);
       qSeleniumJavalin
          .withRouteToFile("/metaData/process/person.bulkEdit", "metaData/process/person.bulkEdit.json")
@@ -56,8 +55,10 @@ public class BulkEditTest extends QBaseSeleniumTest
     *******************************************************************************/
    private void addCommonRoutesForThisTest(QSeleniumJavalin qSeleniumJavalin)
    {
+      super.addJavalinRoutes(qSeleniumJavalin);
       qSeleniumJavalin.withRouteToFile("/data/person/count", "data/person/count.json");
       qSeleniumJavalin.withRouteToFile("/data/person/query", "data/person/index.json");
+      qSeleniumJavalin.withRouteToString("/processes/person.bulkEdit/74a03a7d-2f53-4784-9911-3a21f7646c43/records", "[]");
    }
 
 
