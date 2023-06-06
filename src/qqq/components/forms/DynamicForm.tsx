@@ -19,15 +19,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {colors} from "@mui/material";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {colors, Icon, InputLabel} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
+import Tooltip from "@mui/material/Tooltip";
 import {useFormikContext} from "formik";
 import React, {useState} from "react";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
 {
@@ -35,6 +40,7 @@ interface Props
    formData: any;
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
+   record?: QRecord;
 }
 
 function QDynamicForm(props: Props): JSX.Element
@@ -58,6 +64,14 @@ function QDynamicForm(props: Props): JSX.Element
       }
 
       formikProps.setFieldValue(field.name, event.currentTarget.files[0]);
+   };
+
+   const removeFile = (fieldName: string) =>
+   {
+      setFileName(null);
+      formikProps.setFieldValue(fieldName, null);
+      props.record?.values.delete(fieldName)
+      props.record?.displayValues.delete(fieldName)
    };
 
    const bulkEditSwitchChanged = (name: string, value: boolean) =>
@@ -94,10 +108,23 @@ function QDynamicForm(props: Props): JSX.Element
 
                      if (field.type === "file")
                      {
+                        const pseudoField = new QFieldMetaData({name: fieldName, type: QFieldType.BLOB});
                         return (
                            <Grid item xs={12} sm={6} key={fieldName}>
                               <Box mb={1.5}>
 
+                                 <InputLabel shrink={true}>{field.label}</InputLabel>
+                                 {
+                                    props.record && props.record.values.get(fieldName) && <Box fontSize="0.875rem" pb={1}>
+                                       Current File:
+                                       <Box display="inline-flex" pl={1}>
+                                          {ValueUtils.getDisplayValue(pseudoField, props.record, "view")}
+                                          <Tooltip placement="bottom" title="Remove current file">
+                                             <Icon className="blobIcon" fontSize="small" onClick={(e) => removeFile(fieldName)}>delete</Icon>
+                                          </Tooltip>
+                                       </Box>
+                                    </Box>
+                                 }
                                  <Box display="flex" alignItems="center">
                                     <Button variant="outlined" component="label">
                                        <span style={{color: colors.lightBlue[500]}}>Choose file to upload</span>

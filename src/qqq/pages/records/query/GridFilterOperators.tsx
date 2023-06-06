@@ -707,6 +707,20 @@ const booleanNotEmptyOperator: GridFilterOperator = {
 
 export const QGridBooleanOperators = [booleanTrueOperator, booleanFalseOperator, booleanEmptyOperator, booleanNotEmptyOperator];
 
+const blobEmptyOperator: GridFilterOperator = {
+   label: "is empty",
+   value: "isEmpty",
+   getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+};
+
+const blobNotEmptyOperator: GridFilterOperator = {
+   label: "is not empty",
+   value: "isNotEmpty",
+   getApplyFilterFn: (filterItem: GridFilterItem, column: GridColDef) => null
+};
+
+export const QGridBlobOperators = [blobNotEmptyOperator, blobEmptyOperator];
+
 
 ///////////////////////////////////////
 // input element for possible values //
