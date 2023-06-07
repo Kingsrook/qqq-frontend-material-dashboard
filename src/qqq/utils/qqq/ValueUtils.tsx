@@ -281,6 +281,16 @@ class ValueUtils
       return (`${date.toString("yyyy-MM-ddTHH:mm:ssZ")}`);
    }
 
+   public static formatDateISO8601(date: Date)
+   {
+      if (!(date instanceof Date))
+      {
+         date = new Date(date);
+      }
+      // @ts-ignore
+      return (`${date.toString("yyyy-MM-dd")}`);
+   }
+
    public static formatDateTimeForFileName(date: Date)
    {
       const zp = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
