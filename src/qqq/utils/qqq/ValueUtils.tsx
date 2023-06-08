@@ -560,7 +560,7 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
          {
             displayValue && (
                adornmentFieldsMap.get(fieldName) === true ? (
-                  <Box>
+                  <Box component="span">
                      <Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_on</Icon>
                      {displayValue}
                      <ClickAwayListener onClickAway={handleTooltipClose}>
