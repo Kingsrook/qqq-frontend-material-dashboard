@@ -421,42 +421,50 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    top: -60px !important;
 }
 
+/* tighten the text in the field select dropdown in custom filters */
 .customFilterPanel .MuiAutocomplete-paper
 {
    line-height: 1.375;
 }
 
+/* tighten the text in the field select dropdown in custom filters */
 .customFilterPanel .MuiAutocomplete-groupLabel
 {
    line-height: 1.75;
 }
 
+/* taller list box */
 .customFilterPanel .MuiAutocomplete-listbox
 {
    max-height: 60vh;
 }
 
+/* shrink down-arrows in custom filters panel */
 .customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard,
 .customFilterPanel .MuiSvgIcon-root
 {
    font-size: 14px !important;
 }
 
+/* fix something in AND/OR dropdown in filters */
 .customFilterPanel .booleanOperatorColumn .MuiSvgIcon-root
 {
    display: inline-block !important;
 }
 
+/* adjust bottom of AND/OR dropdown in filters */
 .customFilterPanel .booleanOperatorColumn .MuiInputBase-formControl
 {
    padding-bottom: calc(0.25rem + 1px);
 }
 
+/* adjust down-arrow in AND/OR dropdown in filters */
 .customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard
 {
    top: calc(50% - 0.75rem);
 }
 
+/* change tags in any-of value fields to not be black bg with white text */
 .customFilterPanel .filterValuesColumn .MuiChip-root
 {
    background: none;
@@ -464,13 +472,32 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    border: 1px solid gray;
 }
 
+/* change 'x' icon in tags in any-of value */
 .customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
 {
    color: gray;
 }
 
+/* change tags in any-of value fields to not be black bg with white text */
 .customFilterPanel .filterValuesColumn .MuiAutocomplete-tag
 {
    color: #191919;
    background: none;
+}
+
+/* default hover color for the 'x' to remove a tag from an 'any-of' value was white, which made it disappear */
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
+{
+   color: lightgray;
+}
+
+.DynamicSelectPopper ul
+{
+   padding: 0;
+}
+
+.DynamicSelectPopper ul li.MuiAutocomplete-option
+{
+   padding-left: 0.25rem;
+   padding-right: 0.25rem;
 }

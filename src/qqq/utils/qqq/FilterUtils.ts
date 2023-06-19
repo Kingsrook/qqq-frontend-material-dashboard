@@ -264,10 +264,10 @@ class FilterUtils
             /////////////////////////////////////////////////////////////////////////////////////////////////
             return ([null, null]);
          }
-         return (FilterUtils.prepFilterValuesForBackend(value, fieldMetaData));
+         return (FilterUtils.cleanseCriteriaValueForQQQ(value, fieldMetaData));
       }
 
-      return (FilterUtils.prepFilterValuesForBackend([value], fieldMetaData));
+      return (FilterUtils.cleanseCriteriaValueForQQQ([value], fieldMetaData));
    };
 
 
@@ -278,7 +278,7 @@ class FilterUtils
     **
     ** Or, if the values are date-times, convert them to UTC.
     *******************************************************************************/
-   private static prepFilterValuesForBackend = (param: any[], fieldMetaData: QFieldMetaData): number[] | string[] =>
+   private static cleanseCriteriaValueForQQQ = (param: any[], fieldMetaData: QFieldMetaData): number[] | string[] =>
    {
       if (param === null || param === undefined)
       {
@@ -291,10 +291,15 @@ class FilterUtils
          console.log(param[i]);
          if (param[i] && param[i].id && param[i].label)
          {
-            /////////////////////////////////////////////////////////////
-            // if the param looks like a possible value, return its id //
-            /////////////////////////////////////////////////////////////
-            rs.push(param[i].id);
+            //////////////////////////////////////////////////////////////////////////////////////////
+            // if the param looks like a possible value, return its id                              //
+            // during build of new custom filter panel, this ended up causing us                    //
+            // problems (because we wanted the full PV object in the filter model for the frontend) //
+            // so, we can keep the PV as-is here, and see calls to convertFilterPossibleValuesToIds //
+            // to do what this used to do.                                                          //
+            //////////////////////////////////////////////////////////////////////////////////////////
+            // rs.push(param[i].id);
+            rs.push(param[i]);
          }
          else
          {
@@ -464,7 +469,16 @@ class FilterUtils
                               amount = -amount;
                            }
 
+                           /////////////////////////////////////////////
+                           // shift the date/time by the input amount //
+                           /////////////////////////////////////////////
                            value.setTime(value.getTime() + 1000 * amount);
+
+                           /////////////////////////////////////////////////
+                           // now also shift from local-timezone into UTC //
+                           /////////////////////////////////////////////////
+                           value.setTime(value.getTime() + 1000 * 60 * value.getTimezoneOffset());
+
                            values = [ValueUtils.formatDateTimeISO8601(value)];
                         }
                      }
@@ -598,7 +612,7 @@ class FilterUtils
    /*******************************************************************************
     ** build a qqq filter from a grid and column sort model
     *******************************************************************************/
-   public static buildQFilterFromGridFilter(tableMetaData: QTableMetaData, filterModel: GridFilterModel, columnSortModel: GridSortItem[], limit?: number): QQueryFilter
+   public static buildQFilterFromGridFilter(tableMetaData: QTableMetaData, filterModel: GridFilterModel, columnSortModel: GridSortItem[], limit?: number, allowIncompleteCriteria = false): QQueryFilter
    {
       console.log("Building q filter with model:");
       console.log(filterModel);
@@ -638,13 +652,15 @@ class FilterUtils
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
-            if ((!item.value || item.value.length == 0) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            if ((!item.value || item.value.length == 0 || (item.value.length == 1 && item.value[0] == "")) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
             {
-               return;
+               if (!allowIncompleteCriteria)
+               {
+                  return;
+               }
             }
 
-            var fieldMetadata = tableMetaData?.fields.get(item.columnField);
-
+            const fieldMetadata = tableMetaData?.fields.get(item.columnField);
             const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue, fieldMetadata);
             qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
@@ -663,6 +679,33 @@ class FilterUtils
 
       return qFilter;
    };
+
+
+   public static convertFilterPossibleValuesToIds(inputFilter: QQueryFilter): QQueryFilter
+   {
+      const filter = Object.assign({}, inputFilter);
+
+      if (filter.criteria)
+      {
+         for (let i = 0; i < filter.criteria.length; i++)
+         {
+            const criteria = filter.criteria[i];
+            if (criteria.values)
+            {
+               for (let j = 0; j < criteria.values.length; j++)
+               {
+                  let value = criteria.values[j];
+                  if (value && value.id && value.label)
+                  {
+                     criteria.values[j] = value.id;
+                  }
+               }
+            }
+         }
+      }
+
+      return (filter);
+   }
 
 }
 

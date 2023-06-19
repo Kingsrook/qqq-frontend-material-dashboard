@@ -36,11 +36,12 @@ import ChipTextField from "qqq/components/forms/ChipTextField";
 interface Props
 {
    type: string;
+   onSave: (newValues: any[]) => void;
 }
 
 FilterCriteriaPaster.defaultProps = {};
 
-function FilterCriteriaPaster({type}: Props): JSX.Element
+function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
 {
    enum Delimiter
    {
@@ -86,14 +87,6 @@ function FilterCriteriaPaster({type}: Props): JSX.Element
       setPasteModalIsOpen(true);
    };
 
-   const applyValue = (item: GridFilterItem) =>
-   {
-      console.log(`updating grid values: ${JSON.stringify(item.value)}`);
-      // todo!
-      // setGridFilterItem(item);
-      // props.applyValue(item);
-   };
-
    const clearData = () =>
    {
       setDelimiter("");
@@ -113,34 +106,19 @@ function FilterCriteriaPaster({type}: Props): JSX.Element
 
    const handleSaveClicked = () =>
    {
-      //x if (gridFilterItem)
-      /* todo
+      ////////////////////////////////////////
+      // if numeric remove any non-numerics //
+      ////////////////////////////////////////
+      let saveData = [];
+      for (let i = 0; i < chipData.length; i++)
       {
-         ////////////////////////////////////////
-         // if numeric remove any non-numerics //
-         ////////////////////////////////////////
-         let saveData = [];
-         for (let i = 0; i < chipData.length; i++)
+         if (type !== "number" || !Number.isNaN(Number(chipData[i])))
          {
-            if (type !== "number" || !Number.isNaN(Number(chipData[i])))
-            {
-               saveData.push(chipData[i]);
-            }
+            saveData.push(chipData[i]);
          }
-
-         if (gridFilterItem.value)
-         {
-            gridFilterItem.value = [...gridFilterItem.value, ...saveData];
-         }
-         else
-         {
-            gridFilterItem.value = saveData;
-         }
-
-         setGridFilterItem(gridFilterItem);
-         props.applyValue(gridFilterItem);
       }
-      */
+
+      onSave(saveData);
 
       clearData();
       setPasteModalIsOpen(false);
@@ -299,7 +277,7 @@ function FilterCriteriaPaster({type}: Props): JSX.Element
    return (
       <Box>
          <Tooltip title="Quickly add many values to your filter by pasting them from a spreadsheet or any other data source.">
-            <Icon onClick={handlePasteClick} fontSize="small" color="info" sx={{marginLeft: "10px", cursor: "pointer"}}>paste_content</Icon>
+            <Icon onClick={handlePasteClick} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>paste_content</Icon>
          </Tooltip>
          {
             pasteModalIsOpen &&

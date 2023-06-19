@@ -350,7 +350,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    const buildQFilter = (tableMetaData: QTableMetaData, filterModel: GridFilterModel, limit?: number) =>
    {
-      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, limit);
+      let filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, limit);
+      filter = FilterUtils.convertFilterPossibleValuesToIds(filter);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
       return (filter);
    };
@@ -879,16 +880,28 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log(columnOrderChangeParams);
    };
 
-   const handleFilterChange = (filterModel: GridFilterModel, doSetQueryFilter = true) =>
+   const handleFilterChange = (filterModel: GridFilterModel, doSetQueryFilter = true, isChangeFromDataGrid = false) =>
    {
       setFilterModel(filterModel);
 
-      if(doSetQueryFilter)
+      if (doSetQueryFilter)
       {
          //////////////////////////////////////////////////////////////////////////////////
          // someone might have already set the query filter, so, only set it if asked to //
          //////////////////////////////////////////////////////////////////////////////////
          setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, rowsPerPage));
+      }
+
+      if (isChangeFromDataGrid)
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // this function is called by our code several times, but also from dataGridPro when its filter model changes.      //
+         // in general, we don't want a "partial" criteria to be part of our query filter object (e.g., w/ no values)        //
+         // BUT - for one use-case, when the user adds a "filter" (criteria) from column-header "..." menu, then dataGridPro //
+         // puts a partial item in its filter - so - in that case, we do like to get this partial criteria in our QFilter.   //
+         // so far, not seeing any negatives to this being here, and it fixes that user experience, so keep this.            //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, rowsPerPage, true));
       }
 
       if (filterLocalStorageKey)
@@ -1700,7 +1713,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          // to avoid both this useEffect and the one below from both doing an "initial query", //
          // only run this one if at least 1 query has already been ran                         //
          ////////////////////////////////////////////////////////////////////////////////////////
-         // console.log("calling update table for UE 1");
          updateTable();
       }
    }, [pageNumber, rowsPerPage, columnSortModel, currentSavedFilter]);
@@ -1712,7 +1724,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setTotalRecords(null);
       setDistinctRecords(null);
-      // console.log("calling update table for UE 2");
       updateTable();
    }, [columnsModel, tableState]);
 
@@ -1722,18 +1733,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       currentQFilter.skip = pageNumber * rowsPerPage;
       const currentQFilterJSON = JSON.stringify(currentQFilter);
 
-      // console.log(`current ${currentQFilterJSON}`);
-      // console.log(`last... ${lastFetchedQFilterJSON}`);
       if(currentQFilterJSON !== lastFetchedQFilterJSON)
       {
          setTotalRecords(null);
          setDistinctRecords(null);
-         // console.log("calling update table for UE 3");
          updateTable();
-      }
-      else
-      {
-         // console.log("NOT calling update table for UE 3!!");
       }
 
    }, [filterModel]);
@@ -1744,12 +1748,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       document.scrollingElement.scrollTop = 0;
    }, [pageNumber, rowsPerPage]);
 
-   const updateFilter = (newFilter: QQueryFilter): void =>
+   const updateFilterFromFilterPanel = (newFilter: QQueryFilter): void =>
    {
       setQueryFilter(newFilter);
       const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
       handleFilterChange(gridFilterModel, false);
-   }
+   };
 
    if (tableMetaData && !tableMetaData.readPermission)
    {
@@ -1813,7 +1817,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                }
                <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
                   <Box display="flex" marginRight="auto">
-                     <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange} />
+                     {
+                        metaData && metaData.processes.has("querySavedFilter") &&
+                        <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange} />
+                     }
                   </Box>
 
                   <Box display="flex" width="150px">
@@ -1840,6 +1847,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                            columnsPanel:
                               {
                                  tableMetaData: tableMetaData,
+                                 metaData: metaData,
                                  initialOpenedGroups: columnChooserOpenGroups,
                                  openGroupsChanger: setColumnChooserOpenGroups,
                                  initialFilterText: columnChooserFilterText,
@@ -1848,8 +1856,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                            filterPanel:
                               {
                                  tableMetaData: tableMetaData,
+                                 metaData: metaData,
                                  queryFilter: queryFilter,
-                                 updateFilter: updateFilter
+                                 updateFilter: updateFilterFromFilterPanel
                               }
                         }}
                         localeText={{
@@ -1880,7 +1889,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         density={density}
                         loading={loading}
                         filterModel={filterModel}
-                        onFilterModelChange={(model) => handleFilterChange(model)}
+                        onFilterModelChange={(model) => handleFilterChange(model, true, true)}
                         columnVisibilityModel={columnVisibilityModel}
                         onColumnVisibilityModelChange={handleColumnVisibilityChange}
                         onColumnOrderChange={handleColumnOrderChange}

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
@@ -28,7 +29,7 @@ import Button from "@mui/material/Button/Button";
 import Icon from "@mui/material/Icon/Icon";
 import {GridFilterPanelProps, GridSlotsComponentsProps} from "@mui/x-data-grid-pro";
 import React, {forwardRef, useReducer} from "react";
-import {FilterCriteriaRow} from "qqq/components/query/FilterCriteriaRow";
+import {FilterCriteriaRow, getDefaultCriteriaValue} from "qqq/components/query/FilterCriteriaRow";
 
 
 declare module "@mui/x-data-grid"
@@ -39,6 +40,7 @@ declare module "@mui/x-data-grid"
    interface FilterPanelPropsOverrides
    {
       tableMetaData: QTableMetaData;
+      metaData: QInstance;
       queryFilter: QQueryFilter;
       updateFilter: (newFilter: QQueryFilter) => void;
    }
@@ -66,9 +68,9 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
       {
          setTimeout(() =>
          {
-            console.log(`Try to focus ${criteriaId - 1}`);
             try
             {
+               // console.log(`Try to focus ${criteriaId - 1}`);
                document.getElementById(`field-${criteriaId - 1}`).focus();
             }
             catch (e)
@@ -80,7 +82,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
 
       const addCriteria = () =>
       {
-         const qFilterCriteriaWithId = new QFilterCriteriaWithId(null, QCriteriaOperator.EQUALS, [""]);
+         const qFilterCriteriaWithId = new QFilterCriteriaWithId(null, QCriteriaOperator.EQUALS, getDefaultCriteriaValue());
          qFilterCriteriaWithId.id = criteriaId++;
          console.log(`adding criteria id ${qFilterCriteriaWithId.id}`);
          queryFilter.criteria.push(qFilterCriteriaWithId);
@@ -98,7 +100,28 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
 
       if (queryFilter.criteria.length == 0)
       {
+         /////////////////////////////////////////////
+         // make sure there's at least one criteria //
+         /////////////////////////////////////////////
          addCriteria();
+      }
+      else
+      {
+         ////////////////////////////////////////////////////////////////////////////////////
+         // make sure all criteria have an id on them (to be used as react component keys) //
+         ////////////////////////////////////////////////////////////////////////////////////
+         let updatedAny = false;
+         for (let i = 0; i < queryFilter.criteria.length; i++)
+         {
+            if (!queryFilter.criteria[i].id)
+            {
+               queryFilter.criteria[i].id = criteriaId++;
+            }
+         }
+         if (updatedAny)
+         {
+            props.updateFilter(queryFilter);
+         }
       }
 
       if(queryFilter.criteria.length == 1 && !queryFilter.criteria[0].fieldName)
@@ -149,6 +172,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
                            id={criteria.id}
                            index={index}
                            tableMetaData={props.tableMetaData}
+                           metaData={props.metaData}
                            criteria={criteria}
                            booleanOperator={booleanOperator}
                            updateCriteria={(newCriteria, needDebounce) => updateCriteria(newCriteria, index, needDebounce)}

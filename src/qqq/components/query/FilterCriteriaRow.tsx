@@ -20,6 +20,7 @@
  */
 
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
@@ -57,12 +58,14 @@ export interface OperatorOption
    valueMode: ValueMode;
 }
 
+export const getDefaultCriteriaValue = () => [""];
 
 interface FilterCriteriaRowProps
 {
    id: number;
    index: number;
    tableMetaData: QTableMetaData;
+   metaData: QInstance;
    criteria: QFilterCriteria;
    booleanOperator: "AND" | "OR" | null;
    updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean) => void;
@@ -82,11 +85,11 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
    }
 }
 
-export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator}: FilterCriteriaRowProps): JSX.Element
+export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator}: FilterCriteriaRowProps): JSX.Element
 {
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
-   const [operatorInputValue, setOperatorInputValue] = useState("")
+   const [operatorInputValue, setOperatorInputValue] = useState("");
 
    ///////////////////////////////////////////////////////////////
    // set up the array of options for the fields Autocomplete   //
@@ -98,12 +101,14 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
 
    if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length > 0)
    {
-      fieldsGroupBy = (option: any) => `${option.table.label} Fields`;
-
       for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
       {
          const exposedJoin = tableMetaData.exposedJoins[i];
-         makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true);
+         if (metaData.tables.has(exposedJoin.joinTable.name))
+         {
+            fieldsGroupBy = (option: any) => `${option.table.label} fields`;
+            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true);
+         }
       }
    }
 
@@ -124,8 +129,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
          //////////////////////////////////////////////////////
          if (field.possibleValueSourceName)
          {
-            operatorOptions.push({label: "is", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.PVS_SINGLE});
-            operatorOptions.push({label: "is not", value: QCriteriaOperator.NOT_EQUALS, valueMode: ValueMode.PVS_SINGLE});
+            operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.PVS_SINGLE});
+            operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.PVS_SINGLE});
             operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
             operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
             operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.PVS_MULTI});
@@ -138,7 +143,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                case QFieldType.DECIMAL:
                case QFieldType.INTEGER:
                   operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "not equals", value: QCriteriaOperator.NOT_EQUALS, valueMode: ValueMode.SINGLE});
+                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
                   operatorOptions.push({label: "greater than", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE});
                   operatorOptions.push({label: "greater than or equals", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE});
                   operatorOptions.push({label: "less than", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE});
@@ -151,8 +156,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                   operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.MULTI});
                   break;
                case QFieldType.DATE:
-                  operatorOptions.push({label: "is", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is not", value: QCriteriaOperator.NOT_EQUALS, valueMode: ValueMode.SINGLE_DATE});
+                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE});
+                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
@@ -163,8 +168,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                   //? operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN});
                   break;
                case QFieldType.DATE_TIME:
-                  operatorOptions.push({label: "is", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is not", value: QCriteriaOperator.NOT_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is on or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
@@ -175,8 +180,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                   //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
                   break;
                case QFieldType.BOOLEAN:
-                  operatorOptions.push({label: "is yes", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [true]});
-                  operatorOptions.push({label: "is no", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [false]});
+                  operatorOptions.push({label: "equals yes", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [true]});
+                  operatorOptions.push({label: "equals no", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [false]});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
                   operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
                   /*
@@ -266,20 +271,39 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
    //////////////////////////////////////////
    const handleFieldChange = (event: any, newValue: any, reason: string) =>
    {
-      criteria.fieldName = newValue ? newValue.fieldName : null;
-      updateCriteria(criteria, false);
+      const oldFieldName = criteria.fieldName;
 
-      setOperatorOptions(criteria.fieldName)
-      if(operatorOptions.length)
+      criteria.fieldName = newValue ? newValue.fieldName : null;
+
+      //////////////////////////////////////////////////////
+      // decide if we should clear out the values or not. //
+      //////////////////////////////////////////////////////
+      if (criteria.fieldName == null || isFieldTypeDifferent(oldFieldName, criteria.fieldName))
       {
-         setOperatorSelectedValue(operatorOptions[0]);
-         setOperatorInputValue(operatorOptions[0].label);
+         criteria.values = getDefaultCriteriaValue();
+      }
+
+      ////////////////////////////////////////////////////////////////////
+      // update the operator options, and the operator on this criteria //
+      ////////////////////////////////////////////////////////////////////
+      setOperatorOptions(criteria.fieldName);
+      if (operatorOptions.length)
+      {
+         if (isFieldTypeDifferent(oldFieldName, criteria.fieldName))
+         {
+            criteria.operator = operatorOptions[0].value;
+            setOperatorSelectedValue(operatorOptions[0]);
+            setOperatorInputValue(operatorOptions[0].label);
+         }
       }
       else
       {
+         criteria.operator = null;
          setOperatorSelectedValue(null);
          setOperatorInputValue("");
       }
+
+      updateCriteria(criteria, false);
    };
 
    /////////////////////////////////////////////
@@ -314,7 +338,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
    const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any) =>
    {
       // @ts-ignore
-      const value = newValue ? newValue : event ? event.target.value : null;
+      const value = newValue !== undefined ? newValue : event ? event.target.value : null;
 
       if(!criteria.values)
       {
@@ -323,7 +347,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
 
       if(valueIndex == "all")
       {
-         criteria.values= value;
+         criteria.values = value;
       }
       else
       {
@@ -331,6 +355,22 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
       }
 
       updateCriteria(criteria, true);
+   };
+
+   const isFieldTypeDifferent = (fieldNameA: string, fieldNameB: string): boolean =>
+   {
+      const [fieldA] = FilterUtils.getField(tableMetaData, fieldNameA);
+      const [fieldB] = FilterUtils.getField(tableMetaData, fieldNameB);
+      if (fieldA?.type !== fieldB.type)
+      {
+         return (true);
+      }
+      if (fieldA.possibleValueSourceName !== fieldB.possibleValueSourceName)
+      {
+         return (true);
+      }
+
+      return (false);
    };
 
    function isFieldOptionEqual(option: any, value: any)
@@ -465,6 +505,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                renderOption={(props, option, state) => renderFieldOption(props, option, state)}
                autoSelect={true}
                autoHighlight={true}
+               slotProps={{popper: {style: {padding: 0, width: "250px"}}}}
             />
          </Box>
          <Box display="inline-block" width={200}>
@@ -481,6 +522,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, criteria, booleanOp
                   getOptionLabel={(option: any) => option.label}
                   autoSelect={true}
                   autoHighlight={true}
+                  slotProps={{popper: {style: {padding: 0, maxHeight: "unset", width: "200px"}}}}
                   /*disabled={criteria.fieldName == null}*/
                />
             </Tooltip>
