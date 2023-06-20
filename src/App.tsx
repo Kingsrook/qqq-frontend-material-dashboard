@@ -46,8 +46,6 @@ import ReportRun from "qqq/pages/processes/ReportRun";
 import EntityCreate from "qqq/pages/records/create/RecordCreate";
 import TableDeveloperView from "qqq/pages/records/developer/TableDeveloperView";
 import EntityEdit from "qqq/pages/records/edit/RecordEdit";
-import FilterPoc from "qqq/pages/records/FilterPoc";
-import IntersectionMatrix from "qqq/pages/records/IntersectionMatrix";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
@@ -457,20 +455,6 @@ export default function App()
                   component: <NoApps />,
                });
             }
-
-            appRoutesList.push({
-               name: "Intersection Matrix",
-               key: "intersection-matrix",
-               route: "/intersection-matrix",
-               component: <IntersectionMatrix />,
-            });
-
-            appRoutesList.push({
-               name: "Filer POC",
-               key: "filter-poc",
-               route: "/filter-poc",
-               component: <FilterPoc />,
-            });
 
             const newSideNavRoutes = [];
             // @ts-ignore
