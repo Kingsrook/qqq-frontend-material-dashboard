@@ -475,7 +475,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    }
 
    return (
-      <Box pt={0.5} display="flex" alignItems="flex-end">
+      <Box className="filterCriteriaRow" pt={0.5} display="flex" alignItems="flex-end">
          <Box display="inline-block">
             <Tooltip title="Remove this condition from your filter" enterDelay={750} placement="left">
                <IconButton onClick={removeCriteria}><Icon fontSize="small">close</Icon></IconButton>
@@ -491,7 +491,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                </FormControl>
                : <span />}
          </Box>
-         <Box display="inline-block" width={250}>
+         <Box display="inline-block" width={250} className="fieldColumn">
             <Autocomplete
                id={`field-${id}`}
                renderInput={(params) => (<TextField {...params} label={"Field"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
@@ -508,7 +508,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                slotProps={{popper: {style: {padding: 0, width: "250px"}}}}
             />
          </Box>
-         <Box display="inline-block" width={200}>
+         <Box display="inline-block" width={200} className="operatorColumn">
             <Tooltip title={criteria.fieldName == null ? "You must select a field before you can select an operator" : null} enterDelay={750}>
                <Autocomplete
                   id={"criteriaOperator"}

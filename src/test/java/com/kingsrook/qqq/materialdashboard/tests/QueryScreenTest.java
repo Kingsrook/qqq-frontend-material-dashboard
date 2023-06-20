@@ -29,8 +29,8 @@ import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Select;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -49,7 +49,8 @@ public class QueryScreenTest extends QBaseSeleniumTest
       super.addJavalinRoutes(qSeleniumJavalin);
       qSeleniumJavalin
          .withRouteToFile("/data/person/count", "data/person/count.json")
-         .withRouteToFile("/data/person/query", "data/person/index.json");
+         .withRouteToFile("/data/person/query", "data/person/index.json")
+         .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 
 
@@ -62,15 +63,18 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
 
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
       /////////////////////////////////////////////////////////////////////
       WebElement filterInput = qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_FILTER_INPUT);
       qSeleniumLib.waitForElementToHaveFocus(filterInput);
+      filterInput.sendKeys("id");
+      filterInput.sendKeys("\t");
+      driver.switchTo().activeElement().sendKeys("\t");
       qSeleniumJavalin.beginCapture();
-      filterInput.sendKeys("1");
+      driver.switchTo().activeElement().sendKeys("1");
 
       ///////////////////////////////////////////////////////////////////
       // assert that query & count both have the expected filter value //
@@ -117,10 +121,10 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
 
-      addQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
       qSeleniumJavalin.beginCapture();
+      addQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
       addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
 
       String expectedFilterContents0 = """
@@ -145,27 +149,43 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       if(index > 0)
       {
-         qSeleniumLib.waitForSelectorContaining("BUTTON", "Add filter").click();
+         qSeleniumLib.waitForSelectorContaining("BUTTON", "Add condition").click();
       }
 
-      WebElement subFormForField = qSeleniumLib.waitForSelectorAll(".MuiDataGrid-filterForm", index + 1).get(index);
+      WebElement subFormForField = qSeleniumLib.waitForSelectorAll(".filterCriteriaRow", index + 1).get(index);
 
       if(index == 1)
       {
-         Select linkOperatorSelect = new Select(subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormLinkOperatorInput SELECT")));
-         linkOperatorSelect.selectByVisibleText(booleanOperator);
+         WebElement booleanOperatorInput = subFormForField.findElement(By.cssSelector(".booleanOperatorColumn .MuiInput-input"));
+         booleanOperatorInput.click();
+         qSeleniumLib.waitForMillis(100);
+
+         subFormForField.findElement(By.cssSelector(".booleanOperatorColumn .MuiInput-input"));
+         qSeleniumLib.waitForSelectorContaining("li", booleanOperator).click();
+         qSeleniumLib.waitForMillis(100);
       }
 
-      Select fieldSelect = new Select(subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormColumnInput SELECT")));
-      fieldSelect.selectByVisibleText(fieldLabel);
+      WebElement fieldInput = subFormForField.findElement(By.cssSelector(".fieldColumn INPUT"));
+      fieldInput.click();
+      qSeleniumLib.waitForMillis(100);
+      fieldInput.clear();
+      fieldInput.sendKeys(fieldLabel);
+      qSeleniumLib.waitForMillis(100);
+      fieldInput.sendKeys("\n");
+      qSeleniumLib.waitForMillis(100);
 
-      Select operatorSelect = new Select(subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormOperatorInput SELECT")));
-      operatorSelect.selectByVisibleText(operator);
+      WebElement operatorInput = subFormForField.findElement(By.cssSelector(".operatorColumn INPUT"));
+      operatorInput.click();
+      qSeleniumLib.waitForMillis(100);
+      operatorInput.sendKeys(Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE, operator);
+      qSeleniumLib.waitForMillis(100);
+      operatorInput.sendKeys("\n");
+      qSeleniumLib.waitForMillis(100);
 
-      WebElement valueInput = subFormForField.findElement(By.cssSelector(".MuiDataGrid-filterFormValueInput INPUT"));
+      WebElement valueInput = subFormForField.findElement(By.cssSelector(".filterValuesColumn INPUT"));
       valueInput.click();
       valueInput.sendKeys(value);
-      qSeleniumLib.waitForSeconds(1);
+      qSeleniumLib.waitForMillis(100);
    }
 
 }
