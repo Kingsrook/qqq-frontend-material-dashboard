@@ -133,6 +133,15 @@ function EntityForm(props: Props): JSX.Element
       for (let i = 0; i < formFields.length; i++)
       {
          formData.formFields[formFields[i].name] = formFields[i];
+
+         if (formFields[i].possibleValueProps)
+         {
+            formFields[i].possibleValueProps.otherValues = formFields[i].possibleValueProps.otherValues ?? new Map<string, any>();
+            Object.keys(formFields).forEach((otherKey) =>
+            {
+               formFields[i].possibleValueProps.otherValues.set(otherKey, values[otherKey]);
+            });
+         }
       }
 
       if (!Object.keys(formFields).length)
