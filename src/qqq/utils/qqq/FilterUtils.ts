@@ -681,6 +681,10 @@ class FilterUtils
    };
 
 
+   /*******************************************************************************
+    ** edit the input filter object, replacing any values which have {id,label} attributes
+    ** to instead just have the id part.
+    *******************************************************************************/
    public static convertFilterPossibleValuesToIds(inputFilter: QQueryFilter): QQueryFilter
    {
       const filter = Object.assign({}, inputFilter);
