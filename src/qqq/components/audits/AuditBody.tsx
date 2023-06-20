@@ -108,6 +108,10 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          {
             return (<>{fieldLabel}: Removed value {(oldValue)}</>);
          }
+         else if(message)
+         {
+            return (<>{message}</>);
+         }
 
          /*
          const fieldLabel = <span style={{fontWeight: "700", color: "rgb(52, 71, 103)"}}>{tableMetaData?.fields?.get(fieldName)?.label ?? fieldName}</span>;

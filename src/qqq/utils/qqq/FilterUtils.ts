@@ -488,6 +488,53 @@ class FilterUtils
                      }
                   }
 
+                  if (field && field.type == "DATE" && !values)
+                  {
+                     try
+                     {
+                        const criteria = filterJSON.criteria[i];
+                        if (criteria && criteria.expression)
+                        {
+                           let value = new Date();
+                           let amount = Number(criteria.expression.amount);
+                           switch (criteria.expression.timeUnit)
+                           {
+                              case "MINUTES":
+                              {
+                                 amount = amount * 60;
+                                 break;
+                              }
+                              case "HOURS":
+                              {
+                                 amount = amount * 60 * 60;
+                                 break;
+                              }
+                              case "DAYS":
+                              {
+                                 amount = amount * 60 * 60 * 24;
+                                 break;
+                              }
+                              default:
+                              {
+                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
+                              }
+                           }
+
+                           if (criteria.expression.operator == "MINUS")
+                           {
+                              amount = -amount;
+                           }
+
+                           value.setTime(value.getTime() + 1000 * amount);
+                           values = [ValueUtils.formatDateISO8601(value)];
+                        }
+                     }
+                     catch (e)
+                     {
+                        console.log(e);
+                     }
+                  }
+
                   defaultFilter.items.push({
                      columnField: criteria.fieldName,
                      operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),

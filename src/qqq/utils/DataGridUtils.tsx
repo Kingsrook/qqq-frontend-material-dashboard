@@ -29,7 +29,7 @@ import {GridColDef, GridFilterItem, GridRowsProp} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React from "react";
 import {Link} from "react-router-dom";
-import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
+import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 
@@ -197,6 +197,23 @@ export default class DataGridUtils
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
+         if(field.isHeavy)
+         {
+            if(field.type == QFieldType.BLOB)
+            {
+               ////////////////////////////////////////////////////////
+               // assume we DO want heavy blobs - as download links. //
+               ////////////////////////////////////////////////////////
+            }
+            else
+            {
+               ///////////////////////////////////////////////////
+               // otherwise, skip heavy fields on query screen. //
+               ///////////////////////////////////////////////////
+               return;
+            }
+         }
+
          const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
          if(key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
@@ -262,6 +279,9 @@ export default class DataGridUtils
                columnWidth = 75;
                filterOperators = QGridBooleanOperators;
                break;
+            case QFieldType.BLOB:
+               filterOperators = QGridBlobOperators;
+               break;
             default:
             // noop - leave as string
          }
@@ -274,6 +294,7 @@ export default class DataGridUtils
          const widths: Map<string, number> = new Map<string, number>([
             ["small", 100],
             ["medium", 200],
+            ["medlarge", 300],
             ["large", 400],
             ["xlarge", 600]
          ]);
@@ -290,7 +311,7 @@ export default class DataGridUtils
       let headerName = labelPrefix ? labelPrefix + field.label : field.label;
       let fieldName = namePrefix ? namePrefix + field.name : field.name;
 
-      const column = {
+      const column: GridColDef = {
          field: fieldName,
          type: columnType,
          headerName: headerName,

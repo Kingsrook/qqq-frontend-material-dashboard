@@ -97,11 +97,30 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const tableName = table.name;
    const [searchParams] = useSearchParams();
 
-   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
+   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(false);
+   const [warningAlert, setWarningAlert] = useState(null as string);
    const [successAlert, setSuccessAlert] = useState(null as string);
 
    const location = useLocation();
    const navigate = useNavigate();
+
+   if(location.state)
+   {
+      let state: any = location.state;
+      if(state["deleteSuccess"])
+      {
+         setShowSuccessfullyDeletedAlert(true);
+         delete state["deleteSuccess"];
+      }
+
+      if(state["warning"])
+      {
+         setWarningAlert(state["warning"]);
+         delete state["warning"];
+      }
+
+      window.history.replaceState(state, "");
+   }
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
@@ -982,7 +1001,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                //////////////////////////////////////
                const dateString = ValueUtils.formatDateTimeForFileName(new Date());
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}`;
+
+               const encodedFilterJSON = encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)));
 
                //////////////////////////////////////////////////////////////////////////////////////
                // open a window (tab) with a little page that says the file is being generated.    //
@@ -999,6 +1020,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <script>
                         setTimeout(() =>
                         {
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           // need to encode and decode this value, so set it in the form here, instead of literally below //
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           document.getElementById("filter").value = decodeURIComponent("${encodedFilterJSON}");
+                           
                            document.getElementById("exportForm").submit();
                         }, 1);
                      </script>
@@ -1007,6 +1033,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...
                      <form id="exportForm" method="post" action="${url}" >
                         <input type="hidden" name="Authorization" value="${qController.getAuthorizationHeaderValue()}">
+                        <input type="hidden" name="fields" value="${visibleFields.join(",")}">
+                        <input type="hidden" name="filter" id="filter">
                      </form>
                   </body>
                </html>`);
@@ -1795,23 +1823,20 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                )}
                {
                   (tableLabel && showSuccessfullyDeletedAlert) ? (
-                     <Alert color="success" sx={{mb: 3}} onClose={() =>
-                     {
-                        setShowSuccessfullyDeletedAlert(false);
-                     }}>
-                        {`${tableLabel} successfully deleted`}
-                     </Alert>
+                     <Alert color="success" sx={{mb: 3}} onClose={() => setShowSuccessfullyDeletedAlert(false)}>{`${tableLabel} successfully deleted`}</Alert>
                   ) : null
                }
                {
                   (successAlert) ? (
                      <Collapse in={Boolean(successAlert)}>
-                        <Alert color="success" sx={{mb: 3}} onClose={() =>
-                        {
-                           setSuccessAlert(null);
-                        }}>
-                           {successAlert}
-                        </Alert>
+                        <Alert color="success" sx={{mb: 3}} onClose={() => setSuccessAlert(null)}>{successAlert}</Alert>
+                     </Collapse>
+                  ) : null
+               }
+               {
+                  (warningAlert) ? (
+                     <Collapse in={Boolean(warningAlert)}>
+                        <Alert color="warning" sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
                }
