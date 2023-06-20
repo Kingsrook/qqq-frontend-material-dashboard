@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {Box, FormControlLabel, FormGroup} from "@mui/material";
 import Button from "@mui/material/Button";
@@ -37,6 +38,7 @@ declare module "@mui/x-data-grid"
    interface ColumnsPanelPropsOverrides
    {
       tableMetaData: QTableMetaData;
+      metaData: QInstance;
       initialOpenedGroups: { [name: string]: boolean };
       openGroupsChanger: (openedGroups: { [name: string]: boolean }) => void;
       initialFilterText: string;
@@ -70,7 +72,11 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       {
          for (let i = 0; i < props.tableMetaData.exposedJoins.length; i++)
          {
-            tables.push(props.tableMetaData.exposedJoins[i].joinTable);
+            const exposedJoin = props.tableMetaData.exposedJoins[i];
+            if (props.metaData.tables.has(exposedJoin.joinTable.name))
+            {
+               tables.push(exposedJoin.joinTable);
+            }
          }
       }
 
@@ -112,7 +118,7 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
                return (true);
             }
          }
-         catch(e)
+         catch (e)
          {
             //////////////////////////////////////////////////////////////////////////////////
             // in case text is an invalid regex... well, at least do a starts-with match... //
@@ -120,6 +126,33 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
             if (columnLabelMinusTable.toLowerCase().startsWith(filterText.toLowerCase()))
             {
                return (true);
+            }
+         }
+
+         const tableLabel = column.headerName.replace(/:.*/, "");
+         if (tableLabel)
+         {
+            try
+            {
+               ////////////////////////////////////////////////////////////
+               // try to match word-boundary followed by the filter text //
+               // e.g., "name" would match "First Name" or "Last Name"   //
+               ////////////////////////////////////////////////////////////
+               const re = new RegExp("\\b" + filterText.toLowerCase());
+               if (tableLabel.toLowerCase().match(re))
+               {
+                  return (true);
+               }
+            }
+            catch (e)
+            {
+               //////////////////////////////////////////////////////////////////////////////////
+               // in case text is an invalid regex... well, at least do a starts-with match... //
+               //////////////////////////////////////////////////////////////////////////////////
+               if (tableLabel.toLowerCase().startsWith(filterText.toLowerCase()))
+               {
+                  return (true);
+               }
             }
          }
 

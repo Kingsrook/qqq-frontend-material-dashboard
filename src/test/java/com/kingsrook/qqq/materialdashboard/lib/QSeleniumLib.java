@@ -119,6 +119,26 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void waitForMillis(int n)
+   {
+      try
+      {
+         new WebDriverWait(driver, Duration.ofMillis(n))
+            .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".wontEverBePresent")));
+      }
+      catch(Exception e)
+      {
+         ///////////////////
+         // okay, resume. //
+         ///////////////////
+      }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public void waitForever()
    {
       if(System.getenv("CIRCLECI") != null)

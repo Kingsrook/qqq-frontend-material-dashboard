@@ -108,7 +108,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////
       // modify the query //
       //////////////////////
-      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
       addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
       qSeleniumLib.waitForSelectorContaining("H5", "Person").click();
       qSeleniumLib.waitForSelectorContaining("DIV", "Current Filter: Some People")
