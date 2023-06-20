@@ -361,7 +361,7 @@ class ValueUtils
          //////////////////////////////////////////////////////////////////
          return (value + "T00:00");
       }
-      else if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/))
+      else if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?Z$/))
       {
          ///////////////////////////////////////////////////////////////////////////////////////////////////////
          // If the passed in string has a Z on the end (e.g., in UTC) - make a Date object - the browser will //
