@@ -38,6 +38,8 @@ import {Link} from "react-router-dom";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 
+import "ace-builds/src-noconflict/mode-sql";
+
 /*******************************************************************************
  ** Utility class for working with QQQ Values
  **
@@ -462,7 +464,12 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
    const [errorMessage, setErrorMessage] = useState(null as string);
    const [resetErrorTimeout, setResetErrorTimeout] = useState(null as any);
 
-   const formatJson = () =>
+   const isFormattable = (mode: string): boolean =>
+   {
+      return (mode === "json" || mode === "sql");
+   };
+
+   const formatCode = () =>
    {
       if (isFormatted)
       {
@@ -473,19 +480,44 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
       {
          try
          {
-            let formatted = JSON.stringify(JSON.parse(activeCode), null, 3);
+            let formatted = activeCode;
+
+            if (mode === "json")
+            {
+               formatted = JSON.stringify(JSON.parse(activeCode), null, 3);
+            }
+            else if (mode === "sql")
+            {
+               formatted = code;
+               if (formatted.match(/(^|\s)SELECT\s.*\sFROM\s/i))
+               {
+                  const beforeAndAfterFrom = formatted.split(/\sFROM\s/, 2);
+                  let beforeFrom = beforeAndAfterFrom[0];
+                  beforeFrom = beforeFrom.replaceAll(/,\s*/gi, ",\n   ");
+                  const afterFrom = beforeAndAfterFrom[1];
+                  formatted = beforeFrom + " FROM " + afterFrom;
+               }
+               formatted = formatted.replaceAll(/(\s*\b(SELECT|SELECT DISTINCT|FROM|WHERE|ORDER BY|GROUP BY|HAVING|INNER JOIN|LEFT JOIN|RIGHT JOIN)\b\s*)/gi, "\n$2\n   ");
+               formatted = formatted.replaceAll(/(\s*\b(AND|OR)\b\s*)/gi, "\n   $2 ");
+               formatted = formatted.replaceAll(/^\s*/g, "");
+            }
+            else
+            {
+               console.log(`Unsupported mode for formatting [${mode}]`);
+            }
+
             setActiveCode(formatted);
             setIsFormatted(true);
          }
          catch (e)
          {
-            setErrorMessage("Error formatting json: " + e);
+            setErrorMessage("Error formatting code: " + e);
             clearTimeout(resetErrorTimeout);
             setResetErrorTimeout(setTimeout(() =>
             {
                setErrorMessage(null);
             }, 5000));
-            console.log("Error formatting json: " + e);
+            console.log("Error formatting code: " + e);
          }
       }
    };
@@ -497,7 +529,7 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
 
    return (
       <Box component="span">
-         {mode == "json" && code && <Button onClick={() => formatJson()}>{isFormatted ? "Reset Format" : "Format JSON"}</Button>}
+         {isFormattable(mode) && code && <Button onClick={() => formatCode()}>{isFormatted ? "Reset Format" : `Format ${mode.toUpperCase()}`}</Button>}
          {code && <Button onClick={() => toggleSize()}>{isExpanded ? "Collapse" : "Expand"}</Button>}
          {errorMessage}
          <br />
