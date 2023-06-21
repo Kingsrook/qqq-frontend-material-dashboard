@@ -491,6 +491,27 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    color: lightgray;
 }
 
+/* make the blue active-bottom-border not scroll in multi-value filter value panel */
+/* also prevent that box from getting stupidly large; scroll well.  */
+.filterValuesColumn .multiValue .Mui-focused:after
+{
+   border-bottom: none !important;
+}
+
+.filterValuesColumn .multiValue .Mui-focused .MuiAutocomplete-inputRoot:before
+{
+   border-bottom: none !important;
+}
+
+.filterValuesColumn .multiValue .MuiAutocomplete-inputRoot.Mui-focused
+{
+   border-bottom: 2px solid #0062FF;
+   max-height: 150px;
+   overflow-x: hidden;
+   overflow-y: auto;
+}
+
+
 .DynamicSelectPopper ul
 {
    padding: 0;

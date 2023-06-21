@@ -170,7 +170,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
          {
             values = [];
          }
-         return <Box display="flex" alignItems="flex-end">
+         return <Box display="flex" alignItems="flex-end" className="multiValue">
             <Autocomplete
                renderInput={(params) => (<TextField {...params} variant="standard" label="Values" />)}
                options={[]}
