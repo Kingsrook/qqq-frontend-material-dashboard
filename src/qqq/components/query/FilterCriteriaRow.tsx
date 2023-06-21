@@ -505,7 +505,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                renderOption={(props, option, state) => renderFieldOption(props, option, state)}
                autoSelect={true}
                autoHighlight={true}
-               slotProps={{popper: {style: {padding: 0, width: "250px"}}}}
+               slotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
             />
          </Box>
          <Box display="inline-block" width={200} className="operatorColumn">

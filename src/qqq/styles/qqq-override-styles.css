@@ -434,7 +434,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 }
 
 /* taller list box */
-.customFilterPanel .MuiAutocomplete-listbox
+.filterCriteriaRowColumnPopper .MuiAutocomplete-listbox
 {
    max-height: 60vh;
 }
