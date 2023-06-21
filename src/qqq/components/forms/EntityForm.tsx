@@ -54,6 +54,7 @@ interface Props
    closeModalHandler?: (event: object, reason: string) => void;
    defaultValues: { [key: string]: string };
    disabledFields: { [key: string]: boolean } | string[];
+   isDuplicate?: boolean;
 }
 
 EntityForm.defaultProps = {
@@ -63,6 +64,7 @@ EntityForm.defaultProps = {
    closeModalHandler: null,
    defaultValues: {},
    disabledFields: {},
+   isDuplicate: false
 };
 
 function EntityForm(props: Props): JSX.Element
@@ -173,24 +175,30 @@ function EntityForm(props: Props): JSX.Element
             fieldArray.push(fieldMetaData);
          });
 
-         /////////////////////////////////////////////////////////////////////////////////
-         // if doing an edit, fetch the record and pre-populate the form values from it //
-         /////////////////////////////////////////////////////////////////////////////////
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         // if doing an edit or duplicate, fetch the record and pre-populate the form values from it //
+         //////////////////////////////////////////////////////////////////////////////////////////////
          let record: QRecord = null;
          let defaultDisplayValues = new Map<string, string>();
          if (props.id !== null)
          {
             record = await qController.get(tableName, props.id);
             setRecord(record);
-            setFormTitle(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
+
+            const titleVerb = props.isDuplicate ? "Duplicate" : "Edit";
+            setFormTitle(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
 
             if (!props.isModal)
             {
-               setPageHeader(`Edit ${tableMetaData?.label}: ${record?.recordLabel}`);
+               setPageHeader(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
             }
 
             tableMetaData.fields.forEach((fieldMetaData, key) =>
             {
+               if (props.isDuplicate && fieldMetaData.name == tableMetaData.primaryKeyField)
+               {
+                  return;
+               }
                initialValues[key] = record.values.get(key);
             });
 
@@ -213,15 +221,6 @@ function EntityForm(props: Props): JSX.Element
             if (!props.isModal)
             {
                setPageHeader(`Creating New ${tableMetaData?.label}`);
-            }
-
-            if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
-            {
-               setNotAllowedError("Records may not be created in this table");
-            }
-            else if (!tableMetaData.insertPermission)
-            {
-               setNotAllowedError(`You do not have permission to create ${tableMetaData.label} records`);
             }
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +250,32 @@ function EntityForm(props: Props): JSX.Element
                      }
                   }
                }
+            }
+         }
+
+         //////////////////////////////////////
+         // check capabilities & permissions //
+         //////////////////////////////////////
+         if (props.isDuplicate || !props.id)
+         {
+            if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
+            {
+               setNotAllowedError("Records may not be created in this table");
+            }
+            else if (!tableMetaData.insertPermission)
+            {
+               setNotAllowedError(`You do not have permission to create ${tableMetaData.label} records`);
+            }
+         }
+         else
+         {
+            if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+            {
+               setNotAllowedError("Records may not be edited in this table");
+            }
+            else if (!tableMetaData.editPermission)
+            {
+               setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
             }
          }
 
@@ -316,11 +341,11 @@ function EntityForm(props: Props): JSX.Element
                const fieldName = section.fieldNames[j];
                const field = tableMetaData.fields.get(fieldName);
 
-               ////////////////////////////////////////////////////////////////////////////////////////////
-               // if id !== null - means we're on the edit screen -- show all fields on the edit screen. //
-               // || (or) we're on the insert screen in which case, only show editable fields.           //
-               ////////////////////////////////////////////////////////////////////////////////////////////
-               if (props.id !== null || field.isEditable)
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // if id !== null (and we're not duplicating) - means we're on the edit screen -- show all fields on the edit screen. //
+               // || (or) we're on the insert screen in which case, only show editable fields.                                       //
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               if ((props.id !== null && !props.isDuplicate) || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
                }
@@ -368,7 +393,12 @@ function EntityForm(props: Props): JSX.Element
       //  but if the user used the anchors on the page, this doesn't effectively cancel... //
       //  what we have here pushed a new history entry (I think?), so could be better      //
       ///////////////////////////////////////////////////////////////////////////////////////
-      if (props.id !== null)
+      if (props.id !== null && props.isDuplicate)
+      {
+         const path = `${location.pathname.replace(/\/duplicate$/, "")}`;
+         navigate(path, {replace: true});
+      }
+      else if (props.id !== null)
       {
          const path = `${location.pathname.replace(/\/edit$/, "")}`;
          navigate(path, {replace: true});
@@ -428,8 +458,9 @@ function EntityForm(props: Props): JSX.Element
             }
          }
 
-         if (props.id !== null)
+         if (props.id !== null && !props.isDuplicate)
          {
+            // todo - audit that it's a dupe
             await qController
                .update(tableName, props.id, values)
                .then((record) =>
@@ -473,7 +504,9 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
-                     const path = location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
+                     const path = props.isDuplicate ?
+                        location.pathname.replace(new RegExp(`/${props.id}/duplicate$`), "/" + record.values.get(tableMetaData.primaryKeyField))
+                        : location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
                      navigate(path, {state: {createSuccess: true}});
                   }
                })
@@ -481,8 +514,9 @@ function EntityForm(props: Props): JSX.Element
                {
                   if(error.message.toLowerCase().startsWith("warning"))
                   {
-                     const path = location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
-                     navigate(path);
+                     const path = props.isDuplicate ?
+                        location.pathname.replace(new RegExp(`/${props.id}/duplicate$`), "/" + record.values.get(tableMetaData.primaryKeyField))
+                        : location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
                      navigate(path, {state: {createSuccess: true, warning: error.message}});
                   }
                   else

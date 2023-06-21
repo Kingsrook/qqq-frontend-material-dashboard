@@ -535,6 +535,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             </MenuItem>
          }
          {
+            table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+            <MenuItem onClick={() => navigate("duplicate")}>
+               <ListItemIcon><Icon>copy</Icon></ListItemIcon>
+               Create Duplicate
+            </MenuItem>
+         }
+         {
             table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission &&
             <MenuItem onClick={() => navigate("edit")}>
                <ListItemIcon><Icon>edit</Icon></ListItemIcon>
