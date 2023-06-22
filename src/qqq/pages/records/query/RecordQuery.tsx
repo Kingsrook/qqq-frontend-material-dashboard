@@ -1301,7 +1301,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       else
       {
          handleFilterChange({items: []} as GridFilterModel);
-         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}]);
+         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}], {items: []} as GridFilterModel);
          localStorage.removeItem(currentSavedFilterLocalStorageKey);
       }
    }
