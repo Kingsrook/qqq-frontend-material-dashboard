@@ -101,6 +101,7 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                completions.push({value: "api.bulkInsert(", meta: "Create multiple records in a table."});
                completions.push({value: "api.bulkUpdate(", meta: "Update multiple records in a table."});
                completions.push({value: "api.bulkDelete(", meta: "Remove multiple records from a table."});
+               completions.push({value: "api.runProcess(", meta: "Run a process"});
                // completions.push({value: "api.newRecord(", meta: "Create a new QRecord object."});
                // completions.push({value: "api.newQueryInput(", meta: "Create a new QueryInput object."});
                // completions.push({value: "api.newQueryFilter(", meta: "Create a new QueryFilter object."});

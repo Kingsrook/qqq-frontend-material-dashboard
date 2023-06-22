@@ -25,12 +25,41 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {getGridDateOperators, GridColDef, GridRowsProp} from "@mui/x-data-grid-pro";
+import {GridColDef, GridFilterItem, GridRowsProp} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React from "react";
 import {Link} from "react-router-dom";
 import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+
+
+const emptyApplyFilterFn = (filterItem: GridFilterItem, column: GridColDef): null => null;
+
+function NullInputComponent()
+{
+   return (<React.Fragment />);
+}
+
+const makeGridFilterOperator = (value: string, label: string, takesValues: boolean = false): GridFilterOperator =>
+{
+   const rs: GridFilterOperator = {value: value, label: label, getApplyFilterFn: emptyApplyFilterFn};
+   if (takesValues)
+   {
+      rs.InputComponent = NullInputComponent;
+   }
+   return (rs);
+};
+
+const QGridDateOperators = [
+   makeGridFilterOperator("equals", "equals", true),
+   makeGridFilterOperator("isNot", "not equals", true),
+   makeGridFilterOperator("after", "is after", true),
+   makeGridFilterOperator("onOrAfter", "is on or after", true),
+   makeGridFilterOperator("before", "is before", true),
+   makeGridFilterOperator("onOrBefore", "is on or before", true),
+   makeGridFilterOperator("isEmpty", "is empty"),
+   makeGridFilterOperator("isNotEmpty", "is not empty"),
+];
 
 export default class DataGridUtils
 {
@@ -40,7 +69,7 @@ export default class DataGridUtils
     *******************************************************************************/
    public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData): GridRowsProp[] =>
    {
-      const fields = [ ...tableMetaData.fields.values() ];
+      const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
       let rowIndex = 0;
       results.forEach((record: QRecord) =>
@@ -205,6 +234,7 @@ export default class DataGridUtils
       });
    }
 
+
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -237,12 +267,12 @@ export default class DataGridUtils
             case QFieldType.DATE:
                columnType = "date";
                columnWidth = 100;
-               filterOperators = getGridDateOperators();
+               filterOperators = QGridDateOperators;
                break;
             case QFieldType.DATE_TIME:
                columnType = "dateTime";
                columnWidth = 200;
-               filterOperators = getGridDateOperators(true);
+               filterOperators = QGridDateOperators;
                break;
             case QFieldType.BOOLEAN:
                columnType = "string"; // using boolean gives an odd 'no' for nulls.

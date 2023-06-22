@@ -118,12 +118,12 @@ function ChipTextField({...props})
                return (
                   <div id="chip-text-field-container" style={{flexWrap: "wrap", display:"flex"}}>
                      <TextField
-                        sx={{width: "100%"}}
+                        sx={{width: "99%"}}
                         disabled={disabled}
                         label={label}
                         InputProps={{
                            startAdornment:
-                              <div>
+                              <div style={{overflowY: "auto", overflowX: "hidden", margin: "-10px", width: "calc(100% + 20px)", padding: "10px", marginBottom: "-20px", height: "calc(100% + 10px)"}}>
                                  {
                                     chips.map((item, i) => (
                                        <Chip

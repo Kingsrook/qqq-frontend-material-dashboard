@@ -38,6 +38,7 @@ interface Props
    tableName?: string;
    processName?: string;
    fieldName: string;
+   overrideId?: string;
    fieldLabel: string;
    inForm: boolean;
    initialValue?: any;
@@ -70,29 +71,34 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues}: Props)
+function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues}: Props)
 {
-   const [ open, setOpen ] = useState(false);
-   const [ options, setOptions ] = useState<readonly QPossibleValue[]>([]);
-   const [ searchTerm, setSearchTerm ] = useState(null);
-   const [ firstRender, setFirstRender ] = useState(true);
+   const [open, setOpen] = useState(false);
+   const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
+   const [searchTerm, setSearchTerm] = useState(null);
+   const [firstRender, setFirstRender] = useState(true);
 
    ////////////////////////////////////////////////////////////////////////////////////////////////
    // default value - needs to be an array (from initialValues (array) prop) for multiple mode - //
    // else non-multiple, assume we took in an initialValue (id) and initialDisplayValue (label), //
    // and build a little object that looks like a possibleValue out of those                     //
    ////////////////////////////////////////////////////////////////////////////////////////////////
-   const [defaultValue, _] = isMultiple ? useState(initialValues ?? undefined)
+   let [defaultValue, _] = isMultiple ? useState(initialValues ?? undefined)
       : useState(initialValue && initialDisplayValue ? [{id: initialValue, label: initialDisplayValue}] : null);
+
+   if (isMultiple && defaultValue === null)
+   {
+      defaultValue = [];
+   }
 
    // const loading = open && options.length === 0;
    const [loading, setLoading] = useState(false);
-   const [ switchChecked, setSwitchChecked ] = useState(false);
-   const [ isDisabled, setIsDisabled ] = useState(!isEditable || bulkEditMode);
+   const [switchChecked, setSwitchChecked] = useState(false);
+   const [isDisabled, setIsDisabled] = useState(!isEditable || bulkEditMode);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    let setFieldValueRef: (field: string, value: any, shouldValidate?: boolean) => void = null;
-   if(inForm)
+   if (inForm)
    {
       const {setFieldValue} = useFormikContext();
       setFieldValueRef = setFieldValue;
@@ -239,9 +245,11 @@ function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, i
       bulkEditSwitchChangeHandler(fieldName, newSwitchValue);
    };
 
+   // console.log(`default value: ${JSON.stringify(defaultValue)}`);
+
    const autocomplete = (
       <Autocomplete
-         id={fieldName}
+         id={overrideId ?? fieldName}
          sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
          open={open}
          fullWidth
@@ -291,6 +299,8 @@ function DynamicSelect({tableName, processName, fieldName, fieldLabel, inForm, i
          disabled={isDisabled}
          multiple={isMultiple}
          disableCloseOnSelect={isMultiple}
+         limitTags={5}
+         slotProps={{popper: {className: "DynamicSelectPopper"}}}
          renderInput={(params) => (
             <TextField
                {...params}
