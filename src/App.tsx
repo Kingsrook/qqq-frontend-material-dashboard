@@ -308,7 +308,14 @@ export default function App()
                   name: `${app.label}`,
                   key: `${app.name}.edit`,
                   route: `${path}/:id/edit`,
-                  component: <EntityEdit table={table} />,
+                  component: <EntityEdit table={table} isDuplicate={false} />,
+               });
+
+               routeList.push({
+                  name: `${app.label}`,
+                  key: `${app.name}.duplicate`,
+                  route: `${path}/:id/duplicate`,
+                  component: <EntityEdit table={table} isDuplicate={true} />,
                });
 
                routeList.push({
