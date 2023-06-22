@@ -26,8 +26,9 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Box, Typography} from "@mui/material";
+import {Alert, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -79,7 +80,6 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const location = useLocation();
    const navigate = useNavigate();
-   const {accentColor} = useContext(QContext);
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
    const tableName = table.name;
@@ -102,7 +102,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [errorMessage, setErrorMessage] = useState(null as string)
    const [successMessage, setSuccessMessage] = useState(null as string);
    const [warningMessage, setWarningMessage] = useState(null as string);
-   const {setPageHeader} = useContext(QContext);
+   const {accentColor, setPageHeader, allowShortcuts} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [reloadCounter, setReloadCounter] = useState(0);
 
@@ -112,6 +112,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
+
+
 
    const reload = () =>
    {
@@ -127,6 +129,47 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       setTableSections(null);
       setShowAudit(false);
    };
+
+   // Toggle the menu when ⌘K is pressed
+   useEffect(() =>
+   {
+      const down = (e: { key: string; metaKey: any; ctrlKey: any; preventDefault: () => void; }) =>
+      {
+         if(allowShortcuts)
+         {
+            if (e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            {
+               e.preventDefault()
+               navigate("edit");
+            }
+            else if (e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            {
+               e.preventDefault()
+               gotoCreate();
+            }
+            else if (e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+            {
+               e.preventDefault()
+               handleClickDeleteButton();
+            }
+         }
+      }
+
+      document.addEventListener("keydown", down)
+      return () => document.removeEventListener("keydown", down)
+   }, [allowShortcuts])
+
+   const gotoCreate = () =>
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/create`;
+      navigate(path);
+   }
+
+   const gotoEdit = () =>
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/${record.values.get(table.primaryKeyField)}/edit`;
+      navigate(path);
+   }
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    // monitor location changes - if we've clicked a link from viewing one record to viewing another, //
@@ -506,12 +549,6 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    let hasEditOrDelete = (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission);
 
-   function gotoCreate()
-   {
-      const path = `${pathParts.slice(0, -1).join("/")}/create`;
-      navigate(path);
-   }
-
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
@@ -682,7 +719,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                            <Box pb={3}>
                               {
                                  successMessage ?
-                                    <Alert color="success" sx={{mb: 3}} onClose={() => 
+                                    <Alert color="success" sx={{mb: 3}} onClose={() =>
                                     {
                                        setSuccessMessage(null);
                                     }}>

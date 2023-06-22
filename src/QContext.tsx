@@ -19,6 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {createContext} from "react";
 
 
@@ -28,11 +31,17 @@ interface QContext
    setPageHeader?: (header: string | JSX.Element) => void;
    accentColor: string;
    setAccentColor?: (header: string) => void;
+   qInstance?: QInstance;
+   appMetaData?: QAppMetaData;
+   tableMetaData?: QTableMetaData;
+   allowShortcuts?: boolean;
+   setAllowShortcuts?: (allowShortcuts: boolean) => void;
 }
 
 const defaultState = {
    pageHeader: "",
-   accentColor: "#0062FF"
+   accentColor: "#0062FF",
+   allowShortcuts: true
 };
 
 const QContext = createContext<QContext>(defaultState);

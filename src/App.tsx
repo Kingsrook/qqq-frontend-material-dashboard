@@ -35,6 +35,7 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
+import CommandMenu from "Command";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -64,8 +65,8 @@ export default function App()
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
    const [branding, setBranding] = useState({} as QBrandingMetaData);
+   const [metaData, setMetaData] = useState({} as QInstance);
    const [needLicenseKey, setNeedLicenseKey] = useState(true);
-
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
 
    useEffect(() =>
@@ -263,14 +264,14 @@ export default function App()
                   name: `${app.label}`,
                   key: app.name,
                   route: path,
-                  component: <RecordQuery table={table} />,
+                  component: <RecordQuery table={table} key={table.name}/>,
                });
 
                routeList.push({
                   name: `${app.label}`,
                   key: app.name,
                   route: `${path}/savedFilter/:id`,
-                  component: <RecordQuery table={table} />,
+                  component: <RecordQuery table={table} key={table.name}/>,
                });
 
                routeList.push({
@@ -329,14 +330,14 @@ export default function App()
                      name: process.label,
                      key: process.name,
                      route: `${path}/${process.name}`,
-                     component: <RecordQuery table={table} launchProcess={process} />,
+                     component: <RecordQuery table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
                   });
 
                   routeList.push({
                      name: process.label,
                      key: `${app.name}/${process.name}`,
                      route: `${path}/:id/${process.name}`,
-                     component: <RecordView table={table} launchProcess={process} />,
+                     component: <RecordView table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
                   });
                });
 
@@ -348,7 +349,7 @@ export default function App()
                      name: process.label,
                      key: process.name,
                      route: `${path}/${process.name}`,
-                     component: <RecordQuery table={table} launchProcess={process} />,
+                     component: <RecordQuery table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
                   });
 
                   routeList.push({
@@ -396,6 +397,7 @@ export default function App()
          try
          {
             const metaData = await Client.getInstance().loadMetaData();
+            setMetaData(metaData);
             if (metaData.branding)
             {
                setBranding(metaData.branding);
@@ -551,17 +553,21 @@ export default function App()
 
    const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
+   const [allowShortcuts, setAllowShortcuts] = useState(true);
    return (
 
       appRoutes && (
          <QContext.Provider value={{
             pageHeader: pageHeader,
             accentColor: accentColor,
+            allowShortcuts: allowShortcuts,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
-            setAccentColor: (accentColor: string) => setAccentColor(accentColor)
+            setAccentColor: (accentColor: string) => setAccentColor(accentColor),
+            setAllowShortcuts: (allowShortcuts: boolean) => setAllowShortcuts(allowShortcuts)
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />
+               <CommandMenu metaData={metaData}/>
                <Sidenav
                   color={sidenavColor}
                   icon={branding.icon}

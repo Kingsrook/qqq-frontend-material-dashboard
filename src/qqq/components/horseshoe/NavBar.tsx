@@ -30,8 +30,9 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
+import QContext from "QContext";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/horseshoe/Breadcrumbs";
 import {navbar, navbarContainer, navbarIconButton, navbarRow,} from "qqq/components/horseshoe/Styles";
 import {setTransparentNavbar, useMaterialUIController,} from "qqq/context";
@@ -62,6 +63,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const [autocompleteValue, setAutocompleteValue] = useState<any>(null);
    const route = useLocation().pathname.split("/").slice(1);
    const navigate = useNavigate();
+   const {setAllowShortcuts} = useContext(QContext);
 
    useEffect(() =>
    {
@@ -93,7 +95,6 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       buildHistoryEntries();
 
       const history = HistoryUtils.get();
-      setHistory([ {label: "The Godfather", id: 1}, {label: "Pulp Fiction", id: 2}]);
       const options = [] as any;
       history.entries.reverse().forEach((entry, index) =>
          options.push({label: `${entry.label} index`, id: index, key: index, path: entry.path, iconName: entry.iconName})
@@ -117,6 +118,17 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
          options.push({label: entry.label, id: index, key: index, path: entry.path, iconName: entry.iconName})
       )
       setHistory(options);
+   }
+
+   function handleHistoryOnOpen()
+   {
+      setAllowShortcuts(false);
+      buildHistoryEntries();
+   }
+
+   function handleHistoryOnClose()
+   {
+      setAllowShortcuts(true);
    }
 
    const handleOpenMenu = (event: any) => setOpenMenu(event.currentTarget);
@@ -152,7 +164,8 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             autoHighlight
             blurOnSelect
             style={{width: "200px"}}
-            onOpen={buildHistoryEntries}
+            onOpen={handleHistoryOnOpen}
+            onClose={handleHistoryOnClose}
             onChange={handleAutocompleteOnChange}
             PopperComponent={CustomPopper}
             isOptionEqualToValue={(option, value) => option.id === value.id}

@@ -22,10 +22,12 @@
 import {Auth0Provider} from "@auth0/auth0-react";
 import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import React from "react";
-import {render} from "react-dom";
+import {createRoot} from "react-dom/client";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
 import "qqq/styles/qqq-override-styles.css";
+import "qqq/styles/globals.scss";
+import "qqq/styles/raycast.scss";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/authorization/auth0/ProtectedRoute";
 import {MaterialUIControllerProvider} from "qqq/context";
@@ -73,6 +75,9 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
       }
    }
 
+   const container = document.getElementById("root");
+   const root = createRoot(container);
+
    if (authenticationMetaData.type === "AUTH_0")
    {
       // @ts-ignore
@@ -86,9 +91,8 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
 
       if(!domain || !clientId)
       {
-         render(
-            <div>Error:  AUTH0 authenticationMetaData is missing domain [{domain}] and/or clientId [{clientId}].</div>,
-            document.getElementById("root"),
+         root.render(
+            <div>Error:  AUTH0 authenticationMetaData is missing domain [{domain}] and/or clientId [{clientId}].</div>
          );
          return;
       }
@@ -101,7 +105,7 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
          domain = domain.replace(/\/$/, "");
       }
 
-      render(
+      root.render(
          <BrowserRouter>
             <Auth0ProviderWithRedirectCallback
                domain={domain}
@@ -113,19 +117,18 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
                   <ProtectedRoute component={App} />
                </MaterialUIControllerProvider>
             </Auth0ProviderWithRedirectCallback>
-         </BrowserRouter>,
-         document.getElementById("root"),
+         </BrowserRouter>
       );
    }
    else
    {
-      render(
+      root.render(
          <BrowserRouter>
             <MaterialUIControllerProvider>
                <App />
             </MaterialUIControllerProvider>
          </BrowserRouter>
-         , document.getElementById("root"));
+      );
    }
 
 })

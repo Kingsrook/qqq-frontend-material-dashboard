@@ -23,8 +23,9 @@ import {InputAdornment, InputLabel} from "@mui/material";
 import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field, useFormikContext} from "formik";
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import AceEditor from "react-ace";
+import QContext from "QContext";
 import BooleanFieldSwitch from "qqq/components/forms/BooleanFieldSwitch";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -52,6 +53,7 @@ function QDynamicFormField({
 {
    const [switchChecked, setSwitchChecked] = useState(false);
    const [isDisabled, setIsDisabled] = useState(!isEditable || bulkEditMode);
+   const {setAllowShortcuts} = useContext(QContext);
 
    const {setFieldValue} = useFormikContext();
 
@@ -125,6 +127,14 @@ function QDynamicFormField({
       field = (
          <>
             <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
+               onBlur={(e: any) =>
+               {
+                  setAllowShortcuts(true);
+               }}
+               onFocus={(e: any) =>
+               {
+                  setAllowShortcuts(false);
+               }}
                onKeyPress={(e: any) =>
                {
                   if (e.key === "Enter")
