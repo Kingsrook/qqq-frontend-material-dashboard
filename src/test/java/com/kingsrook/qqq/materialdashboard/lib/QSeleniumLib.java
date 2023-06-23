@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -103,6 +104,26 @@ public class QSeleniumLib
       try
       {
          new WebDriverWait(driver, Duration.ofSeconds(n))
+            .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".wontEverBePresent")));
+      }
+      catch(Exception e)
+      {
+         ///////////////////
+         // okay, resume. //
+         ///////////////////
+      }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void waitForMillis(int n)
+   {
+      try
+      {
+         new WebDriverWait(driver, Duration.ofMillis(n))
             .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".wontEverBePresent")));
       }
       catch(Exception e)
@@ -257,6 +278,17 @@ public class QSeleniumLib
       {
          // resume
       }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void highlightElement(WebElement element)
+   {
+      JavascriptExecutor js = (JavascriptExecutor) driver;
+      js.executeScript("arguments[0].setAttribute('style', 'background: yellow; border: 3px solid red;');", element);
    }
 
 

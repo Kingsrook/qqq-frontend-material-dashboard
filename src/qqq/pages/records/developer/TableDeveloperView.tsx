@@ -47,8 +47,6 @@ TableDeveloperView.defaultProps =
 
 function TableDeveloperView({table}: Props): JSX.Element
 {
-   const {id} = useParams();
-
    const {getAccessTokenSilently} = useAuth0();
    const [accessToken, setAccessToken] = useState(null as string);
 
@@ -70,6 +68,33 @@ function TableDeveloperView({table}: Props): JSX.Element
       setAccessToken(accessToken);
    })();
 
+   const LAST_API_NAME_LS_KEY = "qqq.tableDeveloperView.lastApiName";
+   const LAST_API_VERSION_LS_KEY = "qqq.tableDeveloperView.lastApiVersion";
+
+   const lastSelectedApiName = localStorage.getItem(LAST_API_NAME_LS_KEY);
+   const lastSelectedApiVersion = localStorage.getItem(LAST_API_VERSION_LS_KEY);
+
+   function selectVersionAfterApiIsChanged(versionsJson: any)
+   {
+      if (versionsJson.currentVersion)
+      {
+         setSelectedVersion(versionsJson.currentVersion);
+         localStorage.setItem(LAST_API_VERSION_LS_KEY, versionsJson.currentVersion);
+      }
+
+      if (lastSelectedApiVersion)
+      {
+         for (let i = 0; i < versionsJson.supportedVersions.length; i++)
+         {
+            if (versionsJson.supportedVersions[i] == lastSelectedApiVersion)
+            {
+               setSelectedVersion(lastSelectedApiVersion);
+               localStorage.setItem(LAST_API_VERSION_LS_KEY, lastSelectedApiVersion);
+            }
+         }
+      }
+   }
+
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -90,11 +115,14 @@ function TableDeveloperView({table}: Props): JSX.Element
 
          setPageHeader(tableMetaData.label + " Developer Mode");
 
+         ///////////////////////////////
+         // fetch apis for this table //
+         ///////////////////////////////
          const apisResponse = await fetch("/apis.json?tableName=" + tableName);
          const apisJson = await apisResponse.json();
          console.log(apisJson);
 
-         if(!apisJson["apis"] || apisJson["apis"].length == 0)
+         if (!apisJson["apis"] || apisJson["apis"].length == 0)
          {
             setNoApis(true);
             return;
@@ -102,18 +130,36 @@ function TableDeveloperView({table}: Props): JSX.Element
 
          setSupportedApis(apisJson["apis"]);
 
-         const selectedApi = apisJson["apis"][0];
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // either select the 0th api, or, if there was one previously stored in local storage, use it instead //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         let selectedApi = apisJson["apis"][0];
+         if (lastSelectedApiName)
+         {
+            for (let i = 0; i < apisJson["apis"].length; i++)
+            {
+               if (apisJson["apis"][i].name == lastSelectedApiName)
+               {
+                  selectedApi = apisJson["apis"][i];
+                  break;
+               }
+            }
+         }
+         localStorage.setItem(LAST_API_NAME_LS_KEY, selectedApi.name);
          setSelectedApi(selectedApi);
 
+         ////////////////////////////////
+         // fetch versions for ths api //
+         ////////////////////////////////
          const versionsResponse = await fetch(selectedApi["path"] + "versions.json");
          const versionsJson = await versionsResponse.json();
          console.log(versionsJson);
-
          setSupportedVersions(versionsJson.supportedVersions);
-         if (versionsJson.currentVersion)
-         {
-            setSelectedVersion(versionsJson.currentVersion);
-         }
+
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         // set the selected version, either to current, or to one from local storage, if still valid //
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         selectVersionAfterApiIsChanged(versionsJson);
       })();
    }
 
@@ -129,16 +175,15 @@ function TableDeveloperView({table}: Props): JSX.Element
          {
             const selectedApi = supportedApis[i];
             setSelectedApi(selectedApi);
+            localStorage.setItem(LAST_API_NAME_LS_KEY, selectedApi.name);
 
             const versionsResponse = await fetch(selectedApi["path"] + "versions.json");
             const versionsJson = await versionsResponse.json();
             console.log(versionsJson);
 
             setSupportedVersions(versionsJson.supportedVersions);
-            if (versionsJson.currentVersion)
-            {
-               setSelectedVersion(versionsJson.currentVersion);
-            }
+
+            selectVersionAfterApiIsChanged(versionsJson);
             break;
          }
       }
@@ -147,6 +192,7 @@ function TableDeveloperView({table}: Props): JSX.Element
    const selectVersion = (event: SelectChangeEvent) =>
    {
       setSelectedVersion(event.target.value);
+      localStorage.setItem(LAST_API_VERSION_LS_KEY, event.target.value);
    };
 
    return (
@@ -207,7 +253,7 @@ function TableDeveloperView({table}: Props): JSX.Element
                                  persist-auth={true}
                                  allow-server-selection={false}
                                  allow-spec-file-download={true}
-                                 sort-endpoints-by="method"
+                                 sort-endpoints-by="none"
                                  schema-description-expanded={true}
                                  css-file={"/api/rapi-doc.css"}
                                  css-classes={"qqq-rapi-doc"}

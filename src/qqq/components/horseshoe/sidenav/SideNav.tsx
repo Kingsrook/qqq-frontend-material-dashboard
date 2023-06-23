@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
@@ -42,6 +43,7 @@ interface Props
    icon?: string;
    logo?: string;
    appName?: string;
+   branding?: QBrandingMetaData;
    routes: {
       [key: string]:
          | ReactNode
@@ -64,7 +66,7 @@ interface Props
    [key: string]: any;
 }
 
-function Sidenav({color, icon, logo, appName, routes, ...rest}: Props): JSX.Element
+function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props): JSX.Element
 {
    const [openCollapse, setOpenCollapse] = useState<boolean | string>(false);
    const [openNestedCollapse, setOpenNestedCollapse] = useState<boolean | string>(false);
@@ -328,6 +330,12 @@ function Sidenav({color, icon, logo, appName, routes, ...rest}: Props): JSX.Elem
                </Box>
                }
             </Box>
+            {
+               branding && branding.environmentBannerText &&
+               <Box mt={2} bgcolor={branding.environmentBannerColor} borderRadius={2}>
+                  {branding.environmentBannerText}
+               </Box>
+            }
          </Box>
          <Divider
             light={

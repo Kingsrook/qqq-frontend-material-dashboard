@@ -29,9 +29,15 @@ import BaseLayout from "qqq/layouts/BaseLayout";
 interface Props
 {
    table?: QTableMetaData;
+   isDuplicate?: boolean
 }
 
-function EntityEdit({table}: Props): JSX.Element
+EntityEdit.defaultProps = {
+   table: null,
+   isDuplicate: false
+};
+
+function EntityEdit({table, isDuplicate}: Props): JSX.Element
 {
    const {id} = useParams();
 
@@ -43,7 +49,7 @@ function EntityEdit({table}: Props): JSX.Element
                   <Box mb={3}>
                      <Grid container spacing={3}>
                         <Grid item xs={12}>
-                           <EntityForm table={table} id={id} />
+                           <EntityForm table={table} id={id} isDuplicate={isDuplicate} />
                         </Grid>
                      </Grid>
                   </Box>
@@ -53,9 +59,5 @@ function EntityEdit({table}: Props): JSX.Element
       </BaseLayout>
    );
 }
-
-EntityEdit.defaultProps = {
-   table: null,
-};
 
 export default EntityEdit;

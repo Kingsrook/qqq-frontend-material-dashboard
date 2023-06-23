@@ -10,5 +10,5 @@ public interface QQQMaterialDashboardSelectors
    String BREADCRUMB_HEADER = ".MuiToolbar-root h5";
 
    String QUERY_GRID_CELL    = ".MuiDataGrid-root .MuiDataGrid-cellContent";
-   String QUERY_FILTER_INPUT = ".MuiDataGrid-filterForm input.MuiInput-input";
+   String QUERY_FILTER_INPUT = ".customFilterPanel input.MuiInput-input";
 }

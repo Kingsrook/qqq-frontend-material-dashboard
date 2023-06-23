@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import static com.kingsrook.qqq.materialdashboard.tests.QueryScreenTest.addQueryFilterInput;
@@ -47,7 +46,6 @@ public class SavedFiltersTest extends QBaseSeleniumTest
    protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
    {
       addStandardRoutesForThisTest(qSeleniumJavalin);
-      qSeleniumJavalin.withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 
 
@@ -69,7 +67,6 @@ public class SavedFiltersTest extends QBaseSeleniumTest
     **
     *******************************************************************************/
    @Test
-   @Disabled
    void testNavigatingBackAndForth()
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
@@ -95,10 +92,8 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.takeScreenshotToFile("before-johnny-click");
       qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
-      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
-      qSeleniumLib.takeScreenshotToFile("after-johnny-click");
+      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////
@@ -113,7 +108,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////
       // modify the query //
       //////////////////////
-      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filters").click();
+      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
       addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
       qSeleniumLib.waitForSelectorContaining("H5", "Person").click();
       qSeleniumLib.waitForSelectorContaining("DIV", "Current Filter: Some People")
@@ -123,7 +118,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
+      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////////////////////////////////
@@ -162,7 +157,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV", "jdoe@kingsrook.com").click();
+      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////

@@ -25,12 +25,41 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {getGridDateOperators, GridColDef, GridRowsProp} from "@mui/x-data-grid-pro";
+import {GridColDef, GridFilterItem, GridRowsProp} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import React from "react";
 import {Link} from "react-router-dom";
-import {buildQGridPvsOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
+import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+
+
+const emptyApplyFilterFn = (filterItem: GridFilterItem, column: GridColDef): null => null;
+
+function NullInputComponent()
+{
+   return (<React.Fragment />);
+}
+
+const makeGridFilterOperator = (value: string, label: string, takesValues: boolean = false): GridFilterOperator =>
+{
+   const rs: GridFilterOperator = {value: value, label: label, getApplyFilterFn: emptyApplyFilterFn};
+   if (takesValues)
+   {
+      rs.InputComponent = NullInputComponent;
+   }
+   return (rs);
+};
+
+const QGridDateOperators = [
+   makeGridFilterOperator("equals", "equals", true),
+   makeGridFilterOperator("isNot", "not equals", true),
+   makeGridFilterOperator("after", "is after", true),
+   makeGridFilterOperator("onOrAfter", "is on or after", true),
+   makeGridFilterOperator("before", "is before", true),
+   makeGridFilterOperator("onOrBefore", "is on or before", true),
+   makeGridFilterOperator("isEmpty", "is empty"),
+   makeGridFilterOperator("isNotEmpty", "is not empty"),
+];
 
 export default class DataGridUtils
 {
@@ -40,7 +69,7 @@ export default class DataGridUtils
     *******************************************************************************/
    public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData): GridRowsProp[] =>
    {
-      const fields = [ ...tableMetaData.fields.values() ];
+      const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
       let rowIndex = 0;
       results.forEach((record: QRecord) =>
@@ -97,22 +126,28 @@ export default class DataGridUtils
       const columns = [] as GridColDef[];
       this.addColumnsForTable(tableMetaData, linkBase, columns, columnSort, null, null);
 
-      if(tableMetaData.exposedJoins)
+      if(metaData)
       {
-         for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+         if(tableMetaData.exposedJoins)
          {
-            const join = tableMetaData.exposedJoins[i];
-
-            let joinLinkBase = null;
-            if(metaData)
+            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
             {
-               joinLinkBase = metaData.getTablePath(join.joinTable);
-               joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
-            }
+               const join = tableMetaData.exposedJoins[i];
+               let joinTableName = join.joinTable.name;
+               if(metaData.tables.has(joinTableName) && metaData.tables.get(joinTableName).readPermission)
+               {
+                  let joinLinkBase = null;
+                  joinLinkBase = metaData.getTablePath(join.joinTable);
+                  if(joinLinkBase)
+                  {
+                     joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
+                  }
 
-            if(join?.joinTable?.fields?.values())
-            {
-               this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, join.joinTable.name + ".", join.label + ": ");
+                  if(join?.joinTable?.fields?.values())
+                  {
+                     this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, joinTableName + ".", join.label + ": ");
+                  }
+               }
             }
          }
       }
@@ -162,6 +197,23 @@ export default class DataGridUtils
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
+         if(field.isHeavy)
+         {
+            if(field.type == QFieldType.BLOB)
+            {
+               ////////////////////////////////////////////////////////
+               // assume we DO want heavy blobs - as download links. //
+               ////////////////////////////////////////////////////////
+            }
+            else
+            {
+               ///////////////////////////////////////////////////
+               // otherwise, skip heavy fields on query screen. //
+               ///////////////////////////////////////////////////
+               return;
+            }
+         }
+
          const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
          if(key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
@@ -181,6 +233,7 @@ export default class DataGridUtils
          }
       });
    }
+
 
    /*******************************************************************************
     **
@@ -214,17 +267,20 @@ export default class DataGridUtils
             case QFieldType.DATE:
                columnType = "date";
                columnWidth = 100;
-               filterOperators = getGridDateOperators();
+               filterOperators = QGridDateOperators;
                break;
             case QFieldType.DATE_TIME:
                columnType = "dateTime";
                columnWidth = 200;
-               filterOperators = getGridDateOperators(true);
+               filterOperators = QGridDateOperators;
                break;
             case QFieldType.BOOLEAN:
                columnType = "string"; // using boolean gives an odd 'no' for nulls.
                columnWidth = 75;
                filterOperators = QGridBooleanOperators;
+               break;
+            case QFieldType.BLOB:
+               filterOperators = QGridBlobOperators;
                break;
             default:
             // noop - leave as string
@@ -238,6 +294,7 @@ export default class DataGridUtils
          const widths: Map<string, number> = new Map<string, number>([
             ["small", 100],
             ["medium", 200],
+            ["medlarge", 300],
             ["large", 400],
             ["xlarge", 600]
          ]);
@@ -254,7 +311,7 @@ export default class DataGridUtils
       let headerName = labelPrefix ? labelPrefix + field.label : field.label;
       let fieldName = namePrefix ? namePrefix + field.name : field.name;
 
-      const column = {
+      const column: GridColDef = {
          field: fieldName,
          type: columnType,
          headerName: headerName,

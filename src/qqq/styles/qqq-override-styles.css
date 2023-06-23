@@ -386,8 +386,140 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    font-size: 0.875rem;
 }
 
-.MuiGrid-root > .MuiBox-root > .material-icons-round,
-.MuiBox-root > .MuiBox-root > .material-icons-round
+.big-icon .material-icons-round
 {
    font-size: 2rem !important;
 }
+
+.dashboard-schedule-icon
+{
+   font-size: 1.1rem !important;
+   position: relative;
+   top: -5px;
+   margin-right: 8px;
+}
+
+.custom-columns-panel .MuiSwitch-thumb
+{
+   width: 15px !important;
+   height: 15px !important;
+   position: relative;
+   top: 3px;
+}
+
+.blobIcon
+{
+   margin-left: 0.25rem;
+   margin-right: 0.25rem;
+   cursor: pointer;
+}
+
+/* move the columns & filter panels on the query screen data grid up to not be below the column headers row */
+/* todo - add a class to the query screen and qualify this like that */
+.MuiDataGrid-panel
+{
+   top: -60px !important;
+}
+
+/* tighten the text in the field select dropdown in custom filters */
+.customFilterPanel .MuiAutocomplete-paper
+{
+   line-height: 1.375;
+}
+
+/* tighten the text in the field select dropdown in custom filters */
+.customFilterPanel .MuiAutocomplete-groupLabel
+{
+   line-height: 1.75;
+}
+
+/* taller list box */
+.filterCriteriaRowColumnPopper .MuiAutocomplete-listbox
+{
+   max-height: 60vh;
+}
+
+/* shrink down-arrows in custom filters panel */
+.customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard,
+.customFilterPanel .MuiSvgIcon-root
+{
+   font-size: 14px !important;
+}
+
+/* fix something in AND/OR dropdown in filters */
+.customFilterPanel .booleanOperatorColumn .MuiSvgIcon-root
+{
+   display: inline-block !important;
+}
+
+/* adjust bottom of AND/OR dropdown in filters */
+.customFilterPanel .booleanOperatorColumn .MuiInputBase-formControl
+{
+   padding-bottom: calc(0.25rem + 1px);
+}
+
+/* adjust down-arrow in AND/OR dropdown in filters */
+.customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard
+{
+   top: calc(50% - 0.75rem);
+}
+
+/* change tags in any-of value fields to not be black bg with white text */
+.customFilterPanel .filterValuesColumn .MuiChip-root
+{
+   background: none;
+   color: black;
+   border: 1px solid gray;
+}
+
+/* change 'x' icon in tags in any-of value */
+.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
+{
+   color: gray;
+}
+
+/* change tags in any-of value fields to not be black bg with white text */
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag
+{
+   color: #191919;
+   background: none;
+}
+
+/* default hover color for the 'x' to remove a tag from an 'any-of' value was white, which made it disappear */
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
+{
+   color: lightgray;
+}
+
+/* make the blue active-bottom-border not scroll in multi-value filter value panel */
+/* also prevent that box from getting stupidly large; scroll well.  */
+.filterValuesColumn .multiValue .Mui-focused:after
+{
+   border-bottom: none !important;
+}
+
+.filterValuesColumn .multiValue .Mui-focused .MuiAutocomplete-inputRoot:before
+{
+   border-bottom: none !important;
+}
+
+.filterValuesColumn .multiValue .MuiAutocomplete-inputRoot.Mui-focused
+{
+   border-bottom: 2px solid #0062FF;
+   max-height: 150px;
+   overflow-x: hidden;
+   overflow-y: auto;
+}
+
+
+.DynamicSelectPopper ul
+{
+   padding: 0;
+}
+
+.DynamicSelectPopper ul li.MuiAutocomplete-option
+{
+   padding-left: 0.25rem;
+   padding-right: 0.25rem;
+}
+

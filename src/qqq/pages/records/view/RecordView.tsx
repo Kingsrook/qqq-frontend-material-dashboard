@@ -43,7 +43,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import React, {useContext, useEffect, useState} from "react";
-import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 import QContext from "QContext";
 import AuditBody from "qqq/components/audits/AuditBody";
 import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
@@ -53,6 +53,7 @@ import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import HistoryUtils from "qqq/utils/HistoryUtils";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
@@ -97,10 +98,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
-   const [notFoundMessage, setNotFoundMessage] = useState(null);
+   const [notFoundMessage, setNotFoundMessage] = useState(null as string);
+   const [errorMessage, setErrorMessage] = useState(null as string)
    const [successMessage, setSuccessMessage] = useState(null as string);
    const [warningMessage, setWarningMessage] = useState(null as string);
-   const [searchParams] = useSearchParams();
    const {setPageHeader} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [reloadCounter, setReloadCounter] = useState(0);
@@ -116,6 +117,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    {
       setSuccessMessage(null);
       setNotFoundMessage(null);
+      setErrorMessage(null);
       setAsyncLoadInited(false);
       setTableMetaData(null);
       setRecord(null);
@@ -316,13 +318,16 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          setPageHeader(record.recordLabel);
 
-         try
+         if(!launchingProcess)
          {
-            HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
-         }
-         catch(e)
-         {
-            console.error("Error pushing history: " + e);
+            try
+            {
+               HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
+            }
+            catch(e)
+            {
+               console.error("Error pushing history: " + e);
+            }
          }
 
          /////////////////////////////////////////////////
@@ -423,14 +428,26 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          setSectionFieldElements(sectionFieldElements);
          setNonT1TableSections(nonT1TableSections);
 
-         if (searchParams.get("createSuccess") || searchParams.get("updateSuccess"))
+         if(location.state)
          {
-            setSuccessMessage(`${tableMetaData.label} successfully ${searchParams.get("createSuccess") ? "created" : "updated"}`);
+            let state: any = location.state;
+            if (state["createSuccess"] || state["updateSuccess"])
+            {
+               setSuccessMessage(`${tableMetaData.label} successfully ${state["createSuccess"] ? "created" : "updated"}`);
+            }
+
+            if (state["warning"])
+            {
+               setWarningMessage(state["warning"]);
+            }
+
+            delete state["createSuccess"]
+            delete state["updateSuccess"]
+            delete state["warning"]
+
+            window.history.replaceState(state, "");
          }
-         if (searchParams.get("warning"))
-         {
-            setWarningMessage(searchParams.get("warning"));
-         }
+
       })();
    }
 
@@ -452,8 +469,25 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          await qController.delete(tableName, id)
             .then(() =>
             {
-               const path = `${pathParts.slice(0, -1).join("/")}?deleteSuccess=true`;
-               navigate(path);
+               const path = pathParts.slice(0, -1).join("/");
+               navigate(path, {state: {deleteSuccess: true}});
+            })
+            .catch((error) =>
+            {
+               setDeleteConfirmationOpen(false);
+               console.log("Caught:");
+               console.log(error);
+
+               if(error.message.toLowerCase().startsWith("warning"))
+               {
+                  const path = pathParts.slice(0, -1).join("/");
+                  navigate(path, {state: {deleteSuccess: true, warning: error.message}});
+               }
+               else
+               {
+                  setErrorMessage(error.message);
+                  HtmlUtils.autoScroll(0);
+               }
             });
       })();
    };
@@ -498,6 +532,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             <MenuItem onClick={() => gotoCreate()}>
                <ListItemIcon><Icon>add</Icon></ListItemIcon>
                Create New
+            </MenuItem>
+         }
+         {
+            table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+            <MenuItem onClick={() => navigate("duplicate")}>
+               <ListItemIcon><Icon>copy</Icon></ListItemIcon>
+               Create Duplicate
             </MenuItem>
          }
          {
@@ -648,7 +689,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                            <Box pb={3}>
                               {
                                  successMessage ?
-                                    <Alert color="success" sx={{mb: 3}} onClose={() =>
+                                    <Alert color="success" sx={{mb: 3}} onClose={() => 
                                     {
                                        setSuccessMessage(null);
                                     }}>
@@ -663,6 +704,16 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                        setWarningMessage(null);
                                     }}>
                                        {warningMessage}
+                                    </Alert>
+                                    : ("")
+                              }
+                              {
+                                 errorMessage ?
+                                    <Alert color="error" sx={{mb: 3}} onClose={() =>
+                                    {
+                                       setErrorMessage(null);
+                                    }}>
+                                       {errorMessage}
                                     </Alert>
                                     : ("")
                               }

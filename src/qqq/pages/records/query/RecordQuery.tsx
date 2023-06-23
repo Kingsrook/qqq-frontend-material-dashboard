@@ -30,7 +30,8 @@ import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobEr
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
-import {Alert, Box, Collapse, TablePagination} from "@mui/material";
+import {Alert, Collapse, TablePagination} from "@mui/material";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -46,12 +47,9 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
-import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowProps, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
-import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
-import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -60,6 +58,8 @@ import QContext from "QContext";
 import {QActionsMenuButton, QCancelButton, QCreateNewButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
 import SavedFilters from "qqq/components/misc/SavedFilters";
+import {CustomColumnsPanel} from "qqq/components/query/CustomColumnsPanel";
+import {CustomFilterPanel} from "qqq/components/query/CustomFilterPanel";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
@@ -97,11 +97,30 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const tableName = table.name;
    const [searchParams] = useSearchParams();
 
-   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(searchParams.has("deleteSuccess"));
+   const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(false);
+   const [warningAlert, setWarningAlert] = useState(null as string);
    const [successAlert, setSuccessAlert] = useState(null as string);
 
    const location = useLocation();
    const navigate = useNavigate();
+
+   if(location.state)
+   {
+      let state: any = location.state;
+      if(state["deleteSuccess"])
+      {
+         setShowSuccessfullyDeletedAlert(true);
+         delete state["deleteSuccess"];
+      }
+
+      if(state["warning"])
+      {
+         setWarningAlert(state["warning"]);
+         delete state["warning"];
+      }
+
+      window.history.replaceState(state, "");
+   }
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
@@ -155,13 +174,21 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    }
 
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
+   const [lastFetchedQFilterJSON, setLastFetchedQFilterJSON] = useState("");
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
+   const [queryFilter, setQueryFilter] = useState(new QQueryFilter());
+
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
    const [shouldSetAllNewJoinFieldsToHidden, setShouldSetAllNewJoinFieldsToHidden] = useState(!didDefaultVisibilityComeFromLocalStorage)
    const [visibleJoinTables, setVisibleJoinTables] = useState(new Set<string>());
    const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
    const [density, setDensity] = useState(defaultDensity);
    const [pinnedColumns, setPinnedColumns] = useState(defaultPinnedColumns);
+
+   const initialColumnChooserOpenGroups = {} as { [name: string]: boolean };
+   initialColumnChooserOpenGroups[tableName] = true;
+   const [columnChooserOpenGroups, setColumnChooserOpenGroups] = useState(initialColumnChooserOpenGroups);
+   const [columnChooserFilterText, setColumnChooserFilterText] = useState("");
 
    const [tableState, setTableState] = useState("");
    const [metaData, setMetaData] = useState(null as QInstance);
@@ -212,7 +239,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [receivedQueryTimestamp, setReceivedQueryTimestamp] = useState(new Date());
    const [queryErrors, setQueryErrors] = useState({} as any);
    const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
-
 
    const {setPageHeader} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -311,17 +337,27 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    }, [location, tableMetaData]);
 
+   const updateColumnVisibilityModel = () =>
+   {
+      if (localStorage.getItem(columnVisibilityLocalStorageKey))
+      {
+         const visibility = JSON.parse(localStorage.getItem(columnVisibilityLocalStorageKey));
+         setColumnVisibilityModel(visibility);
+         didDefaultVisibilityComeFromLocalStorage = true;
+      }
+   }
+
    ///////////////////////////////////////////////////////////////////////
    // any time these are out of sync, it means we need to reload things //
    ///////////////////////////////////////////////////////////////////////
    if (tableMetaData && tableMetaData.name !== tableName)
    {
-      console.log("  it looks like we changed tables - try to reload the things");
       setTableMetaData(null);
       setColumnSortModel([]);
-      setColumnVisibilityModel({});
+      updateColumnVisibilityModel();
       setColumnsModel([]);
       setFilterModel({items: []});
+      setQueryFilter(new QQueryFilter());
       setDefaultFilterLoaded(false);
       setRows([]);
    }
@@ -333,7 +369,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    const buildQFilter = (tableMetaData: QTableMetaData, filterModel: GridFilterModel, limit?: number) =>
    {
-      const filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, limit);
+      let filter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, limit);
+      filter = FilterUtils.convertFilterPossibleValuesToIds(filter);
       setHasValidFilters(filter.criteria && filter.criteria.length > 0);
       return (filter);
    };
@@ -499,6 +536,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             let models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, null, searchParams, filterLocalStorageKey, sortLocalStorageKey);
             setFilterModel(models.filter);
             setColumnSortModel(models.sort);
+            setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, models.filter, models.sort, rowsPerPage));
             return;
          }
 
@@ -532,6 +570,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                {
                   columnSortModel.splice(i, 1);
                   setColumnSortModel(columnSortModel);
+                  // todo - need to setQueryFilter?
                   resetColumnSortModel = true;
                   i--;
                }
@@ -548,6 +587,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                sort: "desc",
             });
             setColumnSortModel(columnSortModel);
+            // todo - need to setQueryFilter?
             resetColumnSortModel = true;
          }
 
@@ -604,6 +644,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             });
          }
 
+         setLastFetchedQFilterJSON(JSON.stringify(qFilter));
          qController.query(tableName, qFilter, queryJoins).then((results) =>
          {
             console.log(`Received results for query ${thisQueryId}`);
@@ -833,10 +874,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setColumnVisibilityModel(columnVisibilityModel);
       if (columnVisibilityLocalStorageKey)
       {
-         localStorage.setItem(
-            columnVisibilityLocalStorageKey,
-            JSON.stringify(columnVisibilityModel),
-         );
+         localStorage.setItem(columnVisibilityLocalStorageKey, JSON.stringify(columnVisibilityModel));
       }
    };
 
@@ -849,6 +887,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const newVisibleJoinTables = getVisibleJoinTables();
    if (JSON.stringify([...newVisibleJoinTables.keys()]) != JSON.stringify([...visibleJoinTables.keys()]))
    {
+      console.log("calling update table for visible join table change");
       updateTable();
       setVisibleJoinTables(newVisibleJoinTables);
    }
@@ -860,20 +899,51 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log(columnOrderChangeParams);
    };
 
-   const handleFilterChange = (filterModel: GridFilterModel) =>
+   const handleFilterChange = (filterModel: GridFilterModel, doSetQueryFilter = true, isChangeFromDataGrid = false) =>
    {
       setFilterModel(filterModel);
+
+      if (doSetQueryFilter)
+      {
+         //////////////////////////////////////////////////////////////////////////////////
+         // someone might have already set the query filter, so, only set it if asked to //
+         //////////////////////////////////////////////////////////////////////////////////
+         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, rowsPerPage));
+      }
+
+      if (isChangeFromDataGrid)
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // this function is called by our code several times, but also from dataGridPro when its filter model changes.      //
+         // in general, we don't want a "partial" criteria to be part of our query filter object (e.g., w/ no values)        //
+         // BUT - for one use-case, when the user adds a "filter" (criteria) from column-header "..." menu, then dataGridPro //
+         // puts a partial item in its filter - so - in that case, we do like to get this partial criteria in our QFilter.   //
+         // so far, not seeing any negatives to this being here, and it fixes that user experience, so keep this.            //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, rowsPerPage, true));
+      }
+
       if (filterLocalStorageKey)
       {
          localStorage.setItem(filterLocalStorageKey, JSON.stringify(filterModel));
       }
    };
 
-   const handleSortChange = (gridSort: GridSortModel) =>
+   const handleSortChangeForDataGrid = (gridSort: GridSortModel) =>
+   {
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // this method just wraps handleSortChange, but w/o the optional 2nd param, so we can use it in data grid //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      handleSortChange(gridSort);
+   }
+
+   const handleSortChange = (gridSort: GridSortModel, overrideFilterModel?: GridFilterModel) =>
    {
       if (gridSort && gridSort.length > 0)
       {
          setColumnSortModel(gridSort);
+         const gridFilterModelToUse = overrideFilterModel ?? filterModel;
+         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, gridFilterModelToUse, gridSort, rowsPerPage));
          localStorage.setItem(sortLocalStorageKey, JSON.stringify(gridSort));
       }
    };
@@ -938,10 +1008,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                //////////////////////////////////////
                // construct the url for the export //
                //////////////////////////////////////
-               const d = new Date();
-               const dateString = `${d.getFullYear()}-${zp(d.getMonth() + 1)}-${zp(d.getDate())} ${zp(d.getHours())}${zp(d.getMinutes())}`;
+               const dateString = ValueUtils.formatDateTimeForFileName(new Date());
                const filename = `${tableMetaData.label} Export ${dateString}.${format}`;
-               const url = `/data/${tableMetaData.name}/export/${filename}?filter=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}&fields=${visibleFields.join(",")}`;
+               const url = `/data/${tableMetaData.name}/export/${filename}`;
+
+               const encodedFilterJSON = encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)));
 
                //////////////////////////////////////////////////////////////////////////////////////
                // open a window (tab) with a little page that says the file is being generated.    //
@@ -958,6 +1029,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <script>
                         setTimeout(() =>
                         {
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           // need to encode and decode this value, so set it in the form here, instead of literally below //
+                           //////////////////////////////////////////////////////////////////////////////////////////////////
+                           document.getElementById("filter").value = decodeURIComponent("${encodedFilterJSON}");
+                           
                            document.getElementById("exportForm").submit();
                         }, 1);
                      </script>
@@ -966,6 +1042,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...
                      <form id="exportForm" method="post" action="${url}" >
                         <input type="hidden" name="Authorization" value="${qController.getAuthorizationHeaderValue()}">
+                        <input type="hidden" name="fields" value="${visibleFields.join(",")}">
+                        <input type="hidden" name="filter" id="filter">
                      </form>
                   </body>
                </html>`);
@@ -1077,6 +1155,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       newPath.pop();
       navigate(newPath.join("/"));
 
+      console.log("calling update table for close modal");
       updateTable();
    };
 
@@ -1186,6 +1265,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (
          <TablePagination
             component="div"
+            sx={{minWidth: "450px"}}
             // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
             // so pass a sentinel value of -1...
             count={totalRecords === null || totalRecords === undefined ? -1 : totalRecords}
@@ -1215,13 +1295,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
          handleFilterChange(models.filter);
-         handleSortChange(models.sort);
+         handleSortChange(models.sort, models.filter);
          localStorage.setItem(currentSavedFilterLocalStorageKey, selectedSavedFilterId.toString());
       }
       else
       {
          handleFilterChange({items: []} as GridFilterModel);
-         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}]);
+         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}], {items: []} as GridFilterModel);
          localStorage.removeItem(currentSavedFilterLocalStorageKey);
       }
    }
@@ -1247,17 +1327,39 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (qRecord);
    }
 
+   const getFieldAndTable = (fieldName: string): [QFieldMetaData, QTableMetaData] =>
+   {
+      if(fieldName.indexOf(".") > -1)
+      {
+         const nameParts = fieldName.split(".", 2);
+         for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
+         {
+            const join = tableMetaData?.exposedJoins[i];
+            if(join?.joinTable.name == nameParts[0])
+            {
+               return ([join.joinTable.fields.get(nameParts[1]), join.joinTable]);
+            }
+         }
+      }
+      else
+      {
+         return ([tableMetaData.fields.get(fieldName), tableMetaData]);
+      }
+
+      return (null);
+   }
+
    const copyColumnValues = async (column: GridColDef) =>
    {
       let data = "";
       let counter = 0;
       if (latestQueryResults && latestQueryResults.length)
       {
-         let qFieldMetaData = tableMetaData.fields.get(column.field);
+         let [qFieldMetaData, fieldTable] = getFieldAndTable(column.field);
          for (let i = 0; i < latestQueryResults.length; i++)
          {
             let record = latestQueryResults[i] as QRecord;
-            const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(qFieldMetaData.name), record.displayValues.get(qFieldMetaData.name));
+            const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(column.field), record.displayValues.get(column.field));
             if (value !== null && value !== undefined && String(value) !== "")
             {
                data += value + "\n";
@@ -1283,24 +1385,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
       setColumnStatsFieldName(column.field);
 
-      if(column.field.indexOf(".") > -1)
-      {
-         const nameParts = column.field.split(".", 2);
-         for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
-         {
-            const join = tableMetaData?.exposedJoins[i];
-            if(join?.joinTable.name == nameParts[0])
-            {
-               setColumnStatsField(join.joinTable.fields.get(nameParts[1]));
-               setColumnStatsFieldTableName(nameParts[0]);
-            }
-         }
-      }
-      else
-      {
-         setColumnStatsField(tableMetaData.fields.get(column.field));
-         setColumnStatsFieldTableName(tableMetaData.name);
-      }
+      const [field, fieldTable] = getFieldAndTable(column.field);
+      setColumnStatsField(field);
+      setColumnStatsFieldTableName(fieldTable.name);
    };
 
    const CustomColumnMenu = forwardRef<HTMLUListElement, GridColumnMenuProps>(
@@ -1357,95 +1444,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          );
       });
 
-   ////////////////////////////////////////////////////////////////////////////
-   // this is a WIP example of how we could do a custom "columns" panel/menu //
-   ////////////////////////////////////////////////////////////////////////////
-   const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
-      function MyCustomColumnsPanel(props: GridColumnsPanelProps, ref)
-      {
-         const apiRef = useGridApiContext();
-         const columns = useGridSelector(apiRef, gridColumnDefinitionsSelector);
-         const columnVisibilityModel = useGridSelector(apiRef, gridColumnVisibilityModelSelector);
-
-         const [openGroups, setOpenGroups] = useState({} as { [name: string]: boolean });
-
-         const groups = ["Order", "Line Item"];
-
-         const onColumnVisibilityChange = (fieldName: string) =>
-         {
-            /*
-            if(columnVisibilityModel[fieldName] === undefined)
-            {
-               columnVisibilityModel[fieldName] = true;
-            }
-            columnVisibilityModel[fieldName] = !columnVisibilityModel[fieldName];
-            setColumnVisibilityModel(JSON.parse(JSON.stringify(columnVisibilityModel)))
-            */
-
-            console.log(`${fieldName} = ${columnVisibilityModel[fieldName]}`);
-            // columnVisibilityModel[fieldName] = Math.random() < 0.5;
-            apiRef.current.setColumnVisibility(fieldName, columnVisibilityModel[fieldName] === false);
-            // handleColumnVisibilityChange(JSON.parse(JSON.stringify(columnVisibilityModel)));
-         };
-
-         const toggleColumnGroup = (groupName: string) =>
-         {
-            if (openGroups[groupName] === undefined)
-            {
-               openGroups[groupName] = true;
-            }
-            openGroups[groupName] = !openGroups[groupName];
-            setOpenGroups(JSON.parse(JSON.stringify(openGroups)));
-         };
-
-         return (
-            <div ref={ref} className="custom-columns-panel" style={{width: "350px", height: "450px"}}>
-               <Box height="55px" padding="5px">
-                  <TextField label="Find column" placeholder="Column title" variant="standard" fullWidth={true}></TextField>
-               </Box>
-               <Box overflow="auto" height="calc( 100% - 105px )">
-
-                  <Stack direction="column" spacing={1} pl="0.5rem">
-
-                     {groups.map((groupName: string) =>
-                        (
-                           <>
-                              <IconButton
-                                 key={groupName}
-                                 size="small"
-                                 onClick={() => toggleColumnGroup(groupName)}
-                                 sx={{width: "100%", justifyContent: "flex-start", fontSize: "0.875rem"}}
-                                 disableRipple={true}
-                              >
-                                 <Icon>{openGroups[groupName] === false ? "expand_less" : "expand_more"}</Icon>
-                                 <Box sx={{pl: "0.25rem", fontWeight: "bold"}} textAlign="left">{groupName} fields</Box>
-                              </IconButton>
-
-                              {openGroups[groupName] !== false && columnsModel.map((gridColumn: any) => (
-                                 <IconButton
-                                    key={gridColumn.field}
-                                    size="small"
-                                    onClick={() => onColumnVisibilityChange(gridColumn.field)}
-                                    sx={{width: "100%", justifyContent: "flex-start", fontSize: "0.875rem", pl: "1.375rem"}}
-                                    disableRipple={true}
-                                 >
-                                    <Icon>{columnVisibilityModel[gridColumn.field] === false ? "visibility_off" : "visibility"}</Icon>
-                                    <Box sx={{pl: "0.25rem"}} textAlign="left">{gridColumn.headerName}</Box>
-                                 </IconButton>
-                              ))}
-                           </>
-                        ))}
-
-                  </Stack>
-               </Box>
-               <Box height="50px" padding="5px" display="flex" justifyContent="space-between">
-                  <Button>hide all</Button>
-                  <Button>show all</Button>
-               </Box>
-            </div>
-         );
-      }
-   );
 
    const safeToLocaleString = (n: Number): string =>
    {
@@ -1553,6 +1551,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
       };
 
+      const doClearFilter = (event: React.KeyboardEvent<HTMLDivElement>, isYesButton: boolean = false) =>
+      {
+         if (isYesButton|| event.key == "Enter")
+         {
+            setShowClearFiltersWarning(false);
+            handleFilterChange({items: []} as GridFilterModel);
+         }
+      }
+
       return (
          <GridToolbarContainer>
             <div>
@@ -1567,30 +1574,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <GridToolbarFilterButton nonce={undefined} />
                {
                   hasValidFilters && (
-
-                     <div id="clearFiltersButton" style={{position: "absolute", left: "84px", top: "6px"}}>
-                        <Tooltip title="Clear All Filters">
+                     <div id="clearFiltersButton" style={{display: "inline-block", position: "relative", top: "2px", left: "-0.75rem", width: "1rem"}}>
+                        <Tooltip title="Clear Filter">
                            <Icon sx={{cursor: "pointer"}} onClick={() => setShowClearFiltersWarning(true)}>clear</Icon>
                         </Tooltip>
-                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)} onKeyPress={(e) =>
-                        {
-                           if (e.key == "Enter")
-                           {
-                              setShowClearFiltersWarning(false)
-                              handleFilterChange({items: []} as GridFilterModel);
-                           }
-                        }}>
+                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)} onKeyPress={(e) => doClearFilter(e)}>
                            <DialogTitle id="alert-dialog-title">Confirm</DialogTitle>
                            <DialogContent>
-                              <DialogContentText>Are you sure you want to clear all filters?</DialogContentText>
+                              <DialogContentText>Are you sure you want to remove all conditions from the current filter?</DialogContentText>
                            </DialogContent>
                            <DialogActions>
                               <QCancelButton label="No" disabled={false} onClickHandler={() => setShowClearFiltersWarning(false)} />
-                              <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() =>
-                              {
-                                 setShowClearFiltersWarning(false);
-                                 handleFilterChange({items: []} as GridFilterModel);
-                              }}/>
+                              <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() => doClearFilter(null, true)}/>
                            </DialogActions>
                         </Dialog>
                      </div>
@@ -1606,7 +1601,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                </GridToolbarExportContainer>
             </div>
 
-            <div>
+            <div style={{zIndex: 10}}>
                <MenuButton label="Selection" iconName={selectedIds.length == 0 ? "check_box_outline_blank" : "check_box"} disabled={totalRecords == 0} options={selectionMenuOptions} callback={selectionMenuCallback}/>
                <SelectionSubsetDialog isOpen={selectionSubsetSizePromptOpen} initialValue={selectionSubsetSize} closeHandler={(value) =>
                {
@@ -1767,13 +1762,35 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setTotalRecords(null);
       setDistinctRecords(null);
       updateTable();
-   }, [columnsModel, tableState, filterModel]);
+   }, [columnsModel, tableState]);
+
+   useEffect(() =>
+   {
+      const currentQFilter = FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel, rowsPerPage);
+      currentQFilter.skip = pageNumber * rowsPerPage;
+      const currentQFilterJSON = JSON.stringify(currentQFilter);
+
+      if(currentQFilterJSON !== lastFetchedQFilterJSON)
+      {
+         setTotalRecords(null);
+         setDistinctRecords(null);
+         updateTable();
+      }
+
+   }, [filterModel]);
 
    useEffect(() =>
    {
       document.documentElement.scrollTop = 0;
       document.scrollingElement.scrollTop = 0;
    }, [pageNumber, rowsPerPage]);
+
+   const updateFilterFromFilterPanel = (newFilter: QQueryFilter): void =>
+   {
+      setQueryFilter(newFilter);
+      const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
+      handleFilterChange(gridFilterModel, false);
+   };
 
    if (tableMetaData && !tableMetaData.readPermission)
    {
@@ -1815,29 +1832,29 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                )}
                {
                   (tableLabel && showSuccessfullyDeletedAlert) ? (
-                     <Alert color="success" sx={{mb: 3}} onClose={() =>
-                     {
-                        setShowSuccessfullyDeletedAlert(false);
-                     }}>
-                        {`${tableLabel} successfully deleted`}
-                     </Alert>
+                     <Alert color="success" sx={{mb: 3}} onClose={() => setShowSuccessfullyDeletedAlert(false)}>{`${tableLabel} successfully deleted`}</Alert>
                   ) : null
                }
                {
                   (successAlert) ? (
                      <Collapse in={Boolean(successAlert)}>
-                        <Alert color="success" sx={{mb: 3}} onClose={() =>
-                        {
-                           setSuccessAlert(null);
-                        }}>
-                           {successAlert}
-                        </Alert>
+                        <Alert color="success" sx={{mb: 3}} onClose={() => setSuccessAlert(null)}>{successAlert}</Alert>
+                     </Collapse>
+                  ) : null
+               }
+               {
+                  (warningAlert) ? (
+                     <Collapse in={Boolean(warningAlert)}>
+                        <Alert color="warning" sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
                }
                <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
                   <Box display="flex" marginRight="auto">
-                     <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange} />
+                     {
+                        metaData && metaData.processes.has("querySavedFilter") &&
+                        <SavedFilters qController={qController} metaData={metaData} tableMetaData={tableMetaData} currentSavedFilter={currentSavedFilter} filterModel={filterModel} columnSortModel={columnSortModel} filterOnChangeCallback={handleSavedFilterChange} />
+                     }
                   </Box>
 
                   <Box display="flex" width="150px">
@@ -1848,12 +1865,43 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
                      <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
                   }
-
                </Box>
                <Card>
                   <Box height="100%">
                      <DataGridPro
-                        components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading, ColumnMenu: CustomColumnMenu/*, ColumnsPanel: CustomColumnsPanel*/}}
+                        components={{
+                           Toolbar: CustomToolbar,
+                           Pagination: CustomPagination,
+                           LoadingOverlay: Loading,
+                           ColumnMenu: CustomColumnMenu,
+                           ColumnsPanel: CustomColumnsPanel,
+                           FilterPanel: CustomFilterPanel
+                        }}
+                        componentsProps={{
+                           columnsPanel:
+                              {
+                                 tableMetaData: tableMetaData,
+                                 metaData: metaData,
+                                 initialOpenedGroups: columnChooserOpenGroups,
+                                 openGroupsChanger: setColumnChooserOpenGroups,
+                                 initialFilterText: columnChooserFilterText,
+                                 filterTextChanger: setColumnChooserFilterText
+                              },
+                           filterPanel:
+                              {
+                                 tableMetaData: tableMetaData,
+                                 metaData: metaData,
+                                 queryFilter: queryFilter,
+                                 updateFilter: updateFilterFromFilterPanel
+                              }
+                        }}
+                        localeText={{
+                           toolbarFilters: "Filter", // label on the filters button.  we prefer singular (1 filter has many "conditions" in it).
+                           toolbarFiltersLabel: "", // setting these 3 to "" turns off the "Show Filters" and "Hide Filters" tooltip (which can get in the way of the actual filters panel)
+                           toolbarFiltersTooltipShow: "",
+                           toolbarFiltersTooltipHide: "",
+                           toolbarFiltersTooltipActive: count => count !== 1 ? `${count} conditions` : `${count} condition`
+                        }}
                         pinnedColumns={pinnedColumns}
                         onPinnedColumnsChange={handlePinnedColumnsChange}
                         pagination
@@ -1875,12 +1923,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         density={density}
                         loading={loading}
                         filterModel={filterModel}
-                        onFilterModelChange={handleFilterChange}
+                        onFilterModelChange={(model) => handleFilterChange(model, true, true)}
                         columnVisibilityModel={columnVisibilityModel}
                         onColumnVisibilityModelChange={handleColumnVisibilityChange}
                         onColumnOrderChange={handleColumnOrderChange}
                         onSelectionModelChange={selectionChanged}
-                        onSortModelChange={handleSortChange}
+                        onSortModelChange={handleSortChangeForDataGrid}
                         sortingOrder={["asc", "desc"]}
                         sortModel={columnSortModel}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}

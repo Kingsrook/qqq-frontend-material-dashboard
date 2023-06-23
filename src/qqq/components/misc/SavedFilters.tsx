@@ -200,7 +200,7 @@ function SavedFilters({qController, metaData, tableMetaData, currentSavedFilter,
          else
          {
             formData.append("tableName", tableMetaData.name);
-            formData.append("filterJson", JSON.stringify(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel)));
+            formData.append("filterJson", JSON.stringify(FilterUtils.convertFilterPossibleValuesToIds(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, columnSortModel))));
 
             if (isSaveFilterAs || isRenameFilter || currentSavedFilter == null)
             {

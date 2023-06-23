@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
@@ -26,7 +27,6 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
@@ -37,6 +37,7 @@ import {DataGridPro, GridSortModel} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import React, {useEffect, useState} from "react";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -80,6 +81,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
          formData.append("tableName", tableMetaData.name);
          formData.append("fieldName", fullFieldName);
          formData.append("filterJSON", JSON.stringify(filter));
+         formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 300 * 1000);
          if(orderBy)
          {
             formData.append("orderBy", orderBy);
@@ -95,6 +97,8 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
          }
          else
          {
+            // todo - job running!
+
             const result = processResult as QJobComplete;
 
             const statFieldObjects = result.values.statsFields;
@@ -172,6 +176,20 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
       setStatusString("Refreshing...")
    }
 
+   const doExport = () =>
+   {
+      let csv = `"${ValueUtils.cleanForCsv(fieldMetaData.label)}","Count"\n`;
+      for (let i = 0; i < valueCounts.length; i++)
+      {
+         const fieldValue = valueCounts[i].displayValues.get(fieldMetaData.name);
+         const count = valueCounts[i].values.get("count");
+         csv += `"${ValueUtils.cleanForCsv(fieldValue)}",${count}\n`;
+      }
+
+      const fileName = tableMetaData.label + " - " + fieldMetaData.label + " Column Stats " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
+      HtmlUtils.download(fileName, csv);
+   }
+
    function Loading()
    {
       return (
@@ -198,9 +216,14 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
                   {statusString ?? <>&nbsp;</>}
                </Typography>
             </Typography>
-            <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
-               Refresh
-            </Button>
+            <Box>
+               <Button onClick={() => refresh()} startIcon={<Icon>refresh</Icon>}>
+                  Refresh
+               </Button>
+               <Button onClick={() => doExport()} startIcon={<Icon>save_alt</Icon>} disabled={valueCounts == null || valueCounts.length == 0}>
+                  Export
+               </Button>
+            </Box>
          </Box>
          <Grid container>
             <Grid item xs={8}>
