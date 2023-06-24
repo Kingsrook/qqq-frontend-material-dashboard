@@ -42,7 +42,7 @@ TableWidget.defaultProps = {
 
 function TableWidget(props: Props): JSX.Element
 {
-   const [isExportDisabled, setIsExportDisabled] = useState(true);
+   const [isExportDisabled, setIsExportDisabled] = useState(false); // hmm, would like true here, but it broke...
 
    const rows = props.widgetData?.rows;
    const columns = props.widgetData?.columns;
