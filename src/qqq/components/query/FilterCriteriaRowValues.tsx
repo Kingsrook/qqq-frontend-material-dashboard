@@ -166,7 +166,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
          </Box>;
       case ValueMode.MULTI:
          let values = criteria.values;
-         if (values && values.length == 1 && values[0] == "")
+         if (values && values.length == 1 && (values[0] == "" || values[0] == undefined))
          {
             values = [];
          }
