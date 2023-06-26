@@ -26,6 +26,8 @@ import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QApp
 import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
@@ -35,7 +37,7 @@ import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} f
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
-import CommandMenu from "Command";
+import CommandMenu from "CommandMenu";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -60,7 +62,7 @@ export const SESSION_ID_COOKIE_NAME = "sessionId";
 export default function App()
 {
    const [, setCookie, removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
-   const {user, getAccessTokenSilently, getIdTokenClaims, logout} = useAuth0();
+   const {user, getAccessTokenSilently, logout} = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
@@ -309,14 +311,14 @@ export default function App()
                   name: `${app.label}`,
                   key: `${app.name}.edit`,
                   route: `${path}/:id/edit`,
-                  component: <EntityEdit table={table} isDuplicate={false} />,
+                  component: <EntityEdit table={table} isCopy={false} />,
                });
 
                routeList.push({
                   name: `${app.label}`,
-                  key: `${app.name}.duplicate`,
-                  route: `${path}/:id/duplicate`,
-                  component: <EntityEdit table={table} isDuplicate={true} />,
+                  key: `${app.name}.copy`,
+                  route: `${path}/:id/copy`,
+                  component: <EntityEdit table={table} isCopy={true} />,
                });
 
                routeList.push({
@@ -560,17 +562,23 @@ export default function App()
 
    const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
-   const [allowShortcuts, setAllowShortcuts] = useState(true);
+   const [tableMetaData, setTableMetaData] = useState(null);
+   const [tableProcesses, setTableProcesses] = useState(null);
+   const [dotMenuOpen, setDotMenuOpen] = useState(false);
    return (
 
       appRoutes && (
          <QContext.Provider value={{
             pageHeader: pageHeader,
             accentColor: accentColor,
-            allowShortcuts: allowShortcuts,
+            tableMetaData: tableMetaData,
+            tableProcesses: tableProcesses,
+            dotMenuOpen: dotMenuOpen,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor),
-            setAllowShortcuts: (allowShortcuts: boolean) => setAllowShortcuts(allowShortcuts)
+            setTableMetaData: (tableMetaData: QTableMetaData) => setTableMetaData(tableMetaData),
+            setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
+            setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent)
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />

@@ -88,21 +88,18 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-   const [tableMetaData, setTableMetaData] = useState(null);
    const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1SectionName, setT1SectionName] = useState(null as string);
    const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
-   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [notFoundMessage, setNotFoundMessage] = useState(null as string);
    const [errorMessage, setErrorMessage] = useState(null as string)
    const [successMessage, setSuccessMessage] = useState(null as string);
    const [warningMessage, setWarningMessage] = useState(null as string);
-   const {accentColor, setPageHeader, allowShortcuts} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [reloadCounter, setReloadCounter] = useState(0);
 
@@ -112,6 +109,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
+
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen} = useContext(QContext);
 
 
 
@@ -133,11 +132,25 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    // Toggle the menu when ⌘K is pressed
    useEffect(() =>
    {
+      if(tableMetaData == null)
+      {
+         (async() =>
+         {
+            const tableMetaData = await qController.loadTableMetaData(tableName);
+            setTableMetaData(tableMetaData);
+         })();
+      }
+
       const down = (e: { key: string; metaKey: any; ctrlKey: any; preventDefault: () => void; }) =>
       {
-         if(allowShortcuts)
+         if(!dotMenuOpen)
          {
-            if (e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            if (e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            {
+               e.preventDefault()
+               gotoCreate();
+            }
+            else if (e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
             {
                e.preventDefault()
                navigate("edit");
@@ -145,19 +158,27 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             else if (e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault()
-               gotoCreate();
+               navigate("copy");
             }
             else if (e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
             {
                e.preventDefault()
                handleClickDeleteButton();
             }
+            else if (e.key === "a" && metaData && metaData.tables.has("audit"))
+            {
+               e.preventDefault()
+               navigate("#audit");
+            }
          }
       }
 
       document.addEventListener("keydown", down)
-      return () => document.removeEventListener("keydown", down)
-   }, [allowShortcuts])
+      return () =>
+      {
+         document.removeEventListener("keydown", down)
+      }
+   }, [dotMenuOpen])
 
    const gotoCreate = () =>
    {
@@ -568,14 +589,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
             <MenuItem onClick={() => gotoCreate()}>
                <ListItemIcon><Icon>add</Icon></ListItemIcon>
-               Create New
+               New
             </MenuItem>
          }
          {
             table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-            <MenuItem onClick={() => navigate("duplicate")}>
+            <MenuItem onClick={() => navigate("copy")}>
                <ListItemIcon><Icon>copy</Icon></ListItemIcon>
-               Create Duplicate
+               Copy
             </MenuItem>
          }
          {
@@ -597,14 +618,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                Delete
             </MenuItem>
          }
-         {tableProcesses.length > 0 && hasEditOrDelete && <Divider />}
-         {tableProcesses.map((process) => (
+         {tableProcesses?.length > 0 && hasEditOrDelete && <Divider />}
+         {tableProcesses?.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
                {process.label}
             </MenuItem>
          ))}
-         {(tableProcesses.length > 0 || hasEditOrDelete) && <Divider />}
+         {(tableProcesses?.length > 0 || hasEditOrDelete) && <Divider />}
          <MenuItem onClick={() => navigate("dev")}>
             <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
             Developer Mode
