@@ -63,6 +63,7 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-velocity";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
@@ -258,6 +259,20 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    const getSelectedFileCode = (): string =>
    {
       return (getSelectedVersionCode()[selectedFileName] ?? "");
+   }
+
+   const getSelectedFileType = (): string =>
+   {
+      for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
+      {
+         let name = scriptTypeFileSchemaList[i].values.get("name");
+         if(name == selectedFileName)
+         {
+            return (scriptTypeFileSchemaList[i].values.get("fileType"));
+         }
+      }
+
+      return ("javascript"); // have some default...
    }
 
    const getSelectedVersionCode = (): {[name: string]: string} =>
@@ -476,7 +491,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                                       </FormControl>
                                                    }
                                                    <AceEditor
-                                                      mode="javascript"
+                                                      mode={getSelectedFileType()}
                                                       theme="github"
                                                       name={"viewData"}
                                                       readOnly

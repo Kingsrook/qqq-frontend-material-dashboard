@@ -101,6 +101,26 @@ function buildInitialFileContentsMap(scriptRevisionRecord: QRecord, scriptTypeFi
    return (rs);
 }
 
+function buildFileTypeMap(scriptTypeFileSchemaList: QRecord[]): { [name: string]: string }
+{
+   const rs: {[name: string]: string} = {};
+
+   if(!scriptTypeFileSchemaList)
+   {
+      console.log("Missing scriptTypeFileSchemaList");
+   }
+   else
+   {
+      for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
+      {
+         let name = scriptTypeFileSchemaList[i].values.get("name");
+         rs[name] = scriptTypeFileSchemaList[i].values.get("fileType");
+      }
+   }
+
+   return (rs);
+}
+
 function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tableName, fieldName, recordId, scriptTypeRecord, scriptTypeFileSchemaList}: ScriptEditorProps): JSX.Element
 {
    const [closing, setClosing] = useState(false);
@@ -114,6 +134,8 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
    const [availableFileNames, setAvailableFileNames] = useState(fileNamesFromSchema);
    const [openEditorFileNames, setOpenEditorFileNames] = useState([fileNamesFromSchema[0]])
    const [fileContents, setFileContents] = useState(buildInitialFileContentsMap(scriptRevisionRecord, scriptTypeFileSchemaList))
+   const [fileTypes, setFileTypes] = useState(buildFileTypeMap(scriptTypeFileSchemaList))
+   console.log(`file types: ${JSON.stringify(fileTypes)}`);
 
    const [commitMessage, setCommitMessage] = useState("")
    const [openTool, setOpenTool] = useState(null);
@@ -459,7 +481,7 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                               </Box>
                            </Box>
                            <AceEditor
-                              mode="javascript"
+                              mode={fileTypes[openEditorFileNames[index]] ?? "javascript"}
                               theme="github"
                               name="editor"
                               editorProps={{$blockScrolling: true}}

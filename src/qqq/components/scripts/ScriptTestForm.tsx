@@ -24,6 +24,7 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -51,19 +52,21 @@ interface AssociatedScriptDefinition
 export interface ScriptTestFormProps
 {
    scriptId: number;
-   scriptDefinition: AssociatedScriptDefinition;
+   scriptType: QRecord;
    tableName: string;
    fieldName: string;
    recordId: any;
-   code: string;
+   fileContents: {[name: string]: string};
    apiName: string;
    apiVersion: string;
 }
 
 const qController = Client.getInstance();
 
-function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recordId, code, apiName, apiVersion}: ScriptTestFormProps): JSX.Element
+function ScriptTestForm({scriptId, scriptType, tableName, fieldName, recordId, fileContents, apiName, apiVersion}: ScriptTestFormProps): JSX.Element
 {
+   const [testInputFields, setTestInputFields] = useState(null as QFieldMetaData[])
+   const [testOutputFields, setTestOutputFields] = useState(null as QFieldMetaData[])
    const [testInputValues, setTestInputValues] = useState({} as any);
    const [testOutputValues, setTestOutputValues] = useState({} as any);
    const [logLines, setLogLines] = useState([] as any[])
@@ -77,10 +80,46 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
 
    if(firstRender)
    {
-      scriptDefinition.testInputFields.forEach((field: QFieldMetaData) =>
+      (async () =>
       {
-         testInputValues[field.name] = field.defaultValue ?? "";
-      });
+         /////////////////////////////////////////////////////////////////////
+         // call backend to load details about how to test this script type //
+         /////////////////////////////////////////////////////////////////////
+         const formData = new FormData();
+         formData.append("scriptTypeId", scriptType.values.get("id"));
+         const processResult = await qController.processRun("loadScriptTestDetails", formData, null, true);
+
+         if (processResult instanceof QJobError)
+         {
+            const jobError = processResult as QJobError
+            setTestException(jobError.userFacingError ?? jobError.error)
+            return;
+         }
+
+         const jobComplete = processResult as QJobComplete
+
+         const testInputFields = [] as QFieldMetaData[];
+         for(let i = 0; i <jobComplete?.values?.testInputFields?.length; i++)
+         {
+            testInputFields.push(new QFieldMetaData(jobComplete.values.testInputFields[i]));
+         }
+         setTestInputFields(testInputFields);
+
+         const testOutputFields = [] as QFieldMetaData[];
+         for(let i = 0; i <jobComplete?.values?.testOutputFields?.length; i++)
+         {
+            testOutputFields.push(new QFieldMetaData(jobComplete.values.testOutputFields[i]));
+         }
+         setTestOutputFields(testOutputFields);
+
+         /////////////////////////////////////////////
+         // set a default value in each input field //
+         /////////////////////////////////////////////
+         testInputFields.forEach((field: QFieldMetaData) =>
+         {
+            testInputValues[field.name] = field.defaultValue ?? "";
+         });
+      })();
    }
 
    const buildFullExceptionMessage = (exception: any): string =>
@@ -91,9 +130,9 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
    const testScript = () =>
    {
       const inputValues = new Map<string, any>();
-      if (scriptDefinition.testInputFields)
+      if (testInputFields)
       {
-         scriptDefinition.testInputFields.forEach((field: QFieldMetaData) =>
+         testInputFields.forEach((field: QFieldMetaData) =>
          {
             inputValues.set(field.name, testInputValues[field.name]);
          });
@@ -108,6 +147,7 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
          try
          {
             let output;
+            /*
             if(tableName && recordId && fieldName)
             {
                /////////////////////////////////////////////////////////////////
@@ -115,15 +155,21 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
                /////////////////////////////////////////////////////////////////
                inputValues.set("apiName", apiName);
                inputValues.set("apiVersion", apiVersion);
-               output = await qController.testScript(tableName, recordId, fieldName, code, inputValues);
+               output = await qController.testScript(tableName, recordId, fieldName, "todo!", inputValues);
             }
             else
+            */
             {
                const formData = new FormData();
                formData.append("scriptId", scriptId);
                formData.append("apiName", apiName);
                formData.append("apiVersion", apiVersion);
-               formData.append("code", code);
+
+               formData.append("fileNames", Object.keys(fileContents).join(","))
+               for (let fileName in fileContents)
+               {
+                  formData.append("fileContents:" + fileName, fileContents[fileName]);
+               }
 
                for(let fieldName of inputValues.keys())
                {
@@ -195,7 +241,7 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
                      <Typography variant="h6" p={2} pb={1}>Test Input</Typography>
                      <Box px={2} pb={2}>
                         {
-                           scriptDefinition.testInputFields && testInputValues && scriptDefinition.testInputFields.map((field: QFieldMetaData) =>
+                           testInputFields && testInputValues && testInputFields.map((field: QFieldMetaData) =>
                            {
                               return (<TextField
                                  key={field.name}
@@ -234,16 +280,20 @@ function ScriptTestForm({scriptId, scriptDefinition, tableName, fieldName, recor
                         </Typography>
                      }
                      {
-                        scriptDefinition.testOutputFields && scriptDefinition.testOutputFields.map((f: any) =>
+                        testOutputFields && testOutputFields.map((f: any) =>
                         {
                            const field = new QFieldMetaData(f);
                            return (
                               <Box key={field.name} flexDirection="row" pr={2}>
-                                 <Typography variant="button" fontWeight="bold" pr={1}>
+                                 <Typography variant="button" textTransform="none"  fontWeight="bold" pr={1}>
                                     {field.label}:
                                  </Typography>
                                  <MDTypography variant="button" fontWeight="regular" color="text">
-                                    {ValueUtils.getValueForDisplay(field, testOutputValues[field.name], testOutputValues[field.name], "view")}
+                                    {
+                                       testOutputValues.values ?
+                                          ValueUtils.getValueForDisplay(field, testOutputValues.values[field.name], testOutputValues.displayValues[field.name], "view") :
+                                          ValueUtils.getValueForDisplay(field, testOutputValues[field.name], testOutputValues[field.name], "view")
+                                    }
                                  </MDTypography>
                               </Box>
                            );
