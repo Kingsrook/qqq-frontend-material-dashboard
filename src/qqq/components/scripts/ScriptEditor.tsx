@@ -23,7 +23,7 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
+import {IconButton, SelectChangeEvent, ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -31,9 +31,14 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl/FormControl";
 import Grid from "@mui/material/Grid";
+import Icon from "@mui/material/Icon";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select/Select";
 import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import FormData from "form-data";
 import React, {useEffect, useReducer, useRef, useState} from "react";
 import AceEditor from "react-ace";
@@ -56,21 +61,59 @@ export interface ScriptEditorProps
    tableName: string;
    fieldName: string;
    recordId: any;
-   scriptDefinition: any;
    scriptTypeRecord: QRecord;
+   scriptTypeFileSchemaList: QRecord[];
 }
 
 const qController = Client.getInstance();
 
-function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tableName, fieldName, recordId, scriptDefinition, scriptTypeRecord}: ScriptEditorProps): JSX.Element
+function buildInitialFileContentsMap(scriptRevisionRecord: QRecord, scriptTypeFileSchemaList: QRecord[]): { [name: string]: string }
+{
+   const rs: {[name: string]: string} = {};
+
+   if(!scriptTypeFileSchemaList)
+   {
+      console.log("Missing scriptTypeFileSchemaList");
+   }
+   else
+   {
+      let files = scriptRevisionRecord?.associatedRecords?.get("files")
+
+      for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
+      {
+         let scriptTypeFileSchema = scriptTypeFileSchemaList[i];
+         let name = scriptTypeFileSchema.values.get("name");
+         let contents = "";
+
+         for (let j = 0; j < files?.length; j++)
+         {
+            let file = files[j];
+            if(file.values.get("fileName") == name)
+            {
+               contents = file.values.get("contents");
+            }
+         }
+
+         rs[name] = contents;
+      }
+   }
+
+   return (rs);
+}
+
+function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tableName, fieldName, recordId, scriptTypeRecord, scriptTypeFileSchemaList}: ScriptEditorProps): JSX.Element
 {
    const [closing, setClosing] = useState(false);
 
-   const [updatedCode, setUpdatedCode] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("contents") : "");
    const [apiName, setApiName] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiName") : null)
    const [apiNameLabel, setApiNameLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiName") : null)
    const [apiVersion, setApiVersion] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiVersion") : null)
    const [apiVersionLabel, setApiVersionLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiVersion") : null)
+
+   const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"))
+   const [availableFileNames, setAvailableFileNames] = useState(fileNamesFromSchema);
+   const [openEditorFileNames, setOpenEditorFileNames] = useState([fileNamesFromSchema[0]])
+   const [fileContents, setFileContents] = useState(buildInitialFileContentsMap(scriptRevisionRecord, scriptTypeFileSchemaList))
 
    const [commitMessage, setCommitMessage] = useState("")
    const [openTool, setOpenTool] = useState(null);
@@ -200,7 +243,6 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       {
          const formData = new FormData();
          formData.append("scriptId", scriptId);
-         formData.append("contents", updatedCode);
          formData.append("commitMessage", overrideCommitMessage ?? commitMessage);
 
          if(apiName)
@@ -211,6 +253,15 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
          if(apiVersion)
          {
             formData.append("apiVersion", apiVersion);
+         }
+
+
+         const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"))
+         formData.append("fileNames", fileNamesFromSchema.join(","));
+
+         for (let fileName in fileContents)
+         {
+            formData.append("fileContents:" + fileName, fileContents[fileName]);
          }
 
          //////////////////////////////////////////////////////////////////
@@ -249,10 +300,9 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       closeCallback(null, "cancelled");
    }
 
-   const updateCode = (value: string, event: any) =>
+   const updateCode = (value: string, event: any, index: number) =>
    {
-      console.log("Updating code")
-      setUpdatedCode(value);
+      fileContents[openEditorFileNames[index]] = value;
       forceUpdate();
    }
 
@@ -300,8 +350,34 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       }
    }
 
+   const handleSelectingFile = (event: SelectChangeEvent, index: number) =>
+   {
+      openEditorFileNames[index] = event.target.value
+      setOpenEditorFileNames(openEditorFileNames);
+      forceUpdate();
+   }
+
+   const splitEditorClicked = () =>
+   {
+      openEditorFileNames.push(availableFileNames[0])
+      setOpenEditorFileNames(openEditorFileNames);
+      forceUpdate();
+   }
+
+   const closeEditorClicked = (index: number) =>
+   {
+      openEditorFileNames.splice(index, 1)
+      setOpenEditorFileNames(openEditorFileNames);
+      forceUpdate();
+   }
+
+   const computeEditorWidth = (): string =>
+   {
+      return (100 / openEditorFileNames.length) + "%"
+   }
+
    return (
-      <Box sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={6}>
+      <Box className="scriptEditor" sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={6}>
          <Card sx={{height: "100%", p: 3}}>
 
             <Snackbar open={errorAlert !== null && errorAlert !== ""} onClose={(event?: React.SyntheticEvent | Event, reason?: string) =>
@@ -348,29 +424,67 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                      <DynamicSelect fieldName={"apiVersion"} initialValue={apiVersion} initialDisplayValue={apiVersionLabel} fieldLabel={"API Version *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiVersion} />
                   </Box>
                </Grid>
-               <AceEditor
-                  mode="javascript"
-                  theme="github"
-                  name="editor"
-                  editorProps={{$blockScrolling: true}}
-                  setOptions={{
-                     useWorker: false,
-                     enableBasicAutocompletion: true,
-                     enableLiveAutocompletion: true,
-                  }}
-                  onChange={updateCode}
-                  width="100%"
-                  height="calc(100% - 58px)"
-                  value={updatedCode}
-                  style={{border: "1px solid gray"}}
-               />
+               <Box display="flex" sx={{height: "100%"}}>
+                  {openEditorFileNames.map((fileName, index) =>
+                  {
+                     return (
+                        <Box key={`${fileName}-${index}`} sx={{height: "100%", width: computeEditorWidth()}}>
+                           <Box sx={{borderBottom: 1, borderColor: "divider"}} display="flex" justifyContent="space-between" alignItems="flex-end">
+                              <FormControl className="selectedFileTab" variant="standard" sx={{verticalAlign: "bottom"}}>
+                                 <Select value={openEditorFileNames[index]} onChange={(event) => handleSelectingFile(event, index)}>
+                                    {
+                                       availableFileNames.map((name) => (
+                                          <MenuItem key={name} value={name}>{name}</MenuItem>
+                                       ))
+                                    }
+                                 </Select>
+                              </FormControl>
+                              <Box>
+                                 {
+                                    openEditorFileNames.length > 1 &&
+                                       <Tooltip title="Close this editor split" enterDelay={500}>
+                                          <IconButton size="small" onClick={() => closeEditorClicked(index)}>
+                                             <Icon>close</Icon>
+                                          </IconButton>
+                                       </Tooltip>
+                                 }
+                                 {
+                                    index == openEditorFileNames.length - 1 &&
+                                       <Tooltip title="Open a new editor split" enterDelay={500}>
+                                          <IconButton size="small" onClick={splitEditorClicked}>
+                                             <Icon>vertical_split</Icon>
+                                          </IconButton>
+                                       </Tooltip>
+                                 }
+                              </Box>
+                           </Box>
+                           <AceEditor
+                              mode="javascript"
+                              theme="github"
+                              name="editor"
+                              editorProps={{$blockScrolling: true}}
+                              setOptions={{
+                                 useWorker: false,
+                                 enableBasicAutocompletion: true,
+                                 enableLiveAutocompletion: true,
+                              }}
+                              onChange={(value, event) => updateCode(value, event, index)}
+                              width="100%"
+                              height="calc(100% - 88px)"
+                              value={fileContents[openEditorFileNames[index]]}
+                              style={{border: "1px solid gray"}}
+                           />
+                        </Box>
+                     );
+                  })}
+               </Box>
             </Box>
 
             {
                openTool &&
                <Box sx={{height: "45%"}} pt={2}>
                   {
-                     openTool == "test" && <ScriptTestForm scriptId={scriptId} scriptDefinition={scriptDefinition} tableName={tableName} fieldName={fieldName} recordId={recordId} code={updatedCode} apiName={apiName} apiVersion={apiVersion} />
+                     openTool == "test" && <ScriptTestForm scriptId={scriptId} scriptType={scriptTypeRecord} tableName={tableName} fieldName={fieldName} recordId={recordId} fileContents={fileContents} apiName={apiName} apiVersion={apiVersion} />
                   }
                   {
                      openTool == "docs" && <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} aceEditorHeight="100%" />
