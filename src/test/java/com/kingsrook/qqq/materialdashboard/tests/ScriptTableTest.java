@@ -44,6 +44,7 @@ public class ScriptTableTest extends QBaseSeleniumTest
          .withRouteToFile("/data/script/1", "data/script/1.json")
          .withRouteToFile("/data/scriptType/1", "data/scriptType/1.json")
          .withRouteToFile("/data/scriptRevision/query", "data/scriptRevision/query.json")
+         .withRouteToFile("/data/scriptLog/query", "data/scriptLog/query.json")
          .withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json")
          .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
          .withRouteToFile("/widget/scriptViewer", "widget/scriptViewer.json")
