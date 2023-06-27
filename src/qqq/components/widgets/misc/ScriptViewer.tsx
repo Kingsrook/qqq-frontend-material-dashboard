@@ -142,7 +142,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
             else // MULTI AD_HOC
             {
                // todo - not yet supported
-               console.log(`Script Type File Mode of ${fileMode} is not yet supportred.`);
+               console.log(`Script Type File Mode of ${fileMode} is not yet supported.`);
             }
 
             setScriptTypeFileSchemaList(scriptTypeFileSchemaList);
@@ -499,7 +499,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                                       editorProps={{$blockScrolling: true}}
                                                       setOptions={{useWorker: false}}
                                                       width="100%"
-                                                      height="400px"
+                                                      height="368px"
                                                       value={getSelectedFileCode()}
                                                       style={{borderTop: "1px solid lightgray", borderBottomRightRadius: "1rem"}}
                                                    />
