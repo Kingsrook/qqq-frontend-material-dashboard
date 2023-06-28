@@ -929,12 +929,21 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    };
 
-   const handleSortChange = (gridSort: GridSortModel) =>
+   const handleSortChangeForDataGrid = (gridSort: GridSortModel) =>
+   {
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // this method just wraps handleSortChange, but w/o the optional 2nd param, so we can use it in data grid //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      handleSortChange(gridSort);
+   }
+
+   const handleSortChange = (gridSort: GridSortModel, overrideFilterModel?: GridFilterModel) =>
    {
       if (gridSort && gridSort.length > 0)
       {
          setColumnSortModel(gridSort);
-         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, filterModel, gridSort, rowsPerPage));
+         const gridFilterModelToUse = overrideFilterModel ?? filterModel;
+         setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, gridFilterModelToUse, gridSort, rowsPerPage));
          localStorage.setItem(sortLocalStorageKey, JSON.stringify(gridSort));
       }
    };
@@ -1286,13 +1295,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
          handleFilterChange(models.filter);
-         handleSortChange(models.sort);
+         handleSortChange(models.sort, models.filter);
          localStorage.setItem(currentSavedFilterLocalStorageKey, selectedSavedFilterId.toString());
       }
       else
       {
          handleFilterChange({items: []} as GridFilterModel);
-         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}]);
+         handleSortChange([{field: tableMetaData.primaryKeyField, sort: "desc"}], {items: []} as GridFilterModel);
          localStorage.removeItem(currentSavedFilterLocalStorageKey);
       }
    }
@@ -1692,7 +1701,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    }
 
-   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableName)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
 
    if (tableProcesses && tableProcesses.length)
    {
@@ -1919,7 +1928,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         onColumnVisibilityModelChange={handleColumnVisibilityChange}
                         onColumnOrderChange={handleColumnOrderChange}
                         onSelectionModelChange={selectionChanged}
-                        onSortModelChange={handleSortChange}
+                        onSortModelChange={handleSortChangeForDataGrid}
                         sortingOrder={["asc", "desc"]}
                         sortModel={columnSortModel}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
