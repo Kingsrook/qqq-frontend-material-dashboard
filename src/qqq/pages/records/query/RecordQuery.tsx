@@ -1701,7 +1701,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    }
 
-   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableName)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
 
    if (tableProcesses && tableProcesses.length)
    {
