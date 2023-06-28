@@ -26,8 +26,9 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Box} from "@mui/material";
+import {Alert} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
@@ -54,7 +55,7 @@ interface Props
    closeModalHandler?: (event: object, reason: string) => void;
    defaultValues: { [key: string]: string };
    disabledFields: { [key: string]: boolean } | string[];
-   isDuplicate?: boolean;
+   isCopy?: boolean;
 }
 
 EntityForm.defaultProps = {
@@ -64,7 +65,7 @@ EntityForm.defaultProps = {
    closeModalHandler: null,
    defaultValues: {},
    disabledFields: {},
-   isDuplicate: false
+   isCopy: false
 };
 
 function EntityForm(props: Props): JSX.Element
@@ -175,9 +176,9 @@ function EntityForm(props: Props): JSX.Element
             fieldArray.push(fieldMetaData);
          });
 
-         //////////////////////////////////////////////////////////////////////////////////////////////
-         // if doing an edit or duplicate, fetch the record and pre-populate the form values from it //
-         //////////////////////////////////////////////////////////////////////////////////////////////
+         /////////////////////////////////////////////////////////////////////////////////////////
+         // if doing an edit or copy, fetch the record and pre-populate the form values from it //
+         /////////////////////////////////////////////////////////////////////////////////////////
          let record: QRecord = null;
          let defaultDisplayValues = new Map<string, string>();
          if (props.id !== null)
@@ -185,7 +186,7 @@ function EntityForm(props: Props): JSX.Element
             record = await qController.get(tableName, props.id);
             setRecord(record);
 
-            const titleVerb = props.isDuplicate ? "Duplicate" : "Edit";
+            const titleVerb = props.isCopy ? "Copy" : "Edit";
             setFormTitle(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
 
             if (!props.isModal)
@@ -195,20 +196,26 @@ function EntityForm(props: Props): JSX.Element
 
             tableMetaData.fields.forEach((fieldMetaData, key) =>
             {
-               if (props.isDuplicate && fieldMetaData.name == tableMetaData.primaryKeyField)
+               if (props.isCopy && fieldMetaData.name == tableMetaData.primaryKeyField)
                {
                   return;
                }
                initialValues[key] = record.values.get(key);
             });
 
-            if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // these checks are only for updating records, if copying, it is actually an insert, which is checked after this block //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if(! props.isCopy)
             {
-               setNotAllowedError("Records may not be edited in this table");
-            }
-            else if (!tableMetaData.editPermission)
-            {
-               setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
+               if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+               {
+                  setNotAllowedError("Records may not be edited in this table");
+               }
+               else if (!tableMetaData.editPermission)
+               {
+                  setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
+               }
             }
          }
          else
@@ -256,7 +263,7 @@ function EntityForm(props: Props): JSX.Element
          //////////////////////////////////////
          // check capabilities & permissions //
          //////////////////////////////////////
-         if (props.isDuplicate || !props.id)
+         if (props.isCopy || !props.id)
          {
             if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
             {
@@ -341,11 +348,11 @@ function EntityForm(props: Props): JSX.Element
                const fieldName = section.fieldNames[j];
                const field = tableMetaData.fields.get(fieldName);
 
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               // if id !== null (and we're not duplicating) - means we're on the edit screen -- show all fields on the edit screen. //
-               // || (or) we're on the insert screen in which case, only show editable fields.                                       //
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               if ((props.id !== null && !props.isDuplicate) || field.isEditable)
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // if id !== null (and we're not copying) - means we're on the edit screen -- show all fields on the edit screen. //
+               // || (or) we're on the insert screen in which case, only show editable fields.                                   //
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               if ((props.id !== null && !props.isCopy) || field.isEditable)
                {
                   sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
                }
@@ -393,9 +400,9 @@ function EntityForm(props: Props): JSX.Element
       //  but if the user used the anchors on the page, this doesn't effectively cancel... //
       //  what we have here pushed a new history entry (I think?), so could be better      //
       ///////////////////////////////////////////////////////////////////////////////////////
-      if (props.id !== null && props.isDuplicate)
+      if (props.id !== null && props.isCopy)
       {
-         const path = `${location.pathname.replace(/\/duplicate$/, "")}`;
+         const path = `${location.pathname.replace(/\/copy$/, "")}`;
          navigate(path, {replace: true});
       }
       else if (props.id !== null)
@@ -458,7 +465,7 @@ function EntityForm(props: Props): JSX.Element
             }
          }
 
-         if (props.id !== null && !props.isDuplicate)
+         if (props.id !== null && !props.isCopy)
          {
             // todo - audit that it's a dupe
             await qController
@@ -504,8 +511,8 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
-                     const path = props.isDuplicate ?
-                        location.pathname.replace(new RegExp(`/${props.id}/duplicate$`), "/" + record.values.get(tableMetaData.primaryKeyField))
+                     const path = props.isCopy ?
+                        location.pathname.replace(new RegExp(`/${props.id}/copy$`), "/" + record.values.get(tableMetaData.primaryKeyField))
                         : location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
                      navigate(path, {state: {createSuccess: true}});
                   }
@@ -514,8 +521,8 @@ function EntityForm(props: Props): JSX.Element
                {
                   if(error.message.toLowerCase().startsWith("warning"))
                   {
-                     const path = props.isDuplicate ?
-                        location.pathname.replace(new RegExp(`/${props.id}/duplicate$`), "/" + record.values.get(tableMetaData.primaryKeyField))
+                     const path = props.isCopy ?
+                        location.pathname.replace(new RegExp(`/${props.id}/copy$`), "/" + record.values.get(tableMetaData.primaryKeyField))
                         : location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
                      navigate(path, {state: {createSuccess: true, warning: error.message}});
                   }
