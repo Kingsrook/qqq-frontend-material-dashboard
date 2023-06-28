@@ -584,12 +584,6 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    let hasEditOrDelete = (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission);
 
-   function gotoCreate()
-   {
-      const path = `${pathParts.slice(0, -1).join("/")}/create`;
-      navigate(path);
-   }
-
    const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
 
    const renderActionsMenu = (
