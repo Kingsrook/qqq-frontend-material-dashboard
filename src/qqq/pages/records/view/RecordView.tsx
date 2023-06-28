@@ -265,10 +265,24 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
          ValueUtils.qInstance = metaData;
+
+         ///////////////////////////////////////////////////
+         // load the processes to show in the action menu //
+         ///////////////////////////////////////////////////
          const processesForTable = ProcessUtils.getProcessesForTable(metaData, tableName);
          processesForTable.sort((a, b) => a.label.localeCompare(b.label));
          setTableProcesses(processesForTable);
-         setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
+
+         //////////////////////////////////////////////////////
+         // load processes that the routing needs to respect //
+         //////////////////////////////////////////////////////
+         const allTableProcesses = ProcessUtils.getProcessesForTable(metaData, tableName, true) // these include hidden ones (e.g., to find the bulks)
+         const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
+         if (runRecordScriptProcess)
+         {
+            allTableProcesses.unshift(runRecordScriptProcess)
+         }
+         setAllTableProcesses(allTableProcesses);
 
          if (launchingProcess)
          {
@@ -512,6 +526,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       navigate(path);
    }
 
+   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
    const renderActionsMenu = (
       <Menu
          anchorEl={actionsMenu}
@@ -568,8 +583,15 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             </MenuItem>
          ))}
          {(tableProcesses.length > 0 || hasEditOrDelete) && <Divider />}
+         {
+            runRecordScriptProcess &&
+            <MenuItem key={runRecordScriptProcess.name} onClick={() => processClicked(runRecordScriptProcess)}>
+               <ListItemIcon><Icon>{runRecordScriptProcess.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
+               {runRecordScriptProcess.label}
+            </MenuItem>
+         }
          <MenuItem onClick={() => navigate("dev")}>
-            <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
+            <ListItemIcon><Icon>code</Icon></ListItemIcon>
             Developer Mode
          </MenuItem>
          {
@@ -795,7 +817,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  activeModalProcess &&
                                  <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                                     <div className="modalProcess">
-                                       <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+                                       <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={id} closeModalHandler={closeModalProcess} />
                                     </div>
                                  </Modal>
                               }
