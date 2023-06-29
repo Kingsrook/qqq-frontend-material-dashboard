@@ -242,7 +242,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
          //////////////////////////////////////////////////////////////////////////////////////
          // fetch the full version - including its associated scriptRevisionFile sub-records //
          //////////////////////////////////////////////////////////////////////////////////////
-         const selectedVersion = await qController.get("scriptRevision", version.values.get("id"), true);
+         const selectedVersion = await qController.get("scriptRevision", version.values.get("id"), null, true);
          console.log("Fetched selectedVersion:");
          console.log(selectedVersion);
          setSelectedVersionRecord(selectedVersion);
