@@ -25,6 +25,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
@@ -74,6 +75,8 @@ RecordView.defaultProps =
       launchProcess: null,
    };
 
+const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
+
 function RecordView({table, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
@@ -83,7 +86,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
    const tableName = table.name;
+   let tableVariant: QTableVariant = null;
 
+   const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
@@ -112,7 +117,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen} = useContext(QContext);
 
-
+   if (localStorage.getItem(tableVariantLocalStorageKey))
+   {
+      tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+   }
 
    const reload = () =>
    {
@@ -360,7 +368,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          let record: QRecord;
          try
          {
-            record = await qController.get(tableName, id);
+            record = await qController.get(tableName, id, tableVariant);
             setRecord(record);
          }
          catch (e)
