@@ -43,7 +43,7 @@
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
          <artifactId>qqq-backend-core</artifactId>
-         <version>feature-CTLE-503-optimization-weather-api-data-20230630.185634-2</version>
+         <version>feature-CTLE-503-optimization-weather-api-data-20230701.011918-3</version>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
