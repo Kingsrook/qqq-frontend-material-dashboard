@@ -39,16 +39,25 @@
       <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
    </properties>
 
-   <!-- When qqq-backend-core was added in here, there became a conflict in the Guava versions, that caused
-        java.lang.NoSuchMethodError: com.google.common.collect.ImmutableMap.of(...)
-        Per this SO thread: https://stackoverflow.com/questions/71095560/java-lang-nosuchmethoderror-com-google-common-collect-immutablemap-error-when
-        this fixes us. -->
    <dependencyManagement>
       <dependencies>
          <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>31.0.1-jre</version>
+            <groupId>com.kingsrook.qqq</groupId>
+            <artifactId>qqq-backend-core</artifactId>
+            <!--
+            When qqq-backend-core was added as a dependency here, it brought with it some transitive
+            dependencies which conflicted with selenium.  Excluding these from qqq-backend-core fixes us.
+            -->
+            <exclusions>
+               <exclusion>
+                  <groupId>software.amazon.awssdk</groupId>
+                  <artifactId>netty-nio-client</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>com.google.guava</groupId>
+                  <artifactId>guava</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
       </dependencies>
    </dependencyManagement>
