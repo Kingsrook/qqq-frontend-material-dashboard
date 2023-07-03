@@ -53,7 +53,7 @@ const CommandMenu = ({metaData}: Props) =>
       // if a dot pressed, not from a "text" element, then toggle command menu //
       ///////////////////////////////////////////////////////////////////////////
       const type = (e.target as any).type;
-      if (e.key === "." && type !== "text")
+      if (e.key === "." && type !== "text" && type !== "textarea" && type !== "input" && type !== "search")
       {
          e.preventDefault();
          setDotMenuOpen(!dotMenuOpen);
@@ -173,6 +173,7 @@ const CommandMenu = ({metaData}: Props) =>
                   ))
                )
                }
+               <Command.Separator />
             </Command.Group>
          );
    }
@@ -201,6 +202,7 @@ const CommandMenu = ({metaData}: Props) =>
                   )
                )
             }
+            <Command.Separator />
          </Command.Group>
       );
    }
@@ -231,6 +233,7 @@ const CommandMenu = ({metaData}: Props) =>
                   )
                )
             }
+            <Command.Separator />
          </Command.Group>
       );
    }
@@ -281,11 +284,8 @@ const CommandMenu = ({metaData}: Props) =>
             <Command.List>
                <Command.Empty>No results found.</Command.Empty>
                <ActionsSection />
-               <Command.Separator />
                <TablesSection />
-               <Command.Separator />
                <AppsSection />
-               <Command.Separator />
                <RecentlyViewedSection />
             </Command.List>
          </Command.Dialog>

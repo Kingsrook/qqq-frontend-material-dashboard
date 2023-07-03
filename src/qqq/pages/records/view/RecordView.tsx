@@ -150,31 +150,34 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          })();
       }
 
-      const down = (e: { key: string; metaKey: any; ctrlKey: any; preventDefault: () => void; }) =>
+      const down = (e: KeyboardEvent) =>
       {
-         if(!dotMenuOpen)
+         const type = (e.target as any).type;
+         const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
+
+         if(validType && !dotMenuOpen && !showAudit && !showEditChildForm)
          {
-            if (e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            if (! e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault()
                gotoCreate();
             }
-            else if (e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            else if (! e.metaKey && e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
             {
                e.preventDefault()
                navigate("edit");
             }
-            else if (e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            else if (! e.metaKey && e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault()
                navigate("copy");
             }
-            else if (e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+            else if (! e.metaKey && e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
             {
                e.preventDefault()
                handleClickDeleteButton();
             }
-            else if (e.key === "a" && metaData && metaData.tables.has("audit"))
+            else if (! e.metaKey && e.key === "a" && metaData && metaData.tables.has("audit"))
             {
                e.preventDefault()
                navigate("#audit");
@@ -187,7 +190,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       {
          document.removeEventListener("keydown", down)
       }
-   }, [dotMenuOpen])
+   }, [dotMenuOpen, showEditChildForm, showAudit])
 
    const gotoCreate = () =>
    {
