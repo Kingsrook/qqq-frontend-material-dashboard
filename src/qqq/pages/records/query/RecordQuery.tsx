@@ -25,12 +25,14 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
-import {Alert, Collapse, TablePagination} from "@mui/material";
+import {Alert, Collapse, TablePagination, Typography} from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -79,6 +81,7 @@ const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 const PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT = "qqq.pinnedColumns";
 const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
+const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 
 interface Props
 {
@@ -135,6 +138,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const seenJoinTablesLocalStorageKey = `${SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {} as { [index: string]: boolean };
    let didDefaultVisibilityComeFromLocalStorage = false;
@@ -142,6 +146,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    let defaultDensity = "standard" as GridDensity;
    let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
    let seenJoinTables: {[tableName: string]: boolean} = {};
+   let defaultTableVariant: QTableVariant = null;
 
    ////////////////////////////////////////////////////////////////////////////////////
    // set the to be not per table (do as above if we want per table) at a later port //
@@ -173,11 +178,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       seenJoinTables = JSON.parse(localStorage.getItem(seenJoinTablesLocalStorageKey));
    }
+   if (localStorage.getItem(tableVariantLocalStorageKey))
+   {
+      defaultTableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+   }
 
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
    const [lastFetchedQFilterJSON, setLastFetchedQFilterJSON] = useState("");
    const [columnSortModel, setColumnSortModel] = useState(defaultSort);
    const [queryFilter, setQueryFilter] = useState(new QQueryFilter());
+   const [tableVariant, setTableVariant] = useState(defaultTableVariant);
 
    const [columnVisibilityModel, setColumnVisibilityModel] = useState(defaultVisibility);
    const [shouldSetAllNewJoinFieldsToHidden, setShouldSetAllNewJoinFieldsToHidden] = useState(!didDefaultVisibilityComeFromLocalStorage)
@@ -205,6 +215,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [distinctRecordsOnPageCount, setDistinctRecordsOnPageCount] = useState(null as number);
    const [selectionSubsetSize, setSelectionSubsetSize] = useState(null as number);
    const [selectionSubsetSizePromptOpen, setSelectionSubsetSizePromptOpen] = useState(false);
+   const [tableVariantPromptOpen, setTableVariantPromptOpen] = useState(false);
    const [selectFullFilterState, setSelectFullFilterState] = useState("n/a" as "n/a" | "checked" | "filter" | "filterSubset");
    const [rowSelectionModel, setRowSelectionModel] = useState<GridSelectionModel>([]);
    const [columnsModel, setColumnsModel] = useState([] as GridColDef[]);
@@ -338,6 +349,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    }, [location, tableMetaData]);
 
+   function promptForTableVariantSelection()
+   {
+      setTableVariantPromptOpen(true);
+   }
+
    const updateColumnVisibilityModel = () =>
    {
       if (localStorage.getItem(columnVisibilityLocalStorageKey))
@@ -424,8 +440,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (false);
    }
 
-   const getPageHeader = (tableMetaData: QTableMetaData, visibleJoinTables: Set<string>): string | JSX.Element =>
+   const getPageHeader = (tableMetaData: QTableMetaData, visibleJoinTables: Set<string>, tableVariant: QTableVariant): string | JSX.Element =>
    {
+      let label: string = tableMetaData?.label ?? "";
+
       if (visibleJoinTables.size > 0)
       {
          let joinLabels = [];
@@ -462,15 +480,36 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          return(
             <div>
-               {tableMetaData?.label}
+               {label}
                <CustomWidthTooltip title={tooltipHTML}>
                   <IconButton sx={{p: 0, fontSize: "0.5rem", mb: 1, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">emergency</Icon></IconButton>
                </CustomWidthTooltip>
+               {
+                  tableVariant &&
+                  <Typography variant="h6" color="text" fontWeight="light">
+                     {tableMetaData.variantTableLabel}: {tableVariant.name}
+                     <Tooltip title={`Change ${tableMetaData.variantTableLabel}`}>
+                        <IconButton onClick={promptForTableVariantSelection} sx={{p: 0, m: 0, ml: .5, mb: .5, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">settings</Icon></IconButton>
+                     </Tooltip>
+                  </Typography>
+               }
             </div>);
       }
       else
       {
-         return (tableMetaData?.label);
+         return (
+            <div>
+               {label}
+               {
+                  tableVariant &&
+                  <Typography variant="h6" color="text" fontWeight="light">
+                     {tableMetaData.variantTableLabel}: {tableVariant.name}
+                     <Tooltip title={`Change ${tableMetaData.variantTableLabel}`}>
+                        <IconButton onClick={promptForTableVariantSelection} sx={{p: 0, m: 0, ml: .5, mb: .5, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">settings</Icon></IconButton>
+                     </Tooltip>
+                  </Typography>
+               }
+            </div>);
       }
    };
 
@@ -481,9 +520,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       (async () =>
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
-
          const visibleJoinTables = getVisibleJoinTables();
-         setPageHeader(getPageHeader(tableMetaData, visibleJoinTables));
+         setPageHeader(getPageHeader(tableMetaData, visibleJoinTables, tableVariant));
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
          // if there's an exposedJoin that we haven't seen before, we want to make sure that all of its fields //
@@ -543,6 +581,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
+
+         if(tableMetaData?.usesVariants && ! tableVariant)
+         {
+            promptForTableVariantSelection();
+            return;
+         }
 
          if (columnsModel.length == 0)
          {
@@ -634,7 +678,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
             let includeDistinct = isJoinMany(tableMetaData, getVisibleJoinTables());
-            qController.count(tableName, qFilter, queryJoins, includeDistinct).then(([count, distinctCount]) =>
+            qController.count(tableName, qFilter, queryJoins, includeDistinct, tableVariant).then(([count, distinctCount]) =>
             {
                console.log(`Received count results for query ${thisQueryId}: ${count} ${distinctCount}`);
                countResults[thisQueryId] = [];
@@ -652,7 +696,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
 
          setLastFetchedQFilterJSON(JSON.stringify(qFilter));
-         qController.query(tableName, qFilter, queryJoins).then((results) =>
+         qController.query(tableName, qFilter, queryJoins, tableVariant).then((results) =>
          {
             console.log(`Received results for query ${thisQueryId}`);
             queryResults[thisQueryId] = results;
@@ -1708,7 +1752,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       menuItems.push(<MenuItem key={process.name} onClick={() => processClicked(process)}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    }
 
-   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate("dev")}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableName)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
 
    if (tableProcesses && tableProcesses.length)
    {
@@ -1769,7 +1813,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setTotalRecords(null);
       setDistinctRecords(null);
       updateTable();
-   }, [columnsModel, tableState]);
+   }, [columnsModel, tableState, tableVariant]);
 
    useEffect(() =>
    {
@@ -1971,6 +2015,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
 
             {
+               tableMetaData &&
+               <TableVariantDialog table={tableMetaData} isOpen={tableVariantPromptOpen} closeHandler={(value: QTableVariant) =>
+               {
+                  setTableVariantPromptOpen(false);
+                  setTableVariant(value);
+               }} />
+            }
+
+            {
                columnStatsFieldName &&
                <Modal open={columnStatsFieldName !== null} onClose={(event, reason) => closeColumnStats(event, reason)}>
                   <div className="columnStatsModal">
@@ -1990,6 +2043,93 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          </div>
       </BaseLayout>
    );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// mini-component that is the dialog for the user to select a variant on tables with variant backends //
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+function TableVariantDialog(props: {isOpen: boolean; table: QTableMetaData; closeHandler: (value?: QTableVariant) => void})
+{
+   const [value, setValue] = useState(null)
+   const [dropDownOpen, setDropDownOpen] = useState(false)
+   const [variants, setVariants] = useState(null);
+
+   const handleVariantChange = (event: React.SyntheticEvent, value: any | any[], reason: string, details?: string) =>
+   {
+      const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${props.table.name}`;
+      if(value != null)
+      {
+         localStorage.setItem(tableVariantLocalStorageKey, JSON.stringify(value));
+      }
+      else
+      {
+         localStorage.removeItem(tableVariantLocalStorageKey);
+      }
+      props.closeHandler(value);
+   };
+
+   const keyPressed = (e: React.KeyboardEvent<HTMLDivElement>) =>
+   {
+      if(e.key == "Enter" && value)
+      {
+         props.closeHandler(value);
+      }
+   }
+
+   useEffect(() =>
+   {
+      console.log("queryVariants")
+      try
+      {
+         (async () =>
+         {
+            const variants = await qController.tableVariants(props.table.name);
+            console.log(JSON.stringify(variants));
+            setVariants(variants);
+         })();
+      }
+      catch (e)
+      {
+         console.log(e);
+      }
+   }, []);
+
+
+   return variants && (
+      <Dialog open={props.isOpen}  onKeyPress={(e) => keyPressed(e)}>
+         <DialogTitle>{props.table.variantTableLabel}</DialogTitle>
+         <DialogContent>
+            <DialogContentText>Select the {props.table.variantTableLabel} to be used on this table:</DialogContentText>
+            <Autocomplete
+               id="tableVariantId"
+               sx={{width: "400px", marginTop: "10px"}}
+               open={dropDownOpen}
+               size="small"
+               onOpen={() =>
+               {
+                  setDropDownOpen(true);
+               }}
+               onClose={() =>
+               {
+                  setDropDownOpen(false);
+               }}
+               // @ts-ignore
+               onChange={handleVariantChange}
+               isOptionEqualToValue={(option, value) => option.id === value.id}
+               options={variants}
+               renderInput={(params) => <TextField {...params} label={props.table.variantTableLabel} />}
+               getOptionLabel={(option) =>
+               {
+                  if(typeof option == "object")
+                  {
+                     return (option as QTableVariant).name;
+                  }
+                  return option;
+               }}
+            />
+         </DialogContent>
+      </Dialog>
+   )
 }
 
 //////////////////////////////////////////////////////////////////////////////////

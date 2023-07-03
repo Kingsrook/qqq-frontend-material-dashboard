@@ -62,6 +62,7 @@ function ScriptDocsForm({helpText, exampleCode, aceEditorHeight}: Props): JSX.El
                            width="100%"
                            showPrintMargin={false}
                            height="100%"
+                           style={{borderBottomRightRadius: "1rem", borderBottomLeftRadius: "1rem"}}
                         />
                      </Typography>
                   </Box>

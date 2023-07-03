@@ -39,6 +39,7 @@ import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 
 import "ace-builds/src-noconflict/mode-sql";
+import "ace-builds/src-noconflict/mode-velocity";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -637,7 +638,7 @@ function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.E
    const download = (event: React.MouseEvent<HTMLSpanElement>) =>
    {
       event.stopPropagation();
-      HtmlUtils.downloadUrlViaIFrame(url);
+      HtmlUtils.downloadUrlViaIFrame(url, filename);
    };
 
    const open = (event: React.MouseEvent<HTMLSpanElement>) =>

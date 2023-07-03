@@ -1,7 +1,6 @@
 {
    "tableName": "scriptRevision",
    "values": {
-      "contents": "var hello;",
       "id": 100,
       "commitMessage": "Initial checkin",
       "author": "Jon Programmer",
@@ -10,5 +9,20 @@
    },
    "displayValues": {
 
+   },
+   "associatedRecords": {
+      "files": [
+         {
+            "tableName": "scriptRevisionFile",
+            "values": {
+               "id": 101,
+               "fileName": "Script.js",
+               "contents": "var hello;",
+               "scriptRevisionId": 100,
+               "createDate": "2023-06-23T21:59:57Z",
+               "modifyDate": "2023-06-23T21:59:57Z"
+            }
+         }
+      ]
    }
 }

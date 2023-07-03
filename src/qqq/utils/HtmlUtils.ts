@@ -62,10 +62,21 @@ export default class HtmlUtils
    };
 
    /*******************************************************************************
-    ** Download a server-side generated file.
+    ** Download a server-side generated file (or the contents of a data: url)
     *******************************************************************************/
-   static downloadUrlViaIFrame = (url: string) =>
+   static downloadUrlViaIFrame = (url: string, filename: string) =>
    {
+      if(url.startsWith("data:"))
+      {
+         const link = document.createElement("a");
+         link.download = filename;
+         link.href = url;
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+         return;
+      }
+
       if (document.getElementById("downloadIframe"))
       {
          document.body.removeChild(document.getElementById("downloadIframe"));
@@ -101,10 +112,21 @@ export default class HtmlUtils
    };
 
    /*******************************************************************************
-    ** Open a server-side generated file from a url in a new window.
+    ** Open a server-side generated file from a url in a new window (or a data: url)
     *******************************************************************************/
    static openInNewWindow = (url: string, filename: string) =>
    {
+      if(url.startsWith("data:"))
+      {
+         const openInWindow = window.open("", "_blank");
+         openInWindow.document.write(`<html lang="en">
+            <body style="margin: 0">
+               <iframe src="${url}" width="100%" height="100%" style="border: 0">
+            </body>
+         `);
+         return;
+      }
+
       const openInWindow = window.open("", "_blank");
       openInWindow.document.write(`<html lang="en">
             <head>

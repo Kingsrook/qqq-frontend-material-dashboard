@@ -25,9 +25,11 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Box, Typography} from "@mui/material";
+import {Alert, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -74,36 +76,36 @@ RecordView.defaultProps =
       launchProcess: null,
    };
 
+const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
+
 function RecordView({table, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
 
    const location = useLocation();
    const navigate = useNavigate();
-   const {accentColor} = useContext(QContext);
 
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
    const tableName = table.name;
+   let tableVariant: QTableVariant = null;
 
+   const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [sectionFieldElements, setSectionFieldElements] = useState(null as Map<string, JSX.Element[]>);
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-   const [tableMetaData, setTableMetaData] = useState(null);
    const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1SectionName, setT1SectionName] = useState(null as string);
    const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
-   const [tableProcesses, setTableProcesses] = useState([] as QProcessMetaData[]);
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [notFoundMessage, setNotFoundMessage] = useState(null as string);
    const [errorMessage, setErrorMessage] = useState(null as string)
    const [successMessage, setSuccessMessage] = useState(null as string);
    const [warningMessage, setWarningMessage] = useState(null as string);
-   const {setPageHeader} = useContext(QContext);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [reloadCounter, setReloadCounter] = useState(0);
 
@@ -113,6 +115,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
+
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen} = useContext(QContext);
+
+   if (localStorage.getItem(tableVariantLocalStorageKey))
+   {
+      tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+   }
 
    const reload = () =>
    {
@@ -128,6 +137,69 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       setTableSections(null);
       setShowAudit(false);
    };
+
+   // Toggle the menu when ⌘K is pressed
+   useEffect(() =>
+   {
+      if(tableMetaData == null)
+      {
+         (async() =>
+         {
+            const tableMetaData = await qController.loadTableMetaData(tableName);
+            setTableMetaData(tableMetaData);
+         })();
+      }
+
+      const down = (e: { key: string; metaKey: any; ctrlKey: any; preventDefault: () => void; }) =>
+      {
+         if(!dotMenuOpen)
+         {
+            if (e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            {
+               e.preventDefault()
+               gotoCreate();
+            }
+            else if (e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            {
+               e.preventDefault()
+               navigate("edit");
+            }
+            else if (e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            {
+               e.preventDefault()
+               navigate("copy");
+            }
+            else if (e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+            {
+               e.preventDefault()
+               handleClickDeleteButton();
+            }
+            else if (e.key === "a" && metaData && metaData.tables.has("audit"))
+            {
+               e.preventDefault()
+               navigate("#audit");
+            }
+         }
+      }
+
+      document.addEventListener("keydown", down)
+      return () =>
+      {
+         document.removeEventListener("keydown", down)
+      }
+   }, [dotMenuOpen])
+
+   const gotoCreate = () =>
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/create`;
+      navigate(path);
+   }
+
+   const gotoEdit = () =>
+   {
+      const path = `${pathParts.slice(0, -1).join("/")}/${record.values.get(table.primaryKeyField)}/edit`;
+      navigate(path);
+   }
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    // monitor location changes - if we've clicked a link from viewing one record to viewing another, //
@@ -266,10 +338,24 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
          ValueUtils.qInstance = metaData;
+
+         ///////////////////////////////////////////////////
+         // load the processes to show in the action menu //
+         ///////////////////////////////////////////////////
          const processesForTable = ProcessUtils.getProcessesForTable(metaData, tableName);
          processesForTable.sort((a, b) => a.label.localeCompare(b.label));
          setTableProcesses(processesForTable);
-         setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
+
+         //////////////////////////////////////////////////////
+         // load processes that the routing needs to respect //
+         //////////////////////////////////////////////////////
+         const allTableProcesses = ProcessUtils.getProcessesForTable(metaData, tableName, true) // these include hidden ones (e.g., to find the bulks)
+         const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
+         if (runRecordScriptProcess)
+         {
+            allTableProcesses.unshift(runRecordScriptProcess)
+         }
+         setAllTableProcesses(allTableProcesses);
 
          if (launchingProcess)
          {
@@ -283,7 +369,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          let record: QRecord;
          try
          {
-            record = await qController.get(tableName, id);
+            record = await qController.get(tableName, id, tableVariant);
             setRecord(record);
          }
          catch (e)
@@ -507,11 +593,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    let hasEditOrDelete = (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission);
 
-   function gotoCreate()
-   {
-      const path = `${pathParts.slice(0, -1).join("/")}/create`;
-      navigate(path);
-   }
+   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
 
    const renderActionsMenu = (
       <Menu
@@ -532,14 +614,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
             <MenuItem onClick={() => gotoCreate()}>
                <ListItemIcon><Icon>add</Icon></ListItemIcon>
-               Create New
+               New
             </MenuItem>
          }
          {
             table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-            <MenuItem onClick={() => navigate("duplicate")}>
+            <MenuItem onClick={() => navigate("copy")}>
                <ListItemIcon><Icon>copy</Icon></ListItemIcon>
-               Create Duplicate
+               Copy
             </MenuItem>
          }
          {
@@ -561,16 +643,23 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                Delete
             </MenuItem>
          }
-         {tableProcesses.length > 0 && hasEditOrDelete && <Divider />}
-         {tableProcesses.map((process) => (
+         {tableProcesses?.length > 0 && hasEditOrDelete && <Divider />}
+         {tableProcesses?.map((process) => (
             <MenuItem key={process.name} onClick={() => processClicked(process)}>
                <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
                {process.label}
             </MenuItem>
          ))}
-         {(tableProcesses.length > 0 || hasEditOrDelete) && <Divider />}
+         {(tableProcesses?.length > 0 || hasEditOrDelete) && <Divider />}
+         {
+            runRecordScriptProcess &&
+            <MenuItem key={runRecordScriptProcess.name} onClick={() => processClicked(runRecordScriptProcess)}>
+               <ListItemIcon><Icon>{runRecordScriptProcess.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
+               {runRecordScriptProcess.label}
+            </MenuItem>
+         }
          <MenuItem onClick={() => navigate("dev")}>
-            <ListItemIcon><Icon>data_object</Icon></ListItemIcon>
+            <ListItemIcon><Icon>code</Icon></ListItemIcon>
             Developer Mode
          </MenuItem>
          {
@@ -690,7 +779,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                            <Box pb={3}>
                               {
                                  successMessage ?
-                                    <Alert color="success" sx={{mb: 3}} onClose={() => 
+                                    <Alert color="success" sx={{mb: 3}} onClose={() =>
                                     {
                                        setSuccessMessage(null);
                                     }}>
@@ -799,7 +888,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  activeModalProcess &&
                                  <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                                     <div className="modalProcess">
-                                       <ProcessRun process={activeModalProcess} isModal={true} recordIds={id} closeModalHandler={closeModalProcess} />
+                                       <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={id} closeModalHandler={closeModalProcess} />
                                     </div>
                                  </Modal>
                               }

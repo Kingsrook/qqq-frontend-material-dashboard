@@ -27,18 +27,21 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {Chip, SelectChangeEvent} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl/FormControl";
 import Grid from "@mui/material/Grid";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
+import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
+import Select from "@mui/material/Select/Select";
 import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -59,6 +62,7 @@ import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-velocity";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
@@ -94,7 +98,9 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    const [selectedVersionRecord, setSelectedVersionRecord] = useState(null as QRecord);
    const [scriptLogs, setScriptLogs] = useState({} as any);
    const [scriptTypeRecord, setScriptTypeRecord] = useState(null as QRecord)
-   const [testScriptDefinitionObject, setTestScriptDefinitionObject] = useState({} as any)
+   const [scriptTypeFileSchemaList, setScriptTypeFileSchemaList] = useState(null as QRecord[])
+   const [availableFileNames, setAvailableFileNames] = useState([] as string[]);
+   const [selectedFileName, setSelectedFileName] = useState("");
    const [currentVersionId , setCurrentVersionId] = useState(null as number);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [selectedTab, setSelectedTab] = useState(0);
@@ -118,17 +124,32 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
             const scriptRecord = await qController.get("script", scriptId);
             setScriptRecord(scriptRecord);
 
-            setScriptTypeRecord(await qController.get("scriptType", scriptRecord.values.get("scriptTypeId")));
+            const scriptTypeRecord = await qController.get("scriptType", scriptRecord.values.get("scriptTypeId"));
+            setScriptTypeRecord(scriptTypeRecord);
 
-            if(testInputFields !== null || testOutputFields !== null)
+            let fileMode = scriptTypeRecord.values.get("fileMode");
+            let scriptTypeFileSchemaList: QRecord[] = null;
+            if(fileMode == 1) // SINGLE
             {
-               setTestScriptDefinitionObject({testInputFields: testInputFields, testOutputFields: testOutputFields});
+               scriptTypeFileSchemaList = [new QRecord({values: {name: "Script.js", fileType: "javascript"}})];
             }
-            else
+            else if(fileMode == 2) // MULTI_PRE_DEFINED
             {
-               setTestScriptDefinitionObject({testInputFields: [
-                  new QFieldMetaData({name: "recordPrimaryKeyList", label: "Record Primary Key List"})
-               ], testOutputFields: []})
+               const filter = new QQueryFilter([new QFilterCriteria("scriptTypeId", QCriteriaOperator.EQUALS, [scriptRecord.values.get("scriptTypeId")])], [new QFilterOrderBy("id")])
+               scriptTypeFileSchemaList = await qController.query("scriptTypeFileSchema", filter);
+            }
+            else // MULTI AD_HOC
+            {
+               // todo - not yet supported
+               console.log(`Script Type File Mode of ${fileMode} is not yet supported.`);
+            }
+
+            setScriptTypeFileSchemaList(scriptTypeFileSchemaList);
+            if(scriptTypeFileSchemaList)
+            {
+               const availableFileNames = scriptTypeFileSchemaList.map((fileSchemaRecord) => fileSchemaRecord.values.get("name"))
+               setAvailableFileNames(availableFileNames);
+               setSelectedFileName(availableFileNames[0])
             }
 
             const criteria = [new QFilterCriteria("scriptId", QCriteriaOperator.EQUALS, [scriptId])];
@@ -141,13 +162,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
             if(versions && versions.length > 0)
             {
-               setCurrentVersionId(versions[0].values.get("id"));
-               const latestVersion = await qController.get("scriptRevision", versions[0].values.get("id"));
-               console.log("Fetched latestVersion:");
-               console.log(latestVersion);
-               setSelectedVersionRecord(latestVersion);
-               loadingSelectedVersion.setNotLoading();
-               forceUpdate();
+               selectVersion(versions[0]);
             }
          }
          catch (e)
@@ -174,8 +189,8 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       editorProps.tableName = associatedScriptTableName;
       editorProps.fieldName = associatedScriptFieldName;
       editorProps.recordId = associatedScriptRecordId;
-      editorProps.scriptDefinition = testScriptDefinitionObject;
       editorProps.scriptTypeRecord = scriptTypeRecord;
+      editorProps.scriptTypeFileSchemaList = scriptTypeFileSchemaList;
       setEditorProps(editorProps);
    };
 
@@ -223,8 +238,10 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
          setCurrentVersionId(version.values.get("id"));
          loadingSelectedVersion.setLoading();
 
-         // fetch the full version
-         const selectedVersion = await qController.get("scriptRevision", version.values.get("id"));
+         //////////////////////////////////////////////////////////////////////////////////////
+         // fetch the full version - including its associated scriptRevisionFile sub-records //
+         //////////////////////////////////////////////////////////////////////////////////////
+         const selectedVersion = await qController.get("scriptRevision", version.values.get("id"), null, true);
          console.log("Fetched selectedVersion:");
          console.log(selectedVersion);
          setSelectedVersionRecord(selectedVersion);
@@ -232,6 +249,44 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
          forceUpdate();
       })();
    };
+
+   const handleSelectFile = (event: SelectChangeEvent) =>
+   {
+      setSelectedFileName(event.target.value);
+   }
+
+   const getSelectedFileCode = (): string =>
+   {
+      return (getSelectedVersionCode()[selectedFileName] ?? "");
+   }
+
+   const getSelectedFileType = (): string =>
+   {
+      for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
+      {
+         let name = scriptTypeFileSchemaList[i].values.get("name");
+         if(name == selectedFileName)
+         {
+            return (scriptTypeFileSchemaList[i].values.get("fileType"));
+         }
+      }
+
+      return ("javascript"); // have some default...
+   }
+
+   const getSelectedVersionCode = (): {[name: string]: string} =>
+   {
+      let rs: {[name: string]: string} = {}
+      let files = selectedVersionRecord?.associatedRecords?.get("files")
+
+      for (let j = 0; j < files?.length; j++)
+      {
+         let file = files[j];
+         rs[file.values.get("fileName")] = file.values.get("contents");
+      }
+
+      return (rs);
+   }
 
    function getVersionsList(versionRecordList: QRecord[], selectedVersionRecord: QRecord)
    {
@@ -344,7 +399,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    */
 
    return (
-      <Grid container>
+      <Grid container className="scriptViewer">
          <Grid item xs={12}>
             <Box>
                {
@@ -420,10 +475,22 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                              </CustomWidthTooltip>
                                           </Box>
                                           {
-                                             loadingSelectedVersion.isNotLoading() && selectedVersionRecord && selectedVersionRecord.values.get("contents") ? (
+                                             loadingSelectedVersion.isNotLoading() && selectedVersionRecord ? (
                                                 <>
+                                                   {
+                                                      availableFileNames && availableFileNames.length > 1 &&
+                                                      <FormControl className="selectedFileTab" variant="standard" sx={{verticalAlign: "bottom", pl: "4px"}}>
+                                                         <Select value={selectedFileName} onChange={(event) => handleSelectFile(event)}>
+                                                            {
+                                                               availableFileNames.map((name) => (
+                                                                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                                                               ))
+                                                            }
+                                                         </Select>
+                                                      </FormControl>
+                                                   }
                                                    <AceEditor
-                                                      mode="javascript"
+                                                      mode={getSelectedFileType()}
                                                       theme="github"
                                                       name={"viewData"}
                                                       readOnly
@@ -431,8 +498,9 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                                       editorProps={{$blockScrolling: true}}
                                                       setOptions={{useWorker: false}}
                                                       width="100%"
-                                                      height="400px"
-                                                      value={selectedVersionRecord?.values?.get("contents")}
+                                                      height="368px"
+                                                      value={getSelectedFileCode()}
+                                                      style={{borderTop: "1px solid lightgray", borderBottomRightRadius: "1rem"}}
                                                    />
                                                 </>
                                              ) : null
@@ -473,11 +541,11 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                  <TabPanel index={2} value={selectedTab}>
                                     <Box sx={{height: "455px"}} px={2} pb={1}>
                                        <ScriptTestForm scriptId={scriptId}
-                                          scriptDefinition={testScriptDefinitionObject}
+                                          scriptType={scriptTypeRecord}
                                           tableName={associatedScriptTableName}
                                           fieldName={associatedScriptFieldName}
                                           recordId={associatedScriptRecordId}
-                                          code={selectedVersionRecord?.values.get("contents")}
+                                          fileContents={getSelectedVersionCode()}
                                           apiName={selectedVersionRecord?.values.get("apiName")}
                                           apiVersion={selectedVersionRecord?.values.get("apiVersion")} />
                                     </Box>

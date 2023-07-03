@@ -50,6 +50,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumJavalin
          .withRouteToFile("/data/person/count", "data/person/count.json")
          .withRouteToFile("/data/person/query", "data/person/index.json")
+         .withRouteToFile("/data/person/variants", "data/person/variants.json")
          .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 
