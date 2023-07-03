@@ -50,6 +50,7 @@ import QContext from "QContext";
 import AuditBody from "qqq/components/audits/AuditBody";
 import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
+import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -828,7 +829,10 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                                    <Typography variant="h5">
                                                       {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel || ""}` : ""}
                                                    </Typography>
-                                                   <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
+                                                   <Box display="flex">
+                                                      <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
+                                                      <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
+                                                   </Box>
                                                    {renderActionsMenu}
                                                 </Box>
                                              </Box>

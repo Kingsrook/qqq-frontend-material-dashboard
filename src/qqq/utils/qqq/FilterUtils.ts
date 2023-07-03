@@ -699,10 +699,11 @@ class FilterUtils
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
-            if ((!item.value || item.value.length == 0 || (item.value.length == 1 && item.value[0] == "")) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            if ((!item.value || item.value.length == 0 || (item.value.length == 1 && (item.value[0] === "" || item.value[0] === undefined))) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
             {
                if (!allowIncompleteCriteria)
                {
+                  console.log(`Discarding incomplete filter criteria: ${JSON.stringify(item)}`);
                   return;
                }
             }
