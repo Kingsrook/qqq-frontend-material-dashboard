@@ -57,6 +57,7 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCancelButton, QCreateNewButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
+import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import SavedFilters from "qqq/components/misc/SavedFilters";
 import {CustomColumnsPanel} from "qqq/components/query/CustomColumnsPanel";
 import {CustomFilterPanel} from "qqq/components/query/CustomFilterPanel";
@@ -642,6 +643,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                setCountResults(countResults);
                setReceivedCountTimestamp(new Date());
             });
+         }
+
+         if(!tableMetaData.capabilities.has(Capability.TABLE_QUERY))
+         {
+            console.log("Cannot update table - it does not have QUERY capability.");
+            return;
          }
 
          setLastFetchedQFilterJSON(JSON.stringify(qFilter));
@@ -1803,6 +1810,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       );
    }
 
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   // if the table doesn't allow QUERY, but does allow GET, don't render a data grid -        //
+   // instead, try to just render a Goto Record button, in auto-open, and may-not-close modes //
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_QUERY) && tableMetaData.capabilities.has(Capability.TABLE_GET))
+   {
+      return (
+         <BaseLayout>
+            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} autoOpen={true} buttonVisible={false} mayClose={false} />
+         </BaseLayout>
+      );
+   }
+
    return (
       <BaseLayout>
          <div className="recordQuery">
@@ -1857,6 +1877,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      }
                   </Box>
 
+                  <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
                   <Box display="flex" width="150px">
                      <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                      {renderActionsMenu}
