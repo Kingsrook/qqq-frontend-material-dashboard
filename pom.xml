@@ -39,6 +39,20 @@
       <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
    </properties>
 
+   <!-- When qqq-backend-core was added in here, there became a conflict in the Guava versions, that caused
+        java.lang.NoSuchMethodError: com.google.common.collect.ImmutableMap.of(...)
+        Per this SO thread: https://stackoverflow.com/questions/71095560/java-lang-nosuchmethoderror-com-google-common-collect-immutablemap-error-when
+        this fixes us. -->
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.0.1-jre</version>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
+
    <dependencies>
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
