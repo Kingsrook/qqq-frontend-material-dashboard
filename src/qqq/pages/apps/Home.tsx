@@ -128,16 +128,25 @@ function AppHome({app}: Props): JSX.Element
             let countResult = null;
             if(tableMetaData.capabilities.has(Capability.TABLE_COUNT) && tableMetaData.readPermission)
             {
-               [countResult] = await qController.count(table.name);
+               try
+               {
+                  [countResult] = await qController.count(table.name);
 
-               if (countResult !== null && countResult !== undefined)
-               {
-                  tableCountNumbers.set(table.name, countResult.toLocaleString());
-                  tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+                  if (countResult !== null && countResult !== undefined)
+                  {
+                     tableCountNumbers.set(table.name, countResult.toLocaleString());
+                     tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+                  }
+                  else
+                  {
+                     tableCountNumbers.set(table.name, "–");
+                     tableCountTexts.set(table.name, " ");
+                  }
                }
-               else
+               catch(e)
                {
-                  tableCountNumbers.set(table.name, "--");
+                  console.log("Caught: " + e);
+                  tableCountNumbers.set(table.name, "–");
                   tableCountTexts.set(table.name, " ");
                }
             }
