@@ -159,7 +159,9 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                   operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE});
+                  operatorOptions.push({label: "is on or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE});
+                  operatorOptions.push({label: "is on or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
                   operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
                   //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
@@ -171,9 +173,9 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                   operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is on or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+                  operatorOptions.push({label: "is at or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is on or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+                  operatorOptions.push({label: "is at or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
                   operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
                   //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
@@ -335,8 +337,24 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    //////////////////////////////////////////////////
    // event handler for value field (of all types) //
    //////////////////////////////////////////////////
-   const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any) =>
+   const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any, newExpression?: any) =>
    {
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      // if an expression was passed in - put it on the criteria, removing the values.                     //
+      // else - if no expression - make sure criteria.expression is null, and do the various values logics //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      if(newExpression)
+      {
+         criteria.expression = newExpression;
+         criteria.values = null;
+         updateCriteria(criteria, true);
+         return;
+      }
+      else
+      {
+         criteria.expression = null;
+      }
+
       // @ts-ignore
       const value = newValue !== undefined ? newValue : event ? event.target.value : null;
 
@@ -447,6 +465,12 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
             // don't need to look at values //
             //////////////////////////////////
          }
+         else if (criteria.expression)
+         {
+            ////////////////////////////////////////////////////////
+            // if there's an expression - let's assume it's valid //
+            ////////////////////////////////////////////////////////
+         }
          else if(operatorSelectedValue.valueMode == ValueMode.DOUBLE)
          {
             if(criteria.values.length < 2)
@@ -533,7 +557,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                criteria={{id: id, ...criteria}}
                field={field}
                table={fieldTable}
-               valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
+               valueChangeHandler={(event, valueIndex, newValue, newExpression) => handleValueChange(event, valueIndex, newValue, newExpression)}
             />
          </Box>
          <Box display="inline-block" pl={0.5} pr={1}>

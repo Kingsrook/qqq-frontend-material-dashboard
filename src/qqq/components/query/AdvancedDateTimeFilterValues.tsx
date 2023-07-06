@@ -1,0 +1,207 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
+import {FormControl, FormControlLabel, Radio, RadioGroup, Select} from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import Icon from "@mui/material/Icon";
+import MenuItem from "@mui/material/MenuItem";
+import Modal from "@mui/material/Modal";
+import {SelectChangeEvent} from "@mui/material/Select/Select";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import React, {ReactNode, useState} from "react";
+import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+
+
+interface Props
+{
+   type: "date" | "datetime";
+   expression: any;
+   onSave: (expression: any) => void;
+}
+
+AdvancedDateTimeFilterValues.defaultProps = {};
+
+function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.Element
+{
+   const [originalExpression, setOriginalExpression] = useState(JSON.stringify(expression));
+
+   const [expressionType, setExpressionType] = useState(expression?.type ?? "NowWithOffset")
+
+   const [amount, setAmount] = useState(expression?.amount ?? 1)
+   const [timeUnit, setTimeUnit] = useState(expression?.timeUnit ?? "DAYS" as NowWithOffsetUnit);
+   const [operator, setOperator] = useState(expression?.operator ?? "MINUS" as NowWithOffsetOperator);
+   const [isOpen, setIsOpen] = useState(false)
+
+   //////////////////////////////////////////////////////////////////////////////////
+   // if the expression (prop) has changed, re-set the state variables based on it //
+   //////////////////////////////////////////////////////////////////////////////////
+   if(JSON.stringify(expression) !== originalExpression)
+   {
+      setExpressionType(expression?.type ?? "NowWithOffset")
+      setAmount(expression?.amount ?? 1)
+      setTimeUnit(expression?.timeUnit ?? "DAYS")
+      setOperator(expression?.operator ?? "MINUS")
+      setOriginalExpression(JSON.stringify(expression))
+   }
+
+   const openDialog = () =>
+   {
+      setIsOpen(true);
+   }
+
+   const handleSaveClicked = () =>
+   {
+      switch(expressionType)
+      {
+         case "NowWithOffset":
+         {
+            const expression = new NowWithOffsetExpression()
+            expression.operator = operator;
+            expression.amount = amount;
+            expression.timeUnit = timeUnit;
+            onSave(expression);
+         }
+      }
+
+      close();
+   }
+
+   const close = () =>
+   {
+      setIsOpen(false);
+   }
+
+   function handleExpressionTypeChange(e: React.ChangeEvent<HTMLInputElement>)
+   {
+      setExpressionType(e.target.value);
+   }
+
+   function handleAmountChange(event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>)
+   {
+      setAmount(parseInt(event.target.value));
+   }
+
+   function handleTimeUnitChange(event: SelectChangeEvent<NowWithOffsetUnit>, child: ReactNode)
+   {
+      // @ts-ignore
+      setTimeUnit(event.target.value)
+   }
+
+   function handleOperatorChange(event: SelectChangeEvent<NowWithOffsetOperator>, child: ReactNode)
+   {
+      // @ts-ignore
+      setOperator(event.target.value)
+   }
+
+
+   const mainCardStyles: any = {};
+   mainCardStyles.width = "600px";
+
+   /////////////////////////////////////////////////////////////////////////
+   // for the time units, have them end in an 's' if the amount is plural //
+   /////////////////////////////////////////////////////////////////////////
+   const tuS = (amount == 1 ? "" : "s");
+
+   return (
+      <Box>
+         <Tooltip title={`Define a more advanced ${type == "date" ? "date" : "date-time"} condition`}>
+            <Icon onClick={openDialog} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>settings</Icon>
+         </Tooltip>
+         {
+            isOpen &&
+            (
+               <Modal open={isOpen} className="AdvancedDateTimeFilterValues">
+                  <Box sx={{position: "absolute", overflowY: "auto", width: "100%"}}>
+                     <Box py={3} justifyContent="center" sx={{display: "flex", mt: 8}}>
+                        <Card sx={mainCardStyles}>
+                           <Box p={4} pb={2}>
+                              <Grid container>
+                                 <Grid item pr={3} xs={12} lg={12}>
+                                    <Typography variant="h5">Advanced Date Filter Condition</Typography>
+                                    <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
+                                       Select the type of expression you want for your condition.<br />
+                                       Then enter values to express your condition.
+                                    </Typography>
+                                 </Grid>
+                              </Grid>
+                           </Box>
+                           <RadioGroup name="expressionType" value={expressionType} onChange={handleExpressionTypeChange}>
+
+                              <Box px={4} pb={4}>
+                                 <FormControlLabel value={"NowWithOffset"} control={<Radio size="small" />} label="Relative Expression" />
+                                 <Box pl={4}>
+                                    <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
+                                       <TextField
+                                          variant="standard"
+                                          type="number"
+                                          inputProps={{min: 0}}
+                                          autoComplete="off"
+                                          value={amount}
+                                          onChange={(event) => handleAmountChange(event)}
+                                          fullWidth
+                                       />
+                                    </FormControl>
+
+                                    <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
+                                       <Select value={timeUnit} disabled={false} onChange={handleTimeUnitChange} label="Unit">
+                                          {type == "datetime" && <MenuItem value="SECONDS">Second{tuS}</MenuItem>}
+                                          {type == "datetime" && <MenuItem value="MINUTES">Minute{tuS}</MenuItem>}
+                                          {type == "datetime" && <MenuItem value="HOURS">Hour{tuS}</MenuItem>}
+                                          <MenuItem value="DAYS">Day{tuS}</MenuItem>
+                                          <MenuItem value="WEEKS">Week{tuS}</MenuItem>
+                                          <MenuItem value="MONTHS">Month{tuS}</MenuItem>
+                                          <MenuItem value="YEARS">Year{tuS}</MenuItem>
+                                       </Select>
+                                    </FormControl>
+
+                                    <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "40%"}}>
+                                       <Select value={operator} disabled={false} onChange={handleOperatorChange}>
+                                          <MenuItem value="MINUS">Ago (in the past)</MenuItem>
+                                          <MenuItem value="PLUS">From now (in the future)</MenuItem>
+                                       </Select>
+                                    </FormControl>
+                                 </Box>
+                              </Box>
+
+                           </RadioGroup>
+                           <Box p={3} pt={0}>
+                              <Grid container pl={1} pr={1} justifyContent="right" alignItems="stretch" sx={{display: "flex-inline "}}>
+                                 <QCancelButton onClickHandler={close} iconName="cancel" disabled={false} />
+                                 <QSaveButton onClickHandler={handleSaveClicked} label="Apply" disabled={false} />
+                              </Grid>
+                           </Box>
+                        </Card>
+                     </Box>
+                  </Box>
+               </Modal>
+
+            )
+         }
+      </Box>
+   );
+}
+
+export default AdvancedDateTimeFilterValues;

@@ -23,10 +23,12 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {NowWithOffsetExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {ThisOrLastPeriodExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import {GridFilterItem, GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -285,6 +287,11 @@ class FilterUtils
          return (param);
       }
 
+      if (FilterUtils.gridCriteriaValueToExpression(param))
+      {
+         return (null);
+      }
+
       let rs = [];
       for (let i = 0; i < param.length; i++)
       {
@@ -330,8 +337,13 @@ class FilterUtils
     ** Convert a filter field's value from the style that qqq uses, to the style that
     ** the grid uses.
     *******************************************************************************/
-   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], field: QFieldMetaData): any | any[] =>
+   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], expression: any, field: QFieldMetaData): any | any[] =>
    {
+      if(expression)
+      {
+         return (expression);
+      }
+
       const fieldType = field.type;
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
@@ -342,7 +354,7 @@ class FilterUtils
          return (values);
       }
 
-      if (values.length > 0)
+      if (values && values.length > 0)
       {
          ////////////////////////////////////////////////////////////////////////////////////////////////
          // make sure dates are formatted for the grid the way it expects - not the way we pass it in. //
@@ -353,7 +365,7 @@ class FilterUtils
          }
       }
 
-      return (values[0]);
+      return (values ? values[0] : "");
    };
 
 
@@ -432,6 +444,7 @@ class FilterUtils
                      }
                   }
 
+                  // todo - use expressions here!!
                   if (field && field.type == "DATE_TIME" && !values)
                   {
                      try
@@ -538,7 +551,7 @@ class FilterUtils
                   defaultFilter.items.push({
                      columnField: criteria.fieldName,
                      operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
-                     value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
+                     value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, criteria.expression, field),
                      id: id++, // not sure what this id is!!
                   });
                }
@@ -595,6 +608,18 @@ class FilterUtils
          }
       }
 
+      if(defaultFilter && defaultFilter.items && defaultFilter.items.length)
+      {
+         defaultFilter.items.forEach((item) =>
+         {
+            const expression = this.gridCriteriaValueToExpression(item.value)
+            if(expression)
+            {
+               item.value = expression;
+            }
+         });
+      }
+
       return ({filter: defaultFilter, sort: defaultSort});
    }
 
@@ -612,7 +637,7 @@ class FilterUtils
          const [field, fieldTable] = FilterUtils.getField(tableMetaData, criteria.fieldName);
          if (field)
          {
-            gridItems.push({columnField: criteria.fieldName, id: i, operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, criteria.values), value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, field)});
+            gridItems.push({columnField: criteria.fieldName, id: i, operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, criteria.values), value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, criteria.expression, field)});
          }
       }
 
@@ -711,7 +736,13 @@ class FilterUtils
             const fieldMetadata = tableMetaData?.fields.get(item.columnField);
             const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue, fieldMetadata);
-            qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
+            let criteria = new QFilterCriteria(item.columnField, operator, values);
+            const expression = FilterUtils.gridCriteriaValueToExpression(item.value);
+            if(expression)
+            {
+               criteria.expression = expression;
+            }
+            qFilter.addCriteria(criteria);
             foundFilter = true;
          });
 
@@ -727,6 +758,29 @@ class FilterUtils
 
       return qFilter;
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static gridCriteriaValueToExpression(value: any)
+   {
+      if (value.length)
+      {
+         value = value[0];
+      }
+
+      if (value.type && value.type == "NowWithOffset")
+      {
+         return (new NowWithOffsetExpression(value));
+      }
+      else if (value.type && value.type == "ThisOrLastPeriod")
+      {
+         return (new ThisOrLastPeriodExpression(value));
+      }
+
+      return (null);
+   }
 
 
    /*******************************************************************************
