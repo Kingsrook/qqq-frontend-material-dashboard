@@ -27,9 +27,17 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
+import Typography from "@mui/material/Typography";
+import {makeStyles} from "@mui/styles";
 import {Command} from "cmdk";
-import React, {useContext, useEffect, useRef} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import HistoryUtils, {QHistoryEntry} from "qqq/utils/HistoryUtils";
@@ -39,6 +47,21 @@ interface Props
    metaData?: QInstance;
 }
 
+const useStyles = makeStyles((theme: any) => ({
+   item: {
+      whiteSpace: "nowrap"
+   },
+   keyboardKey: {
+      border: "1px solid gray",
+      borderRadius: "5px",
+      width: "28px",
+      display: "inline-block",
+      textAlign: "center",
+      marginRight: "5px",
+      fontWeight: "bold",
+      background: "#f0f0f0"
+   }
+}));
 
 const CommandMenu = ({metaData}: Props) =>
 {
@@ -47,16 +70,27 @@ const CommandMenu = ({metaData}: Props) =>
 
    const {accentColor, tableMetaData, dotMenuOpen, setDotMenuOpen, setTableMetaData, tableProcesses} = useContext(QContext);
 
+   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
+   const classes = useStyles();
+
    function evalueKeyPress(e: KeyboardEvent)
    {
       ///////////////////////////////////////////////////////////////////////////
       // if a dot pressed, not from a "text" element, then toggle command menu //
       ///////////////////////////////////////////////////////////////////////////
       const type = (e.target as any).type;
-      if (e.key === "." && type !== "text" && type !== "textarea" && type !== "input" && type !== "search")
+      if (type !== "text" && type !== "textarea" && type !== "input" && type !== "search")
       {
-         e.preventDefault();
-         setDotMenuOpen(!dotMenuOpen);
+         if (e.key === "." && !keyboardHelpOpen)
+         {
+            e.preventDefault();
+            setDotMenuOpen(!dotMenuOpen);
+         }
+         else if (e.key === "?" && !dotMenuOpen)
+         {
+            e.preventDefault();
+            setKeyboardHelpOpen(true);
+         }
       }
    }
 
@@ -83,7 +117,7 @@ const CommandMenu = ({metaData}: Props) =>
       {
          document.removeEventListener("keydown", down)
       }
-   }, [tableMetaData, dotMenuOpen])
+   }, [tableMetaData, dotMenuOpen, keyboardHelpOpen])
 
    useEffect(() =>
    {
@@ -116,11 +150,11 @@ const CommandMenu = ({metaData}: Props) =>
       {
          if (nodes[i].type === QAppNodeType.APP && nodes[i].name === name)
          {
-            return (`${path} > ${nodes[i].label}`);
+            return (`${path}${nodes[i].label}`);
          }
          else if (nodes[i].type === QAppNodeType.APP)
          {
-            const result = getFullAppLabel(nodes[i].children, name, depth + 1, `${path} ${nodes[i].label}`);
+            const result = getFullAppLabel(nodes[i].children, name, depth + 1, `${path}${nodes[i].label} > `);
             if (result !== null)
             {
                return (result);
@@ -272,24 +306,63 @@ const CommandMenu = ({metaData}: Props) =>
    }
 
    const containerElement = useRef(null)
+
+   function closeKeyboardHelp()
+   {
+      setKeyboardHelpOpen(false);
+   }
+
    return (
-      <Box ref={containerElement} className="raycast" sx={{position: "relative", zIndex: 10_000}}>
-         <Command.Dialog open={dotMenuOpen} onOpenChange={setDotMenuOpen} container={containerElement.current} label="Test Global Command Menu">
-            <Box sx={{display: "flex"}}>
-               <Command.Input placeholder="Search for Tables, Actions, or Recently Viewed Items..."/>
-               <Button onClick={() => setDotMenuOpen(false)}><Icon>close</Icon></Button>
-            </Box>
-            <Command.Loading  />
-            <Command.Separator />
-            <Command.List>
-               <Command.Empty>No results found.</Command.Empty>
-               <ActionsSection />
-               <TablesSection />
-               <AppsSection />
-               <RecentlyViewedSection />
-            </Command.List>
-         </Command.Dialog>
-      </Box>
+      <React.Fragment>
+         <Box ref={containerElement} className="raycast" sx={{position: "relative", zIndex: 10_000}}>
+            {
+               dotMenuOpen && <Dialog open={dotMenuOpen}>
+                  <Command.Dialog open={dotMenuOpen} onOpenChange={setDotMenuOpen} container={containerElement.current} label="Test Global Command Menu">
+                     <Box sx={{display: "flex"}}>
+                        <Command.Input placeholder="Search for Tables, Actions, or Recently Viewed Items..."/>
+                        <Button onClick={() => setDotMenuOpen(false)}><Icon>close</Icon></Button>
+                     </Box>
+                     <Command.Loading  />
+                     <Command.Separator />
+                     <Command.List>
+                        <Command.Empty>No results found.</Command.Empty>
+                        <ActionsSection />
+                        <TablesSection />
+                        <AppsSection />
+                        <RecentlyViewedSection />
+                     </Command.List>
+                  </Command.Dialog>
+               </Dialog>
+            }
+         </Box>
+         {
+            keyboardHelpOpen &&
+            <Dialog open={keyboardHelpOpen} onClose={closeKeyboardHelp}>
+               <DialogTitle id="alert-dialog-title">Keyboard Shortcuts</DialogTitle>
+               <DialogContent>
+
+                  <Typography variant="h6">Global</Typography>
+                  <Grid container columnSpacing={5} rowSpacing={1}>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>.</span>Open the Quick Navigation Menu</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>?</span>Open Keyboard Shortcuts Help</Grid>
+                  </Grid>
+
+                  <Typography variant="h6" pt={3}>Record View</Typography>
+                  <Grid container columnSpacing={5} rowSpacing={1}>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>n</span>Create a New Record</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>c</span>Copy the current Record</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>e</span>Edit the current Record</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>d</span>Delete the current Record</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>a</span>Audit the current Record</Grid>
+                  </Grid>
+
+               </DialogContent>
+               <DialogActions>
+                  <Button onClick={closeKeyboardHelp}>Close</Button>
+               </DialogActions>
+            </Dialog>
+         }
+      </React.Fragment>
    )
 }
 export default CommandMenu;
