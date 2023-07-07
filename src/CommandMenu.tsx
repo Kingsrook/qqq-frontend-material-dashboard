@@ -30,7 +30,6 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
@@ -84,7 +83,7 @@ const CommandMenu = ({metaData}: Props) =>
          if (e.key === "." && !keyboardHelpOpen)
          {
             e.preventDefault();
-            setDotMenuOpen(!dotMenuOpen);
+            setDotMenuOpen(true);
          }
          else if (e.key === "?" && !dotMenuOpen)
          {
@@ -312,15 +311,20 @@ const CommandMenu = ({metaData}: Props) =>
       setKeyboardHelpOpen(false);
    }
 
+   function closeDotMenu()
+   {
+      setDotMenuOpen(false);
+   }
+
    return (
       <React.Fragment>
          <Box ref={containerElement} className="raycast" sx={{position: "relative", zIndex: 10_000}}>
             {
-               dotMenuOpen && <Dialog open={dotMenuOpen}>
+               <Dialog open={dotMenuOpen} onClose={closeDotMenu}>
                   <Command.Dialog open={dotMenuOpen} onOpenChange={setDotMenuOpen} container={containerElement.current} label="Test Global Command Menu">
                      <Box sx={{display: "flex"}}>
                         <Command.Input placeholder="Search for Tables, Actions, or Recently Viewed Items..."/>
-                        <Button onClick={() => setDotMenuOpen(false)}><Icon>close</Icon></Button>
+                        <Button onClick={closeDotMenu}><Icon>close</Icon></Button>
                      </Box>
                      <Command.Loading  />
                      <Command.Separator />
