@@ -78,7 +78,7 @@ const CommandMenu = ({metaData}: Props) =>
       // if a dot pressed, not from a "text" element, then toggle command menu //
       ///////////////////////////////////////////////////////////////////////////
       const type = (e.target as any).type;
-      if (type !== "text" && type !== "textarea" && type !== "input" && type !== "search")
+      if (type !== "text" && type !== "textarea" && type !== "input" && type !== "search" && type !== "number")
       {
          if (e.key === "." && !keyboardHelpOpen)
          {
