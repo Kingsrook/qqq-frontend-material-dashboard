@@ -131,7 +131,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       />;
    };
 
-   const makeDateTimeExpressionTextField = (value: string, valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
+   const makeDateTimeExpressionTextField = (expression: any, valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
    {
       const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
       {
@@ -143,11 +143,20 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       const inputProps: any = {};
       inputProps.endAdornment = (
          <InputAdornment position="end">
-            <IconButton sx={{visibility: value ? "visible" : "hidden"}} onClick={(event) => clearValue(event, valueIndex)}>
+            <IconButton sx={{visibility: expression ? "visible" : "hidden"}} onClick={(event) => clearValue(event, valueIndex)}>
                <Icon>close</Icon>
             </IconButton>
          </InputAdornment>
       );
+
+      let displayValue = expression.toString();
+      if (expression?.type == "ThisOrLastPeriod")
+      {
+         if(field.type == QFieldType.DATE_TIME || (field.type == QFieldType.DATE && expression.timeUnit != "DAYS"))
+         {
+            displayValue = "start of " + displayValue;
+         }
+      }
 
       return <TextField
          id={`${idPrefix}${criteria.id}`}
@@ -155,9 +164,97 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
          variant="standard"
          autoComplete="off"
          InputProps={{readOnly: true, unselectable: "off", ...inputProps}}
-         value={value}
+         value={displayValue}
          fullWidth
       />;
+   }
+
+   const makeDateField = (valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
+   {
+      return <Box display="flex" alignItems="flex-end">
+         {
+            criteria.expression == null && makeTextField(valueIndex, label, idPrefix)
+         }
+         {
+            criteria.expression != null && makeDateTimeExpressionTextField(criteria.expression, valueIndex, label, idPrefix)
+         }
+         <Box>
+            <Tooltip title="Choose a common relative date expression" placement="top">
+               <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}} onClick={openRelativeDateTimeMenu}>date_range</Icon>
+            </Tooltip>
+            <Menu
+               open={relativeDateTimeMenuAnchorElement}
+               anchorEl={relativeDateTimeMenuAnchorElement}
+               transformOrigin={{horizontal: "center", vertical: "top"}}
+               onClose={closeRelativeDateTimeMenu}
+            >
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "DAYS")}>1 day ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "DAYS")}>today</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "DAYS")}>yesterday</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 7, "DAYS")}>7 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "WEEKS")}>start of this week</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "WEEKS")}>start of last week</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 14, "DAYS")}>14 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 30, "DAYS")}>30 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "MONTHS")}>start of this month</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "MONTHS")}>start of last month</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 90, "DAYS")}>90 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 180, "DAYS")}>180 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "YEARS")}>1 year ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "YEARS")}>start of this year</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "YEARS")}>start of last year</MenuItem>
+            </Menu>
+         </Box>
+         <Box>
+            <AdvancedDateTimeFilterValues type={"date"} expression={criteria.expression} onSave={(expression: any) => saveNewDateTimeExpression(valueIndex, expression)} />
+         </Box>
+      </Box>;
+   }
+
+   const makeDateTimeField = (valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
+   {
+      return <Box display="flex" alignItems="flex-end">
+         {
+            criteria.expression == null && makeTextField(valueIndex, label, idPrefix)
+         }
+         {
+            criteria.expression != null && makeDateTimeExpressionTextField(criteria.expression, valueIndex, label, idPrefix)
+         }
+         <Box>
+            <Tooltip title="Choose a common relative date-time expression" placement="top">
+               <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}} onClick={openRelativeDateTimeMenu}>date_range</Icon>
+            </Tooltip>
+            <Menu
+               open={relativeDateTimeMenuAnchorElement}
+               anchorEl={relativeDateTimeMenuAnchorElement}
+               transformOrigin={{horizontal: "center", vertical: "top"}}
+               onClose={closeRelativeDateTimeMenu}
+            >
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "HOURS")}>1 hour ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "HOURS")}>start of this hour</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "HOURS")}>start of last hour</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 12, "HOURS")}>12 hours ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 24, "HOURS")}>24 hours ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "DAYS")}>start of today</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "DAYS")}>start of yesterday</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 7, "DAYS")}>7 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "WEEKS")}>start of this week</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "WEEKS")}>start of last week</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 14, "DAYS")}>14 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 30, "DAYS")}>30 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "MONTHS")}>start of this month</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "MONTHS")}>start of last month</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 90, "DAYS")}>90 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 180, "DAYS")}>180 days ago</MenuItem>
+               <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "YEARS")}>1 year ago</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "YEARS")}>start of this year</MenuItem>
+               <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "YEARS")}>start of last year</MenuItem>
+            </Menu>
+         </Box>
+         <Box>
+            <AdvancedDateTimeFilterValues type={"datetime"} expression={criteria.expression} onSave={(expression: any) => saveNewDateTimeExpression(valueIndex, expression)} />
+         </Box>
+      </Box>;
    }
 
    function saveNewPasterValues(newValues: any[])
@@ -193,34 +290,34 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       setRelativeDateTimeMenuAnchorElement(null);
    };
 
-   const setExpressionNowWithOffset = (operator: NowWithOffsetOperator, amount: number, timeUnit: NowWithOffsetUnit) =>
+   const setExpressionNowWithOffset = (valueIndex: number, operator: NowWithOffsetOperator, amount: number, timeUnit: NowWithOffsetUnit) =>
    {
       const expression = new NowWithOffsetExpression()
       expression.operator = operator;
       expression.amount = amount;
       expression.timeUnit = timeUnit;
 
-      saveNewDateTimeExpression(expression);
+      saveNewDateTimeExpression(valueIndex, expression);
 
       closeRelativeDateTimeMenu();
    };
 
-   const setExpressionThisOrLastPeriod = (operator: ThisOrLastPeriodOperator, timeUnit: ThisOrLastPeriodUnit) =>
+   const setExpressionThisOrLastPeriod = (valueIndex: number, operator: ThisOrLastPeriodOperator, timeUnit: ThisOrLastPeriodUnit) =>
    {
       const expression = new ThisOrLastPeriodExpression()
       expression.operator = operator;
       expression.timeUnit = timeUnit;
 
-      saveNewDateTimeExpression(expression);
+      saveNewDateTimeExpression(valueIndex, expression);
 
       closeRelativeDateTimeMenu();
    };
 
-   function saveNewDateTimeExpression(expression: any)
+   function saveNewDateTimeExpression(valueIndex: number, expression: any)
    {
       criteria.expression = expression;
       criteria.values = null;
-      valueChangeHandler(null, null, null, expression);
+      valueChangeHandler(null, valueIndex, null, expression);
       forceUpdate();
    }
 
@@ -231,87 +328,14 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       case ValueMode.SINGLE:
          return makeTextField();
       case ValueMode.SINGLE_DATE:
-         return <Box display="flex" alignItems="flex-end">
-            {
-               criteria.expression == null && makeTextField()
-            }
-            {
-               criteria.expression != null && makeDateTimeExpressionTextField(criteria.expression.toString())
-            }
-            <Box>
-               <Tooltip title="Choose a common relative date-time expression" placement="top">
-                  <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}} onClick={openRelativeDateTimeMenu}>event_upcoming</Icon>
-               </Tooltip>
-               <Menu
-                  open={relativeDateTimeMenuAnchorElement}
-                  anchorEl={relativeDateTimeMenuAnchorElement}
-                  transformOrigin={{horizontal: "center", vertical: "top"}}
-                  onClose={closeRelativeDateTimeMenu}
-               >
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 1, "DAYS")}>1 day ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "DAYS")}>today</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "DAYS")}>yesterday</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 7, "DAYS")}>7 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "WEEKS")}>start of this week</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "WEEKS")}>start of last week</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 14, "DAYS")}>14 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 30, "DAYS")}>30 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "MONTHS")}>start of this month</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "MONTHS")}>start of last month</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 90, "DAYS")}>90 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 180, "DAYS")}>180 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 1, "YEARS")}>1 year ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "YEARS")}>start of this year</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "YEARS")}>start of last year</MenuItem>
-               </Menu>
-            </Box>
-            <Box>
-               <AdvancedDateTimeFilterValues type={"date"} expression={criteria.expression} onSave={(expression: any) => saveNewDateTimeExpression(expression)} />
-            </Box>
-         </Box>;
+         return makeDateField();
+      case ValueMode.DOUBLE_DATE:
+         return <Box>
+            {makeDateField(0, "From", "from-")}
+            {makeDateField(1, "To", "to-")}
+         </Box>
       case ValueMode.SINGLE_DATE_TIME:
-         return <Box display="flex" alignItems="flex-end">
-            {
-               criteria.expression == null && makeTextField()
-            }
-            {
-               criteria.expression != null && makeDateTimeExpressionTextField(criteria.expression.toString())
-            }
-            <Box>
-               <Tooltip title="Choose a common relative date-time expression" placement="top">
-                  <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}} onClick={openRelativeDateTimeMenu}>event_upcoming</Icon>
-               </Tooltip>
-               <Menu
-                  open={relativeDateTimeMenuAnchorElement}
-                  anchorEl={relativeDateTimeMenuAnchorElement}
-                  transformOrigin={{horizontal: "center", vertical: "top"}}
-                  onClose={closeRelativeDateTimeMenu}
-               >
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 1, "HOURS")}>1 hour ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "HOURS")}>start of this hour</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "HOURS")}>start of last hour</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 12, "HOURS")}>12 hours ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 24, "HOURS")}>24 hours ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "DAYS")}>start of today</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "DAYS")}>start of yesterday</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 7, "DAYS")}>7 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "WEEKS")}>start of this week</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "WEEKS")}>start of last week</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 14, "DAYS")}>14 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 30, "DAYS")}>30 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "MONTHS")}>start of this month</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "MONTHS")}>start of last month</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 90, "DAYS")}>90 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 180, "DAYS")}>180 days ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionNowWithOffset("MINUS", 1, "YEARS")}>1 year ago</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("THIS", "YEARS")}>start of this year</MenuItem>
-                  <MenuItem onClick={() => setExpressionThisOrLastPeriod("LAST", "YEARS")}>start of last year</MenuItem>
-               </Menu>
-            </Box>
-            <Box>
-               <AdvancedDateTimeFilterValues type={"datetime"} expression={criteria.expression} onSave={(expression: any) => saveNewDateTimeExpression(expression)} />
-            </Box>
-         </Box>;
+         return makeDateTimeField();
       case ValueMode.DOUBLE:
          return <Box>
             <Box width="50%" display="inline-block">

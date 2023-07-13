@@ -45,7 +45,9 @@ export enum ValueMode
    DOUBLE = "DOUBLE",
    MULTI = "MULTI",
    SINGLE_DATE = "SINGLE_DATE",
+   DOUBLE_DATE = "DOUBLE_DATE",
    SINGLE_DATE_TIME = "SINGLE_DATE_TIME",
+   DOUBLE_DATE_TIME = "DOUBLE_DATE_TIME",
    PVS_SINGLE = "PVS_SINGLE",
    PVS_MULTI = "PVS_MULTI",
 }
@@ -164,6 +166,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                   operatorOptions.push({label: "is on or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
                   operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+                  operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
+                  operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
                   //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
                   //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
                   //? operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN});
@@ -178,6 +182,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                   operatorOptions.push({label: "is at or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
                   operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
                   operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+                  operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
+                  operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
                   //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
                   //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
                   break;
