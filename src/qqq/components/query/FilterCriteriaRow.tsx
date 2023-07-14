@@ -343,24 +343,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    //////////////////////////////////////////////////
    // event handler for value field (of all types) //
    //////////////////////////////////////////////////
-   const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any, newExpression?: any) =>
+   const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any) =>
    {
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      // if an expression was passed in - put it on the criteria, removing the values.                     //
-      // else - if no expression - make sure criteria.expression is null, and do the various values logics //
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      if(newExpression)
-      {
-         criteria.expression = newExpression;
-         criteria.values = null;
-         updateCriteria(criteria, true);
-         return;
-      }
-      else
-      {
-         criteria.expression = null;
-      }
-
       // @ts-ignore
       const value = newValue !== undefined ? newValue : event ? event.target.value : null;
 
@@ -471,15 +455,9 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
             // don't need to look at values //
             //////////////////////////////////
          }
-         else if (criteria.expression)
+         else if(operatorSelectedValue.valueMode == ValueMode.DOUBLE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE_TIME)
          {
-            ////////////////////////////////////////////////////////
-            // if there's an expression - let's assume it's valid //
-            ////////////////////////////////////////////////////////
-         }
-         else if(operatorSelectedValue.valueMode == ValueMode.DOUBLE)
-         {
-            if(criteria.values.length < 2)
+            if(criteria.values.length < 2 || isNotSet(criteria.values[0]) || isNotSet(criteria.values[1]))
             {
                criteriaIsValid = false;
                criteriaStatusTooltip = "You must enter two values to complete the definition of this condition.";
@@ -563,7 +541,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                criteria={{id: id, ...criteria}}
                field={field}
                table={fieldTable}
-               valueChangeHandler={(event, valueIndex, newValue, newExpression) => handleValueChange(event, valueIndex, newValue, newExpression)}
+               valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
             />
          </Box>
          <Box display="inline-block" pl={0.5} pr={1}>

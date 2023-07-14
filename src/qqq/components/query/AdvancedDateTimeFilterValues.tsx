@@ -19,7 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
 import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
+import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import {FormControl, FormControlLabel, Radio, RadioGroup, Select} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -37,33 +40,57 @@ import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons"
 
 interface Props
 {
-   type: "date" | "datetime";
+   type: QFieldType
    expression: any;
    onSave: (expression: any) => void;
 }
 
 AdvancedDateTimeFilterValues.defaultProps = {};
 
+const extractExpressionType = (expression: any) => expression?.type ?? "NowWithOffset";
+const extractNowWithOffsetAmount = (expression: any) => expression?.type == "NowWithOffset" ? (expression?.amount ?? 1) : 1;
+const extractNowWithOffsetTimeUnit = (expression: any) => expression?.type == "NowWithOffset" ? (expression?.timeUnit ?? "DAYS") : "DAYS" as NowWithOffsetUnit;
+const extractNowWithOffsetOperator = (expression: any) => expression?.type == "NowWithOffset" ? (expression?.operator ?? "MINUS") : "MINUS" as NowWithOffsetOperator;
+const extractThisOrLastPeriodTimeUnit = (expression: any) => expression?.type == "ThisOrLastPeriod" ? (expression?.timeUnit ?? "DAYS") : "DAYS" as ThisOrLastPeriodUnit;
+const extractThisOrLastPeriodOperator = (expression: any) => expression?.type == "ThisOrLastPeriod" ? (expression?.operator ?? "THIS") : "THIS" as ThisOrLastPeriodOperator;
+
 function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.Element
 {
    const [originalExpression, setOriginalExpression] = useState(JSON.stringify(expression));
 
-   const [expressionType, setExpressionType] = useState(expression?.type ?? "NowWithOffset")
+   const [expressionType, setExpressionType] = useState(extractExpressionType(expression))
 
-   const [amount, setAmount] = useState(expression?.amount ?? 1)
-   const [timeUnit, setTimeUnit] = useState(expression?.timeUnit ?? "DAYS" as NowWithOffsetUnit);
-   const [operator, setOperator] = useState(expression?.operator ?? "MINUS" as NowWithOffsetOperator);
+   const [nowWithOffsetAmount, setNowWithOffsetAmount] = useState(extractNowWithOffsetAmount(expression));
+   const [nowWithOffsetTimeUnit, setNowWithOffsetTimeUnit] = useState(extractNowWithOffsetTimeUnit(expression));
+   const [nowWithOffsetOperator, setNowWithOffsetOperator] = useState(extractNowWithOffsetOperator(expression));
+
+   const [thisOrLastPeriodTimeUnit, setThisOrLastPeriodTimeUnit] = useState(extractThisOrLastPeriodTimeUnit(expression));
+   const [thisOrLastPeriodOperator, setThisOrLastPeriodOperator] = useState(extractThisOrLastPeriodOperator(expression));
+
    const [isOpen, setIsOpen] = useState(false)
+
+   const setStateToExpression = (activeExpression: any) =>
+   {
+      setExpressionType(extractExpressionType(activeExpression))
+
+      setNowWithOffsetAmount(extractNowWithOffsetAmount(activeExpression))
+      setNowWithOffsetTimeUnit(extractNowWithOffsetTimeUnit(activeExpression))
+      setNowWithOffsetOperator(extractNowWithOffsetOperator(activeExpression))
+
+      setThisOrLastPeriodTimeUnit(extractThisOrLastPeriodTimeUnit(activeExpression))
+      setThisOrLastPeriodOperator(extractThisOrLastPeriodOperator(activeExpression))
+   }
 
    //////////////////////////////////////////////////////////////////////////////////
    // if the expression (prop) has changed, re-set the state variables based on it //
    //////////////////////////////////////////////////////////////////////////////////
    if(JSON.stringify(expression) !== originalExpression)
    {
-      setExpressionType(expression?.type ?? "NowWithOffset")
-      setAmount(expression?.amount ?? 1)
-      setTimeUnit(expression?.timeUnit ?? "DAYS")
-      setOperator(expression?.operator ?? "MINUS")
+      ///////////////////////////////////////////////////////////
+      // update all state vars based on the current expression //
+      ///////////////////////////////////////////////////////////
+      setStateToExpression(expression);
+
       setOriginalExpression(JSON.stringify(expression))
    }
 
@@ -72,17 +99,47 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
       setIsOpen(true);
    }
 
+   const handleCancelClicked = () =>
+   {
+      ///////////////////////////////////////////////////////////
+      // update all state vars back to the original expression //
+      ///////////////////////////////////////////////////////////
+      const restoreExpression = JSON.parse(originalExpression)
+      setStateToExpression(restoreExpression);
+
+      close();
+   }
+
    const handleSaveClicked = () =>
    {
       switch(expressionType)
       {
+         case "Now":
+         {
+            const expression = new NowExpression();
+            onSave(expression);
+            break;
+         }
          case "NowWithOffset":
          {
             const expression = new NowWithOffsetExpression()
-            expression.operator = operator;
-            expression.amount = amount;
-            expression.timeUnit = timeUnit;
+            expression.operator = nowWithOffsetOperator;
+            expression.amount = nowWithOffsetAmount;
+            expression.timeUnit = nowWithOffsetTimeUnit;
             onSave(expression);
+            break;
+         }
+         case "ThisOrLastPeriod":
+         {
+            const expression = new ThisOrLastPeriodExpression()
+            expression.operator = thisOrLastPeriodOperator;
+            expression.timeUnit = thisOrLastPeriodTimeUnit;
+            onSave(expression);
+            break;
+         }
+         default:
+         {
+            console.log(`Unmapped expression type in handleSAveClicked: ${expressionType}`);
          }
       }
 
@@ -99,35 +156,47 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
       setExpressionType(e.target.value);
    }
 
-   function handleAmountChange(event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>)
+   function handleNowWithOffsetAmountChange(event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>)
    {
-      setAmount(parseInt(event.target.value));
+      setNowWithOffsetAmount(parseInt(event.target.value));
    }
 
-   function handleTimeUnitChange(event: SelectChangeEvent<NowWithOffsetUnit>, child: ReactNode)
-   {
-      // @ts-ignore
-      setTimeUnit(event.target.value)
-   }
-
-   function handleOperatorChange(event: SelectChangeEvent<NowWithOffsetOperator>, child: ReactNode)
+   function handleNowWithOffsetTimeUnitChange(event: SelectChangeEvent<NowWithOffsetUnit>, child: ReactNode)
    {
       // @ts-ignore
-      setOperator(event.target.value)
+      setNowWithOffsetTimeUnit(event.target.value)
    }
 
+   function handleNowWithOffsetOperatorChange(event: SelectChangeEvent<NowWithOffsetOperator>, child: ReactNode)
+   {
+      // @ts-ignore
+      setNowWithOffsetOperator(event.target.value)
+   }
+
+   function handleThisOrLastPeriodTimeUnitChange(event: SelectChangeEvent<ThisOrLastPeriodUnit>, child: ReactNode)
+   {
+      // @ts-ignore
+      setThisOrLastPeriodTimeUnit(event.target.value)
+   }
+
+   function handleThisOrLastPeriodOperatorChange(event: SelectChangeEvent<ThisOrLastPeriodOperator>, child: ReactNode)
+   {
+      // @ts-ignore
+      setThisOrLastPeriodOperator(event.target.value)
+   }
 
    const mainCardStyles: any = {};
    mainCardStyles.width = "600px";
 
    /////////////////////////////////////////////////////////////////////////
    // for the time units, have them end in an 's' if the amount is plural //
+   // name here means "time unit 's'"                                     //
    /////////////////////////////////////////////////////////////////////////
-   const tuS = (amount == 1 ? "" : "s");
+   const nwoTUs = (nowWithOffsetAmount == 1 ? "" : "s");
 
    return (
       <Box>
-         <Tooltip title={`Define a more advanced ${type == "date" ? "date" : "date-time"} condition`}>
+         <Tooltip title={`Define a more advanced ${type == QFieldType.DATE ? "date" : "date-time"} condition`}>
             <Icon onClick={openDialog} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>settings</Icon>
          </Tooltip>
          {
@@ -151,6 +220,10 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                            <RadioGroup name="expressionType" value={expressionType} onChange={handleExpressionTypeChange}>
 
                               <Box px={4} pb={4}>
+                                 <FormControlLabel value={"Now"} control={<Radio size="small" />} label="Now" />
+                              </Box>
+
+                              <Box px={4} pb={4}>
                                  <FormControlLabel value={"NowWithOffset"} control={<Radio size="small" />} label="Relative Expression" />
                                  <Box pl={4}>
                                     <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
@@ -159,26 +232,26 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                                           type="number"
                                           inputProps={{min: 0}}
                                           autoComplete="off"
-                                          value={amount}
-                                          onChange={(event) => handleAmountChange(event)}
+                                          value={nowWithOffsetAmount}
+                                          onChange={(event) => handleNowWithOffsetAmountChange(event)}
                                           fullWidth
                                        />
                                     </FormControl>
 
                                     <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
-                                       <Select value={timeUnit} disabled={false} onChange={handleTimeUnitChange} label="Unit">
-                                          {type == "datetime" && <MenuItem value="SECONDS">Second{tuS}</MenuItem>}
-                                          {type == "datetime" && <MenuItem value="MINUTES">Minute{tuS}</MenuItem>}
-                                          {type == "datetime" && <MenuItem value="HOURS">Hour{tuS}</MenuItem>}
-                                          <MenuItem value="DAYS">Day{tuS}</MenuItem>
-                                          <MenuItem value="WEEKS">Week{tuS}</MenuItem>
-                                          <MenuItem value="MONTHS">Month{tuS}</MenuItem>
-                                          <MenuItem value="YEARS">Year{tuS}</MenuItem>
+                                       <Select value={nowWithOffsetTimeUnit} disabled={false} onChange={handleNowWithOffsetTimeUnitChange} label="Unit">
+                                          {type == QFieldType.DATE_TIME && <MenuItem value="SECONDS">Second{nwoTUs}</MenuItem>}
+                                          {type == QFieldType.DATE_TIME  && <MenuItem value="MINUTES">Minute{nwoTUs}</MenuItem>}
+                                          {type == QFieldType.DATE_TIME  && <MenuItem value="HOURS">Hour{nwoTUs}</MenuItem>}
+                                          <MenuItem value="DAYS">Day{nwoTUs}</MenuItem>
+                                          <MenuItem value="WEEKS">Week{nwoTUs}</MenuItem>
+                                          <MenuItem value="MONTHS">Month{nwoTUs}</MenuItem>
+                                          <MenuItem value="YEARS">Year{nwoTUs}</MenuItem>
                                        </Select>
                                     </FormControl>
 
                                     <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "40%"}}>
-                                       <Select value={operator} disabled={false} onChange={handleOperatorChange}>
+                                       <Select value={nowWithOffsetOperator} disabled={false} onChange={handleNowWithOffsetOperatorChange}>
                                           <MenuItem value="MINUS">Ago (in the past)</MenuItem>
                                           <MenuItem value="PLUS">From now (in the future)</MenuItem>
                                        </Select>
@@ -186,10 +259,34 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                                  </Box>
                               </Box>
 
+                              <Box px={4} pb={4}>
+                                 <FormControlLabel value={"ThisOrLastPeriod"} control={<Radio size="small" />} label={`${type == QFieldType.DATE_TIME ? "Start of " : ""}This or Last...`} />
+                                 <Box pl={4}>
+
+                                    <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
+                                       <Select value={thisOrLastPeriodOperator} disabled={false} onChange={handleThisOrLastPeriodOperatorChange}>
+                                          <MenuItem value="THIS">This</MenuItem>
+                                          <MenuItem value="LAST">Last</MenuItem>
+                                       </Select>
+                                    </FormControl>
+
+                                    <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
+                                       <Select value={thisOrLastPeriodTimeUnit} disabled={false} onChange={handleThisOrLastPeriodTimeUnitChange} label="Unit">
+                                          {type == QFieldType.DATE_TIME  && <MenuItem value="HOURS">Hour</MenuItem>}
+                                          <MenuItem value="DAYS">Day</MenuItem>
+                                          <MenuItem value="WEEKS">Week</MenuItem>
+                                          <MenuItem value="MONTHS">Month</MenuItem>
+                                          <MenuItem value="YEARS">Year</MenuItem>
+                                       </Select>
+                                    </FormControl>
+
+                                 </Box>
+                              </Box>
+
                            </RadioGroup>
                            <Box p={3} pt={0}>
                               <Grid container pl={1} pr={1} justifyContent="right" alignItems="stretch" sx={{display: "flex-inline "}}>
-                                 <QCancelButton onClickHandler={close} iconName="cancel" disabled={false} />
+                                 <QCancelButton onClickHandler={handleCancelClicked} iconName="cancel" disabled={false} />
                                  <QSaveButton onClickHandler={handleSaveClicked} label="Apply" disabled={false} />
                               </Grid>
                            </Box>

@@ -23,6 +23,7 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
 import {NowWithOffsetExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
@@ -289,7 +290,7 @@ class FilterUtils
 
       if (FilterUtils.gridCriteriaValueToExpression(param))
       {
-         return (null);
+         return (param);
       }
 
       let rs = [];
@@ -337,13 +338,8 @@ class FilterUtils
     ** Convert a filter field's value from the style that qqq uses, to the style that
     ** the grid uses.
     *******************************************************************************/
-   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], expression: any, field: QFieldMetaData): any | any[] =>
+   public static qqqCriteriaValuesToGrid = (operator: QCriteriaOperator, values: any[], field: QFieldMetaData): any | any[] =>
    {
-      if(expression)
-      {
-         return (expression);
-      }
-
       const fieldType = field.type;
       if (operator === QCriteriaOperator.IS_BLANK || operator === QCriteriaOperator.IS_NOT_BLANK)
       {
@@ -361,7 +357,13 @@ class FilterUtils
          ////////////////////////////////////////////////////////////////////////////////////////////////
          if (fieldType === QFieldType.DATE_TIME)
          {
-            values[0] = ValueUtils.formatDateTimeValueForForm(values[0]);
+            for(let i = 0; i<values.length; i++)
+            {
+               if(!values[i].type)
+               {
+                  values[i] = ValueUtils.formatDateTimeValueForForm(values[i]);
+               }
+            }
          }
       }
 
@@ -551,7 +553,7 @@ class FilterUtils
                   defaultFilter.items.push({
                      columnField: criteria.fieldName,
                      operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
-                     value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, criteria.expression, field),
+                     value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
                      id: id++, // not sure what this id is!!
                   });
                }
@@ -637,7 +639,7 @@ class FilterUtils
          const [field, fieldTable] = FilterUtils.getField(tableMetaData, criteria.fieldName);
          if (field)
          {
-            gridItems.push({columnField: criteria.fieldName, id: i, operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, criteria.values), value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, criteria.expression, field)});
+            gridItems.push({columnField: criteria.fieldName, id: i, operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, criteria.values), value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, criteria.values, field)});
          }
       }
 
@@ -737,11 +739,6 @@ class FilterUtils
             const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue, fieldMetadata);
             let criteria = new QFilterCriteria(item.columnField, operator, values);
-            const expression = FilterUtils.gridCriteriaValueToExpression(item.value);
-            if(expression)
-            {
-               criteria.expression = expression;
-            }
             qFilter.addCriteria(criteria);
             foundFilter = true;
          });
@@ -773,6 +770,10 @@ class FilterUtils
       if (value.type && value.type == "NowWithOffset")
       {
          return (new NowWithOffsetExpression(value));
+      }
+      else if (value.type && value.type == "Now")
+      {
+         return (new NowExpression(value));
       }
       else if (value.type && value.type == "ThisOrLastPeriod")
       {
