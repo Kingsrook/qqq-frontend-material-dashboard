@@ -31,6 +31,7 @@ import InputAdornment from "@mui/material/InputAdornment/InputAdornment";
 import TextField from "@mui/material/TextField";
 import React, {SyntheticEvent, useReducer} from "react";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
+import CriteriaDateField from "qqq/components/query/CriteriaDateField";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import FilterCriteriaPaster from "qqq/components/query/FilterCriteriaPaster";
 import {OperatorOption, ValueMode} from "qqq/components/query/FilterCriteriaRow";
@@ -45,7 +46,71 @@ interface Props
    valueChangeHandler: (event: React.ChangeEvent | SyntheticEvent, valueIndex?: number | "all", newValue?: any) => void;
 }
 
-FilterCriteriaRowValues.defaultProps = {
+FilterCriteriaRowValues.defaultProps = {};
+
+export const getTypeForTextField = (field: QFieldMetaData): string =>
+{
+   let type = "search";
+
+   if (field.type == QFieldType.INTEGER)
+   {
+      type = "number";
+   }
+   else if (field.type == QFieldType.DATE)
+   {
+      type = "date";
+   }
+   else if (field.type == QFieldType.DATE_TIME)
+   {
+      type = "datetime-local";
+   }
+
+   return (type);
+};
+
+export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWithId, valueChangeHandler?: (event: (React.ChangeEvent | React.SyntheticEvent), valueIndex?: (number | "all"), newValue?: any) => void, valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
+{
+   let type = getTypeForTextField(field);
+   const inputLabelProps: any = {};
+
+   if (field.type == QFieldType.DATE || field.type == QFieldType.DATE_TIME)
+   {
+      inputLabelProps.shrink = true;
+   }
+
+   let value = criteria.values[valueIndex];
+   if (field.type == QFieldType.DATE_TIME && value && String(value).indexOf("Z") > -1)
+   {
+      value = ValueUtils.formatDateTimeValueForForm(value);
+   }
+
+   const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
+   {
+      valueChangeHandler(event, index, "");
+      document.getElementById(`${idPrefix}${criteria.id}`).focus();
+   };
+
+   const inputProps: any = {};
+   inputProps.endAdornment = (
+      <InputAdornment position="end">
+         <IconButton sx={{visibility: value ? "visible" : "hidden"}} onClick={(event) => clearValue(event, valueIndex)}>
+            <Icon>close</Icon>
+         </IconButton>
+      </InputAdornment>
+   );
+
+   return <TextField
+      id={`${idPrefix}${criteria.id}`}
+      label={label}
+      variant="standard"
+      autoComplete="off"
+      type={type}
+      onChange={(event) => valueChangeHandler(event, valueIndex)}
+      value={value}
+      InputLabelProps={inputLabelProps}
+      InputProps={inputProps}
+      fullWidth
+   />;
 };
 
 function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler}: Props): JSX.Element
@@ -56,71 +121,6 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
    {
       return <br />;
    }
-
-   const getTypeForTextField = (): string =>
-   {
-      let type = "search";
-
-      if (field.type == QFieldType.INTEGER)
-      {
-         type = "number";
-      }
-      else if (field.type == QFieldType.DATE)
-      {
-         type = "date";
-      }
-      else if (field.type == QFieldType.DATE_TIME)
-      {
-         type = "datetime-local";
-      }
-
-      return (type);
-   };
-
-   const makeTextField = (valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
-   {
-      let type = getTypeForTextField();
-      const inputLabelProps: any = {};
-
-      if (field.type == QFieldType.DATE || field.type == QFieldType.DATE_TIME)
-      {
-         inputLabelProps.shrink = true;
-      }
-
-      let value = criteria.values[valueIndex];
-      if (field.type == QFieldType.DATE_TIME && value && String(value).indexOf("Z") > -1)
-      {
-         value = ValueUtils.formatDateTimeValueForForm(value);
-      }
-
-      const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
-      {
-         valueChangeHandler(event, index, "");
-         document.getElementById(`${idPrefix}${criteria.id}`).focus();
-      };
-
-      const inputProps: any = {};
-      inputProps.endAdornment = (
-         <InputAdornment position="end">
-            <IconButton sx={{visibility: value ? "visible" : "hidden"}} onClick={(event) => clearValue(event, valueIndex)}>
-               <Icon>close</Icon>
-            </IconButton>
-         </InputAdornment>
-      );
-
-      return <TextField
-         id={`${idPrefix}${criteria.id}`}
-         label={label}
-         variant="standard"
-         autoComplete="off"
-         type={type}
-         onChange={(event) => valueChangeHandler(event, valueIndex)}
-         value={value}
-         InputLabelProps={inputLabelProps}
-         InputProps={inputProps}
-         fullWidth
-      />;
-   };
 
    function saveNewPasterValues(newValues: any[])
    {
@@ -150,18 +150,28 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       case ValueMode.NONE:
          return <br />;
       case ValueMode.SINGLE:
-         return makeTextField();
+         return makeTextField(field, criteria, valueChangeHandler);
       case ValueMode.SINGLE_DATE:
-         return makeTextField();
+         return <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} />;
+      case ValueMode.DOUBLE_DATE:
+         return <Box>
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" />
+         </Box>;
       case ValueMode.SINGLE_DATE_TIME:
-         return makeTextField();
+         return <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} />;
+      case ValueMode.DOUBLE_DATE_TIME:
+         return <Box>
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" />
+         </Box>;
       case ValueMode.DOUBLE:
          return <Box>
             <Box width="50%" display="inline-block">
-               { makeTextField(0, "From", "from-") }
+               {makeTextField(field, criteria, valueChangeHandler, 0, "From", "from-")}
             </Box>
             <Box width="50%" display="inline-block">
-               {makeTextField(1, "To", "to-")}
+               {makeTextField(field, criteria, valueChangeHandler, 1, "To", "to-")}
             </Box>
          </Box>;
       case ValueMode.MULTI:
@@ -184,7 +194,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                onChange={(event, value) => valueChangeHandler(event, "all", value)}
             />
             <Box>
-               <FilterCriteriaPaster type={getTypeForTextField()} onSave={(newValues: any[]) => saveNewPasterValues(newValues)} />
+               <FilterCriteriaPaster type={getTypeForTextField(field)} onSave={(newValues: any[]) => saveNewPasterValues(newValues)} />
             </Box>
          </Box>;
       case ValueMode.PVS_SINGLE:
@@ -233,7 +243,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                inForm={false}
                onChange={(value: any) => valueChangeHandler(null, "all", value)}
             />
-         </Box>
+         </Box>;
    }
 
    return (<br />);

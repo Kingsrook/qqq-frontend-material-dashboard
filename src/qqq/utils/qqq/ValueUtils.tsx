@@ -254,6 +254,16 @@ class ValueUtils
       return (returnValue);
    }
 
+   public static formatDate(date: Date)
+   {
+      if (!(date instanceof Date))
+      {
+         date = new Date(date);
+      }
+      // @ts-ignore
+      return (`${date.toString("yyyy-MM-dd")}`);
+   }
+
    public static formatDateTime(date: Date)
    {
       if (!(date instanceof Date))

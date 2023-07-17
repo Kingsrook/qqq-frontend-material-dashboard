@@ -50,15 +50,33 @@ const makeGridFilterOperator = (value: string, label: string, takesValues: boole
    return (rs);
 };
 
+////////////////////////////////////////////////////////////////////////////////////////
+// at this point, these may only be used to drive the toolitp on the FILTER button... //
+////////////////////////////////////////////////////////////////////////////////////////
 const QGridDateOperators = [
    makeGridFilterOperator("equals", "equals", true),
-   makeGridFilterOperator("isNot", "not equals", true),
+   makeGridFilterOperator("isNot", "does not equal", true),
    makeGridFilterOperator("after", "is after", true),
    makeGridFilterOperator("onOrAfter", "is on or after", true),
    makeGridFilterOperator("before", "is before", true),
    makeGridFilterOperator("onOrBefore", "is on or before", true),
    makeGridFilterOperator("isEmpty", "is empty"),
    makeGridFilterOperator("isNotEmpty", "is not empty"),
+   makeGridFilterOperator("between", "is between", true),
+   makeGridFilterOperator("notBetween", "is not between", true),
+];
+
+const QGridDateTimeOperators = [
+   makeGridFilterOperator("equals", "equals", true),
+   makeGridFilterOperator("isNot", "does not equal", true),
+   makeGridFilterOperator("after", "is after", true),
+   makeGridFilterOperator("onOrAfter", "is at or after", true),
+   makeGridFilterOperator("before", "is before", true),
+   makeGridFilterOperator("onOrBefore", "is at or before", true),
+   makeGridFilterOperator("isEmpty", "is empty"),
+   makeGridFilterOperator("isNotEmpty", "is not empty"),
+   makeGridFilterOperator("between", "is between", true),
+   makeGridFilterOperator("notBetween", "is not between", true),
 ];
 
 export default class DataGridUtils
@@ -272,7 +290,7 @@ export default class DataGridUtils
             case QFieldType.DATE_TIME:
                columnType = "dateTime";
                columnWidth = 200;
-               filterOperators = QGridDateOperators;
+               filterOperators = QGridDateTimeOperators;
                break;
             case QFieldType.BOOLEAN:
                columnType = "string"; // using boolean gives an odd 'no' for nulls.
