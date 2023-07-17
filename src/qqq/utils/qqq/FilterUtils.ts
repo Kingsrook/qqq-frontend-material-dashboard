@@ -446,107 +446,15 @@ class FilterUtils
                      }
                   }
 
-                  // todo - use expressions here!!
-                  if (field && field.type == "DATE_TIME" && !values)
+                  //////////////////////////////////////////////////////////////////////////
+                  // replace objects that look like expressions with expression instances //
+                  //////////////////////////////////////////////////////////////////////////
+                  for(let i = 0; i < values.length; i++)
                   {
-                     try
+                     const expression = this.gridCriteriaValueToExpression(values[i])
+                     if(expression)
                      {
-                        const criteria = filterJSON.criteria[i];
-                        if (criteria && criteria.expression)
-                        {
-                           let value = new Date();
-                           let amount = Number(criteria.expression.amount);
-                           switch (criteria.expression.timeUnit)
-                           {
-                              case "MINUTES":
-                              {
-                                 amount = amount * 60;
-                                 break;
-                              }
-                              case "HOURS":
-                              {
-                                 amount = amount * 60 * 60;
-                                 break;
-                              }
-                              case "DAYS":
-                              {
-                                 amount = amount * 60 * 60 * 24;
-                                 break;
-                              }
-                              default:
-                              {
-                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
-                              }
-                           }
-
-                           if (criteria.expression.operator == "MINUS")
-                           {
-                              amount = -amount;
-                           }
-
-                           /////////////////////////////////////////////
-                           // shift the date/time by the input amount //
-                           /////////////////////////////////////////////
-                           value.setTime(value.getTime() + 1000 * amount);
-
-                           /////////////////////////////////////////////////
-                           // now also shift from local-timezone into UTC //
-                           /////////////////////////////////////////////////
-                           value.setTime(value.getTime() + 1000 * 60 * value.getTimezoneOffset());
-
-                           values = [ValueUtils.formatDateTimeISO8601(value)];
-                        }
-                     }
-                     catch (e)
-                     {
-                        console.log(e);
-                     }
-                  }
-
-                  if (field && field.type == "DATE" && !values)
-                  {
-                     try
-                     {
-                        const criteria = filterJSON.criteria[i];
-                        if (criteria && criteria.expression)
-                        {
-                           let value = new Date();
-                           let amount = Number(criteria.expression.amount);
-                           switch (criteria.expression.timeUnit)
-                           {
-                              case "MINUTES":
-                              {
-                                 amount = amount * 60;
-                                 break;
-                              }
-                              case "HOURS":
-                              {
-                                 amount = amount * 60 * 60;
-                                 break;
-                              }
-                              case "DAYS":
-                              {
-                                 amount = amount * 60 * 60 * 24;
-                                 break;
-                              }
-                              default:
-                              {
-                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
-                              }
-                           }
-
-                           if (criteria.expression.operator == "MINUS")
-                           {
-                              amount = -amount;
-                           }
-
-                           value.setTime(value.getTime() + 1000 * amount);
-                           values = [ValueUtils.formatDateISO8601(value)];
-                        }
-                     }
-                     catch (e)
-                     {
-                        console.log(e);
+                        values[i] = expression;
                      }
                   }
 
@@ -554,7 +462,7 @@ class FilterUtils
                      columnField: criteria.fieldName,
                      operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
                      value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
-                     id: id++, // not sure what this id is!!
+                     id: id++
                   });
                }
 
@@ -564,9 +472,9 @@ class FilterUtils
                   defaultFilter.linkOperator = GridLinkOperator.Or;
                }
 
-               //////////////////////////////////////////////////////////////////
-               // translate from a qqq-style filter to one that the grid wants //
-               //////////////////////////////////////////////////////////////////
+               /////////////////////////////////////////////////////////////////
+               // translate from qqq-style orderBy to one that the grid wants //
+               /////////////////////////////////////////////////////////////////
                if (qQueryFilter.orderBys && qQueryFilter.orderBys.length > 0)
                {
                   for (let i = 0; i < qQueryFilter.orderBys.length; i++)
@@ -610,14 +518,32 @@ class FilterUtils
          }
       }
 
+      /////////////////////////////////////////////////////////////////////////////////
+      // if any values in the items are objects, but should be expression instances, //
+      // then convert & replace them.                                               //
+      /////////////////////////////////////////////////////////////////////////////////
       if(defaultFilter && defaultFilter.items && defaultFilter.items.length)
       {
          defaultFilter.items.forEach((item) =>
          {
-            const expression = this.gridCriteriaValueToExpression(item.value)
-            if(expression)
+            if(item.value && item.value.length)
             {
-               item.value = expression;
+               for (let i = 0; i < item.value.length; i++)
+               {
+                  const expression = this.gridCriteriaValueToExpression(item.value[i])
+                  if(expression)
+                  {
+                     item.value[i] = expression;
+                  }
+               }
+            }
+            else
+            {
+               const expression = this.gridCriteriaValueToExpression(item.value)
+               if(expression)
+               {
+                  item.value = expression;
+               }
             }
          });
       }
@@ -726,13 +652,23 @@ class FilterUtils
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
-            if ((!item.value || item.value.length == 0 || (item.value.length == 1 && (item.value[0] === "" || item.value[0] === undefined))) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            let incomplete = false;
+            if (item.operatorValue === "between" || item.operatorValue === "notBetween")
             {
-               if (!allowIncompleteCriteria)
+               if(!item.value || !item.value.length || item.value.length < 2 || this.isUnset(item.value[0]) || this.isUnset(item.value[1]))
                {
-                  console.log(`Discarding incomplete filter criteria: ${JSON.stringify(item)}`);
-                  return;
+                  incomplete = true;
                }
+            }
+            else if ((!item.value || item.value.length == 0 || (item.value.length == 1 && this.isUnset(item.value[0]))) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            {
+               incomplete = true;
+            }
+
+            if (incomplete && !allowIncompleteCriteria)
+            {
+               console.log(`Discarding incomplete filter criteria: ${JSON.stringify(item)}`);
+               return;
             }
 
             const fieldMetadata = tableMetaData?.fields.get(item.columnField);
@@ -760,24 +696,35 @@ class FilterUtils
    /*******************************************************************************
     **
     *******************************************************************************/
+   private static isUnset(value: any)
+   {
+      return value === "" || value === undefined;
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    private static gridCriteriaValueToExpression(value: any)
    {
-      if (value.length)
+      if (value && value.length)
       {
          value = value[0];
       }
 
-      if (value.type && value.type == "NowWithOffset")
+      if (value && value.type)
       {
-         return (new NowWithOffsetExpression(value));
-      }
-      else if (value.type && value.type == "Now")
-      {
-         return (new NowExpression(value));
-      }
-      else if (value.type && value.type == "ThisOrLastPeriod")
-      {
-         return (new ThisOrLastPeriodExpression(value));
+         if (value.type == "NowWithOffset")
+         {
+            return (new NowWithOffsetExpression(value));
+         }
+         else if (value.type == "Now")
+         {
+            return (new NowExpression(value));
+         }
+         else if (value.type == "ThisOrLastPeriod")
+         {
+            return (new ThisOrLastPeriodExpression(value));
+         }
       }
 
       return (null);

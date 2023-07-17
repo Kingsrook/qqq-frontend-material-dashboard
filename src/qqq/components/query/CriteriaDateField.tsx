@@ -25,17 +25,24 @@ import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExp
 import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment/InputAdornment";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import {styled} from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import React, {SyntheticEvent, useReducer, useState} from "react";
+import Tooltip, {tooltipClasses, TooltipProps} from "@mui/material/Tooltip";
+import React, {SyntheticEvent, useEffect, useReducer, useState} from "react";
 import AdvancedDateTimeFilterValues from "qqq/components/query/AdvancedDateTimeFilterValues";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
+import {EvaluatedExpression} from "qqq/components/query/EvaluatedExpression";
 import {makeTextField} from "qqq/components/query/FilterCriteriaRowValues";
+
+
+export type Expression = NowWithOffsetExpression | ThisOrLastPeriodExpression | NowExpression;
+
 
 interface CriteriaDateFieldProps
 {
@@ -56,6 +63,7 @@ CriteriaDateField.defaultProps = {
 export default function CriteriaDateField({valueIndex, label, idPrefix, field, criteria, valueChangeHandler}: CriteriaDateFieldProps): JSX.Element
 {
    const [relativeDateTimeMenuAnchorElement, setRelativeDateTimeMenuAnchorElement] = useState(null);
+   const [forceAdvancedDateTimeDialogOpen, setForceAdvancedDateTimeDialogOpen] = useState(false)
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openRelativeDateTimeMenu = (event: React.MouseEvent<HTMLElement>) =>
@@ -68,34 +76,9 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
       setRelativeDateTimeMenuAnchorElement(null);
    };
 
-   const setExpressionNow = (valueIndex: number) =>
+   const setExpression = (valueIndex: number, expression: Expression) =>
    {
-      const expression = new NowExpression()
       saveNewDateTimeExpression(valueIndex, expression);
-
-      closeRelativeDateTimeMenu();
-   };
-
-   const setExpressionNowWithOffset = (valueIndex: number, operator: NowWithOffsetOperator, amount: number, timeUnit: NowWithOffsetUnit) =>
-   {
-      const expression = new NowWithOffsetExpression()
-      expression.operator = operator;
-      expression.amount = amount;
-      expression.timeUnit = timeUnit;
-
-      saveNewDateTimeExpression(valueIndex, expression);
-
-      closeRelativeDateTimeMenu();
-   };
-
-   const setExpressionThisOrLastPeriod = (valueIndex: number, operator: ThisOrLastPeriodOperator, timeUnit: ThisOrLastPeriodUnit) =>
-   {
-      const expression = new ThisOrLastPeriodExpression()
-      expression.operator = operator;
-      expression.timeUnit = timeUnit;
-
-      saveNewDateTimeExpression(valueIndex, expression);
-
       closeRelativeDateTimeMenu();
    };
 
@@ -110,7 +93,7 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
       const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
       {
          valueChangeHandler(event, index, "");
-         forceUpdate()
+         forceUpdate();
          document.getElementById(`${idPrefix}${criteria.id}`).focus();
       };
 
@@ -126,13 +109,20 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
       let displayValue = expression.toString();
       if (expression?.type == "ThisOrLastPeriod")
       {
-         if(field.type == QFieldType.DATE_TIME || (field.type == QFieldType.DATE && expression.timeUnit != "DAYS"))
+         if (field.type == QFieldType.DATE_TIME || (field.type == QFieldType.DATE && expression.timeUnit != "DAYS"))
          {
             displayValue = "start of " + displayValue;
          }
       }
+      if (expression?.type == "Now")
+      {
+         if (field.type == QFieldType.DATE)
+         {
+            displayValue = "today";
+         }
+      }
 
-      return <TextField
+      return <NoWrapTooltip title={<EvaluatedExpression field={field} expression={expression} />} placement="bottom" enterDelay={1000} sx={{marginLeft: "-75px !important", marginTop: "-8px !important"}}><TextField
          id={`${idPrefix}${criteria.id}`}
          label={label}
          variant="standard"
@@ -141,11 +131,65 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
          InputLabelProps={{shrink: true}}
          value={displayValue}
          fullWidth
-      />;
-   }
+      /></NoWrapTooltip>;
+   };
 
    const isExpression = criteria.values && criteria.values[valueIndex] && criteria.values[valueIndex].type;
    const currentExpression = isExpression ? criteria.values[valueIndex] : null;
+
+   const NoWrapTooltip = styled(({className, children, ...props}: TooltipProps) => (
+      <Tooltip {...props} classes={{popper: className}}>{children}</Tooltip>
+   ))({
+      [`& .${tooltipClasses.tooltip}`]: {
+         whiteSpace: "nowrap"
+      },
+   });
+
+   const tooltipMenuItemFromExpression = (valueIndex: number, tooltipPlacement: "left" | "right", expression: Expression) =>
+   {
+      let startOfPrefix = "";
+      if(expression.type == "ThisOrLastPeriod")
+      {
+         if(field.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
+         {
+            startOfPrefix = "start of ";
+         }
+      }
+
+      return <NoWrapTooltip title={<EvaluatedExpression field={field} expression={expression} />} placement={tooltipPlacement}>
+         <MenuItem onClick={() => setExpression(valueIndex, expression)}>{startOfPrefix}{expression.toString()}</MenuItem>
+      </NoWrapTooltip>;
+   };
+
+   const newNowExpression = (): NowExpression =>
+   {
+      const expression = new NowExpression();
+      return (expression);
+   };
+
+   const newNowWithOffsetExpression = (operator: NowWithOffsetOperator, amount: number, timeUnit: NowWithOffsetUnit): NowWithOffsetExpression =>
+   {
+      const expression = new NowWithOffsetExpression();
+      expression.operator = operator;
+      expression.amount = amount;
+      expression.timeUnit = timeUnit;
+      return (expression);
+   };
+
+   const newThisOrLastPeriodExpression = (operator: ThisOrLastPeriodOperator, timeUnit: ThisOrLastPeriodUnit): ThisOrLastPeriodExpression =>
+   {
+      const expression = new ThisOrLastPeriodExpression();
+      expression.operator = operator;
+      expression.timeUnit = timeUnit;
+      return (expression);
+   };
+
+   function doForceAdvancedDateTimeDialogOpen()
+   {
+      setForceAdvancedDateTimeDialogOpen(true);
+      closeRelativeDateTimeMenu();
+      setTimeout(() => setForceAdvancedDateTimeDialogOpen(false), 100);
+   }
 
    return <Box display="flex" alignItems="flex-end">
       {
@@ -153,8 +197,8 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
             : makeTextField(field, criteria, valueChangeHandler, valueIndex, label, idPrefix)
       }
       <Box>
-         <Tooltip title={`Choose a common relative ${field.type == QFieldType.DATE ? "date" : "date-time"} expression`} placement="top">
-            <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}} onClick={openRelativeDateTimeMenu}>date_range</Icon>
+         <Tooltip title={`Choose a common relative ${field.type == QFieldType.DATE ? "date" : "date-time"} expression`} placement="bottom">
+            <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer", position: "relative", top: "2px"}} onClick={openRelativeDateTimeMenu}>date_range</Icon>
          </Tooltip>
          <Menu
             open={relativeDateTimeMenuAnchorElement}
@@ -166,56 +210,65 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
                field.type == QFieldType.DATE ?
                   <Box display="flex">
                      <Box>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 7, "DAYS")}>7 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 14, "DAYS")}>14 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 30, "DAYS")}>30 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 90, "DAYS")}>90 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 180, "DAYS")}>180 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "YEARS")}>1 year ago</MenuItem>
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 7, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 14, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 30, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 90, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 180, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 1, "YEARS"))}
+                        <Divider />
+                        <Tooltip title="Define a custom expression" placement="left">
+                           <MenuItem onClick={doForceAdvancedDateTimeDialogOpen}>Custom</MenuItem>
+                        </Tooltip>
                      </Box>
                      <Box>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "DAYS")}>today</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "DAYS")}>yesterday</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "WEEKS")}>start of this week</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "WEEKS")}>start of last week</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "MONTHS")}>start of this month</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "MONTHS")}>start of last month</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "YEARS")}>start of this year</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "YEARS")}>start of last year</MenuItem>
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "WEEKS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "WEEKS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "MONTHS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "MONTHS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "YEARS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "YEARS"))}
                      </Box>
                   </Box>
                   :
                   <Box display="flex">
                      <Box>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "HOURS")}>1 hour ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 12, "HOURS")}>12 hours ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 24, "HOURS")}>24 hours ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 7, "DAYS")}>7 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 14, "DAYS")}>14 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 30, "DAYS")}>30 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 90, "DAYS")}>90 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 180, "DAYS")}>180 days ago</MenuItem>
-                        <MenuItem onClick={() => setExpressionNowWithOffset(valueIndex, "MINUS", 1, "YEARS")}>1 year ago</MenuItem>
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 1, "HOURS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 12, "HOURS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 24, "HOURS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 7, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 14, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 30, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 90, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 180, "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "left", newNowWithOffsetExpression("MINUS", 1, "YEARS"))}
+                        <Divider />
+                        <Tooltip title="Define a custom expression" placement="left">
+                           <MenuItem onClick={doForceAdvancedDateTimeDialogOpen}>Custom</MenuItem>
+                        </Tooltip>
                      </Box>
                      <Box>
-                        <MenuItem onClick={() => setExpressionNow(valueIndex)}>now</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "HOURS")}>start of this hour</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "HOURS")}>start of last hour</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "DAYS")}>start of today</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "DAYS")}>start of yesterday</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "WEEKS")}>start of this week</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "WEEKS")}>start of last week</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "MONTHS")}>start of this month</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "MONTHS")}>start of last month</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "THIS", "YEARS")}>start of this year</MenuItem>
-                        <MenuItem onClick={() => setExpressionThisOrLastPeriod(valueIndex, "LAST", "YEARS")}>start of last year</MenuItem>
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newNowExpression())}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "HOURS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "HOURS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "DAYS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "WEEKS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "WEEKS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "MONTHS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "MONTHS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("THIS", "YEARS"))}
+                        {tooltipMenuItemFromExpression(valueIndex, "right", newThisOrLastPeriodExpression("LAST", "YEARS"))}
                      </Box>
                   </Box>
             }
          </Menu>
       </Box>
       <Box>
-         <AdvancedDateTimeFilterValues type={field.type} expression={currentExpression} onSave={(expression: any) => saveNewDateTimeExpression(valueIndex, expression)} />
+         <AdvancedDateTimeFilterValues type={field.type} expression={currentExpression} onSave={(expression: any) => saveNewDateTimeExpression(valueIndex, expression)} forcedOpen={forceAdvancedDateTimeDialogOpen} />
       </Box>
    </Box>;
 }
+

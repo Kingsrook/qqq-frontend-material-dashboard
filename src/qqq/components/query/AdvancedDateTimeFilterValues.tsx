@@ -43,9 +43,12 @@ interface Props
    type: QFieldType
    expression: any;
    onSave: (expression: any) => void;
+   forcedOpen: boolean;
 }
 
-AdvancedDateTimeFilterValues.defaultProps = {};
+AdvancedDateTimeFilterValues.defaultProps = {
+   forcedOpen: false
+};
 
 const extractExpressionType = (expression: any) => expression?.type ?? "NowWithOffset";
 const extractNowWithOffsetAmount = (expression: any) => expression?.type == "NowWithOffset" ? (expression?.amount ?? 1) : 1;
@@ -54,7 +57,7 @@ const extractNowWithOffsetOperator = (expression: any) => expression?.type == "N
 const extractThisOrLastPeriodTimeUnit = (expression: any) => expression?.type == "ThisOrLastPeriod" ? (expression?.timeUnit ?? "DAYS") : "DAYS" as ThisOrLastPeriodUnit;
 const extractThisOrLastPeriodOperator = (expression: any) => expression?.type == "ThisOrLastPeriod" ? (expression?.operator ?? "THIS") : "THIS" as ThisOrLastPeriodOperator;
 
-function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.Element
+function AdvancedDateTimeFilterValues({type, expression, onSave, forcedOpen}: Props): JSX.Element
 {
    const [originalExpression, setOriginalExpression] = useState(JSON.stringify(expression));
 
@@ -68,6 +71,11 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
    const [thisOrLastPeriodOperator, setThisOrLastPeriodOperator] = useState(extractThisOrLastPeriodOperator(expression));
 
    const [isOpen, setIsOpen] = useState(false)
+
+   if(!isOpen && forcedOpen)
+   {
+      setIsOpen(true);
+   }
 
    const setStateToExpression = (activeExpression: any) =>
    {
@@ -196,8 +204,8 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
 
    return (
       <Box>
-         <Tooltip title={`Define a more advanced ${type == QFieldType.DATE ? "date" : "date-time"} condition`}>
-            <Icon onClick={openDialog} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>settings</Icon>
+         <Tooltip title={`Define a custom ${type == QFieldType.DATE ? "date" : "date-time"} condition`}>
+            <Icon onClick={openDialog} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer", position: "relative", top: "2px"}}>settings</Icon>
          </Tooltip>
          {
             isOpen &&
@@ -209,7 +217,7 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                            <Box p={4} pb={2}>
                               <Grid container>
                                  <Grid item pr={3} xs={12} lg={12}>
-                                    <Typography variant="h5">Advanced Date Filter Condition</Typography>
+                                    <Typography variant="h5">Custom Date Filter Condition</Typography>
                                     <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
                                        Select the type of expression you want for your condition.<br />
                                        Then enter values to express your condition.
@@ -220,11 +228,11 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                            <RadioGroup name="expressionType" value={expressionType} onChange={handleExpressionTypeChange}>
 
                               <Box px={4} pb={4}>
-                                 <FormControlLabel value={"Now"} control={<Radio size="small" />} label="Now" />
+                                 <FormControlLabel value="Now" control={<Radio size="small" />} label={type == QFieldType.DATE_TIME ? "Now" : "Today"} />
                               </Box>
 
                               <Box px={4} pb={4}>
-                                 <FormControlLabel value={"NowWithOffset"} control={<Radio size="small" />} label="Relative Expression" />
+                                 <FormControlLabel value="NowWithOffset" control={<Radio size="small" />} label="Relative Expression" />
                                  <Box pl={4}>
                                     <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
                                        <TextField
@@ -260,7 +268,7 @@ function AdvancedDateTimeFilterValues({type, expression, onSave}: Props): JSX.El
                               </Box>
 
                               <Box px={4} pb={4}>
-                                 <FormControlLabel value={"ThisOrLastPeriod"} control={<Radio size="small" />} label={`${type == QFieldType.DATE_TIME ? "Start of " : ""}This or Last...`} />
+                                 <FormControlLabel value="ThisOrLastPeriod" control={<Radio size="small" />} label={`${type == QFieldType.DATE_TIME ? "Start of " : ""}This or Last...`} />
                                  <Box pl={4}>
 
                                     <FormControl variant="standard" sx={{verticalAlign: "bottom", width: "30%"}}>
