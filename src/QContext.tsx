@@ -20,6 +20,7 @@
  */
 
 import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
+import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -33,19 +34,22 @@ interface QContext
    accentColor: string;
    setAccentColor?: (header: string) => void;
    dotMenuOpen: boolean;
+   setDotMenuOpen?: (dotMenuOpen: boolean) => void;
    qInstance?: QInstance;
    appMetaData?: QAppMetaData;
    tableMetaData?: QTableMetaData;
    setTableMetaData?: (tableMetaData: QTableMetaData) => void;
    tableProcesses?: QProcessMetaData[];
    setTableProcesses?: (tableProcesses: QProcessMetaData[]) => void;
-   setDotMenuOpen?: (dotMenuOpen: boolean) => void;
+   pathToLabelMap?: {[path: string]: string};
+   branding?: QBrandingMetaData;
 }
 
 const defaultState = {
    pageHeader: "",
    accentColor: "#0062FF",
-   dotMenuOpen: false
+   dotMenuOpen: false,
+   pathToLabelMap: {},
 };
 
 const QContext = createContext<QContext>(defaultState);
