@@ -26,21 +26,26 @@ import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {createContext} from "react";
 
-
 interface QContext
 {
    pageHeader: string | JSX.Element;
    setPageHeader?: (header: string | JSX.Element) => void;
+
    accentColor: string;
    setAccentColor?: (header: string) => void;
+
    dotMenuOpen: boolean;
    setDotMenuOpen?: (dotMenuOpen: boolean) => void;
-   qInstance?: QInstance;
-   appMetaData?: QAppMetaData;
+
    tableMetaData?: QTableMetaData;
    setTableMetaData?: (tableMetaData: QTableMetaData) => void;
+
    tableProcesses?: QProcessMetaData[];
    setTableProcesses?: (tableProcesses: QProcessMetaData[]) => void;
+
+   ///////////////////////////////////
+   // constants - no setters needed //
+   ///////////////////////////////////
    pathToLabelMap?: {[path: string]: string};
    branding?: QBrandingMetaData;
 }
