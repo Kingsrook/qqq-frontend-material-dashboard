@@ -215,6 +215,11 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const {pathToLabelMap} = useContext(QContext);
    const fullPathToLabel = (fullPath: string, route: string): string =>
    {
+      if(fullPath.endsWith("/"))
+      {
+         fullPath = fullPath.replace(/\/+$/, "");
+      }
+
       if(pathToLabelMap && pathToLabelMap[fullPath])
       {
          return pathToLabelMap[fullPath];

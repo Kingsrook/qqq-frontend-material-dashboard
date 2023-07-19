@@ -59,11 +59,25 @@ export const routeToLabel = (route: string): string =>
 
 function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
 {
+   ///////////////////////////////////////////////////////////////////////
+   // strip away empty elements of the route (e.g., trailing slash(es)) //
+   ///////////////////////////////////////////////////////////////////////
+   if(route.length)
+   {
+      // @ts-ignore
+      route = route.filter(r => r != "");
+   }
+
    const routes: string[] | any = route.slice(0, -1);
    const {pageHeader, pathToLabelMap, branding} = useContext(QContext);
 
    const fullPathToLabel = (fullPath: string, route: string): string =>
    {
+      if(fullPath.endsWith("/"))
+      {
+         fullPath = fullPath.replace(/\/+$/, "");
+      }
+
       if(pathToLabelMap && pathToLabelMap[fullPath])
       {
          return pathToLabelMap[fullPath];
@@ -78,6 +92,11 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    for (let i = 0; i < routes.length; i++)
    {
       if(routes[i] === "savedFilter")
+      {
+         continue;
+      }
+
+      if(routes[i] === "")
       {
          continue;
       }
