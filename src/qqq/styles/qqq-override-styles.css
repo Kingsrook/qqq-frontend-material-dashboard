@@ -446,22 +446,34 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    font-size: 14px !important;
 }
 
-/* fix something in AND/OR dropdown in filters */
-.customFilterPanel .booleanOperatorColumn .MuiSvgIcon-root
+/* make down-arrow appear in select boxes */
+.customFilterPanel .booleanOperatorColumn .MuiSvgIcon-root,
+.AdvancedDateTimeFilterValues .MuiSvgIcon-root
 {
    display: inline-block !important;
 }
 
-/* adjust bottom of AND/OR dropdown in filters */
-.customFilterPanel .booleanOperatorColumn .MuiInputBase-formControl
+/* adjust vertical padding in filter selects  */
+.customFilterPanel .booleanOperatorColumn .MuiInputBase-formControl .MuiSelect-select,
+.AdvancedDateTimeFilterValues .MuiInputBase-formControl .MuiSelect-select
 {
-   padding-bottom: calc(0.25rem + 1px);
+   padding-bottom: calc(0.25rem + 1px) !important;
+   padding-top: calc(0.25rem + 1px) !important;
 }
 
-/* adjust down-arrow in AND/OR dropdown in filters */
-.customFilterPanel .booleanOperatorColumn .MuiSelect-iconStandard
+.customFilterPanel .filterValuesColumn .MuiInputBase-inputAdornedEnd
 {
-   top: calc(50% - 0.75rem);
+   padding-right: 0 !important;
+}
+
+.customFilterPanel .filterValuesColumn .MuiInputAdornment-positionEnd button
+{
+   padding-left: 0;
+}
+
+.customFilterPanel .filterValuesColumn .MuiSelect-iconStandard
+{
+   display: inline;
 }
 
 /* change tags in any-of value fields to not be black bg with white text */

@@ -23,10 +23,13 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
+import {NowWithOffsetExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {ThisOrLastPeriodExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import {GridFilterItem, GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -285,6 +288,11 @@ class FilterUtils
          return (param);
       }
 
+      if (FilterUtils.gridCriteriaValueToExpression(param))
+      {
+         return (param);
+      }
+
       let rs = [];
       for (let i = 0; i < param.length; i++)
       {
@@ -342,18 +350,24 @@ class FilterUtils
          return (values);
       }
 
-      if (values.length > 0)
+      if (values && values.length > 0)
       {
          ////////////////////////////////////////////////////////////////////////////////////////////////
          // make sure dates are formatted for the grid the way it expects - not the way we pass it in. //
          ////////////////////////////////////////////////////////////////////////////////////////////////
          if (fieldType === QFieldType.DATE_TIME)
          {
-            values[0] = ValueUtils.formatDateTimeValueForForm(values[0]);
+            for(let i = 0; i<values.length; i++)
+            {
+               if(!values[i].type)
+               {
+                  values[i] = ValueUtils.formatDateTimeValueForForm(values[i]);
+               }
+            }
          }
       }
 
-      return (values[0]);
+      return (values ? values[0] : "");
    };
 
 
@@ -432,106 +446,15 @@ class FilterUtils
                      }
                   }
 
-                  if (field && field.type == "DATE_TIME" && !values)
+                  //////////////////////////////////////////////////////////////////////////
+                  // replace objects that look like expressions with expression instances //
+                  //////////////////////////////////////////////////////////////////////////
+                  for(let i = 0; i < values.length; i++)
                   {
-                     try
+                     const expression = this.gridCriteriaValueToExpression(values[i])
+                     if(expression)
                      {
-                        const criteria = filterJSON.criteria[i];
-                        if (criteria && criteria.expression)
-                        {
-                           let value = new Date();
-                           let amount = Number(criteria.expression.amount);
-                           switch (criteria.expression.timeUnit)
-                           {
-                              case "MINUTES":
-                              {
-                                 amount = amount * 60;
-                                 break;
-                              }
-                              case "HOURS":
-                              {
-                                 amount = amount * 60 * 60;
-                                 break;
-                              }
-                              case "DAYS":
-                              {
-                                 amount = amount * 60 * 60 * 24;
-                                 break;
-                              }
-                              default:
-                              {
-                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
-                              }
-                           }
-
-                           if (criteria.expression.operator == "MINUS")
-                           {
-                              amount = -amount;
-                           }
-
-                           /////////////////////////////////////////////
-                           // shift the date/time by the input amount //
-                           /////////////////////////////////////////////
-                           value.setTime(value.getTime() + 1000 * amount);
-
-                           /////////////////////////////////////////////////
-                           // now also shift from local-timezone into UTC //
-                           /////////////////////////////////////////////////
-                           value.setTime(value.getTime() + 1000 * 60 * value.getTimezoneOffset());
-
-                           values = [ValueUtils.formatDateTimeISO8601(value)];
-                        }
-                     }
-                     catch (e)
-                     {
-                        console.log(e);
-                     }
-                  }
-
-                  if (field && field.type == "DATE" && !values)
-                  {
-                     try
-                     {
-                        const criteria = filterJSON.criteria[i];
-                        if (criteria && criteria.expression)
-                        {
-                           let value = new Date();
-                           let amount = Number(criteria.expression.amount);
-                           switch (criteria.expression.timeUnit)
-                           {
-                              case "MINUTES":
-                              {
-                                 amount = amount * 60;
-                                 break;
-                              }
-                              case "HOURS":
-                              {
-                                 amount = amount * 60 * 60;
-                                 break;
-                              }
-                              case "DAYS":
-                              {
-                                 amount = amount * 60 * 60 * 24;
-                                 break;
-                              }
-                              default:
-                              {
-                                 console.log("Unrecognized time unit: " + criteria.expression.timeUnit);
-                              }
-                           }
-
-                           if (criteria.expression.operator == "MINUS")
-                           {
-                              amount = -amount;
-                           }
-
-                           value.setTime(value.getTime() + 1000 * amount);
-                           values = [ValueUtils.formatDateISO8601(value)];
-                        }
-                     }
-                     catch (e)
-                     {
-                        console.log(e);
+                        values[i] = expression;
                      }
                   }
 
@@ -539,7 +462,7 @@ class FilterUtils
                      columnField: criteria.fieldName,
                      operatorValue: FilterUtils.qqqCriteriaOperatorToGrid(criteria.operator, field, values),
                      value: FilterUtils.qqqCriteriaValuesToGrid(criteria.operator, values, field),
-                     id: id++, // not sure what this id is!!
+                     id: id++
                   });
                }
 
@@ -549,9 +472,9 @@ class FilterUtils
                   defaultFilter.linkOperator = GridLinkOperator.Or;
                }
 
-               //////////////////////////////////////////////////////////////////
-               // translate from a qqq-style filter to one that the grid wants //
-               //////////////////////////////////////////////////////////////////
+               /////////////////////////////////////////////////////////////////
+               // translate from qqq-style orderBy to one that the grid wants //
+               /////////////////////////////////////////////////////////////////
                if (qQueryFilter.orderBys && qQueryFilter.orderBys.length > 0)
                {
                   for (let i = 0; i < qQueryFilter.orderBys.length; i++)
@@ -593,6 +516,36 @@ class FilterUtils
             defaultSort = JSON.parse(localStorage.getItem(sortLocalStorageKey));
             console.log(`Got default from LS: ${JSON.stringify(defaultSort)}`);
          }
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////
+      // if any values in the items are objects, but should be expression instances, //
+      // then convert & replace them.                                               //
+      /////////////////////////////////////////////////////////////////////////////////
+      if(defaultFilter && defaultFilter.items && defaultFilter.items.length)
+      {
+         defaultFilter.items.forEach((item) =>
+         {
+            if(item.value && item.value.length)
+            {
+               for (let i = 0; i < item.value.length; i++)
+               {
+                  const expression = this.gridCriteriaValueToExpression(item.value[i])
+                  if(expression)
+                  {
+                     item.value[i] = expression;
+                  }
+               }
+            }
+            else
+            {
+               const expression = this.gridCriteriaValueToExpression(item.value)
+               if(expression)
+               {
+                  item.value = expression;
+               }
+            }
+         });
       }
 
       return ({filter: defaultFilter, sort: defaultSort});
@@ -699,19 +652,30 @@ class FilterUtils
             ////////////////////////////////////////////////////////////////////////////////
             // if no value set and not 'empty' or 'not empty' operators, skip this filter //
             ////////////////////////////////////////////////////////////////////////////////
-            if ((!item.value || item.value.length == 0 || (item.value.length == 1 && (item.value[0] === "" || item.value[0] === undefined))) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            let incomplete = false;
+            if (item.operatorValue === "between" || item.operatorValue === "notBetween")
             {
-               if (!allowIncompleteCriteria)
+               if(!item.value || !item.value.length || item.value.length < 2 || this.isUnset(item.value[0]) || this.isUnset(item.value[1]))
                {
-                  console.log(`Discarding incomplete filter criteria: ${JSON.stringify(item)}`);
-                  return;
+                  incomplete = true;
                }
+            }
+            else if ((!item.value || item.value.length == 0 || (item.value.length == 1 && this.isUnset(item.value[0]))) && item.operatorValue !== "isEmpty" && item.operatorValue !== "isNotEmpty")
+            {
+               incomplete = true;
+            }
+
+            if (incomplete && !allowIncompleteCriteria)
+            {
+               console.log(`Discarding incomplete filter criteria: ${JSON.stringify(item)}`);
+               return;
             }
 
             const fieldMetadata = tableMetaData?.fields.get(item.columnField);
             const operator = FilterUtils.gridCriteriaOperatorToQQQ(item.operatorValue);
             const values = FilterUtils.gridCriteriaValueToQQQ(operator, item.value, item.operatorValue, fieldMetadata);
-            qFilter.addCriteria(new QFilterCriteria(item.columnField, operator, values));
+            let criteria = new QFilterCriteria(item.columnField, operator, values);
+            qFilter.addCriteria(criteria);
             foundFilter = true;
          });
 
@@ -727,6 +691,44 @@ class FilterUtils
 
       return qFilter;
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static isUnset(value: any)
+   {
+      return value === "" || value === undefined;
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private static gridCriteriaValueToExpression(value: any)
+   {
+      if (value && value.length)
+      {
+         value = value[0];
+      }
+
+      if (value && value.type)
+      {
+         if (value.type == "NowWithOffset")
+         {
+            return (new NowWithOffsetExpression(value));
+         }
+         else if (value.type == "Now")
+         {
+            return (new NowExpression(value));
+         }
+         else if (value.type == "ThisOrLastPeriod")
+         {
+            return (new ThisOrLastPeriodExpression(value));
+         }
+      }
+
+      return (null);
+   }
 
 
    /*******************************************************************************

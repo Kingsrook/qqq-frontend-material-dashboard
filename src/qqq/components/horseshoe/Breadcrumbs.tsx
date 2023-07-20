@@ -59,10 +59,34 @@ export const routeToLabel = (route: string): string =>
 
 function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
 {
-   const routes: string[] | any = route.slice(0, -1);
-   const {pageHeader, setPageHeader} = useContext(QContext);
+   ///////////////////////////////////////////////////////////////////////
+   // strip away empty elements of the route (e.g., trailing slash(es)) //
+   ///////////////////////////////////////////////////////////////////////
+   if(route.length)
+   {
+      // @ts-ignore
+      route = route.filter(r => r != "");
+   }
 
-   let pageTitle = "ColdTrack Live";
+   const routes: string[] | any = route.slice(0, -1);
+   const {pageHeader, pathToLabelMap, branding} = useContext(QContext);
+
+   const fullPathToLabel = (fullPath: string, route: string): string =>
+   {
+      if(fullPath.endsWith("/"))
+      {
+         fullPath = fullPath.replace(/\/+$/, "");
+      }
+
+      if(pathToLabelMap && pathToLabelMap[fullPath])
+      {
+         return pathToLabelMap[fullPath];
+      }
+
+      return (routeToLabel(route));
+   }
+
+   let pageTitle = branding?.appName ?? "";
    const fullRoutes: string[] = [];
    let accumulatedPath = "";
    for (let i = 0; i < routes.length; i++)
@@ -72,9 +96,14 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
          continue;
       }
 
+      if(routes[i] === "")
+      {
+         continue;
+      }
+
       accumulatedPath = `${accumulatedPath}/${routes[i]}`;
       fullRoutes.push(accumulatedPath);
-      pageTitle = `${routeToLabel(routes[i])} | ${pageTitle}`;
+      pageTitle = `${fullPathToLabel(accumulatedPath, routes[i])} | ${pageTitle}`;
    }
 
    document.title = `${ucFirst(title)} | ${pageTitle}`;
@@ -110,7 +139,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
                      opacity={light ? 0.8 : 0.5}
                      sx={{lineHeight: 0}}
                   >
-                     {routeToLabel(fullRoute.replace(/.*\//, ""))}
+                     {fullPathToLabel(fullRoute, fullRoute.replace(/.*\//, ""))}
                   </MDTypography>
                </Link>
             ))}
