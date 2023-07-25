@@ -104,7 +104,18 @@ class DynamicFormUtils
    {
       if (field.isRequired)
       {
-         return (Yup.string().required(`${field.label} is required.`));
+         if(field.possibleValueSourceName)
+         {
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            // the "nullable(true)" here doesn't mean that you're allowed to set the field to null... //
+            // rather, it's more like "null is how empty will be treated" or some-such...             //
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            return (Yup.string().required(`${field.label} is required.`).nullable(true));
+         }
+         else
+         {
+            return (Yup.string().required(`${field.label} is required.`));
+         }
       }
       return (null);
    }

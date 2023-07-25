@@ -27,8 +27,9 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
-import {useFormikContext} from "formik";
+import {ErrorMessage, useFormikContext} from "formik";
 import React, {useEffect, useState} from "react";
+import MDTypography from "qqq/components/legacy/MDTypography";
 import Client from "qqq/utils/qqq/Client";
 
 interface Props
@@ -246,78 +247,85 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
    // console.log(`default value: ${JSON.stringify(defaultValue)}`);
 
    const autocomplete = (
-      <Autocomplete
-         id={overrideId ?? fieldName}
-         sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
-         open={open}
-         fullWidth
-         onOpen={() =>
-         {
-            setOpen(true);
-            // console.log("setting open...");
-            if(options.length == 0)
+      <Box>
+         <Autocomplete
+            id={overrideId ?? fieldName}
+            sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
+            open={open}
+            fullWidth
+            onOpen={() =>
             {
-               // console.log("no options yet, so setting search term to ''...");
-               setSearchTerm("");
-            }
-         }}
-         onClose={() =>
-         {
-            setOpen(false);
-         }}
-         isOptionEqualToValue={(option, value) => option.id === value.id}
-         getOptionLabel={(option) =>
-         {
-            // @ts-ignore
-            if(option && option.length)
+               setOpen(true);
+               // console.log("setting open...");
+               if(options.length == 0)
+               {
+                  // console.log("no options yet, so setting search term to ''...");
+                  setSearchTerm("");
+               }
+            }}
+            onClose={() =>
+            {
+               setOpen(false);
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            getOptionLabel={(option) =>
             {
                // @ts-ignore
-               option = option[0];
-            }
+               if(option && option.length)
+               {
+                  // @ts-ignore
+                  option = option[0];
+               }
+               // @ts-ignore
+               return option.label
+            }}
+            options={options}
+            loading={loading}
+            onInputChange={inputChanged}
+            onBlur={handleBlur}
+            defaultValue={defaultValue}
             // @ts-ignore
-            return option.label
-         }}
-         options={options}
-         loading={loading}
-         onInputChange={inputChanged}
-         onBlur={handleBlur}
-         defaultValue={defaultValue}
-         // @ts-ignore
-         onChange={handleChanged}
-         noOptionsText={"No matches found"}
-         onKeyPress={e =>
-         {
-            if (e.key === "Enter")
+            onChange={handleChanged}
+            noOptionsText={"No matches found"}
+            onKeyPress={e =>
             {
-               e.preventDefault();
-            }
-         }}
-         renderOption={renderOption}
-         filterOptions={filterOptions}
-         disabled={isDisabled}
-         multiple={isMultiple}
-         disableCloseOnSelect={isMultiple}
-         limitTags={5}
-         slotProps={{popper: {className: "DynamicSelectPopper"}}}
-         renderInput={(params) => (
-            <TextField
-               {...params}
-               label={fieldLabel}
-               variant="standard"
-               autoComplete="off"
-               type="search"
-               InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                     <React.Fragment>
-                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                     </React.Fragment>
-                  ),
-               }}
-            />
-         )}
-      />
+               if (e.key === "Enter")
+               {
+                  e.preventDefault();
+               }
+            }}
+            renderOption={renderOption}
+            filterOptions={filterOptions}
+            disabled={isDisabled}
+            multiple={isMultiple}
+            disableCloseOnSelect={isMultiple}
+            limitTags={5}
+            slotProps={{popper: {className: "DynamicSelectPopper"}}}
+            renderInput={(params) => (
+               <TextField
+                  {...params}
+                  label={fieldLabel}
+                  variant="standard"
+                  autoComplete="off"
+                  type="search"
+                  InputProps={{
+                     ...params.InputProps,
+                     endAdornment: (
+                        <React.Fragment>
+                           {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                           {params.InputProps.endAdornment}
+                        </React.Fragment>
+                     ),
+                  }}
+               />
+            )}
+         />
+         <Box mt={0.75}>
+            <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+               {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
+            </MDTypography>
+         </Box>
+      </Box>
    );
 
 
