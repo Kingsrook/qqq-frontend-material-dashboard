@@ -37,6 +37,9 @@ interface QContext
    dotMenuOpen: boolean;
    setDotMenuOpen?: (dotMenuOpen: boolean) => void;
 
+   keyboardHelpOpen: boolean;
+   setKeyboardHelpOpen?: (keyboardHelpOpen: boolean) => void;
+
    tableMetaData?: QTableMetaData;
    setTableMetaData?: (tableMetaData: QTableMetaData) => void;
 
@@ -54,6 +57,7 @@ const defaultState = {
    pageHeader: "",
    accentColor: "#0062FF",
    dotMenuOpen: false,
+   keyboardHelpOpen: false,
    pathToLabelMap: {},
 };
 
