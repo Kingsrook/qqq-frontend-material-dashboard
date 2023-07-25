@@ -252,7 +252,6 @@ function EntityForm(props: Props): JSX.Element
                      if (results && results.length > 0)
                      {
                         defaultDisplayValues.set(fieldName, results[0].label);
-                        initialValues[fieldName] = {id: defaultValue, value: results[0].label}
                      }
                   }
                }
