@@ -473,7 +473,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          }
          else
          {
-            if(isNotSet(criteria.values[0]))
+            if(!criteria.values || isNotSet(criteria.values[0]))
             {
                criteriaIsValid = false;
                criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";
