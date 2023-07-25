@@ -320,11 +320,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
                />
             )}
          />
-         <Box mt={0.75}>
-            <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-               {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
-            </MDTypography>
-         </Box>
+         {
+            inForm &&
+            <Box mt={0.75}>
+               <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
+               </MDTypography>
+            </Box>
+         }
       </Box>
    );
 
