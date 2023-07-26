@@ -74,6 +74,15 @@
             "isEditable": true,
             "displayFormat": "%s"
          },
+         "homeCityId": {
+            "name": "homeCityId",
+            "label": "Home City",
+            "type": "INTEGER",
+            "possibleValueSourceName": "city",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%s"
+         },
          "email": {
             "name": "email",
             "label": "Email",
