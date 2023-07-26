@@ -56,11 +56,113 @@ export interface OperatorOption
 {
    label: string;
    value: QCriteriaOperator;
-   implicitValues?: [any];
+   implicitValues?: any[];
    valueMode: ValueMode;
 }
 
 export const getDefaultCriteriaValue = () => [""];
+
+export const getOperatorOptions = (tableMetaData: QTableMetaData, fieldName: string): OperatorOption[] =>
+{
+   const [field, fieldTable] = FilterUtils.getField(tableMetaData, fieldName);
+   let operatorOptions = [];
+   if (field && fieldTable)
+   {
+      //////////////////////////////////////////////////////
+      // setup array of options for operator Autocomplete //
+      //////////////////////////////////////////////////////
+      if (field.possibleValueSourceName)
+      {
+         operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.PVS_SINGLE});
+         operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.PVS_SINGLE});
+         operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+         operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+         operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.PVS_MULTI});
+         operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.PVS_MULTI});
+      }
+      else
+      {
+         switch (field.type)
+         {
+            case QFieldType.DECIMAL:
+            case QFieldType.INTEGER:
+               operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "greater than", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "greater than or equals", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "less than", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "less than or equals", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE});
+               operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE});
+               operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.MULTI});
+               operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.MULTI});
+               break;
+            case QFieldType.DATE:
+               operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "is on or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "is on or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
+               operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
+               //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
+               //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
+               //? operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN});
+               //? operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN});
+               break;
+            case QFieldType.DATE_TIME:
+               operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "is at or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "is at or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
+               operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
+               //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
+               //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
+               break;
+            case QFieldType.BOOLEAN:
+               operatorOptions.push({label: "equals yes", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [true]});
+               operatorOptions.push({label: "equals no", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [false]});
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               /*
+               ? is yes or empty (is not no)
+               ? is no or empty (is not yes)
+                */
+               break;
+            case QFieldType.BLOB:
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               break;
+            default:
+               operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "contains ", value: QCriteriaOperator.CONTAINS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "does not contain", value: QCriteriaOperator.NOT_CONTAINS, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "starts with", value: QCriteriaOperator.STARTS_WITH, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "does not start with", value: QCriteriaOperator.NOT_STARTS_WITH, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "ends with", value: QCriteriaOperator.ENDS_WITH, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "does not end with", value: QCriteriaOperator.NOT_ENDS_WITH, valueMode: ValueMode.SINGLE});
+               operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
+               operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.MULTI});
+               operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.MULTI});
+         }
+      }
+   }
+
+   return (operatorOptions);
+}
+
 
 interface FilterCriteriaRowProps
 {
@@ -120,105 +222,6 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    ////////////////////////////////////////////////////////////
    let operatorOptions: OperatorOption[] = [];
 
-   function setOperatorOptions(fieldName: string)
-   {
-      const [field, fieldTable] = FilterUtils.getField(tableMetaData, fieldName);
-      operatorOptions = [];
-      if (field && fieldTable)
-      {
-         //////////////////////////////////////////////////////
-         // setup array of options for operator Autocomplete //
-         //////////////////////////////////////////////////////
-         if (field.possibleValueSourceName)
-         {
-            operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.PVS_SINGLE});
-            operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.PVS_SINGLE});
-            operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-            operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-            operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.PVS_MULTI});
-            operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.PVS_MULTI});
-         }
-         else
-         {
-            switch (field.type)
-            {
-               case QFieldType.DECIMAL:
-               case QFieldType.INTEGER:
-                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "greater than", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "greater than or equals", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "less than", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "less than or equals", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE});
-                  operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE});
-                  operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.MULTI});
-                  operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.MULTI});
-                  break;
-               case QFieldType.DATE:
-                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is on or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is on or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE});
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
-                  operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE});
-                  //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
-                  //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
-                  //? operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN});
-                  //? operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN});
-                  break;
-               case QFieldType.DATE_TIME:
-                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is after", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is at or after", value: QCriteriaOperator.GREATER_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is before", value: QCriteriaOperator.LESS_THAN, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is at or before", value: QCriteriaOperator.LESS_THAN_OR_EQUALS, valueMode: ValueMode.SINGLE_DATE_TIME});
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
-                  operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN, valueMode: ValueMode.DOUBLE_DATE_TIME});
-                  //? operatorOptions.push({label: "is between", value: QCriteriaOperator.BETWEEN});
-                  //? operatorOptions.push({label: "is not between", value: QCriteriaOperator.NOT_BETWEEN});
-                  break;
-               case QFieldType.BOOLEAN:
-                  operatorOptions.push({label: "equals yes", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [true]});
-                  operatorOptions.push({label: "equals no", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.NONE, implicitValues: [false]});
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  /*
-                  ? is yes or empty (is not no)
-                  ? is no or empty (is not yes)
-                   */
-                  break;
-               case QFieldType.BLOB:
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  break;
-               default:
-                  operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "contains ", value: QCriteriaOperator.CONTAINS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "does not contain", value: QCriteriaOperator.NOT_CONTAINS, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "starts with", value: QCriteriaOperator.STARTS_WITH, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "does not start with", value: QCriteriaOperator.NOT_STARTS_WITH, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "ends with", value: QCriteriaOperator.ENDS_WITH, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "does not end with", value: QCriteriaOperator.NOT_ENDS_WITH, valueMode: ValueMode.SINGLE});
-                  operatorOptions.push({label: "is empty", value: QCriteriaOperator.IS_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is not empty", value: QCriteriaOperator.IS_NOT_BLANK, valueMode: ValueMode.NONE});
-                  operatorOptions.push({label: "is any of", value: QCriteriaOperator.IN, valueMode: ValueMode.MULTI});
-                  operatorOptions.push({label: "is none of", value: QCriteriaOperator.NOT_IN, valueMode: ValueMode.MULTI});
-            }
-         }
-      }
-   }
-
    ////////////////////////////////////////////////////////////////
    // make currently selected values appear in the Autocompletes //
    ////////////////////////////////////////////////////////////////
@@ -240,8 +243,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
             defaultFieldValue = {field: field, table: fieldTable, fieldName: criteria.fieldName};
          }
 
-         setOperatorOptions(criteria.fieldName);
-
+         operatorOptions = getOperatorOptions(tableMetaData, criteria.fieldName);
 
          let newOperatorSelectedValue = operatorOptions.filter(option =>
          {
@@ -294,7 +296,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
       ////////////////////////////////////////////////////////////////////
       // update the operator options, and the operator on this criteria //
       ////////////////////////////////////////////////////////////////////
-      setOperatorOptions(criteria.fieldName);
+      operatorOptions = getOperatorOptions(tableMetaData, criteria.fieldName);
       if (operatorOptions.length)
       {
          if (isFieldTypeDifferent(oldFieldName, criteria.fieldName))
@@ -473,7 +475,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          }
          else
          {
-            if(isNotSet(criteria.values[0]))
+            if(!criteria.values || isNotSet(criteria.values[0]))
             {
                criteriaIsValid = false;
                criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";

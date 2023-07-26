@@ -32,8 +32,8 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
-import {Form, Formik} from "formik";
-import React, {useContext, useReducer, useState} from "react";
+import {Form, Formik, useFormikContext} from "formik";
+import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
 import QContext from "QContext";
@@ -77,7 +77,7 @@ function EntityForm(props: Props): JSX.Element
 
    const [formTitle, setFormTitle] = useState("");
    const [validations, setValidations] = useState({});
-   const [initialValues, setInitialValues] = useState({} as { [key: string]: string });
+   const [initialValues, setInitialValues] = useState({} as { [key: string]: any });
    const [formFields, setFormFields] = useState(null as Map<string, any>);
    const [t1sectionName, setT1SectionName] = useState(null as string);
    const [nonT1Sections, setNonT1Sections] = useState([] as QTableSection[]);
@@ -233,27 +233,25 @@ function EntityForm(props: Props): JSX.Element
             ////////////////////////////////////////////////////////////////////////////////////////////////
             // if default values were supplied for a new record, then populate initialValues, for formik. //
             ////////////////////////////////////////////////////////////////////////////////////////////////
-            if(defaultValues)
+            for (let i = 0; i < fieldArray.length; i++)
             {
-               for (let i = 0; i < fieldArray.length; i++)
+               const fieldMetaData = fieldArray[i];
+               const fieldName = fieldMetaData.name;
+               const defaultValue = (defaultValues && defaultValues[fieldName]) ? defaultValues[fieldName] : fieldMetaData.defaultValue;
+               if (defaultValue)
                {
-                  const fieldMetaData = fieldArray[i];
-                  const fieldName = fieldMetaData.name;
-                  if (defaultValues[fieldName])
-                  {
-                     initialValues[fieldName] = defaultValues[fieldName];
+                  initialValues[fieldName] = defaultValue;
 
-                     ///////////////////////////////////////////////////////////////////////////////////////////
-                     // we need to set the initialDisplayValue for possible value fields with a default value //
-                     // so, look them up here now if needed                                                   //
-                     ///////////////////////////////////////////////////////////////////////////////////////////
-                     if (fieldMetaData.possibleValueSourceName)
+                  ///////////////////////////////////////////////////////////////////////////////////////////
+                  // we need to set the initialDisplayValue for possible value fields with a default value //
+                  // so, look them up here now if needed                                                   //
+                  ///////////////////////////////////////////////////////////////////////////////////////////
+                  if (fieldMetaData.possibleValueSourceName)
+                  {
+                     const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
+                     if (results && results.length > 0)
                      {
-                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
-                        if (results && results.length > 0)
-                        {
-                           defaultDisplayValues.set(fieldName, results[0].label);
-                        }
+                        defaultDisplayValues.set(fieldName, results[0].label);
                      }
                   }
                }
@@ -598,6 +596,7 @@ function EntityForm(props: Props): JSX.Element
                         isSubmitting,
                      }) => (
                         <Form id={formId} autoComplete="off">
+                           <ScrollToFirstError />
 
                            <Box pb={3} pt={0}>
                               <Card id={`${t1sectionName}`} sx={{overflow: "visible", pb: 2, scrollMarginTop: "100px"}} elevation={cardElevation}>
@@ -671,5 +670,44 @@ function EntityForm(props: Props): JSX.Element
       return (body);
    }
 }
+
+function ScrollToFirstError(): JSX.Element
+{
+   const {submitCount, isValid} = useFormikContext()
+
+   useEffect(() =>
+   {
+      /////////////////////////////////////////////////////////////////////////////
+      // Wrap the code in setTimeout to make sure it runs after the DOM has been //
+      // updated and has the error message elements.                             //
+      /////////////////////////////////////////////////////////////////////////////
+      setTimeout(() =>
+      {
+         ////////////////////////////////////////
+         // Only run on submit or if not valid //
+         ////////////////////////////////////////
+         if (submitCount === 0 || isValid)
+         {
+            return;
+         }
+
+         //////////////////////////////////
+         // Find the first error message //
+         //////////////////////////////////
+         const errorMessageSelector = "[data-field-error]";
+         const firstErrorMessage = document.querySelector(errorMessageSelector);
+         if (!firstErrorMessage)
+         {
+            console.warn(`Form failed validation but no error field was found with selector: ${errorMessageSelector}`);
+            return;
+         }
+         firstErrorMessage.scrollIntoView({block: "center"});
+
+      }, 100)
+   }, [submitCount, isValid])
+
+   return null;
+}
+
 
 export default EntityForm;

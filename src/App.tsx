@@ -574,6 +574,7 @@ export default function App()
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableProcesses, setTableProcesses] = useState(null);
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
+   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    return (
 
       appRoutes && (
@@ -583,11 +584,13 @@ export default function App()
             tableMetaData: tableMetaData,
             tableProcesses: tableProcesses,
             dotMenuOpen: dotMenuOpen,
+            keyboardHelpOpen: keyboardHelpOpen,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor),
             setTableMetaData: (tableMetaData: QTableMetaData) => setTableMetaData(tableMetaData),
             setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
             setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent),
+            setKeyboardHelpOpen: (keyboardHelpOpen: boolean) => setKeyboardHelpOpen(keyboardHelpOpen),
             pathToLabelMap: pathToLabelMap,
             branding: branding
          }}>

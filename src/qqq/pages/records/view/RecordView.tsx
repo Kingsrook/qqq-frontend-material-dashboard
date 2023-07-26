@@ -116,7 +116,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen} = useContext(QContext);
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -138,7 +138,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       setShowAudit(false);
    };
 
-   // Toggle the menu when ⌘K is pressed
+   ///////////////////////
+   // Keyboard handling //
+   ///////////////////////
    useEffect(() =>
    {
       if(tableMetaData == null)
@@ -155,7 +157,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          const type = (e.target as any).type;
          const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
 
-         if(validType && !dotMenuOpen && !showAudit && !showEditChildForm)
+         if(validType && !dotMenuOpen && !keyboardHelpOpen && !showAudit && !showEditChildForm)
          {
             if (! e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
@@ -190,7 +192,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       {
          document.removeEventListener("keydown", down)
       }
-   }, [dotMenuOpen, showEditChildForm, showAudit, metaData])
+   }, [dotMenuOpen, keyboardHelpOpen, showEditChildForm, showAudit, metaData])
 
    const gotoCreate = () =>
    {

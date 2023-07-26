@@ -51,7 +51,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector, useGridApiRef, GridPreferencePanelsValue} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -252,11 +252,64 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [queryErrors, setQueryErrors] = useState({} as any);
    const [receivedQueryErrorTimestamp, setReceivedQueryErrorTimestamp] = useState(new Date());
 
-   const {setPageHeader} = useContext(QContext);
+   const {setPageHeader, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
+
+   const gridApiRef = useGridApiRef();
+
+   ///////////////////////
+   // Keyboard handling //
+   ///////////////////////
+   useEffect(() =>
+   {
+      if(tableMetaData == null)
+      {
+         (async() =>
+         {
+            const tableMetaData = await qController.loadTableMetaData(tableName);
+            setTableMetaData(tableMetaData);
+         })();
+      }
+
+      const down = (e: KeyboardEvent) =>
+      {
+         const type = (e.target as any).type;
+         const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
+
+         if(validType && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
+         {
+            if (! e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            {
+               e.preventDefault()
+               navigate(`${metaData?.getTablePathByName(tableName)}/create`);
+            }
+            else if (! e.metaKey && e.key === "r")
+            {
+               e.preventDefault()
+               updateTable();
+            }
+            else if (! e.metaKey && e.key === "c")
+            {
+               e.preventDefault()
+               gridApiRef.current.showPreferences(GridPreferencePanelsValue.columns)
+            }
+            else if (! e.metaKey && e.key === "f")
+            {
+               e.preventDefault()
+               gridApiRef.current.showFilterPanel()
+            }
+         }
+      }
+
+      document.addEventListener("keydown", down)
+      return () =>
+      {
+         document.removeEventListener("keydown", down)
+      }
+   }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess])
 
    /////////////////////////////////////////////////////////////////////////////////////////
    // monitor location changes - if our url looks like a process, then open that process. //
@@ -1934,6 +1987,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <Card>
                   <Box height="100%">
                      <DataGridPro
+                        apiRef={gridApiRef}
                         components={{
                            Toolbar: CustomToolbar,
                            Pagination: CustomPagination,

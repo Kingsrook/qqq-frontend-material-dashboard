@@ -31,7 +31,7 @@ import TextField from "@mui/material/TextField";
 import {GridColDef, GridSlotsComponentsProps, useGridApiContext, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridColumnsPanelProps} from "@mui/x-data-grid/components/panel/GridColumnsPanel";
 import {gridColumnDefinitionsSelector, gridColumnVisibilityModelSelector} from "@mui/x-data-grid/hooks/features/columns/gridColumnsSelector";
-import React, {createRef, forwardRef, useEffect, useReducer, useState} from "react";
+import React, {createRef, forwardRef, useEffect, useReducer, useRef, useState} from "react";
 
 declare module "@mui/x-data-grid"
 {
@@ -55,6 +55,9 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       const [, forceUpdate] = useReducer((x) => x + 1, 0);
       const someRef = createRef();
 
+      const textRef = useRef(null);
+      const [didInitialFocus, setDidInitialFocus] = useState(false)
+
       const [openGroups, setOpenGroups] = useState(props.initialOpenedGroups || {});
       const openGroupsBecauseOfFilter = {} as { [name: string]: boolean };
       const [lastScrollTop, setLastScrollTop] = useState(0);
@@ -67,6 +70,15 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       tables.push(props.tableMetaData);
 
       console.log(`Open groups: ${JSON.stringify(openGroups)}`);
+
+      if(!didInitialFocus)
+      {
+         if(textRef.current)
+         {
+            textRef.current.select();
+            setDidInitialFocus(true);
+         }
+      }
 
       if (props.tableMetaData.exposedJoins)
       {
@@ -360,7 +372,7 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       return (
          <Box className="custom-columns-panel" style={{width: "350px", height: "450px"}}>
             <Box height="55px" padding="5px" display="flex">
-               <TextField id="findColumn" label="Find column" placeholder="Column title" variant="standard" fullWidth={true}
+               <TextField inputRef={textRef} id="findColumn" label="Find column" placeholder="Column title" variant="standard" fullWidth={true}
                   value={filterText}
                   onChange={(event) => filterTextChanged(event)}
                ></TextField>

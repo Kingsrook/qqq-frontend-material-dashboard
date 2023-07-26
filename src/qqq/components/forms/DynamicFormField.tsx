@@ -135,7 +135,7 @@ function QDynamicFormField({
             />
             <Box mt={0.75}>
                <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} /></div>}
+                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
                </MDTypography>
             </Box>
          </>
