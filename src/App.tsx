@@ -33,7 +33,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
-import React, {JSXElementConstructor, Key, ReactElement, useContext, useEffect, useState,} from "react";
+import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
@@ -57,11 +57,11 @@ import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 
 
 const qController = Client.getInstance();
-export const SESSION_ID_COOKIE_NAME = "sessionId";
+export const SESSION_UUID_COOKIE_NAME = "sessionUUID";
 
 export default function App()
 {
-   const [, setCookie, removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
+   const [, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
    const {user, getAccessTokenSilently, logout} = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
@@ -69,7 +69,61 @@ export default function App()
    const [branding, setBranding] = useState({} as QBrandingMetaData);
    const [metaData, setMetaData] = useState({} as QInstance);
    const [needLicenseKey, setNeedLicenseKey] = useState(true);
+   const [loggedInUser, setLoggedInUser] = useState({} as { name?: string, email?: string });
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
+
+   const decodeJWT = (jwt: string): any =>
+   {
+      const base64Url = jwt.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(window.atob(base64).split("").map(function (c)
+      {
+         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(""));
+
+      return JSON.parse(jsonPayload);
+   };
+
+   const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
+   {
+      if (!oldToken)
+      {
+         return (true);
+      }
+
+      try
+      {
+         const oldJSON = decodeJWT(oldToken);
+         const newJSON = decodeJWT(newToken);
+
+         ////////////////////////////////////////////////////////////////////////////////////
+         // if the old (local storage) token is expired, then we need to store the new one //
+         ////////////////////////////////////////////////////////////////////////////////////
+         const oldExp = oldJSON["exp"];
+         if(oldExp * 1000 < (new Date().getTime()))
+         {
+            return (true);
+         }
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         // remove the exp & iat values from what we compare - as they are always different from auth0 //
+         // note, this is only deleting them from what we compare, not from what we'd store.           //
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         delete newJSON["exp"]
+         delete newJSON["iat"]
+         delete oldJSON["exp"]
+         delete oldJSON["iat"]
+
+         const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
+         return (different);
+      }
+      catch(e)
+      {
+         console.log("Caught in shouldStoreNewToken: " + e)
+      }
+
+      return (true);
+   };
 
    useEffect(() =>
    {
@@ -92,20 +146,28 @@ export default function App()
             {
                console.log("Loading token from auth0...");
                const accessToken = await getAccessTokenSilently();
-               qController.setAuthorizationHeaderValue("Bearer " + accessToken);
+               // qController.setAuthorizationHeaderValue("Bearer " + accessToken);
 
-               /////////////////////////////////////////////////////////////////////////////////
-               // we've stopped using session id cook with auth0, so make sure it is not set. //
-               /////////////////////////////////////////////////////////////////////////////////
-               removeCookie(SESSION_ID_COOKIE_NAME);
+               const lsAccessToken = localStorage.getItem("accessToken");
+               if (shouldStoreNewToken(accessToken, lsAccessToken))
+               {
+                  const newSessionUuid = await qController.manageSession(accessToken, null);
+                  setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
+                  localStorage.setItem("accessToken", accessToken);
+               }
 
                setIsFullyAuthenticated(true);
+               qController.setGotAuthentication();
+
+               setLoggedInUser(user);
                console.log("Token load complete.");
             }
             catch (e)
             {
                console.log(`Error loading token: ${JSON.stringify(e)}`);
-               qController.clearAuthenticationMetaDataLocalStorage();
+               // qController.clearAuthenticationMetaDataLocalStorage();
+               localStorage.removeItem("accessToken")
+               removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                logout();
                return;
             }
@@ -116,9 +178,9 @@ export default function App()
             // use a random token if anonymous or mock //
             /////////////////////////////////////////////
             console.log("Generating random token...");
-            qController.setAuthorizationHeaderValue(null);
+            // qController.setAuthorizationHeaderValue(null);
             setIsFullyAuthenticated(true);
-            setCookie(SESSION_ID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
+            setCookie(SESSION_UUID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
             console.log("Token generation complete.");
             return;
          }
@@ -149,7 +211,7 @@ export default function App()
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
    const [sideNavRoutes, setSideNavRoutes] = useState([]);
    const [appRoutes, setAppRoutes] = useState(null as any);
-   const [pathToLabelMap, setPathToLabelMap] = useState({} as {[path: string]: string});
+   const [pathToLabelMap, setPathToLabelMap] = useState({} as { [path: string]: string });
 
    ////////////////////////////////////////////
    // load qqq meta data to make more routes //
@@ -267,14 +329,14 @@ export default function App()
                   name: `${app.label}`,
                   key: app.name,
                   route: path,
-                  component: <RecordQuery table={table} key={table.name}/>,
+                  component: <RecordQuery table={table} key={table.name} />,
                });
 
                routeList.push({
                   name: `${app.label}`,
                   key: app.name,
                   route: `${path}/savedFilter/:id`,
-                  component: <RecordQuery table={table} key={table.name}/>,
+                  component: <RecordQuery table={table} key={table.name} />,
                });
 
                routeList.push({
@@ -429,11 +491,11 @@ export default function App()
 
             let profileRoutes = {};
             const gravatarBase = "https://www.gravatar.com/avatar/";
-            const hash = Md5.hashStr(user?.email || "user");
+            const hash = Md5.hashStr(loggedInUser?.email || "user");
             const profilePicture = `${gravatarBase}${hash}`;
             profileRoutes = {
                type: "collapse",
-               name: user?.name,
+               name: loggedInUser?.name ?? "Anonymous",
                key: "username",
                noCollapse: true,
                icon: <Avatar src={profilePicture} alt="{user?.name}" />,
@@ -495,11 +557,13 @@ export default function App()
             {
                if ((e as QException).status === "401")
                {
-                  qController.clearAuthenticationMetaDataLocalStorage();
+                  // todo revisit qController.clearAuthenticationMetaDataLocalStorage();
 
                   //////////////////////////////////////////////////////
                   // todo - this is auth0 logout... make more generic //
                   //////////////////////////////////////////////////////
+                  localStorage.removeItem("accessToken")
+                  removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                   logout();
                   return;
                }
@@ -596,7 +660,7 @@ export default function App()
          }}>
             <ThemeProvider theme={theme}>
                <CssBaseline />
-               <CommandMenu metaData={metaData}/>
+               <CommandMenu metaData={metaData} />
                <Sidenav
                   color={sidenavColor}
                   icon={branding.icon}
