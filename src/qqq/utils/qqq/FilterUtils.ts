@@ -449,12 +449,15 @@ class FilterUtils
                   //////////////////////////////////////////////////////////////////////////
                   // replace objects that look like expressions with expression instances //
                   //////////////////////////////////////////////////////////////////////////
-                  for(let i = 0; i < values.length; i++)
+                  if(values && values.length)
                   {
-                     const expression = this.gridCriteriaValueToExpression(values[i])
-                     if(expression)
+                     for (let i = 0; i < values.length; i++)
                      {
-                        values[i] = expression;
+                        const expression = this.gridCriteriaValueToExpression(values[i])
+                        if (expression)
+                        {
+                           values[i] = expression;
+                        }
                      }
                   }
 

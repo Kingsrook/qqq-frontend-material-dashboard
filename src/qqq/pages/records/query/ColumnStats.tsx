@@ -88,7 +88,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
          }
          const processResult = await qController.processRun("columnStats", formData);
 
-         setStatusString(null)
+         setStatusString(null);
          if (processResult instanceof QJobError)
          {
             const jobError = processResult as QJobError;
@@ -107,7 +107,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
                const newStatsFields = [] as QFieldMetaData[];
                for(let i = 0; i<statFieldObjects.length; i++)
                {
-                  newStatsFields.push(new QFieldMetaData(statFieldObjects[i]))
+                  newStatsFields.push(new QFieldMetaData(statFieldObjects[i]));
                }
                setStatsFields(newStatsFields);
             }
@@ -139,15 +139,15 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
             fakeTableMetaData.fields = new Map<string, QFieldMetaData>();
             fakeTableMetaData.fields.set(fieldMetaData.name, fieldMetaData);
             fakeTableMetaData.fields.set("count", new QFieldMetaData({name: "count", label: "Count", type: "INTEGER"}));
+            fakeTableMetaData.fields.set("percent", new QFieldMetaData({name: "percent", label: "Percent", type: "DECIMAL"}));
             fakeTableMetaData.sections = [] as QTableSection[];
-            fakeTableMetaData.sections.push(new QTableSection({fieldNames: [fieldMetaData.name, "count"]}));
+            fakeTableMetaData.sections.push(new QTableSection({fieldNames: [fieldMetaData.name, "count", "percent"]}));
 
             const rows = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, null, null, "bySection");
 
             columns.forEach((c) =>
             {
-               c.width = 200;
                c.filterable = false;
                c.hideable = false;
             })
@@ -162,7 +162,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
    function CustomPagination()
    {
       return (
-         <Box pr={3}>
+         <Box pr={3} fontSize="0.85rem">
             {rows && rows.length && countDistinct && rows.length < countDistinct ? <span>Showing the first {rows.length.toLocaleString()} of {countDistinct.toLocaleString()} values</span> : <></>}
             {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length == 1 ? <span>Showing the only value</span> : <></>}
             {rows && rows.length && countDistinct && rows.length >= countDistinct && rows.length > 1 ? <span>Showing all {rows.length.toLocaleString()} values</span> : <></>}
@@ -172,9 +172,9 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
 
    const refresh = () =>
    {
-      setLoading(true)
-      setStatusString("Refreshing...")
-   }
+      setLoading(true);
+      setStatusString("Refreshing...");
+   };
 
    const doExport = () =>
    {
@@ -188,7 +188,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
 
       const fileName = tableMetaData.label + " - " + fieldMetaData.label + " Column Stats " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
       HtmlUtils.download(fileName, csv);
-   }
+   };
 
    function Loading()
    {

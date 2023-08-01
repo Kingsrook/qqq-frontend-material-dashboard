@@ -259,7 +259,6 @@ export default class DataGridUtils
    public static makeColumnFromField = (field: QFieldMetaData, tableMetaData: QTableMetaData, namePrefix?: string, labelPrefix?: string): GridColDef =>
    {
       let columnType = "string";
-      let columnWidth = 200;
       let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
 
       if (field.possibleValueSourceName)
@@ -273,28 +272,18 @@ export default class DataGridUtils
             case QFieldType.DECIMAL:
             case QFieldType.INTEGER:
                columnType = "number";
-               columnWidth = 100;
-
-               if (field.name === tableMetaData.primaryKeyField && field.label.length < 3)
-               {
-                  columnWidth = 75;
-               }
-
                filterOperators = QGridNumericOperators;
                break;
             case QFieldType.DATE:
                columnType = "date";
-               columnWidth = 100;
                filterOperators = QGridDateOperators;
                break;
             case QFieldType.DATE_TIME:
                columnType = "dateTime";
-               columnWidth = 200;
                filterOperators = QGridDateTimeOperators;
                break;
             case QFieldType.BOOLEAN:
                columnType = "string"; // using boolean gives an odd 'no' for nulls.
-               columnWidth = 75;
                filterOperators = QGridBooleanOperators;
                break;
             case QFieldType.BLOB:
@@ -305,6 +294,31 @@ export default class DataGridUtils
          }
       }
 
+      let headerName = labelPrefix ? labelPrefix + field.label : field.label;
+      let fieldName = namePrefix ? namePrefix + field.name : field.name;
+
+      const column: GridColDef = {
+         field: fieldName,
+         type: columnType,
+         headerName: headerName,
+         width: DataGridUtils.getColumnWidthForField(field, tableMetaData),
+         renderCell: null as any,
+         filterOperators: filterOperators,
+      };
+
+      column.renderCell = (cellValues: any) => (
+         (cellValues.value)
+      );
+
+      return (column);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getColumnWidthForField = (field: QFieldMetaData, table?: QTableMetaData): number =>
+   {
       if (field.hasAdornment(AdornmentType.SIZE))
       {
          const sizeAdornment = field.getAdornment(AdornmentType.SIZE);
@@ -318,7 +332,7 @@ export default class DataGridUtils
          ]);
          if (widths.has(width))
          {
-            columnWidth = widths.get(width);
+            return widths.get(width);
          }
          else
          {
@@ -326,23 +340,31 @@ export default class DataGridUtils
          }
       }
 
-      let headerName = labelPrefix ? labelPrefix + field.label : field.label;
-      let fieldName = namePrefix ? namePrefix + field.name : field.name;
+      if(field.possibleValueSourceName)
+      {
+         return (200);
+      }
 
-      const column: GridColDef = {
-         field: fieldName,
-         type: columnType,
-         headerName: headerName,
-         width: columnWidth,
-         renderCell: null as any,
-         filterOperators: filterOperators,
-      };
+      switch (field.type)
+      {
+         case QFieldType.DECIMAL:
+         case QFieldType.INTEGER:
 
-      column.renderCell = (cellValues: any) => (
-         (cellValues.value)
-      );
+            if (table && field.name === table.primaryKeyField && field.label.length < 3)
+            {
+               return (75);
+            }
 
-      return (column);
+            return (100);
+         case QFieldType.DATE:
+            return (100);
+         case QFieldType.DATE_TIME:
+            return (200);
+         case QFieldType.BOOLEAN:
+            return (75);
+      }
+
+      return (200);
    }
 }
 
