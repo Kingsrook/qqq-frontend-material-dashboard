@@ -346,6 +346,12 @@ function EntityForm(props: Props): JSX.Element
                const fieldName = section.fieldNames[j];
                const field = tableMetaData.fields.get(fieldName);
 
+               if(!field)
+               {
+                  console.log(`Omitting un-found field ${fieldName} from form`);
+                  continue;
+               }
+
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                // if id !== null (and we're not copying) - means we're on the edit screen -- show all fields on the edit screen. //
                // || (or) we're on the insert screen in which case, only show editable fields.                                   //

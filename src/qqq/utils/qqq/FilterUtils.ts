@@ -31,6 +31,7 @@ import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilt
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {ThisOrLastPeriodExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import {GridFilterItem, GridFilterModel, GridLinkOperator, GridSortItem} from "@mui/x-data-grid-pro";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
@@ -375,10 +376,11 @@ class FilterUtils
     ** Get the default filter to use on the page - either from given filter string, query string param, or
     ** local storage, or a default (empty).
     *******************************************************************************/
-   public static async determineFilterAndSortModels(qController: QController, tableMetaData: QTableMetaData, filterString: string, searchParams: URLSearchParams, filterLocalStorageKey: string, sortLocalStorageKey: string): Promise<{ filter: GridFilterModel, sort: GridSortItem[] }>
+   public static async determineFilterAndSortModels(qController: QController, tableMetaData: QTableMetaData, filterString: string, searchParams: URLSearchParams, filterLocalStorageKey: string, sortLocalStorageKey: string): Promise<{ filter: GridFilterModel, sort: GridSortItem[], warning: string }>
    {
       let defaultFilter = {items: []} as GridFilterModel;
       let defaultSort = [] as GridSortItem[];
+      let warningParts = [] as string[];
 
       if (tableMetaData && tableMetaData.fields !== undefined)
       {
@@ -396,30 +398,11 @@ class FilterUtils
                for (let i = 0; i < qQueryFilter?.criteria?.length; i++)
                {
                   const criteria = qQueryFilter.criteria[i];
-                  let fieldTable = tableMetaData;
-                  let field = null;
-                  if (criteria.fieldName.indexOf(".") > -1)
-                  {
-                     const nameParts = criteria.fieldName.split(".", 2);
-                     for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
-                     {
-                        const joinTable = tableMetaData.exposedJoins[i].joinTable;
-                        if (joinTable.name == nameParts[0])
-                        {
-                           fieldTable = joinTable;
-                           field = joinTable.fields.get(nameParts[1]);
-                           break;
-                        }
-                     }
-                  }
-                  else
-                  {
-                     field = tableMetaData.fields.get(criteria.fieldName);
-                  }
-
+                  let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
                   if (field == null)
                   {
                      console.log("Couldn't find field for filter: " + criteria.fieldName);
+                     warningParts.push("Your filter contained an unrecognized field name: " + criteria.fieldName)
                      continue;
                   }
 
@@ -500,7 +483,7 @@ class FilterUtils
                   localStorage.setItem(sortLocalStorageKey, JSON.stringify(defaultSort));
                }
 
-               return ({filter: defaultFilter, sort: defaultSort});
+               return ({filter: defaultFilter, sort: defaultSort, warning: warningParts.length > 0 ? "Warning: " + warningParts.join("; ") : ""});
             }
             catch (e)
             {
@@ -551,7 +534,7 @@ class FilterUtils
          });
       }
 
-      return ({filter: defaultFilter, sort: defaultSort});
+      return ({filter: defaultFilter, sort: defaultSort, warning: warningParts.length > 0 ? "Warning: " + warningParts.join("; ") : ""});
    }
 
 
