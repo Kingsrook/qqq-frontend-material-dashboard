@@ -27,6 +27,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -103,7 +104,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [allTableProcesses, setAllTableProcesses] = useState([] as QProcessMetaData[]);
    const [actionsMenu, setActionsMenu] = useState(null);
    const [notFoundMessage, setNotFoundMessage] = useState(null as string);
-   const [errorMessage, setErrorMessage] = useState(null as string)
+   const [errorMessage, setErrorMessage] = useState(null as string);
    const [successMessage, setSuccessMessage] = useState(null as string);
    const [warningMessage, setWarningMessage] = useState(null as string);
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
@@ -325,6 +326,31 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       reload();
    }, [location.pathname, location.hash]);
 
+   const getVisibleJoinTables = (tableMetaData: QTableMetaData): Set<string> =>
+   {
+      const visibleJoinTables = new Set<string>();
+
+      for (let i = 0; i < tableMetaData?.sections.length; i++)
+      {
+         const section = tableMetaData?.sections[i];
+         if (section.isHidden || !section.fieldNames || !section.fieldNames.length)
+         {
+            continue;
+         }
+
+         section.fieldNames.forEach((fieldName) =>
+         {
+            const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+            if(tableForField && tableForField.name != tableMetaData.name)
+            {
+               visibleJoinTables.add(tableForField.name);
+            }
+         })
+      }
+
+      return (visibleJoinTables);
+   };
+
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -368,13 +394,20 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             setActiveModalProcess(launchingProcess);
          }
 
+         let queryJoins: QueryJoin[] = null;
+         const visibleJoinTables = getVisibleJoinTables(tableMetaData);
+         if(visibleJoinTables.size > 0)
+         {
+            queryJoins = TableUtils.getQueryJoins(tableMetaData, visibleJoinTables);
+         }
+
          /////////////////////
          // load the record //
          /////////////////////
          let record: QRecord;
          try
          {
-            record = await qController.get(tableName, id, tableVariant);
+            record = await qController.get(tableName, id, tableVariant, null, queryJoins);
             setRecord(record);
          }
          catch (e)
@@ -465,17 +498,22 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                const fields = (
                   <Box key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
                      {
-                        section.fieldNames.map((fieldName: string) => (
-                           <Box  key={fieldName} flexDirection="row" pr={2}>
-                              <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
-                                 {tableMetaData.fields.get(fieldName).label}:
-                                 <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
-                              </Typography>
-                              <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
-                                 {ValueUtils.getDisplayValue(tableMetaData.fields.get(fieldName), record, "view")}
-                              </Typography>
-                           </Box>
-                        ))
+                        section.fieldNames.map((fieldName: string) =>
+                        {
+                           let [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                           let label = field.label;
+                           return (
+                              <Box key={fieldName} flexDirection="row" pr={2}>
+                                 <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
+                                    {label}:
+                                    <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
+                                 </Typography>
+                                 <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
+                                    {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                                 </Typography>
+                              </Box>
+                           )
+                        })
                      }
                   </Box>
                );

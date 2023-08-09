@@ -71,6 +71,7 @@ import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 const CURRENT_SAVED_FILTER_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedFilterId";
@@ -628,6 +629,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             let models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, null, searchParams, filterLocalStorageKey, sortLocalStorageKey);
             setFilterModel(models.filter);
             setColumnSortModel(models.sort);
+            setWarningAlert(models.warning);
+
             setQueryFilter(FilterUtils.buildQFilterFromGridFilter(tableMetaData, models.filter, models.sort, rowsPerPage));
             return;
          }
@@ -708,16 +711,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          if (tableMetaData?.exposedJoins)
          {
             const visibleJoinTables = getVisibleJoinTables();
-
-            queryJoins = [];
-            for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
-            {
-               const join = tableMetaData.exposedJoins[i];
-               if (visibleJoinTables.has(join.joinTable.name))
-               {
-                  queryJoins.push(new QueryJoin(join.joinTable.name, true, "LEFT"));
-               }
-            }
+            queryJoins = TableUtils.getQueryJoins(tableMetaData, visibleJoinTables);
          }
 
          //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1400,6 +1394,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          const models = await FilterUtils.determineFilterAndSortModels(qController, tableMetaData, qRecord.values.get("filterJson"), null, null, null);
          handleFilterChange(models.filter);
          handleSortChange(models.sort, models.filter);
+         setWarningAlert(models.warning);
+
          localStorage.setItem(currentSavedFilterLocalStorageKey, selectedSavedFilterId.toString());
       }
       else
@@ -1431,35 +1427,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (qRecord);
    }
 
-   const getFieldAndTable = (fieldName: string): [QFieldMetaData, QTableMetaData] =>
-   {
-      if(fieldName.indexOf(".") > -1)
-      {
-         const nameParts = fieldName.split(".", 2);
-         for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
-         {
-            const join = tableMetaData?.exposedJoins[i];
-            if(join?.joinTable.name == nameParts[0])
-            {
-               return ([join.joinTable.fields.get(nameParts[1]), join.joinTable]);
-            }
-         }
-      }
-      else
-      {
-         return ([tableMetaData.fields.get(fieldName), tableMetaData]);
-      }
-
-      return (null);
-   }
-
    const copyColumnValues = async (column: GridColDef) =>
    {
       let data = "";
       let counter = 0;
       if (latestQueryResults && latestQueryResults.length)
       {
-         let [qFieldMetaData, fieldTable] = getFieldAndTable(column.field);
+         let [qFieldMetaData, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, column.field);
          for (let i = 0; i < latestQueryResults.length; i++)
          {
             let record = latestQueryResults[i] as QRecord;
@@ -1489,7 +1463,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setFilterForColumnStats(buildQFilter(tableMetaData, filterModel));
       setColumnStatsFieldName(column.field);
 
-      const [field, fieldTable] = getFieldAndTable(column.field);
+      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, column.field);
       setColumnStatsField(field);
       setColumnStatsFieldTableName(fieldTable.name);
    };
@@ -1962,7 +1936,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                {
                   (warningAlert) ? (
                      <Collapse in={Boolean(warningAlert)}>
-                        <Alert color="warning" sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
+                        <Alert color="warning" icon={<Icon>warning</Icon>} sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
                }

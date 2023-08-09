@@ -19,8 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Tables
@@ -28,7 +30,6 @@ import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTa
  *******************************************************************************/
 class TableUtils
 {
-
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -85,6 +86,61 @@ class TableUtils
          })]);
       }
    }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getFieldAndTable(tableMetaData: QTableMetaData, fieldName: string): [QFieldMetaData, QTableMetaData]
+   {
+      if (fieldName.indexOf(".") > -1)
+      {
+         const nameParts = fieldName.split(".", 2);
+         for (let i = 0; i < tableMetaData?.exposedJoins?.length; i++)
+         {
+            const join = tableMetaData?.exposedJoins[i];
+            if (join?.joinTable.name == nameParts[0])
+            {
+               return ([join.joinTable.fields.get(nameParts[1]), join.joinTable]);
+            }
+         }
+      }
+      else
+      {
+         return ([tableMetaData.fields.get(fieldName), tableMetaData]);
+      }
+
+      return (null);
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getQueryJoins(tableMetaData: QTableMetaData, visibleJoinTables: Set<string>): QueryJoin[]
+   {
+      const queryJoins = [];
+      for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+      {
+         const join = tableMetaData.exposedJoins[i];
+         if (visibleJoinTables.has(join.joinTable.name))
+         {
+            let joinName = null;
+            if (join.joinPath && join.joinPath.length == 1 && join.joinPath[0].name)
+            {
+               joinName = join.joinPath[0].name;
+            }
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // todo - what about a join with a longer path?  it would be nice to pass such joinNames through there too, //
+            // but what, that would actually be multiple queryJoins?  needs a fair amount of thought.                   //
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            queryJoins.push(new QueryJoin(join.joinTable.name, true, "LEFT", null, null, joinName));
+         }
+      }
+
+      return queryJoins;
+   }
+
+
 }
 
 export default TableUtils;

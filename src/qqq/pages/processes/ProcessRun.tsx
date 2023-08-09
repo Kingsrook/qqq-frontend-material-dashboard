@@ -985,6 +985,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
             setQJobRunning(null);
          }
+         else
+         {
+            console.warn(`Process response was not of an expected type (need an npm clean?) ${JSON.stringify(lastProcessResponse)}`);
+         }
       }
    }, [lastProcessResponse]);
 
