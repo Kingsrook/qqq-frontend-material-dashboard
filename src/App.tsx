@@ -38,7 +38,6 @@ import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
-import DNDTest from "DNDTest";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
