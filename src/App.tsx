@@ -38,6 +38,7 @@ import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
+import DNDTest from "DNDTest";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -102,6 +103,7 @@ export default function App()
          const oldExp = oldJSON["exp"];
          if(oldExp * 1000 < (new Date().getTime()))
          {
+            console.log("Access token in local storage was expired.");
             return (true);
          }
 
@@ -115,6 +117,10 @@ export default function App()
          delete oldJSON["iat"]
 
          const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
+         if(different)
+         {
+            console.log("Latest access token from auth0 has changed vs localStorage.");
+         }
          return (different);
       }
       catch(e)
@@ -146,18 +152,28 @@ export default function App()
             {
                console.log("Loading token from auth0...");
                const accessToken = await getAccessTokenSilently();
-               // qController.setAuthorizationHeaderValue("Bearer " + accessToken);
 
                const lsAccessToken = localStorage.getItem("accessToken");
                if (shouldStoreNewToken(accessToken, lsAccessToken))
                {
+                  console.log("Sending accessToken to backend, requesting a sessionUUID...");
                   const newSessionUuid = await qController.manageSession(accessToken, null);
                   setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
                   localStorage.setItem("accessToken", accessToken);
                }
 
+               /*
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // todo#authHeader - this is our quick rollback plan - if we feel the need to stop using the cookie approach. //
+               // we turn off the shouldStoreNewToken block above, and turn on these 2 lines.                                //
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
+               localStorage.removeItem("accessToken");
+               */
+
                setIsFullyAuthenticated(true);
                qController.setGotAuthentication();
+               qController.setAuthorizationHeaderValue("Bearer " + accessToken);
 
                setLoggedInUser(user);
                console.log("Token load complete.");
@@ -165,7 +181,7 @@ export default function App()
             catch (e)
             {
                console.log(`Error loading token: ${JSON.stringify(e)}`);
-               // qController.clearAuthenticationMetaDataLocalStorage();
+               qController.clearAuthenticationMetaDataLocalStorage();
                localStorage.removeItem("accessToken")
                removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                logout();
@@ -178,7 +194,7 @@ export default function App()
             // use a random token if anonymous or mock //
             /////////////////////////////////////////////
             console.log("Generating random token...");
-            // qController.setAuthorizationHeaderValue(null);
+            qController.setAuthorizationHeaderValue(Md5.hashStr(`${new Date()}`));
             setIsFullyAuthenticated(true);
             setCookie(SESSION_UUID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
             console.log("Token generation complete.");
@@ -531,7 +547,7 @@ export default function App()
             }
 
             const pathToLabelMap: {[path: string]: string} = {}
-            for(let i =0; i<appRoutesList.length; i++)
+            for (let i = 0; i < appRoutesList.length; i++)
             {
                const route = appRoutesList[i];
                pathToLabelMap[route.route] = route.name;
@@ -557,13 +573,14 @@ export default function App()
             {
                if ((e as QException).status === "401")
                {
-                  // todo revisit qController.clearAuthenticationMetaDataLocalStorage();
+                  console.log("Exception is a QException with status = 401.  Clearing some of localStorage & cookies");
+                  qController.clearAuthenticationMetaDataLocalStorage();
+                  localStorage.removeItem("accessToken")
+                  removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
 
                   //////////////////////////////////////////////////////
                   // todo - this is auth0 logout... make more generic //
                   //////////////////////////////////////////////////////
-                  localStorage.removeItem("accessToken")
-                  removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                   logout();
                   return;
                }

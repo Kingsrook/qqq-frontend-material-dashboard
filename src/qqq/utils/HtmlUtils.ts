@@ -95,6 +95,11 @@ export default class HtmlUtils
       form.setAttribute("target", "downloadIframe");
       iframe.appendChild(form);
 
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      // todo#authHeader - remove after comfortable with sessionUUID                             //
+      // todo - this could be simplified (i think?)                                              //
+      // it was originally built like this when we had to submit full access token to backend... //
+      /////////////////////////////////////////////////////////////////////////////////////////////
       const authorizationInput = document.createElement("input");
       authorizationInput.setAttribute("type", "hidden");
       authorizationInput.setAttribute("id", "authorizationInput");
@@ -118,6 +123,11 @@ export default class HtmlUtils
    {
       if(url.startsWith("data:"))
       {
+         /////////////////////////////////////////////////////////////////////////////////////////////
+         // todo#authHeader - remove the Authorization input after comfortable with sessionUUID     //
+         // todo - this could be simplified (i think?)                                              //
+         // it was originally built like this when we had to submit full access token to backend... //
+         /////////////////////////////////////////////////////////////////////////////////////////////
          const openInWindow = window.open("", "_blank");
          openInWindow.document.write(`<html lang="en">
             <body style="margin: 0">
