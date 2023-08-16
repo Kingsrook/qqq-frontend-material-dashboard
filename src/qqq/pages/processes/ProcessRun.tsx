@@ -1147,6 +1147,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          }
 
+         if(tableMetaData)
+         {
+            queryStringPairsForInit.push(`tableName=${tableMetaData.name}`)
+         }
+
          try
          {
             const processResponse = await Client.getInstance().processInit(processName, queryStringPairsForInit.join("&"));
