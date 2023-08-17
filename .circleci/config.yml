@@ -115,7 +115,7 @@ workflows:
           context: [ qqq-maven-registry-credentials, kingsrook-slack, build-qqq-sample-app ]
           filters:
             branches:
-              ignore: /dev/
+              ignore: /main/
             tags:
               ignore: /(version|snapshot)-.*/
   deploy:
