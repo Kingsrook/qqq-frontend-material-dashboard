@@ -64,8 +64,6 @@ public class ScriptTableTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("DIV.ace_line", "var hello;");
       qSeleniumLib.waitForSelectorContaining("DIV", "2nd commit");
       qSeleniumLib.waitForSelectorContaining("DIV", "Initial checkin");
-
-      qSeleniumLib.waitForever();
    }
 
 }
