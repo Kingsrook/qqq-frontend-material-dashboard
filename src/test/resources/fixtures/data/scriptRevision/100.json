@@ -1,28 +1,19 @@
 {
    "tableName": "scriptRevision",
+   "recordLabel": "Hello, Script Revision",
    "values": {
-      "id": 100,
-      "commitMessage": "Initial checkin",
-      "author": "Jon Programmer",
+      "id": "100",
+      "name": "Hello, Script Revision",
+      "sequenceNo": "22",
       "createDate": "2023-02-18T00:47:51Z",
       "modifyDate": "2023-02-18T00:47:51Z"
    },
    "displayValues": {
-
-   },
-   "associatedRecords": {
-      "files": [
-         {
-            "tableName": "scriptRevisionFile",
-            "values": {
-               "id": 101,
-               "fileName": "Script.js",
-               "contents": "var hello;",
-               "scriptRevisionId": 100,
-               "createDate": "2023-06-23T21:59:57Z",
-               "modifyDate": "2023-06-23T21:59:57Z"
-            }
-         }
-      ]
+      "id": "1",
+      "name": "Hello, Script Revision",
+      "scriptId": "1",
+      "sequenceNo": "22",
+      "createDate": "2023-02-18T00:47:51Z",
+      "modifyDate": "2023-02-18T00:47:51Z"
    }
 }
