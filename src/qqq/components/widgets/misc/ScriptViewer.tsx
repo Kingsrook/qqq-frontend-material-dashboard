@@ -314,7 +314,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                            primaryTypographyProps={{fontSize: "1rem"}}
                            secondaryTypographyProps={{fontSize: ".85rem"}}
                            primary={
-                              <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}} title={version.values.get("commitMessage")}>
+                              <div style={{overflow: "hidden", textOverflow: "ellipsis", maxHeight: "5rem"}} title={version.values.get("commitMessage")}>
                                  {scriptRecord.values.get("currentScriptRevisionId") == version?.values?.get("id") && <Chip label="CURRENT" color="success" variant="outlined" size="small" sx={{mr: 1, fontSize: "0.75rem"}} />}
                                  {version.values.get("commitMessage")}
                               </div>

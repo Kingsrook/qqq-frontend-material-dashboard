@@ -992,6 +992,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
             setQJobRunning(null);
          }
+         else
+         {
+            console.warn(`Process response was not of an expected type (need an npm clean?) ${JSON.stringify(lastProcessResponse)}`);
+         }
       }
    }, [lastProcessResponse]);
 
@@ -1148,6 +1152,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                queryStringPairsForInit.push(`${key}=${encodeURIComponent(defaultProcessValues[key])}`);
             }
+         }
+
+         if(tableMetaData)
+         {
+            queryStringPairsForInit.push(`tableName=${tableMetaData.name}`)
          }
 
          try
