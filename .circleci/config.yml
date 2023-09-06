@@ -29,6 +29,7 @@ commands:
 
   mvn_verify:
     steps:
+      - run: sudo apt-get update
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - run:
