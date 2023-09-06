@@ -193,7 +193,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       {
          document.removeEventListener("keydown", down)
       }
-   }, [dotMenuOpen, keyboardHelpOpen, showEditChildForm, showAudit, metaData])
+   }, [dotMenuOpen, keyboardHelpOpen, showEditChildForm, showAudit, metaData, location])
 
    const gotoCreate = () =>
    {

@@ -1,14 +1,22 @@
 {
    "tableName": "scriptRevision",
+   "recordLabel": "Hello, Script Revision",
    "values": {
-      "id": 100,
+      "id": "100",
+      "name": "Hello, Script Revision",
+      "sequenceNo": "22",
       "commitMessage": "Initial checkin",
       "author": "Jon Programmer",
       "createDate": "2023-02-18T00:47:51Z",
       "modifyDate": "2023-02-18T00:47:51Z"
    },
    "displayValues": {
-
+      "id": "1",
+      "name": "Hello, Script Revision",
+      "scriptId": "1",
+      "sequenceNo": "22",
+      "createDate": "2023-02-18T00:47:51Z",
+      "modifyDate": "2023-02-18T00:47:51Z"
    },
    "associatedRecords": {
       "files": [

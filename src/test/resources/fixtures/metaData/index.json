@@ -131,7 +131,8 @@
          "capabilities": [
             "TABLE_COUNT",
             "TABLE_GET",
-            "TABLE_QUERY"
+            "TABLE_QUERY",
+            "TABLE_UPDATE"
          ],
          "readPermission": true,
          "insertPermission": true,

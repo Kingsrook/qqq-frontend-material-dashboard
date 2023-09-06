@@ -89,6 +89,8 @@ public class QBaseSeleniumTest
          .withRouteToFile("/metaData/authentication", "metaData/authentication.json")
          .withRouteToFile("/metaData/table/person", "metaData/table/person.json")
          .withRouteToFile("/metaData/table/city", "metaData/table/person.json")
+         .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
+         .withRouteToFile("/metaData/table/scriptRevision", "metaData/table/scriptRevision.json")
          .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 
