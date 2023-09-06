@@ -5,6 +5,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -92,6 +93,17 @@ public class QSeleniumLib
    {
       BASE_URL = baseUrl;
       return (this);
+   }
+
+
+
+   /*******************************************************************************
+    ** Getter for BASE_URL
+    **
+    *******************************************************************************/
+   public String getBaseUrl()
+   {
+      return BASE_URL;
    }
 
 
@@ -268,6 +280,31 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void waitForNumberOfWindowsToBe(int number)
+   {
+      LOG.debug("Waiting for number of windows (tabs) to be [" + number + "]");
+      long start = System.currentTimeMillis();
+
+      do
+      {
+         if(driver.getWindowHandles().size() == number)
+         {
+            LOG.debug("Number of windows (tabs) is [" + number + "]");
+            return;
+         }
+
+         sleepABit();
+      }
+      while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
+
+      fail("Failed waiting for number of windows (tabs) to be [" + number + "] after [" + WAIT_SECONDS + "] seconds.");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public static void sleepABit()
    {
       try
@@ -289,6 +326,53 @@ public class QSeleniumLib
    {
       JavascriptExecutor js = (JavascriptExecutor) driver;
       js.executeScript("arguments[0].setAttribute('style', 'background: yellow; border: 3px solid red;');", element);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void switchToSecondaryTab()
+   {
+      String originalWindow = driver.getWindowHandle();
+
+      waitForNumberOfWindowsToBe(2);
+
+      Set<String> windowHandles = driver.getWindowHandles();
+      for(String windowHandle : windowHandles)
+      {
+         if(!windowHandle.equals(originalWindow))
+         {
+            driver.switchTo().window(windowHandle);
+            return;
+         }
+      }
+
+      fail("Failed to find a window handle not equal to the original window handle.  Original=[" + originalWindow + "].  All=[" + windowHandles + "]");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void closeSecondaryTab()
+   {
+      String originalWindow = driver.getWindowHandle();
+      driver.close();
+
+      Set<String> windowHandles = driver.getWindowHandles();
+      for(String windowHandle : windowHandles)
+      {
+         if(!windowHandle.equals(originalWindow))
+         {
+            driver.switchTo().window(windowHandle);
+            return;
+         }
+      }
+
+      fail("Failed to find a window handle not equal to the original window handle.  Original=[" + originalWindow + "].  All=[" + windowHandles + "]");
    }
 
 
