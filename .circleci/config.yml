@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   node: circleci/node@5.1.0
-  browser-tools: circleci/browser-tools@1.4.3
+  browser-tools: circleci/browser-tools@1.4.5
 
 executors:
   java17:
@@ -29,7 +29,6 @@ commands:
 
   mvn_verify:
     steps:
-      - run: sudo apt-get update
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - run:
