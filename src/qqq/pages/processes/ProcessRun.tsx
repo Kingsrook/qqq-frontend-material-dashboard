@@ -62,9 +62,11 @@ import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDri
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
 import ValidationReview from "qqq/components/processes/ValidationReview";
 import BaseLayout from "qqq/layouts/BaseLayout";
+import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+
 
 interface Props
 {
@@ -88,6 +90,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
+   const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
 
    ///////////////////
    // process state //
@@ -368,15 +371,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       // but our first use case, they're the same, so... this needs fixed.              //
       // they also need to know the 'otherValues' in this process - e.g., for filtering //
       ////////////////////////////////////////////////////////////////////////////////////
-      if(formFields && processValues)
+      if (formFields && processValues)
       {
          Object.keys(formFields).forEach((key) =>
          {
-            if(formFields[key].possibleValueProps)
+            if (formFields[key].possibleValueProps)
             {
-               if(processValues[key])
+               if (processValues[key])
                {
-                  formFields[key].possibleValueProps.initialDisplayValue = processValues[key]
+                  formFields[key].possibleValueProps.initialDisplayValue = processValues[key];
                }
 
                formFields[key].possibleValueProps.otherValues = formFields[key].possibleValueProps.otherValues ?? new Map<string, any>();
@@ -385,7 +388,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                   formFields[key].possibleValueProps.otherValues.set(otherKey, processValues[otherKey]);
                });
             }
-         })
+         });
       }
 
       return (
@@ -741,7 +744,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             formValidations[fieldName] = validation;
          };
 
-         if(tableMetaData)
+         if (tableMetaData)
          {
             console.log("Adding table name field... ?", tableMetaData.name);
             addField("tableName", {type: "hidden", omitFromQDynamicForm: true}, tableMetaData.name, null);
@@ -794,15 +797,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             ////////////////////////////////////////////////////////////////////////////////////
             Object.keys(dynamicFormFields).forEach((key: any) =>
             {
-               if(dynamicFormFields[key].possibleValueProps)
+               if (dynamicFormFields[key].possibleValueProps)
                {
                   dynamicFormFields[key].possibleValueProps.otherValues = dynamicFormFields[key].possibleValueProps.otherValues ?? new Map<string, any>();
                   Object.keys(initialValues).forEach((ivKey: any) =>
                   {
                      dynamicFormFields[key].possibleValueProps.otherValues.set(ivKey, initialValues[ivKey]);
-                  })
+                  });
                }
-            })
+            });
 
             ////////////////////////////////////////////////////
             // disable all fields if this is a bulk edit form //
@@ -1102,6 +1105,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          }
 
+         if (localStorage.getItem(tableVariantLocalStorageKey))
+         {
+            let tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+            queryStringPairsForInit.push(`tableVariant=${JSON.stringify(tableVariant)}`);
+         }
+
          try
          {
             const qInstance = await Client.getInstance().loadMetaData();
@@ -1147,9 +1156,9 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          }
 
-         if(tableMetaData)
+         if (tableMetaData)
          {
-            queryStringPairsForInit.push(`tableName=${tableMetaData.name}`)
+            queryStringPairsForInit.push(`tableName=${tableMetaData.name}`);
          }
 
          try
@@ -1186,6 +1195,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       {
          formData.append(key, values[key]);
       });
+
+      if (localStorage.getItem(tableVariantLocalStorageKey))
+      {
+         let tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+         formData.append("tableVariant", JSON.stringify(tableVariant));
+      }
 
       if (doesStepHaveComponent(activeStep, QComponentType.BULK_EDIT_FORM))
       {
