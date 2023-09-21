@@ -82,7 +82,8 @@ const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 const PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT = "qqq.pinnedColumns";
 const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
-const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
+
+export const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 
 interface Props
 {
