@@ -18,7 +18,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
  *******************************************************************************/
 public class QBaseSeleniumTest
 {
-   private static ChromeOptions chromeOptions;
+   protected static ChromeOptions chromeOptions;
 
    protected WebDriver        driver;
    protected QSeleniumJavalin qSeleniumJavalin;
@@ -52,15 +52,29 @@ public class QBaseSeleniumTest
     **
     *******************************************************************************/
    @BeforeEach
-   void beforeEach()
+   public void beforeEach()
    {
       driver = new ChromeDriver(chromeOptions);
       driver.manage().window().setSize(new Dimension(1700, 1300));
       qSeleniumLib = new QSeleniumLib(driver);
 
-      qSeleniumJavalin = new QSeleniumJavalin();
-      addJavalinRoutes(qSeleniumJavalin);
-      qSeleniumJavalin.start();
+      if(useInternalJavalin())
+      {
+         qSeleniumJavalin = new QSeleniumJavalin();
+         addJavalinRoutes(qSeleniumJavalin);
+         qSeleniumJavalin.start();
+      }
+   }
+
+
+
+   /*******************************************************************************
+    ** control if the test needs to start its own javalin server, or if we're running
+    ** in an environment where an external web server is being used.
+    *******************************************************************************/
+   protected boolean useInternalJavalin()
+   {
+      return (true);
    }
 
 
@@ -75,6 +89,8 @@ public class QBaseSeleniumTest
          .withRouteToFile("/metaData/authentication", "metaData/authentication.json")
          .withRouteToFile("/metaData/table/person", "metaData/table/person.json")
          .withRouteToFile("/metaData/table/city", "metaData/table/person.json")
+         .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
+         .withRouteToFile("/metaData/table/scriptRevision", "metaData/table/scriptRevision.json")
          .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
    }
 

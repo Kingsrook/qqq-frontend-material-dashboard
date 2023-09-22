@@ -25,12 +25,13 @@ package com.kingsrook.qqq.materialdashboard.tests;
 import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /*******************************************************************************
- ** Test for the scripts table
+ ** Test for Associated Record Scripts functionality.
  *******************************************************************************/
-public class ScriptTableTest extends QBaseSeleniumTest
+public class ClickLinkOnRecordThenEditShortcutTest extends QBaseSeleniumTest
 {
 
    /*******************************************************************************
@@ -40,15 +41,8 @@ public class ScriptTableTest extends QBaseSeleniumTest
    protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
    {
       super.addJavalinRoutes(qSeleniumJavalin);
-      qSeleniumJavalin
-         .withRouteToFile("/data/script/1", "data/script/1.json")
-         .withRouteToFile("/data/scriptType/1", "data/scriptType/1.json")
-         .withRouteToFile("/data/scriptRevision/query", "data/scriptRevision/query.json")
-         .withRouteToFile("/data/scriptLog/query", "data/scriptLog/query.json")
-         .withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json")
-         .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
-         .withRouteToFile("/widget/scriptViewer", "widget/scriptViewer.json")
-      ;
+      qSeleniumJavalin.withRouteToFile("/data/script/1", "data/script/1.json");
+      qSeleniumJavalin.withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json");
    }
 
 
@@ -57,13 +51,13 @@ public class ScriptTableTest extends QBaseSeleniumTest
     **
     *******************************************************************************/
    @Test
-   void test()
+   void testClickLinkOnRecordThenEditShortcutTest()
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
+      qSeleniumLib.waitForSelectorContaining("A", "100").click();
 
-      qSeleniumLib.waitForSelectorContaining("DIV.ace_line", "var hello;");
-      qSeleniumLib.waitForSelectorContaining("DIV", "2nd commit");
-      qSeleniumLib.waitForSelectorContaining("DIV", "Initial checkin");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").sendKeys("e");
+      assertTrue(qSeleniumLib.driver.getCurrentUrl().endsWith("/scriptRevision/100/edit"));
    }
 
 }

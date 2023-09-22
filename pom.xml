@@ -161,6 +161,20 @@
                <skipUpdateVersion>true</skipUpdateVersion>
             </configuration>
          </plugin>
+
+         <!-- Publish this project's test code as a jar -->
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+
       </plugins>
    </build>
 
