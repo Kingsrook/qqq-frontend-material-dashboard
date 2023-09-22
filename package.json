@@ -86,7 +86,7 @@
       "@types/react-table": "7.7.9",
       "@typescript-eslint/eslint-plugin": "5.10.2",
       "@typescript-eslint/parser": "5.10.2",
-      "cypress": "11.0.1",
+      "cypress": "13.2.0",
       "cypress-wait-for-stable-dom": "0.1.0",
       "eslint": "8.8.0",
       "eslint-import-resolver-typescript": "2.5.0",
