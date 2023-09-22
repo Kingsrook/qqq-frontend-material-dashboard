@@ -90,7 +90,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 {
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
-   const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
+   let tableVariantLocalStorageKey: string | null = null;
+   if(table)
+   {
+      tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
+   }
 
    ///////////////////
    // process state //
@@ -1105,7 +1109,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          }
 
-         if (localStorage.getItem(tableVariantLocalStorageKey))
+         if (tableVariantLocalStorageKey && localStorage.getItem(tableVariantLocalStorageKey))
          {
             let tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
             queryStringPairsForInit.push(`tableVariant=${JSON.stringify(tableVariant)}`);
@@ -1196,7 +1200,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          formData.append(key, values[key]);
       });
 
-      if (localStorage.getItem(tableVariantLocalStorageKey))
+      if (tableVariantLocalStorageKey && localStorage.getItem(tableVariantLocalStorageKey))
       {
          let tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
          formData.append("tableVariant", JSON.stringify(tableVariant));
