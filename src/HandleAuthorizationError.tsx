@@ -22,7 +22,7 @@
 import {useAuth0} from "@auth0/auth0-react";
 import React, {useEffect} from "react";
 import {useCookies} from "react-cookie";
-import {SESSION_ID_COOKIE_NAME} from "App";
+import {SESSION_UUID_COOKIE_NAME} from "App";
 
 interface Props
 {
@@ -33,13 +33,13 @@ interface Props
 function HandleAuthorizationError({errorMessage}: Props)
 {
 
-   const [, , removeCookie] = useCookies([SESSION_ID_COOKIE_NAME]);
+   const [, , removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
    const {logout} = useAuth0();
 
    useEffect(() =>
    {
       logout();
-      removeCookie(SESSION_ID_COOKIE_NAME, {path: "/"});
+      removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
    });
 
    return (
