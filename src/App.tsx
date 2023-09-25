@@ -33,6 +33,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
+import jwt_decode from "jwt-decode";
 import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
 import {useCookies} from "react-cookie";
 import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
@@ -72,18 +73,6 @@ export default function App()
    const [loggedInUser, setLoggedInUser] = useState({} as { name?: string, email?: string });
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
 
-   const decodeJWT = (jwt: string): any =>
-   {
-      const base64Url = jwt.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(window.atob(base64).split("").map(function (c)
-      {
-         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(""));
-
-      return JSON.parse(jsonPayload);
-   };
-
    const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
    {
       if (!oldToken)
@@ -93,8 +82,8 @@ export default function App()
 
       try
       {
-         const oldJSON = decodeJWT(oldToken);
-         const newJSON = decodeJWT(newToken);
+         const oldJSON: any = jwt_decode(oldToken);
+         const newJSON: any = jwt_decode(newToken);
 
          ////////////////////////////////////////////////////////////////////////////////////
          // if the old (local storage) token is expired, then we need to store the new one //
