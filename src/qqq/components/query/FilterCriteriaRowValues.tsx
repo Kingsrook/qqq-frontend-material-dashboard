@@ -44,9 +44,13 @@ interface Props
    field: QFieldMetaData;
    table: QTableMetaData;
    valueChangeHandler: (event: React.ChangeEvent | SyntheticEvent, valueIndex?: number | "all", newValue?: any) => void;
+   initiallyOpenMultiValuePvs?: boolean
 }
 
-FilterCriteriaRowValues.defaultProps = {};
+FilterCriteriaRowValues.defaultProps =
+   {
+      initiallyOpenMultiValuePvs: false
+   };
 
 export const getTypeForTextField = (field: QFieldMetaData): string =>
 {
@@ -110,16 +114,17 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       InputLabelProps={inputLabelProps}
       InputProps={inputProps}
       fullWidth
+      autoFocus={true}
    />;
 };
 
-function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler}: Props): JSX.Element
+function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler, initiallyOpenMultiValuePvs}: Props): JSX.Element
 {
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    if (!operatorOption)
    {
-      return <br />;
+      return null;
    }
 
    function saveNewPasterValues(newValues: any[])
@@ -148,7 +153,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
    switch (operatorOption.valueMode)
    {
       case ValueMode.NONE:
-         return <br />;
+         return null;
       case ValueMode.SINGLE:
          return makeTextField(field, criteria, valueChangeHandler);
       case ValueMode.SINGLE_DATE:
@@ -241,6 +246,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                isMultiple
                fieldLabel="Values"
                initialValues={initialValues}
+               initiallyOpen={false /*initiallyOpenMultiValuePvs*/}
                inForm={false}
                onChange={(value: any) => valueChangeHandler(null, "all", value)}
                variant="standard"

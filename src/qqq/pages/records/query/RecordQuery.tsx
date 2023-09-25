@@ -22,6 +22,7 @@
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -29,6 +30,8 @@ import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTa
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse, TablePagination, Typography} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -50,7 +53,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector, useGridApiRef, GridPreferencePanelsValue, GridColumnResizeParams} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector, useGridApiRef, GridPreferencePanelsValue} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -58,10 +61,12 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCancelButton, QCreateNewButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
+import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import SavedFilters from "qqq/components/misc/SavedFilters";
 import {CustomColumnsPanel} from "qqq/components/query/CustomColumnsPanel";
-import {CustomFilterPanel} from "qqq/components/query/CustomFilterPanel";
+import {CustomFilterPanel, QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
+import QuickFilter from "qqq/components/query/QuickFilter";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
@@ -83,6 +88,7 @@ const COLUMN_ORDERING_LOCAL_STORAGE_KEY_ROOT = "qqq.columnOrdering";
 const COLUMN_WIDTHS_LOCAL_STORAGE_KEY_ROOT = "qqq.columnWidths";
 const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
+const QUICK_FILTER_FIELD_NAMES_LOCAL_STORAGE_KEY_ROOT = "qqq.quickFilterFieldNames";
 
 export const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 
@@ -98,6 +104,7 @@ RecordQuery.defaultProps = {
 };
 
 const qController = Client.getInstance();
+let debounceTimeout: string | number | NodeJS.Timeout;
 
 function RecordQuery({table, launchProcess}: Props): JSX.Element
 {
@@ -144,6 +151,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const quickFilterFieldNamesLocalStorageKey = `${QUICK_FILTER_FIELD_NAMES_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    let defaultSort = [] as GridSortItem[];
    let defaultVisibility = {} as { [index: string]: boolean };
    let didDefaultVisibilityComeFromLocalStorage = false;
@@ -154,6 +162,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    let defaultColumnWidths = {} as {[fieldName: string]: number};
    let seenJoinTables: {[tableName: string]: boolean} = {};
    let defaultTableVariant: QTableVariant = null;
+   let defaultQuickFilterFieldNames: Set<string> = new Set<string>();
 
    ////////////////////////////////////////////////////////////////////////////////////
    // set the to be not per table (do as above if we want per table) at a later port //
@@ -196,6 +205,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
       defaultTableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
+   }
+   if (localStorage.getItem(quickFilterFieldNamesLocalStorageKey))
+   {
+      defaultQuickFilterFieldNames = new Set<string>(JSON.parse(localStorage.getItem(quickFilterFieldNamesLocalStorageKey)));
    }
 
    const [filterModel, setFilterModel] = useState({items: []} as GridFilterModel);
@@ -252,6 +265,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [columnStatsField, setColumnStatsField] = useState(null as QFieldMetaData);
    const [columnStatsFieldTableName, setColumnStatsFieldTableName] = useState(null as string)
    const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter);
+
+   const [addQuickFilterMenu, setAddQuickFilterMenu] = useState(null);
+   const [quickFilterFieldNames, setQuickFilterFieldNames] = useState(defaultQuickFilterFieldNames);
+   const [addQuickFilterOpenCounter, setAddQuickFilterOpenCounter] = useState(0);
 
    const instance = useRef({timer: null});
 
@@ -1946,6 +1963,129 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       );
    }
 
+   const updateQuickCriteria = (newCriteria: QFilterCriteria, needDebounce = false, doClearCriteria = false) =>
+   {
+      let found = false;
+      let foundIndex = null;
+      for (let i = 0; i < queryFilter?.criteria?.length; i++)
+      {
+         if(queryFilter.criteria[i].fieldName == newCriteria.fieldName)
+         {
+            queryFilter.criteria[i] = newCriteria;
+            found = true;
+            foundIndex = i;
+            break;
+         }
+      }
+
+      if(doClearCriteria)
+      {
+         if(found)
+         {
+            queryFilter.criteria.splice(foundIndex, 1);
+            setQueryFilter(queryFilter);
+            const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
+            handleFilterChange(gridFilterModel, false);
+         }
+         return;
+      }
+
+      if(!found)
+      {
+         if(!queryFilter.criteria)
+         {
+            queryFilter.criteria = [];
+         }
+         queryFilter.criteria.push(newCriteria);
+         found = true;
+      }
+
+      if(found)
+      {
+         clearTimeout(debounceTimeout)
+         debounceTimeout = setTimeout(() =>
+         {
+            setQueryFilter(queryFilter);
+            const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
+            handleFilterChange(gridFilterModel, false);
+         }, needDebounce ? 500 : 1);
+
+         forceUpdate();
+      }
+   };
+
+
+   const getQuickCriteriaParam = (fieldName: string): QFilterCriteriaWithId | null | "tooComplex" =>
+   {
+      const matches: QFilterCriteriaWithId[] = [];
+      for (let i = 0; i < queryFilter?.criteria?.length; i++)
+      {
+         if(queryFilter.criteria[i].fieldName == fieldName)
+         {
+            matches.push(queryFilter.criteria[i] as QFilterCriteriaWithId);
+         }
+      }
+
+      if(matches.length == 0)
+      {
+         return (null);
+      }
+      else if(matches.length == 1)
+      {
+         return (matches[0]);
+      }
+      else
+      {
+         return "tooComplex";
+      }
+   }
+
+   const toggleQuickFilterField = (fieldName: string): void =>
+   {
+      if(quickFilterFieldNames.has(fieldName))
+      {
+         quickFilterFieldNames.delete(fieldName);
+      }
+      else
+      {
+         quickFilterFieldNames.add(fieldName);
+      }
+      setQuickFilterFieldNames(new Set<string>([...quickFilterFieldNames.values()]))
+      localStorage.setItem(quickFilterFieldNamesLocalStorageKey, JSON.stringify([...quickFilterFieldNames.values()]));
+
+      // damnit, not auto-updating in the filter panel... have to click twice most of the time w/o this hacky hack.
+      setTimeout(() => forceUpdate(), 10);
+   }
+
+   const openAddQuickFilterMenu = (event: any) =>
+   {
+      setAddQuickFilterMenu(event.currentTarget);
+      setAddQuickFilterOpenCounter(addQuickFilterOpenCounter + 1);
+   }
+
+   const closeAddQuickFilterMenu = () =>
+   {
+      setAddQuickFilterMenu(null);
+   }
+
+   function addQuickFilterField(event: any, newValue: any, reason: string)
+   {
+      if(reason == "blur")
+      {
+         //////////////////////////////////////////////////////////////////
+         // this keeps a click out of the menu from selecting the option //
+         //////////////////////////////////////////////////////////////////
+         return;
+      }
+
+      const fieldName = newValue ? newValue.fieldName : null
+      if(fieldName)
+      {
+         toggleQuickFilterField(fieldName);
+         closeAddQuickFilterMenu();
+      }
+   }
+
    return (
       <BaseLayout>
          <div className="recordQuery">
@@ -2010,6 +2150,74 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
                   }
                </Box>
+
+               <Box display="flex" alignItems="center" flexWrap="wrap" position="relative" top={"-0.5rem"} left={"0.5rem"} minHeight="2.5rem">
+                  <Tooltip enterDelay={1000} title={
+                     <Box textAlign="left">
+                        Fields that are frequently used for filter conditions can be added here for quick access.<br /><br />
+                        Use the <Icon fontSize="medium" sx={{position: "relative", top: "0.5rem"}}>add_circle_outline</Icon> button to add a field.<br /><br />
+                        To remove a field, click it and then use the <Icon fontSize="medium" sx={{position: "relative", top: "0.5rem"}}>highlight_off</Icon> button.
+                     </Box>} placement="left">
+                     <Typography variant="h6" sx={{cursor: "default"}}>Quick Filter:</Typography>
+                  </Tooltip>
+                  {
+                     metaData && tableMetaData &&
+                     <>
+                        <Tooltip enterDelay={500} title="Add a Quick Filter field" placement="top">
+                           <IconButton onClick={(e) => openAddQuickFilterMenu(e)} size="small" disableRipple><Icon>add_circle_outline</Icon></IconButton>
+                        </Tooltip>
+                        <Menu
+                           anchorEl={addQuickFilterMenu}
+                           anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+                           transformOrigin={{vertical: "top", horizontal: "left"}}
+                           open={Boolean(addQuickFilterMenu)}
+                           onClose={closeAddQuickFilterMenu}
+                           keepMounted
+                        >
+                           <Box width="250px">
+                              <FieldAutoComplete
+                                 key={addQuickFilterOpenCounter} // use a unique key each time we open it, because we don't want the user's last selection to stick.
+                                 id={"add-quick-filter-field"}
+                                 metaData={metaData}
+                                 tableMetaData={tableMetaData}
+                                 defaultValue={null}
+                                 handleFieldChange={addQuickFilterField}
+                                 autoFocus={true}
+                                 hiddenFieldNames={[...quickFilterFieldNames.values()]}
+                              />
+                           </Box>
+                        </Menu>
+                     </>
+                  }
+                  {
+                     tableMetaData &&
+                     [...quickFilterFieldNames.values()].map((fieldName) =>
+                     {
+                        // todo - join fields...
+                        // todo - sometimes i want contains (client.name, for example...)
+
+                        const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                        let defaultOperator = field?.possibleValueSourceName ? QCriteriaOperator.IN : QCriteriaOperator.EQUALS
+                        if(field?.type == QFieldType.DATE_TIME || field?.type == QFieldType.DATE)
+                        {
+                           defaultOperator = QCriteriaOperator.GREATER_THAN;
+                        }
+
+                        return (
+                           field && <QuickFilter
+                              key={fieldName}
+                              fullFieldName={fieldName}
+                              tableMetaData={tableMetaData}
+                              updateCriteria={updateQuickCriteria}
+                              criteriaParam={getQuickCriteriaParam(fieldName)}
+                              fieldMetaData={field}
+                              defaultOperator={defaultOperator}
+                              toggleQuickFilterField={toggleQuickFilterField} />
+                        )
+                     })
+                  }
+               </Box>
+
                <Card>
                   <Box height="100%">
                      <DataGridPro
@@ -2037,7 +2245,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                                  tableMetaData: tableMetaData,
                                  metaData: metaData,
                                  queryFilter: queryFilter,
-                                 updateFilter: updateFilterFromFilterPanel
+                                 updateFilter: updateFilterFromFilterPanel,
+                                 quickFilterFieldNames: quickFilterFieldNames,
+                                 showQuickFilterPin: true,
+                                 toggleQuickFilterField: toggleQuickFilterField,
                               }
                         }}
                         localeText={{

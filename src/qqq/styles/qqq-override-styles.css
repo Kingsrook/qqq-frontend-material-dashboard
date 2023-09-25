@@ -424,6 +424,13 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    top: -60px !important;
 }
 
+/* within the data-grid, the filter-panel's container has a max-height.  mirror that, and set an overflow-y */
+.MuiDataGrid-panel .customFilterPanel
+{
+   max-height: 450px;
+   overflow-y: auto;
+}
+
 /* tighten the text in the field select dropdown in custom filters */
 .customFilterPanel .MuiAutocomplete-paper
 {
@@ -487,7 +494,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 }
 
 /* change tags in any-of value fields to not be black bg with white text */
-.customFilterPanel .filterValuesColumn .MuiChip-root
+.customFilterPanel .filterValuesColumn .MuiChip-root,
+.quickFilter.filterValuesColumn .MuiChip-root
 {
    background: none;
    color: black;
@@ -495,20 +503,23 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 }
 
 /* change 'x' icon in tags in any-of value */
-.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
+.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon,
+.quickFilter.filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
 {
    color: gray;
 }
 
 /* change tags in any-of value fields to not be black bg with white text */
-.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag,
+.quickFilter.filterValuesColumn .MuiAutocomplete-tag
 {
    color: #191919;
    background: none;
 }
 
 /* default hover color for the 'x' to remove a tag from an 'any-of' value was white, which made it disappear */
-.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover,
+.quickFilter.filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
 {
    color: lightgray;
 }
