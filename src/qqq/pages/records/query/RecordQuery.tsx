@@ -234,7 +234,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const [activeModalProcess, setActiveModalProcess] = useState(null as QProcessMetaData);
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
-   const [recordIdsForProcess, setRecordIdsForProcess] = useState(null as string | QQueryFilter);
+   const [recordIdsForProcess, setRecordIdsForProcess] = useState([] as string[] | QQueryFilter);
    const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string);
    const [columnStatsField, setColumnStatsField] = useState(null as QFieldMetaData);
    const [columnStatsFieldTableName, setColumnStatsFieldTableName] = useState(null as string)
@@ -926,11 +926,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             if (table.primaryKeyField !== "id")
             {
-               navigate(`${metaData.getTablePathByName(tableName)}/${params.row[tableMetaData.primaryKeyField]}`);
+               navigate(`${metaData.getTablePathByName(tableName)}/${encodeURIComponent(params.row[tableMetaData.primaryKeyField])}`);
             }
             else
             {
-               navigate(`${metaData.getTablePathByName(tableName)}/${params.id}`);
+               navigate(`${metaData.getTablePathByName(tableName)}/${encodeURIComponent(params.id)}`);
             }
          }, 100);
       }
@@ -1189,17 +1189,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(tableMetaData, filterModel))}`;
+         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel)))}`;
       }
 
       if (selectFullFilterState === "filterSubset")
       {
-         return `?recordsParam=filterJSON&filterJSON=${JSON.stringify(buildQFilter(tableMetaData, filterModel, selectionSubsetSize))}`;
+         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(buildQFilter(tableMetaData, filterModel, selectionSubsetSize)))}`;
       }
 
       if (selectedIds.length > 0)
       {
-         return `?recordsParam=recordIds&recordIds=${selectedIds.join(",")}`;
+         return `?recordsParam=recordIds&recordIds=${selectedIds.map(r => encodeURIComponent(r)).join(",")}`;
       }
 
       return "";
@@ -1217,11 +1217,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
       else if (selectedIds.length > 0)
       {
-         setRecordIdsForProcess(selectedIds.join(","));
+         setRecordIdsForProcess(selectedIds);
       }
       else
       {
-         setRecordIdsForProcess("");
+         setRecordIdsForProcess([]);
       }
 
       navigate(`${metaData?.getTablePathByName(tableName)}/${process.name}${getRecordsQueryString()}`);

@@ -931,7 +931,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  activeModalProcess &&
                                  <Modal open={activeModalProcess !== null} onClose={(event, reason) => closeModalProcess(event, reason)}>
                                     <div className="modalProcess">
-                                       <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={id} closeModalHandler={closeModalProcess} />
+                                       <ProcessRun process={activeModalProcess} isModal={true} table={tableMetaData} recordIds={[id]} closeModalHandler={closeModalProcess} />
                                     </div>
                                  </Modal>
                               }

@@ -246,7 +246,7 @@ export default class DataGridUtils
          if (key === tableMetaData.primaryKeyField && linkBase)
          {
             column.renderCell = (cellValues: any) => (
-               <Link to={`${linkBase}${cellValues.value}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link>
+               <Link to={`${linkBase}${encodeURIComponent(cellValues.value)}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link>
             );
          }
       });
