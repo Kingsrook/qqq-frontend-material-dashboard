@@ -6,7 +6,7 @@
       "@auth0/auth0-react": "1.10.2",
       "@emotion/react": "11.7.1",
       "@emotion/styled": "11.6.0",
-      "@kingsrook/qqq-frontend-core": "1.0.81",
+      "@kingsrook/qqq-frontend-core": "1.0.82",
       "@mui/icons-material": "5.4.1",
       "@mui/material": "5.11.1",
       "@mui/styles": "5.11.1",
@@ -57,9 +57,7 @@
       "npm-install": "npm install --legacy-peer-deps",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
       "start": "BROWSER=none react-scripts --max-http-header-size=65535 start",
-      "test": "react-scripts test",
-      "cypress:open": "cypress open",
-      "cypress:run": "cypress run"
+      "test": "react-scripts test"
    },
    "eslintConfig": {
       "extends": [
@@ -87,8 +85,6 @@
       "@types/react-table": "7.7.9",
       "@typescript-eslint/eslint-plugin": "5.10.2",
       "@typescript-eslint/parser": "5.10.2",
-      "cypress": "11.0.1",
-      "cypress-wait-for-stable-dom": "0.1.0",
       "eslint": "8.8.0",
       "eslint-import-resolver-typescript": "2.5.0",
       "eslint-plugin-import": "2.25.4",

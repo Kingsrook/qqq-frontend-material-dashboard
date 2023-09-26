@@ -76,7 +76,7 @@ interface Props
    isModal?: boolean;
    isWidget?: boolean;
    isReport?: boolean;
-   recordIds?: string | QQueryFilter;
+   recordIds?: string[] | QQueryFilter;
    closeModalHandler?: (event: object, reason: string) => void;
    forceReInit?: number;
    overrideLabel?: string;
@@ -1089,8 +1089,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          let queryStringPairsForInit = [];
          if (urlSearchParams.get("recordIds"))
          {
+            const recordIdsFromQueryString = urlSearchParams.get("recordIds").split(",");
+            const encodedRecordIds = recordIdsFromQueryString.map(r => encodeURIComponent(r)).join(",");
             queryStringPairsForInit.push("recordsParam=recordIds");
-            queryStringPairsForInit.push(`recordIds=${urlSearchParams.get("recordIds")}`);
+            queryStringPairsForInit.push(`recordIds=${encodedRecordIds}`);
          }
          else if (urlSearchParams.get("filterJSON"))
          {
@@ -1104,15 +1106,16 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          // }
          else if (recordIds)
          {
-            if (typeof recordIds === "string")
-            {
-               queryStringPairsForInit.push("recordsParam=recordIds");
-               queryStringPairsForInit.push(`recordIds=${recordIds}`);
-            }
-            else if (recordIds instanceof QQueryFilter)
+            if (recordIds instanceof QQueryFilter)
             {
                queryStringPairsForInit.push("recordsParam=filterJSON");
                queryStringPairsForInit.push(`filterJSON=${JSON.stringify(recordIds)}`);
+            }
+            else if (typeof recordIds === "object" && recordIds.length)
+            {
+               const encodedRecordIds = recordIds.map(r => encodeURIComponent(r)).join(",");
+               queryStringPairsForInit.push("recordsParam=recordIds");
+               queryStringPairsForInit.push(`recordIds=${encodedRecordIds}`);
             }
          }
 
@@ -1169,7 +1172,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          if (tableMetaData)
          {
-            queryStringPairsForInit.push(`tableName=${tableMetaData.name}`);
+            queryStringPairsForInit.push(`tableName=${encodeURIComponent(tableMetaData.name)}`);
          }
 
          try
