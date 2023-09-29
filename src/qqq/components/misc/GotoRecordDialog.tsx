@@ -22,6 +22,7 @@
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
@@ -45,8 +46,10 @@ interface Props
    isOpen: boolean;
    metaData: QInstance;
    tableMetaData: QTableMetaData;
+   tableVariant?: QTableVariant;
    closeHandler: () => void;
    mayClose: boolean;
+   subHeader?: JSX.Element;
 }
 
 GotoRecordDialog.defaultProps = {
@@ -155,21 +158,30 @@ function GotoRecordDialog(props: Props): JSX.Element
    {
       setError("");
       const filter = new QQueryFilter([new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [values[fieldName]])], null, "AND", null, 10);
-      const queryResult = await qController.query(props.tableMetaData.name, filter)
-      if(queryResult.length == 0)
+      try
       {
-         setError("Record not found.");
-         setTimeout(() => setError(""), 3000);
+         const queryResult = await qController.query(props.tableMetaData.name, filter, null, props.tableVariant)
+         if (queryResult.length == 0)
+         {
+            setError("Record not found.");
+            setTimeout(() => setError(""), 3000);
+         }
+         else if (queryResult.length == 1)
+         {
+            navigate(`${props.metaData.getTablePathByName(props.tableMetaData.name)}/${encodeURIComponent(queryResult[0].values.get(props.tableMetaData.primaryKeyField))}`);
+            close();
+         }
+         else
+         {
+            setError("More than 1 record found...");
+            setTimeout(() => setError(""), 3000);
+         }
       }
-      else if(queryResult.length == 1)
+      catch(e)
       {
-         navigate(`${props.metaData.getTablePathByName(props.tableMetaData.name)}/${queryResult[0].values.get(props.tableMetaData.primaryKeyField)}`);
-         close();
-      }
-      else
-      {
-         setError("More than 1 record found...");
-         setTimeout(() => setError(""), 3000);
+         // @ts-ignore
+         setError(`Error: ${(e && e.message) ? e.message : e}`);
+         setTimeout(() => setError(""), 6000);
       }
    }
 
@@ -184,7 +196,9 @@ function GotoRecordDialog(props: Props): JSX.Element
    return (
       <Dialog open={props.isOpen} onClose={() => closeRequested} onKeyPress={(e) => keyPressed(e)} fullWidth maxWidth={"sm"}>
          <DialogTitle>Go To...</DialogTitle>
+
          <DialogContent>
+            {props.subHeader}
             {
                fields.map((field, index) =>
                   (
@@ -237,9 +251,11 @@ interface GotoRecordButtonProps
 {
    metaData: QInstance;
    tableMetaData: QTableMetaData;
+   tableVariant?: QTableVariant;
    autoOpen?: boolean;
    buttonVisible?: boolean;
    mayClose?: boolean;
+   subHeader?: JSX.Element;
 }
 
 GotoRecordButton.defaultProps = {
@@ -268,7 +284,7 @@ export function GotoRecordButton(props: GotoRecordButtonProps): JSX.Element
          {
             props.buttonVisible && hasGotoFieldNames(props.tableMetaData) && <Button onClick={openGoto} >Go To...</Button>
          }
-         <GotoRecordDialog metaData={props.metaData} tableMetaData={props.tableMetaData} isOpen={gotoIsOpen} closeHandler={closeGoto} mayClose={props.mayClose} />
+         <GotoRecordDialog metaData={props.metaData} tableMetaData={props.tableMetaData} tableVariant={props.tableVariant} isOpen={gotoIsOpen} closeHandler={closeGoto} mayClose={props.mayClose} subHeader={props.subHeader} />
       </React.Fragment>
    );
 }

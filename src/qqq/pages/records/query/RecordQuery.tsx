@@ -539,15 +539,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <CustomWidthTooltip title={tooltipHTML}>
                   <IconButton sx={{p: 0, fontSize: "0.5rem", mb: 1, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">emergency</Icon></IconButton>
                </CustomWidthTooltip>
-               {
-                  tableVariant &&
-                  <Typography variant="h6" color="text" fontWeight="light">
-                     {tableMetaData.variantTableLabel}: {tableVariant.name}
-                     <Tooltip title={`Change ${tableMetaData.variantTableLabel}`}>
-                        <IconButton onClick={promptForTableVariantSelection} sx={{p: 0, m: 0, ml: .5, mb: .5, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">settings</Icon></IconButton>
-                     </Tooltip>
-                  </Typography>
-               }
+               {tableVariant && getTableVariantHeader()}
             </div>);
       }
       else
@@ -555,18 +547,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          return (
             <div>
                {label}
-               {
-                  tableVariant &&
-                  <Typography variant="h6" color="text" fontWeight="light">
-                     {tableMetaData.variantTableLabel}: {tableVariant.name}
-                     <Tooltip title={`Change ${tableMetaData.variantTableLabel}`}>
-                        <IconButton onClick={promptForTableVariantSelection} sx={{p: 0, m: 0, ml: .5, mb: .5, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">settings</Icon></IconButton>
-                     </Tooltip>
-                  </Typography>
-               }
+               {tableVariant && getTableVariantHeader()}
             </div>);
       }
    };
+
+   const getTableVariantHeader = () =>
+   {
+      return (
+         <Typography variant="h6" color="text" fontWeight="light">
+            {tableMetaData?.variantTableLabel}: {tableVariant?.name}
+            <Tooltip title={`Change ${tableMetaData?.variantTableLabel}`}>
+               <IconButton onClick={promptForTableVariantSelection} sx={{p: 0, m: 0, ml: .5, mb: .5, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">settings</Icon></IconButton>
+            </Tooltip>
+         </Typography>
+      );
+   }
 
    const updateTable = () =>
    {
@@ -1889,9 +1885,26 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////////////////////////
    if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_QUERY) && tableMetaData.capabilities.has(Capability.TABLE_GET))
    {
+      if(tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
+      {
+         return (
+            <BaseLayout>
+               <TableVariantDialog table={tableMetaData} isOpen={true} closeHandler={(value: QTableVariant) =>
+               {
+                  setTableVariantPromptOpen(false);
+                  setTableVariant(value);
+               }} />
+            </BaseLayout>
+         );
+      }
+
       return (
          <BaseLayout>
-            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} autoOpen={true} buttonVisible={false} mayClose={false} />
+            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={
+               <Box mb={2}>
+                  {getTableVariantHeader()}
+               </Box>
+            } />
          </BaseLayout>
       );
    }
