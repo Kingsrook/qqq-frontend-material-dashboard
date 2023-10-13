@@ -62,7 +62,7 @@ export const SESSION_UUID_COOKIE_NAME = "sessionUUID";
 
 export default function App()
 {
-   const [, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
+   const [cookies, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
    const {user, getAccessTokenSilently, logout} = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
@@ -75,8 +75,15 @@ export default function App()
 
    const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
    {
+      if (!cookies[SESSION_UUID_COOKIE_NAME])
+      {
+         console.log("No session uuid cookie - so we should store a new one.");
+         return (true);
+      }
+
       if (!oldToken)
       {
+         console.log("No accessToken in localStorage - so we should store a new one.");
          return (true);
       }
 
@@ -91,7 +98,7 @@ export default function App()
          const oldExp = oldJSON["exp"];
          if(oldExp * 1000 < (new Date().getTime()))
          {
-            console.log("Access token in local storage was expired.");
+            console.log("Access token in local storage was expired - so we should store a new one.");
             return (true);
          }
 
@@ -107,7 +114,7 @@ export default function App()
          const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
          if(different)
          {
-            console.log("Latest access token from auth0 has changed vs localStorage.");
+            console.log("Latest access token from auth0 has changed vs localStorage - so we should store a new one.");
          }
          return (different);
       }
@@ -146,8 +153,18 @@ export default function App()
                {
                   console.log("Sending accessToken to backend, requesting a sessionUUID...");
                   const newSessionUuid = await qController.manageSession(accessToken, null);
-                  setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
+
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
+
                   localStorage.setItem("accessToken", accessToken);
+                  console.log("Got new sessionUUID from backend, and stored new accessToken");
+               }
+               else
+               {
+                  console.log("Using existing sessionUUID cookie");
                }
 
                /*
@@ -673,7 +690,6 @@ export default function App()
                   appName={branding.appName}
                   branding={branding}
                   routes={sideNavRoutes}
-                  pathToLabelMap={pathToLabelMap}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}
                />
