@@ -22,11 +22,16 @@
 package com.kingsrook.qqq.materialdashboard.tests;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 /*******************************************************************************
@@ -70,7 +75,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
     **
     *******************************************************************************/
    @Test
-   void testDashboardTableWidgetExport()
+   void testDashboardTableWidgetExport() throws IOException
    {
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/", "Greetings App");
 
@@ -89,16 +94,18 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
          .findElement(By.cssSelector("button"))
          .click();
 
-      /////////////////////////////////////////////////////////////////////////////
-      // assert about the file that was downloaded - its name and some contents. //
-      /////////////////////////////////////////////////////////////////////////////
-      String latestFile = qSeleniumLib.getLatestChromeDownloadedFileInfo();
-      assertThat(latestFile).contains("Sample Table Widget");
-      assertThat(latestFile).contains(".csv");
-      assertThat(latestFile).contains("""
-         "Id"%2C"Name"%0A"1"%2C"Homer S."%0A""");
+      qSeleniumLib.waitForCondition("Should have downloaded 1 file", () -> getDownloadedFiles().size() == 1);
+      File csvFile = getDownloadedFiles().get(0);
+      assertThat(csvFile.getName()).matches("Sample Table Widget.*.csv");
+      String fileContents = FileUtils.readFileToString(csvFile, StandardCharsets.UTF_8);
+      assertEquals("""
+         "Id","Name"
+         "1","Homer S."
+         "2","Marge B."
+         "3","Bart J."
+         """, fileContents);
 
-      qSeleniumLib.waitForever();
+      // qSeleniumLib.waitForever();
    }
 
 }
