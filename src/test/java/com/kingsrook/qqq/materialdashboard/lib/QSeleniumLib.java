@@ -1,3 +1,24 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.kingsrook.qqq.materialdashboard.lib;
 
 
@@ -6,11 +27,15 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import com.kingsrook.qqq.backend.core.utils.SleepUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -35,6 +60,8 @@ public class QSeleniumLib
    private String  BASE_URL            = "https://localhost:3001";
    private boolean SCREENSHOTS_ENABLED = true;
    private String  SCREENSHOTS_PATH    = "/tmp/QSeleniumScreenshots/";
+
+   private boolean autoHighlight = false;
 
 
 
@@ -187,7 +214,13 @@ public class QSeleniumLib
     *******************************************************************************/
    public WebElement waitForSelector(String cssSelector)
    {
-      return (waitForSelectorAll(cssSelector, 1).get(0));
+      WebElement element = waitForSelectorAll(cssSelector, 1).get(0);
+
+      Actions actions = new Actions(driver);
+      actions.moveToElement(element);
+
+      conditionallyAutoHighlight(element);
+      return element;
    }
 
 
@@ -230,7 +263,7 @@ public class QSeleniumLib
       do
       {
          List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
-         if(elements.size() == 0)
+         if(elements.isEmpty())
          {
             LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "]");
             return;
@@ -256,7 +289,7 @@ public class QSeleniumLib
       do
       {
          List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
-         if(elements.size() == 0)
+         if(elements.isEmpty())
          {
             LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "]");
             return;
@@ -333,6 +366,22 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   private void soonUnhighlightElement(WebElement element)
+   {
+      CompletableFuture.supplyAsync(() ->
+      {
+         SleepUtils.sleep(2, TimeUnit.SECONDS);
+         JavascriptExecutor js = (JavascriptExecutor) driver;
+         js.executeScript("arguments[0].setAttribute('style', 'background: unset; border: unset;');", element);
+         return (true);
+      });
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public void switchToSecondaryTab()
    {
       String originalWindow = driver.getWindowHandle();
@@ -380,7 +429,10 @@ public class QSeleniumLib
    @FunctionalInterface
    public interface Code<T>
    {
-      public T run();
+      /*******************************************************************************
+       **
+       *******************************************************************************/
+      T run();
    }
 
 
@@ -430,12 +482,17 @@ public class QSeleniumLib
                   LOG.debug("Found element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
                   Actions actions = new Actions(driver);
                   actions.moveToElement(element);
+                  conditionallyAutoHighlight(element);
                   return (element);
                }
             }
             catch(StaleElementReferenceException sere)
             {
                LOG.debug("Caught a StaleElementReferenceException - will retry.");
+            }
+            catch(NoSuchElementException nsee)
+            {
+               LOG.debug("Caught a NoSuchElementException - will retry.");
             }
          }
 
@@ -445,6 +502,20 @@ public class QSeleniumLib
 
       fail("Failed to find element matching selector [" + cssSelector + "] containing text [" + textContains + "] after [" + WAIT_SECONDS + "] seconds.");
       return (null);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void conditionallyAutoHighlight(WebElement element)
+   {
+      if(autoHighlight && System.getenv("CIRCLECI") == null)
+      {
+         highlightElement(element);
+         soonUnhighlightElement(element);
+      }
    }
 
 
@@ -478,7 +549,8 @@ public class QSeleniumLib
             destFile.mkdirs();
             if(destFile.exists())
             {
-               destFile.delete();
+               String newFileName = destFile.getAbsolutePath().replaceFirst("\\.png", "-" + System.currentTimeMillis() + ".png");
+               destFile.renameTo(new File(newFileName));
             }
             FileUtils.moveFile(outputFile, destFile);
             LOG.info("Made screenshot at: " + destFile);
@@ -553,6 +625,50 @@ public class QSeleniumLib
             }
          }
       }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public String getLatestChromeDownloadedFileInfo()
+   {
+      driver.get("chrome://downloads/");
+      JavascriptExecutor js      = (JavascriptExecutor) driver;
+      WebElement         element = (WebElement) js.executeScript("return document.querySelector('downloads-manager').shadowRoot.querySelector('#mainContainer > iron-list > downloads-item').shadowRoot.querySelector('#content')");
+      return (element.getText());
+   }
+
+
+
+   /*******************************************************************************
+    ** Getter for autoHighlight
+    *******************************************************************************/
+   public boolean getAutoHighlight()
+   {
+      return (this.autoHighlight);
+   }
+
+
+
+   /*******************************************************************************
+    ** Setter for autoHighlight
+    *******************************************************************************/
+   public void setAutoHighlight(boolean autoHighlight)
+   {
+      this.autoHighlight = autoHighlight;
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for autoHighlight
+    *******************************************************************************/
+   public QSeleniumLib withAutoHighlight(boolean autoHighlight)
+   {
+      this.autoHighlight = autoHighlight;
+      return (this);
    }
 
 }
