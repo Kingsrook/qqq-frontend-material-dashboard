@@ -22,10 +22,14 @@
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import Button from "@mui/material/Button";
+import Icon from "@mui/material/Icon";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
+import Typography from "@mui/material/Typography";
 import {DataGridPro, GridCallbackDetails, GridRowParams, MuiEvent} from "@mui/x-data-grid-pro";
 import React, {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import Widget, {AddNewRecordButton, ExportDataButton, HeaderLink, LabelComponent} from "qqq/components/widgets/Widget";
+import {useNavigate, Link} from "react-router-dom";
+import Widget, {AddNewRecordButton, LabelComponent} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -47,6 +51,8 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    const [records, setRecords] = useState([] as QRecord[])
    const [columns, setColumns] = useState([]);
    const [allColumns, setAllColumns] = useState([])
+   const [csv, setCsv] = useState(null as string);
+   const [fileName, setFileName] = useState(null as string);
    const navigate = useNavigate();
 
    useEffect(() =>
@@ -75,6 +81,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // capture all-columns to use for the export (before we might splice some away from the on-screen display) //
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const allColumns = [... columns];
          setAllColumns(JSON.parse(JSON.stringify(columns)));
 
          ////////////////////////////////////////////////////////////////
@@ -95,39 +102,42 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          setRows(rows);
          setRecords(records)
          setColumns(columns);
-      }
-   }, [data]);
 
-   const exportCallback = () =>
-   {
-      let csv = "";
-      for (let i = 0; i < allColumns.length; i++)
-      {
-         csv += `${i > 0 ? "," : ""}"${ValueUtils.cleanForCsv(allColumns[i].headerName)}"`
-      }
-      csv += "\n";
-
-      for (let i = 0; i < records.length; i++)
-      {
-         for (let j = 0; j < allColumns.length; j++)
+         let csv = "";
+         for (let i = 0; i < allColumns.length; i++)
          {
-            const value = records[i].displayValues.get(allColumns[j].field) ?? records[i].values.get(allColumns[j].field)
-            csv += `${j > 0 ? "," : ""}"${ValueUtils.cleanForCsv(value)}"`
+            csv += `${i > 0 ? "," : ""}"${ValueUtils.cleanForCsv(allColumns[i].headerName)}"`
          }
          csv += "\n";
-      }
 
-      const fileName = (data?.label ?? widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
-      HtmlUtils.download(fileName, csv);
-   }
+         for (let i = 0; i < records.length; i++)
+         {
+            for (let j = 0; j < allColumns.length; j++)
+            {
+               const value = records[i].displayValues.get(allColumns[j].field) ?? records[i].values.get(allColumns[j].field)
+               csv += `${j > 0 ? "," : ""}"${ValueUtils.cleanForCsv(value)}"`
+            }
+            csv += "\n";
+         }
+
+         const fileName = (data?.label ?? widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
+
+         setCsv(csv);
+         setFileName(fileName);
+      }
+   }, [data]);
 
    ///////////////////
    // view all link //
    ///////////////////
-   const labelAdditionalComponentsLeft: LabelComponent[] = []
+   const labelAdditionalElementsLeft: JSX.Element[] = [];
    if(data && data.viewAllLink)
    {
-      labelAdditionalComponentsLeft.push(new HeaderLink("View All", data.viewAllLink));
+      labelAdditionalElementsLeft.push(
+         <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative" top="-0.25rem">
+            <Link to={data.viewAllLink}>View All</Link>
+         </Typography>
+      )
    }
 
    ///////////////////
@@ -149,7 +159,26 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
       }
    }
 
-   labelAdditionalComponentsLeft.push(new ExportDataButton(() => exportCallback(), isExportDisabled, tooltipTitle))
+   const onExportClick = () =>
+   {
+      if(csv)
+      {
+         HtmlUtils.download(fileName, csv);
+      }
+      else
+      {
+         alert("There is no data available to export.")
+      }
+   }
+
+   if(widgetMetaData?.showExportButton)
+   {
+      labelAdditionalElementsLeft.push(
+         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
+            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon>save_alt</Icon></Button></Tooltip>
+         </Typography>
+      );
+   }
 
    ////////////////////
    // add new button //
@@ -184,7 +213,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
       <Widget
          widgetMetaData={widgetMetaData}
          widgetData={data}
-         labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+         labelAdditionalElementsLeft={labelAdditionalElementsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
       >
          <DataGridPro
