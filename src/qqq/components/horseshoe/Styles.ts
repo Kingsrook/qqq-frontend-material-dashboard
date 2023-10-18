@@ -110,11 +110,10 @@ const navbarContainer = ({breakpoints}: Theme): any => ({
 const navbarRow = ({breakpoints}: Theme, {isMini}: any) => ({
    display: "flex",
    alignItems: "center",
-   justifyContent: "space-between",
    width: "100%",
 
    [breakpoints.up("md")]: {
-      justifyContent: isMini ? "space-between" : "stretch",
+      justifyContent: "stretch",
       width: isMini ? "100%" : "max-content",
    },
 
@@ -146,12 +145,27 @@ const navbarDesktopMenu = ({breakpoints}: Theme) => ({
    display: "none !important",
    cursor: "pointer",
 
-   [breakpoints.up("xl")]: {
+   [breakpoints.down("sm")]: {
       display: "inline-block !important",
    },
 });
 
+const recentlyViewedMenu = ({breakpoints}: Theme) => ({
+   "& .MuiOutlinedInput-root": {
+      borderRadius: "0",
+      padding: "0"
+   },
+   "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+      border: "0"
+   },
+   display: "block",
+   [breakpoints.down("md")]: {
+      display: "none !important",
+   },
+});
+
 const navbarMobileMenu = ({breakpoints}: Theme) => ({
+   left: "-0.75rem",
    display: "inline-block",
    lineHeight: 0,
 
@@ -167,4 +181,5 @@ export {
    navbarIconButton,
    navbarDesktopMenu,
    navbarMobileMenu,
+   recentlyViewedMenu
 };

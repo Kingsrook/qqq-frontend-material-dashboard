@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Popper} from "@mui/material";
+import {Popper, InputAdornment} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Autocomplete from "@mui/material/Autocomplete";
 import Badge from "@mui/material/Badge";
@@ -34,8 +34,8 @@ import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/horseshoe/Breadcrumbs";
-import {navbar, navbarContainer, navbarIconButton, navbarRow,} from "qqq/components/horseshoe/Styles";
-import {setTransparentNavbar, useMaterialUIController,} from "qqq/context";
+import {navbar, navbarContainer, navbarRow, navbarMobileMenu, recentlyViewedMenu,} from "qqq/components/horseshoe/Styles";
+import {setTransparentNavbar, useMaterialUIController, setMiniSidenav} from "qqq/context";
 import HistoryUtils from "qqq/utils/HistoryUtils";
 
 // Declaring prop types for NavBar
@@ -57,7 +57,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
 {
    const [navbarType, setNavbarType] = useState<"fixed" | "absolute" | "relative" | "static" | "sticky">();
    const [controller, dispatch] = useMaterialUIController();
-   const {transparentNavbar, fixedNavbar, darkMode,} = controller;
+   const {miniSidenav, transparentNavbar, fixedNavbar, darkMode,} = controller;
    const [openMenu, setOpenMenu] = useState<any>(false);
    const [history, setHistory] = useState<any>([] as HistoryEntry[]);
    const [autocompleteValue, setAutocompleteValue] = useState<any>(null);
@@ -104,6 +104,8 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       // Remove event listener on cleanup
       return () => window.removeEventListener("scroll", handleTransparentNavbar);
    }, [dispatch, fixedNavbar]);
+
+   const handleMiniSidenav = () => setMiniSidenav(dispatch, !miniSidenav);
 
    const goToHistory = (path: string) =>
    {
@@ -162,7 +164,15 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             onChange={handleAutocompleteOnChange}
             PopperComponent={CustomPopper}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            renderInput={(params) => <TextField {...params} label="Recently Viewed Records" />}
+            sx={recentlyViewedMenu}
+            renderInput={(params) => <TextField {...params}  label="Recently Viewed Records" InputProps={{
+               ...params.InputProps,
+               endAdornment: (
+                  <InputAdornment position="end">
+                     <Icon sx={{position: "relative", right: "-1rem"}}>keyboard_arrow_down</Icon>
+                  </InputAdornment>
+               )
+            }} />}
             renderOption={(props, option: HistoryEntry) => (
                <Box {...props} component="li" key={option.id} sx={{width: "auto"}}>
                   <Box sx={{width: "auto", px: "8px", whiteSpace: "overflow"}} key={option.id}>
@@ -174,22 +184,6 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
          />
       );
    }
-
-
-   // Render the notifications menu
-   const renderMenu = () => (
-      <Menu
-         anchorEl={openMenu}
-         anchorReference={null}
-         anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "left",
-         }}
-         open={Boolean(openMenu)}
-         onClose={handleCloseMenu}
-         sx={{mt: 2}}
-      />
-   );
 
    // Styles for the navbar icons
    const iconsStyle = ({
@@ -240,25 +234,21 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       >
          <Toolbar sx={navbarContainer}>
             <Box color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
+               <IconButton
+                  size="small"
+                  disableRipple
+                  color="inherit"
+                  sx={navbarMobileMenu}
+                  onClick={handleMiniSidenav}
+               >
+                  <Icon sx={iconsStyle} fontSize="large">menu</Icon>
+               </IconButton>
                <QBreadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
             </Box>
             {isMini ? null : (
                <Box sx={(theme) => navbarRow(theme, {isMini})}>
-                  <Box pr={1}>
+                  <Box pr={0} mr={-2} mt={-4}>
                      {renderHistory()}
-                  </Box>
-                  <Box color={light ? "white" : "inherit"}>
-                     <IconButton
-                        size="small"
-                        color="inherit"
-                        sx={navbarIconButton}
-                        onClick={handleOpenMenu}
-                     >
-                        <Badge badgeContent={0} color="error" variant="dot">
-                           <Icon sx={iconsStyle}>notifications</Icon>
-                        </Badge>
-                     </IconButton>
-                     {renderMenu()}
                   </Box>
                </Box>
             )}
