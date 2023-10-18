@@ -740,7 +740,16 @@
       "SampleTableWidget": {
          "name": "SampleTableWidget",
          "label": "Sample Table Widget",
-         "type": "table"
+         "type": "table",
+         "showExportButton": true
+      },
+      "scriptViewer": {
+         "name": "scriptViewer",
+         "label": "Contents",
+         "type": "scriptViewer",
+         "isCard": true,
+         "storeDropdownSelections": false,
+         "hasPermission": true
       }
    },
    "environmentValues": {
