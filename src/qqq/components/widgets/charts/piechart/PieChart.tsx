@@ -85,7 +85,7 @@ function PieChart({description, chartData}: Props): JSX.Element
    }
 
    return (
-      <Card sx={{minHeight: "400px", boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1}}>
+      <Card sx={{minHeight: "400px", boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1, border: 0}}>
          <Box mt={3}>
             <Grid container alignItems="center">
                <Grid item xs={12} justifyContent="center">

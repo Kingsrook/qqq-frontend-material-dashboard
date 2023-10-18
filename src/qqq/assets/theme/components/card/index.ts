@@ -31,7 +31,7 @@ type Types = any;
 
 const card: Types = {
    defaultProps: {
-      elevation: 3
+      elevation: 0
    },
    styleOverrides: {
       root: {
@@ -42,7 +42,7 @@ const card: Types = {
          wordWrap: "break-word",
          backgroundColor: white.main,
          backgroundClip: "border-box",
-         border: `${borderWidth[0]} solid ${rgba(black.main, 0.125)}`,
+         border: `${borderWidth[1]} solid ${rgba(black.main, 0.25)}`,
          borderRadius: borderRadius.xl,
          overflow: "visible",
       },
