@@ -1,0 +1,104 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.kingsrook.qqq.materialdashboard.tests;
+
+
+import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import static org.assertj.core.api.Assertions.assertThat;
+
+
+/*******************************************************************************
+ ** Tests for dashboard table widget with export button
+ *******************************************************************************/
+public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
+{
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Override
+   protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
+   {
+      super.addJavalinRoutes(qSeleniumJavalin);
+      qSeleniumJavalin
+         .withRouteToFile("/data/person/count", "data/person/count.json")
+         .withRouteToFile("/data/city/count", "data/city/count.json");
+
+      qSeleniumJavalin.withRouteToString("/widget/SampleTableWidget", """
+         {
+            "label": "Sample Table Widget",
+            "footerHTML": "<span class='material-icons-round notranslate MuiIcon-root MuiIcon-fontSizeInherit' aria-hidden='true'><span class='dashboard-schedule-icon'>schedule</span></span>Updated at 2023-10-17 09:11:38 AM CDT",
+            "columns": [
+                { "type": "html", "header": "Id", "accessor": "id", "width": "1%" },
+                { "type": "html", "header": "Name", "accessor": "name", "width": "99%" }
+            ],
+            "rows": [
+                { "id": "1", "name": "<a href='/setup/person/1'>Homer S.</a>" },
+                { "id": "2", "name": "<a href='/setup/person/2'>Marge B.</a>" },
+                { "id": "3", "name": "<a href='/setup/person/3'>Bart J.</a>" }
+            ],
+            "type": "table"
+         }
+         """);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testDashboardTableWidgetExport()
+   {
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/", "Greetings App");
+
+      ////////////////////////////////////////////////////////////////////////
+      // assert that the table widget rendered its header and some contents //
+      ////////////////////////////////////////////////////////////////////////
+      qSeleniumLib.waitForSelectorContaining("#SampleTableWidget h6", "Sample Table Widget");
+      qSeleniumLib.waitForSelectorContaining("#SampleTableWidget table a", "Homer S.");
+      qSeleniumLib.waitForSelectorContaining("#SampleTableWidget div", "Updated at 2023-10-17 09:11:38 AM CDT");
+
+      /////////////////////////////
+      // click the export button //
+      /////////////////////////////
+      qSeleniumLib.waitForSelector("#SampleTableWidget h6")
+         .findElement(By.xpath("./.."))
+         .findElement(By.cssSelector("button"))
+         .click();
+
+      /////////////////////////////////////////////////////////////////////////////
+      // assert about the file that was downloaded - its name and some contents. //
+      /////////////////////////////////////////////////////////////////////////////
+      String latestFile = qSeleniumLib.getLatestChromeDownloadedFileInfo();
+      assertThat(latestFile).contains("Sample Table Widget");
+      assertThat(latestFile).contains(".csv");
+      assertThat(latestFile).contains("""
+         "Id"%2C"Name"%0A"1"%2C"Homer S."%0A""");
+
+      qSeleniumLib.waitForever();
+   }
+
+}
