@@ -34,6 +34,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
+import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
@@ -195,8 +196,17 @@ function GotoRecordDialog(props: Props): JSX.Element
 
    return (
       <Dialog open={props.isOpen} onClose={() => closeRequested} onKeyPress={(e) => keyPressed(e)} fullWidth maxWidth={"sm"}>
-         <DialogTitle>Go To...</DialogTitle>
-
+         <DialogTitle sx={{display: "flex"}}>
+            <Box sx={{display: "flex", flexGrow: 1}}>
+               Go To...
+            </Box>
+            <Box sx={{display: "flex"}}>
+               <IconButton onClick={() =>
+               {
+                  document.location.href = "/";
+               }}><Icon sx={{align: "right"}} fontSize="small">close</Icon></IconButton>
+            </Box>
+         </DialogTitle>
          <DialogContent>
             {props.subHeader}
             {

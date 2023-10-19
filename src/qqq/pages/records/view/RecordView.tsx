@@ -441,17 +441,20 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             }
          }
 
-         setPageHeader(record.recordLabel);
-
-         if(!launchingProcess)
+         if(record)
          {
-            try
+            setPageHeader(record.recordLabel);
+
+            if(!launchingProcess)
             {
-               HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
-            }
-            catch(e)
-            {
-               console.error("Error pushing history: " + e);
+               try
+               {
+                  HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
+               }
+               catch(e)
+               {
+                  console.error("Error pushing history: " + e);
+               }
             }
          }
 

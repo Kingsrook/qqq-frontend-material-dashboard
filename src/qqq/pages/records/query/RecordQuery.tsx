@@ -55,7 +55,7 @@ import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, G
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
-import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
+import {Navigate, NavigateFunction, useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import {QActionsMenuButton, QCancelButton, QCreateNewButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
@@ -752,26 +752,62 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                console.log(`Received error for query ${thisQueryId}`);
                console.log(error);
 
+               ////////////////////////////////////////////////////////////////////////////////////
+               // special case for variant errors, if 500 and certain message, just clear out    //
+               // local storage of variant and reload the page (rather than black page of death) //
+               ////////////////////////////////////////////////////////////////////////////////////
                var errorMessage;
-               if (error && error.message)
+               if(tableMetaData?.usesVariants)
                {
-                  errorMessage = error.message;
-               }
-               else if (error && error.response && error.response.data && error.response.data.error)
-               {
-                  errorMessage = error.response.data.error;
+                  if (error.status == "500" && error.message.indexOf("Could not find Backend Variant") != -1)
+                  {
+                     if (table)
+                     {
+                        const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
+                        localStorage.removeItem(tableVariantLocalStorageKey);
+                     }
+                  }
+                  else
+                  {
+                     if (error && error.message)
+                     {
+                        errorMessage = error.message;
+                     }
+                     else if (error && error.response && error.response.data && error.response.data.error)
+                     {
+                        errorMessage = error.response.data.error;
+                     }
+                     else
+                     {
+                        errorMessage = "Unexpected error running query";
+                     }
+
+                     setAlertContent(errorMessage);
+                     setLoading(false);
+                  }
                }
                else
                {
-                  errorMessage = "Unexpected error running query";
+                  if (error && error.message)
+                  {
+                     errorMessage = error.message;
+                  }
+                  else if (error && error.response && error.response.data && error.response.data.error)
+                  {
+                     errorMessage = error.response.data.error;
+                  }
+                  else
+                  {
+                     errorMessage = "Unexpected error running query";
+                  }
+
+                  queryErrors[thisQueryId] = errorMessage;
+                  setQueryErrors(queryErrors);
+                  setReceivedQueryErrorTimestamp(new Date());
+
+                  throw error;
                }
-
-               queryErrors[thisQueryId] = errorMessage;
-               setQueryErrors(queryErrors);
-               setReceivedQueryErrorTimestamp(new Date());
-
-               throw error;
-            });
+            })
       })();
    };
 
@@ -1889,7 +1925,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          return (
             <BaseLayout>
-               <TableVariantDialog table={tableMetaData} isOpen={true} closeHandler={(value: QTableVariant) =>
+               <TableVariantDialog navigate={navigate} table={tableMetaData} isOpen={true} closeHandler={(value: QTableVariant) =>
                {
                   setTableVariantPromptOpen(false);
                   setTableVariant(value);
@@ -2059,7 +2095,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
             {
                tableMetaData &&
-               <TableVariantDialog table={tableMetaData} isOpen={tableVariantPromptOpen} closeHandler={(value: QTableVariant) =>
+               <TableVariantDialog navigate={navigate} table={tableMetaData} isOpen={tableVariantPromptOpen} closeHandler={(value: QTableVariant) =>
                {
                   setTableVariantPromptOpen(false);
                   setTableVariant(value);
@@ -2091,7 +2127,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // mini-component that is the dialog for the user to select a variant on tables with variant backends //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-function TableVariantDialog(props: {isOpen: boolean; table: QTableMetaData; closeHandler: (value?: QTableVariant) => void})
+function TableVariantDialog(props: {navigate: NavigateFunction, isOpen: boolean; table: QTableMetaData; closeHandler: (value?: QTableVariant) => void})
 {
    const [value, setValue] = useState(null)
    const [dropDownOpen, setDropDownOpen] = useState(false)
@@ -2140,7 +2176,17 @@ function TableVariantDialog(props: {isOpen: boolean; table: QTableMetaData; clos
 
    return variants && (
       <Dialog open={props.isOpen}  onKeyPress={(e) => keyPressed(e)}>
-         <DialogTitle>{props.table.variantTableLabel}</DialogTitle>
+         <DialogTitle sx={{display: "flex"}}>
+            <Box sx={{display: "flex", flexGrow: 1}}>
+               {props.table.variantTableLabel}
+            </Box>
+            <Box sx={{display: "flex"}}>
+               <IconButton onClick={() =>
+               {
+                  document.location.href = "/";
+               }}><Icon sx={{align: "right"}} fontSize="small">close</Icon></IconButton>
+            </Box>
+         </DialogTitle>
          <DialogContent>
             <DialogContentText>Select the {props.table.variantTableLabel} to be used on this table:</DialogContentText>
             <Autocomplete
