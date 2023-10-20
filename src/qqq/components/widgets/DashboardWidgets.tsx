@@ -22,11 +22,14 @@ import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Q
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import parse from "html-react-parser";
 import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation} from "react-router-dom";
 import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import TabPanel from "qqq/components/misc/TabPanel";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
 import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLineChart";
@@ -44,7 +47,7 @@ import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
-import Widget, {WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
+import Widget, {HeaderIcon, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT, LabelComponent} from "qqq/components/widgets/Widget";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
 import TableWidget from "./tables/TableWidget";
@@ -58,9 +61,10 @@ interface Props
    tableName?: string;
    entityPrimaryKey?: string;
    omitWrappingGridContainer: boolean;
-   areChildren?: boolean
-   childUrlParams?: string
-   parentWidgetMetaData?: QWidgetMetaData
+   areChildren?: boolean;
+   childUrlParams?: string;
+   parentWidgetMetaData?: QWidgetMetaData;
+   wrapWidgetsInTabPanels: boolean;
 }
 
 DashboardWidgets.defaultProps = {
@@ -70,10 +74,11 @@ DashboardWidgets.defaultProps = {
    omitWrappingGridContainer: false,
    areChildren: false,
    childUrlParams: "",
-   parentWidgetMetaData: null
+   parentWidgetMetaData: null,
+   wrapWidgetsInTabPanels: false,
 };
 
-function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels}: Props): JSX.Element
 {
    const location = useLocation();
    const [widgetData, setWidgetData] = useState([] as any[]);
@@ -83,6 +88,13 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    const [currentUrlParams, setCurrentUrlParams] = useState(null as string);
    const [haveLoadedParams, setHaveLoadedParams] = useState(false);
    const {accentColor} = useContext(QContext);
+
+   const [selectedTab, setSelectedTab] = useState(0);
+
+   const changeTab = (newValue: number) =>
+   {
+      setSelectedTab(newValue);
+   };
 
    useEffect(() =>
    {
@@ -102,15 +114,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetData[i] = await qController.widget(widgetMetaData.name, urlParams);
                setWidgetData(widgetData);
                setWidgetCounter(widgetCounter + 1);
-               if(widgetData[i])
+               if (widgetData[i])
                {
                   widgetData[i]["errorLoading"] = false;
                }
             }
-            catch(e)
+            catch (e)
             {
                console.error(e);
-               if(widgetData[i])
+               if (widgetData[i])
                {
                   widgetData[i]["errorLoading"] = true;
                }
@@ -123,7 +135,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    const reloadWidget = async (index: number, data: string) =>
    {
-      (async() =>
+      (async () =>
       {
          const urlParams = getQueryParams(widgetMetaDataList[index], data);
          setCurrentUrlParams(urlParams);
@@ -140,7 +152,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                widgetData[index]["errorLoading"] = false;
             }
          }
-         catch(e)
+         catch (e)
          {
             console.error(e);
             if (widgetData[index])
@@ -151,7 +163,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
          forceUpdate();
       })();
-   }
+   };
 
    function getQueryParams(widgetMetaData: QWidgetMetaData, extraParams: string): string
    {
@@ -178,36 +190,36 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          }
       }
 
-      if(entityPrimaryKey)
+      if (entityPrimaryKey)
       {
          paramMap.set("id", entityPrimaryKey);
       }
 
-      if(tableName)
+      if (tableName)
       {
          paramMap.set("tableName", tableName);
       }
 
-      if(extraParams)
+      if (extraParams)
       {
          let pairs = extraParams.split("&");
          for (let i = 0; i < pairs.length; i++)
          {
             let nameValue = pairs[i].split("=");
-            if(nameValue.length == 2)
+            if (nameValue.length == 2)
             {
                paramMap.set(nameValue[0], nameValue[1]);
             }
          }
       }
 
-      if(childUrlParams)
+      if (childUrlParams)
       {
          let pairs = childUrlParams.split("&");
          for (let i = 0; i < pairs.length; i++)
          {
             let nameValue = pairs[i].split("=");
-            if(nameValue.length == 2)
+            if (nameValue.length == 2)
             {
                paramMap.set(nameValue[0], nameValue[1]);
             }
@@ -227,6 +239,16 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
+      const labelAdditionalComponentsRight: LabelComponent[] = [];
+      if (widgetMetaData && widgetMetaData.icons)
+      {
+         const topRightInsideCardIcon = widgetMetaData.icons.get("topRightInsideCard");
+         if (topRightInsideCardIcon)
+         {
+            labelAdditionalComponentsRight.push(new HeaderIcon(topRightInsideCardIcon.name, topRightInsideCardIcon.color));
+         }
+      }
+
       return (
          <Box key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
             {
@@ -270,8 +292,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
                   >
-                     <StackedBarChart data={widgetData[i]?.chartData}/>
+                     <StackedBarChart data={widgetData[i]?.chartData} chartSubheaderData={widgetData[i]?.chartSubheaderData} />
                   </Widget>
                )
             }
@@ -381,10 +404,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
                   >
                      <div>
                         <PieChart
                            chartData={widgetData[i]?.chartData}
+                           chartSubheaderData={widgetData[i]?.chartSubheaderData}
                            description={widgetData[i]?.description}
                         />
                      </div>
@@ -436,11 +461,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {
                widgetMetaData.type === "fieldValueList" && (
                   widgetData && widgetData[i] &&
-                     <FieldValueListWidget
-                        widgetMetaData={widgetMetaData}
-                        data={widgetData[i]}
-                        reloadWidgetCallback={(data) => reloadWidget(i, data)}
-                     />
+                  <FieldValueListWidget
+                     widgetMetaData={widgetMetaData}
+                     data={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                  />
                )
             }
             {
@@ -461,32 +486,61 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             }
          </Box>
       );
-   }
+   };
 
    const body: JSX.Element =
       (
          <>
             {
-               widgetMetaDataList.map((widgetMetaData, i) => (
-                  omitWrappingGridContainer
-                     ? widgetMetaData && renderWidget(widgetMetaData, i)
-                     :
-                     widgetMetaData && <Grid id={widgetMetaData.name} key={`${widgetMetaData.name}-${i}`} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
-                        {renderWidget(widgetMetaData, i)}
-                     </Grid>
-               ))
+               widgetMetaDataList.map((widgetMetaData, i) =>
+               {
+                  let renderedWidget = widgetMetaData ? renderWidget(widgetMetaData, i) : (<></>);
+
+                  if (!omitWrappingGridContainer)
+                  {
+                     renderedWidget = (<Grid id={widgetMetaData.name} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                        {renderedWidget}
+                     </Grid>);
+                  }
+
+                  if (wrapWidgetsInTabPanels)
+                  {
+                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 1.5rem 0 1.5rem", width: "100%"}}>
+                        {renderedWidget}
+                     </TabPanel>);
+                  }
+
+                  return (<React.Fragment key={`${widgetMetaData.name}-${i}`}>{renderedWidget}</React.Fragment>)
+               })
             }
          </>
       );
 
+   const tabs = widgetMetaDataList && wrapWidgetsInTabPanels ?
+      <Tabs
+         sx={{m: 0, mb: 1.5}}
+         value={selectedTab}
+         onChange={(event, newValue) => changeTab(newValue)}
+         variant="standard"
+      >
+         {widgetMetaDataList.map((widgetMetaData, i) => (
+            <Tab key={widgetMetaData.name} label={widgetMetaData.label} />
+         ))}
+      </Tabs>
+      : <></>
+
    return (
       widgetCount > 0 ? (
-         omitWrappingGridContainer ? body :
-            (
-               <Grid container spacing={3} pb={4}>
-                  {body}
-               </Grid>
-            )
+         <>
+            {tabs}
+            {
+               omitWrappingGridContainer ? body : (
+                  <Grid container spacing={3} pb={4}>
+                     {body}
+                  </Grid>
+               )
+            }
+         </>
       ) : null
    );
 }
