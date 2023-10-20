@@ -122,6 +122,49 @@ export class HeaderLink extends LabelComponent
 /*******************************************************************************
  **
  *******************************************************************************/
+export class HeaderIcon extends LabelComponent
+{
+   iconName: string;
+   color: string;
+   coloredBG: boolean;
+
+   iconColor: string;
+   bgColor: string;
+
+   constructor(iconName: string, color: string, coloredBG: boolean = true)
+   {
+      super();
+      this.iconName = iconName;
+      this.color = color;
+      this.coloredBG = coloredBG;
+
+      this.iconColor = this.coloredBG ? "#FFFFFF" : this.color;
+      this.bgColor = this.coloredBG ? this.color : "none";
+   }
+
+
+   render = (args: LabelComponentRenderArgs): JSX.Element =>
+   {
+      return (
+         <Icon sx={{
+            m: 2,
+            mr: 0,
+            mb: 0,
+            width: "1.75rem",
+            height: "1.75rem",
+            color: this.iconColor,
+            backgroundColor: this.bgColor,
+            padding: "0.25rem",
+            borderRadius: "0.25rem"
+         }} fontSize="small">{this.iconName}</Icon>
+      )
+   }
+}
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
 export class AddNewRecordButton extends LabelComponent
 {
    table: QTableMetaData;
@@ -456,18 +499,35 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       needLabelBox ||= isSet(props.widgetMetaData?.label);
    }
 
+   //////////////////////////////////////////////////////////////////////////////////////////
+   // first look for a label in the widget data, which would override that in the metadata //
+   // note - previously this had a ?: and one was pl={2}, the other was pl={3}...          //
+   //////////////////////////////////////////////////////////////////////////////////////////
+   const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
+   let labelElement = (
+      <Typography sx={{position: "relative", top: -4, cursor: "default"}} variant="h6" fontWeight="medium" display="inline">
+         {labelToUse}
+      </Typography>
+   );
+
+   if(props.widgetMetaData.tooltip)
+   {
+      labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={false} followCursor={true} placement="bottom-start">{labelElement}</Tooltip>
+   }
+
    const errorLoading = props.widgetData?.errorLoading !== undefined && props.widgetData?.errorLoading === true;
    const widgetContent =
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          {
             needLabelBox &&
-            <Box pr={2} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} height={"3.5rem"}>
-               <Box pt={2} pb={1}>
+            <Box pr={2} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} minHeight={"3.5rem"}>
+               <Box pt={2} pb={1} ml={2}>
                   {
                      hasPermission ?
                         props.widgetMetaData?.icon && (
                            <Box
-                              ml={3}
+                              ml={1}
+                              mr={2}
                               mt={-4}
                               sx={{
                                  display: "flex",
@@ -507,20 +567,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                         )
                   }
                   {
-                     //////////////////////////////////////////////////////////////////////////////////////////
-                     // first look for a label in the widget data, which would override that in the metadata //
-                     //////////////////////////////////////////////////////////////////////////////////////////
-                     hasPermission && props.widgetData?.label ? (
-                        <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={2} display="inline-block">
-                           {props.widgetData.label}
-                        </Typography>
-                     ) : (
-                        hasPermission && props.widgetMetaData?.label && (
-                           <Typography sx={{position: "relative", top: -4}} variant="h6" fontWeight="medium" pl={3} display="inline-block">
-                              {props.widgetMetaData.label}
-                           </Typography>
-                        )
-                     )
+                     hasPermission && labelToUse && (labelElement)
                   }
                   {
                      hasPermission && (
@@ -579,7 +626,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%"}} className={fullScreenWidgetClassName}>
          {widgetContent}
       </Card>
-      : widgetContent;
+      : <span style={{width: "100%"}}>{widgetContent}</span>;
 }
 
 export default Widget;
