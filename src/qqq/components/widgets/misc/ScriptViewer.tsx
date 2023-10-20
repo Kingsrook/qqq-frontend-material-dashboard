@@ -430,20 +430,17 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                         <Grid container spacing={3}>
                            <Grid item xs={12}>
                               <>
-                                 <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mt={-6}>
-                                    <Typography variant="h5" p={2}></Typography>
-                                    <Tabs
-                                       sx={{m: 1}}
-                                       value={selectedTab}
-                                       onChange={(event, newValue) => changeTab(newValue)}
-                                       variant="standard"
-                                    >
-                                       <Tab label="Code" id="simple-tab-0" aria-controls="simple-tabpanel-0" sx={{width: "100px"}} />
-                                       <Tab label="Logs" id="simple-tab-1" aria-controls="simple-tabpanel-1" sx={{width: "100px"}} />
-                                       <Tab label="Test" id="simple-tab-1" aria-controls="simple-tabpanel-2" sx={{width: "100px"}} />
-                                       <Tab label="Docs" id="simple-tab-1" aria-controls="simple-tabpanel-3" sx={{width: "100px"}} />
-                                    </Tabs>
-                                 </Box>
+                                 <Tabs
+                                    sx={{m: 0, mb: 1, mt: -3}}
+                                    value={selectedTab}
+                                    onChange={(event, newValue) => changeTab(newValue)}
+                                    variant="standard"
+                                 >
+                                    <Tab label="Code" id="simple-tab-0" aria-controls="simple-tabpanel-0" />
+                                    <Tab label="Logs" id="simple-tab-1" aria-controls="simple-tabpanel-1" />
+                                    <Tab label="Test" id="simple-tab-1" aria-controls="simple-tabpanel-2" />
+                                    <Tab label="Docs" id="simple-tab-1" aria-controls="simple-tabpanel-3" />
+                                 </Tabs>
 
                                  <TabPanel index={0} value={selectedTab}>
                                     <Grid container>

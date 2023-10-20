@@ -28,11 +28,12 @@ interface TabPanelProps
    children?: React.ReactNode;
    index: number;
    value: number;
+   style?: any;
 }
 
 export default function TabPanel(props: TabPanelProps)
 {
-   const {children, value, index, ...other} = props;
+   const {children, value, index, style, ...other} = props;
 
    return (
       <div
@@ -40,6 +41,7 @@ export default function TabPanel(props: TabPanelProps)
          hidden={value !== index}
          id={`simple-tabpanel-${index}`}
          aria-labelledby={`simple-tab-${index}`}
+         style={style}
          {...other}
       >
          {value === index && (

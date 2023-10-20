@@ -286,18 +286,15 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
                         <Grid container spacing={3}>
                            <Grid item xs={12}>
                               <>
-                                 <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mt={-6}>
-                                    <Typography variant="h5" p={2}></Typography>
-                                    <Tabs
-                                       sx={{m: 1}}
-                                       value={selectedTab}
-                                       onChange={(event, newValue) => changeTab(newValue)}
-                                       variant="standard"
-                                    >
-                                       <Tab label="Raw Data" id="simple-tab-0" aria-controls="simple-tabpanel-0" sx={{width: "150px"}} />
-                                       <Tab label="Data Preview" id="simple-tab-1" aria-controls="simple-tabpanel-1" sx={{width: "150px"}} />
-                                    </Tabs>
-                                 </Box>
+                                 <Tabs
+                                    sx={{m: 0, mb: 1, mt: -3}}
+                                    value={selectedTab}
+                                    onChange={(event, newValue) => changeTab(newValue)}
+                                    variant="standard"
+                                 >
+                                    <Tab label="Raw Data" id="simple-tab-0" aria-controls="simple-tabpanel-0" />
+                                    <Tab label="Data Preview" id="simple-tab-1" aria-controls="simple-tabpanel-1" />
+                                 </Tabs>
 
                                  <TabPanel index={0} value={selectedTab}>
                                     <Grid container>
