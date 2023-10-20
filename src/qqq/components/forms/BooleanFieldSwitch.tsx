@@ -19,13 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {InputLabel} from "@mui/material";
+import {Box, InputLabel} from "@mui/material";
 import Stack from "@mui/material/Stack";
 import {styled} from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import {useFormikContext} from "formik";
 import React, {SyntheticEvent} from "react";
+import colors from "qqq/assets/theme/base/colors";
 
 const AntSwitch = styled(Switch)(({theme}) => ({
    width: 28,
@@ -60,6 +61,9 @@ const AntSwitch = styled(Switch)(({theme}) => ({
          duration: 200,
       }),
    },
+   "&.nullSwitch .MuiSwitch-thumb": {
+      width: 24,
+   },
    "& .MuiSwitch-track": {
       borderRadius: 16 / 2,
       opacity: 1,
@@ -76,6 +80,7 @@ interface Props
    value: boolean;
    isDisabled: boolean;
 }
+
 
 
 function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Element
@@ -96,8 +101,10 @@ function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Eleme
       setFieldValue(name, !value);
    }
 
+   const classNullSwitch = (value === null || value == undefined || `${value}` == "") ? "nullSwitch" : "";
+
    return (
-      <>
+      <Box bgcolor={isDisabled ? colors.grey[200] : ""}>
          <InputLabel shrink={true}>{label}</InputLabel>
          <Stack direction="row" spacing={1} alignItems="center">
             <Typography
@@ -107,7 +114,7 @@ function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Eleme
                sx={{cursor: value === false || isDisabled ? "inherit" : "pointer"}}>
          No
             </Typography>
-            <AntSwitch name={name} checked={value} onClick={toggleSwitch} disabled={isDisabled} />
+            <AntSwitch className={classNullSwitch} name={name} checked={value} onClick={toggleSwitch} disabled={isDisabled} />
             <Typography
                fontSize="0.875rem"
                color={value === true ? "auto" : "#bfbfbf"}
@@ -116,7 +123,7 @@ function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Eleme
          Yes
             </Typography>
          </Stack>
-      </>
+      </Box>
    );
 }
 
