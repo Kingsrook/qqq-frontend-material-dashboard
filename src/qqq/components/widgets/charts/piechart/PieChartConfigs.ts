@@ -30,10 +30,16 @@ function configs(labels: any, datasets: any)
    if (datasets.backgroundColors)
    {
       datasets.backgroundColors.forEach((color: string) =>
-         gradients[color]
-            ? backgroundColors.push(gradients[color].state)
-            : backgroundColors.push(dark.main)
-      );
+      {
+         if (gradients[color])
+         {
+            backgroundColors.push(gradients[color].state);
+         }
+         else
+         {
+            backgroundColors.push(color);
+         }
+      });
    }
    else
    {
@@ -58,12 +64,17 @@ function configs(labels: any, datasets: any)
          ],
       },
       options: {
-         maintainAspectRatio: true,
+         maintainAspectRatio: false,
          responsive: true,
-         aspectRatio: 2,
          plugins: {
             legend: {
                position: "bottom",
+               labels: {
+                  usePointStyle: true,
+                  pointStyle: "circle",
+                  pointStyleWidth: 3,
+                  padding: 20
+               }
             },
          },
          scales: {

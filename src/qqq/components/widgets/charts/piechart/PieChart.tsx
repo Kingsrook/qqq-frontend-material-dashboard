@@ -30,6 +30,7 @@ import {useNavigate} from "react-router-dom";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import {chartColors} from "qqq/components/widgets/charts/DefaultChartData";
 import configs from "qqq/components/widgets/charts/piechart/PieChartConfigs";
+import ChartSubheaderWithData, {ChartSubheaderData} from "qqq/components/widgets/components/ChartSubheaderWithData";
 
 //////////////////////////////////////////
 // structure of expected bar chart data //
@@ -51,12 +52,13 @@ interface Props
 {
    description?: string;
    chartData: PieChartData;
+   chartSubheaderData?: ChartSubheaderData;
 
    [key: string]: any;
 }
 
 
-function PieChart({description, chartData}: Props): JSX.Element
+function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Element
 {
    const navigate = useNavigate();
    const [dataLoaded, setDataLoaded] = useState(false);
@@ -69,7 +71,7 @@ function PieChart({description, chartData}: Props): JSX.Element
 
    useEffect(() =>
    {
-      if(chartData)
+      if (chartData)
       {
          setDataLoaded(true);
       }
@@ -77,19 +79,22 @@ function PieChart({description, chartData}: Props): JSX.Element
 
    const handleClick = (e: Array<{}>) =>
    {
-      if(e && e.length > 0 && chartData?.dataset?.urls && chartData?.dataset?.urls.length)
+      if (e && e.length > 0 && chartData?.dataset?.urls && chartData?.dataset?.urls.length)
       {
          // @ts-ignore
          navigate(chartData.dataset.urls[e[0]["index"]]);
       }
-   }
+   };
 
    return (
-      <Card sx={{minHeight: "400px", boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1, border: 0}}>
-         <Box mt={3}>
+      <Card sx={{boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1, border: 0}}>
+         <Box mt={1}>
+            <Box px={3}>
+               {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
+            </Box>
             <Grid container alignItems="center">
                <Grid item xs={12} justifyContent="center">
-                  <Box width="100%" height="80%" py={2} pr={2} pl={2}>
+                  <Box width="100%" height="250px" py={2} pr={2} pl={2}>
                      {useMemo(
                         () => (
                            <Pie data={data} options={options} getElementsAtEvent={handleClick} />
@@ -98,32 +103,35 @@ function PieChart({description, chartData}: Props): JSX.Element
                      )}
                   </Box>
                   {
-                     ! chartData && (
+                     !chartData && (
                         <Box sx={{
                            position: "absolute",
                            top: "40%",
                            left: "50%",
                            transform: "translate(-50%, -50%)",
                            display: "flex",
-                           justifyContent: "center"}}>
-                           <Skeleton sx={{width: "150px", height: "150px"}} variant="circular"/>
+                           justifyContent: "center"
+                        }}>
+                           <Skeleton sx={{width: "150px", height: "150px"}} variant="circular" />
                         </Box>
                      )
                   }
                </Grid>
             </Grid>
-            <Divider />
             {
                description && (
-                  <Grid container>
-                     <Grid item xs={12}>
-                        <Box pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
-                           <MDTypography variant="button" color="text" fontWeight="light">
-                              {parse(description)}
-                           </MDTypography>
-                        </Box>
+                  <>
+                     <Divider />
+                     <Grid container>
+                        <Grid item xs={12}>
+                           <Box pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
+                              <MDTypography variant="button" color="text" fontWeight="light">
+                                 {parse(description)}
+                              </MDTypography>
+                           </Box>
+                        </Grid>
                      </Grid>
-                  </Grid>
+                  </>
                )
             }
          </Box>

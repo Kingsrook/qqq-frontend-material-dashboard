@@ -28,6 +28,7 @@ import {Bar} from "react-chartjs-2";
 import {useNavigate} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
 import {chartColors, DefaultChartData} from "qqq/components/widgets/charts/DefaultChartData";
+import ChartSubheaderWithData, {ChartSubheaderData} from "qqq/components/widgets/components/ChartSubheaderWithData";
 
 ChartJS.register(
    CategoryScale,
@@ -39,18 +40,32 @@ ChartJS.register(
 );
 
 export const options = {
+   maintainAspectRatio: false,
    responsive: true,
    animation: {
       duration: 0
    },
+   plugins: {
+      legend: {
+         position: "bottom",
+         labels: {
+            usePointStyle: true,
+            pointStyle: "circle",
+            pointStyleWidth: 3,
+            padding: 20
+         }
+      }
+   },
    scales: {
       x: {
          stacked: true,
-         grid: {offset: false},
+         grid: {display: false},
          ticks: {autoSkip: false, maxRotation: 90}
       },
       y: {
          stacked: true,
+         position: "right",
+         ticks: {precision: 0}
       },
    },
 };
@@ -58,10 +73,12 @@ export const options = {
 interface Props
 {
    data: DefaultChartData;
+   chartSubheaderData?: ChartSubheaderData;
 }
 
 const {gradients} = colors;
-function StackedBarChart({data}: Props): JSX.Element
+
+function StackedBarChart({data, chartSubheaderData}: Props): JSX.Element
 {
    const navigate = useNavigate();
 
@@ -70,23 +87,30 @@ function StackedBarChart({data}: Props): JSX.Element
 
    const handleClick = (e: Array<{}>) =>
    {
-      if(e && e.length > 0 && data?.urls && data?.urls.length)
+      if (e && e.length > 0 && data?.urls && data?.urls.length)
       {
          // @ts-ignore
          navigate(data.urls[e[0]["index"]]);
       }
       console.log(e);
-   }
+   };
 
    useEffect(() =>
    {
-      if(data)
+      if (data)
       {
          data?.datasets.forEach((dataset: any, index: number) =>
          {
             if (!dataset.backgroundColor)
             {
-               dataset.backgroundColor = gradients[chartColors[index]].state;
+               if (gradients[chartColors[index]])
+               {
+                  dataset.backgroundColor = gradients[chartColors[index]].state;
+               }
+               else
+               {
+                  dataset.backgroundColor = chartColors[index];
+               }
             }
          });
          setStateData(stateData);
@@ -95,8 +119,13 @@ function StackedBarChart({data}: Props): JSX.Element
 
 
    return data ? (
-      <Box p={3}><Bar data={data} options={options} getElementsAtEvent={handleClick} /></Box>
-   ) : <Skeleton sx={{marginLeft: "20px", marginRight: "20px", height: "200px"}} /> ;
+      <Box p={3} pt={1}>
+         {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
+         <Box width="100%" height="250px">
+            <Bar data={data} options={options} getElementsAtEvent={handleClick} />
+         </Box>
+      </Box>
+   ) : <Skeleton sx={{marginLeft: "20px", marginRight: "20px", height: "200px"}} />;
 }
 
 export default StackedBarChart;
