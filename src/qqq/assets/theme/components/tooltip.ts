@@ -24,7 +24,7 @@ import borders from "qqq/assets/theme/base/borders";
 // Material Dashboard 2 PRO React TS Helper Functions
 import pxToRem from "qqq/assets/theme/functions/pxToRem";
 
-const { black, light } = colors;
+const { black, light, white, dark } = colors;
 const { size, fontWeightRegular } = typography;
 const { borderRadius } = borders;
 
@@ -39,19 +39,20 @@ const tooltip: Types = {
 
   styleOverrides: {
     tooltip: {
-      maxWidth: pxToRem(200),
-      backgroundColor: black.main,
-      color: light.main,
+      maxWidth: pxToRem(300),
+      backgroundColor: white.main,
+      color: dark.main,
       fontSize: size.sm,
       fontWeight: fontWeightRegular,
-      textAlign: "center",
+      textAlign: "left",
       borderRadius: borderRadius.md,
       opacity: 0.7,
-      padding: `${pxToRem(5)} ${pxToRem(8)} ${pxToRem(4)}`,
+      padding: "1rem",
+      boxShadow: "rgba(0, 0, 0, 0.2) 0px 3px 3px -2px, rgba(0, 0, 0, 0.14) 0px 3px 4px 0px, rgba(0, 0, 0, 0.12) 0px 1px 8px 0px"
     },
 
     arrow: {
-      color: black.main,
+      color: white.main,
     },
   },
 };
