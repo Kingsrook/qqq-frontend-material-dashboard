@@ -43,6 +43,7 @@ export interface ParentWidgetData
    dropdownNeedsSelectedText?: string;
    storeDropdownSelections?: boolean;
    icon?: string;
+   layoutType: string;
 }
 
 
@@ -112,7 +113,7 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
             reloadWidgetCallback={parentReloadWidgetCallback}
          >
             <Box sx={{height: "100%", width: "100%"}} px={px}>
-               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData}/>
+               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData} wrapWidgetsInTabPanels={data.layoutType == "TABS"}/>
             </Box>
          </Widget>
       ) : null
