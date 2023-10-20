@@ -155,7 +155,7 @@ function ValidationReview({
                            "false",
                            "Skip Validation.  Submit the records for immediate processing", (
                               <div>
-                                 If you choose this option, the records input records will immediately be processed.
+                                 If you choose this option, the input records will immediately be processed.
                                  You will be told how many records were successfully processed, and which ones had issues after the processing is completed.
                                  <br />
                                  <br />
