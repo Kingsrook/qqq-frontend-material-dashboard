@@ -88,7 +88,14 @@ function QDynamicFormField({
    if (type === "checkbox")
    {
       getsBulkEditHtmlLabel = false;
-      field = (<BooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} />);
+      field = (<>
+         <BooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} />
+         <Box mt={0.75}>
+            <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
+               {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
+            </MDTypography>
+         </Box>
+      </>);
    }
    else if (type === "ace")
    {
