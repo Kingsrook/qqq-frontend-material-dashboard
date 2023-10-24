@@ -505,7 +505,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
                   if (wrapWidgetsInTabPanels)
                   {
-                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 1.5rem 0 1.5rem", width: "100%"}}>
+                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 0 0 1.5rem", width: "100%", marginBottom: "-1.5rem"}}>
                         {renderedWidget}
                      </TabPanel>);
                   }

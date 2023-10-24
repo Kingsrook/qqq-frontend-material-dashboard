@@ -2043,6 +2043,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         getRowId={(row) => row.__rowIndex}
                         selectionModel={rowSelectionModel}
                         hideFooterSelectedRowCount={true}
+                        sx={{border: 0}}
                      />
                   </Box>
                </Card>

@@ -1284,6 +1284,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       mainCardStyles.background = "none";
       mainCardStyles.boxShadow = "none";
+      mainCardStyles.border = "none";
       mainCardStyles.minHeight = "";
       mainCardStyles.alignItems = "stretch";
       mainCardStyles.flexGrow = 1;

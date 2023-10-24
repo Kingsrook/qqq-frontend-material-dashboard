@@ -30,7 +30,7 @@ import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import {useEffect, useMemo, useState} from "react";
-import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
+import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable, useExpanded} from "react-table";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDPagination from "qqq/components/legacy/MDPagination";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -47,6 +47,8 @@ interface Props
    canSearch?: boolean;
    showTotalEntries?: boolean;
    hidePaginationDropdown?: boolean;
+   fixedStickyLastRow?: boolean;
+   fixedHeight?: number;
    table: TableDataInput;
    pagination?: {
       variant: "contained" | "gradient";
@@ -55,6 +57,18 @@ interface Props
    isSorted?: boolean;
    noEndBorder?: boolean;
 }
+
+DataTable.defaultProps = {
+   entriesPerPage: 10,
+   entriesPerPageOptions: ["5", "10", "15", "20", "25"],
+   canSearch: false,
+   showTotalEntries: true,
+   fixedStickyLastRow: false,
+   fixedHeight: null,
+   pagination: {variant: "gradient", color: "info"},
+   isSorted: true,
+   noEndBorder: false,
+};
 
 const NoMaxWidthTooltip = styled(({className, ...props}: TooltipProps) => (
    <Tooltip {...props} classes={{popper: className}} />
@@ -71,6 +85,8 @@ function DataTable({
    hidePaginationDropdown,
    canSearch,
    showTotalEntries,
+   fixedStickyLastRow,
+   fixedHeight,
    table,
    pagination,
    isSorted,
@@ -83,8 +99,73 @@ function DataTable({
    defaultValue = (entriesPerPage) ? entriesPerPage : "10";
    entries = entriesPerPageOptions ? entriesPerPageOptions : ["10", "25", "50", "100"];
 
-   const columns = useMemo<any>(() => table.columns, [table]);
+   let widths = [];
+   for(let i = 0; i<table.columns.length; i++)
+   {
+      const column = table.columns[i];
+      if(column.type !== "hidden")
+      {
+         widths.push(table.columns[i].width ?? "1fr");
+      }
+   }
+
+   let showExpandColumn = false;
+   for (let i = 0; i < table.rows.length; i++)
+   {
+      if(table.rows[i].subRows)
+      {
+         showExpandColumn = true;
+         break;
+      }
+   }
+
+   const columnsToMemo = [...table.columns];
+   if(showExpandColumn)
+   {
+      widths.push("60px");
+      columnsToMemo.push(
+         {
+            ///////////////////////////////
+            // Build our expander column //
+            ///////////////////////////////
+            id: "__expander",
+            width: 60,
+
+            ////////////////////////////////////////////////
+            // use this block if we want to do expand-all //
+            ////////////////////////////////////////////////
+            // @ts-ignore
+            // header: ({getToggleAllRowsExpandedProps, isAllRowsExpanded}) => (
+            //    <span {...getToggleAllRowsExpandedProps()}>
+            //       {isAllRowsExpanded ? "yes" : "no"}
+            //    </span>
+            // ),
+            header: () => (<span />),
+
+            // @ts-ignore
+            cell: ({row}) =>
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // Use the row.canExpand and row.getToggleRowExpandedProps prop getter to build the toggle for expanding a row //
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               row.canExpand ? (
+                  <span
+                     {...row.getToggleRowExpandedProps({
+                        //////////////////////////////////////////////////////////////////////////////////////////
+                        // We could use the row.depth property and paddingLeft to indicate the depth of the row //
+                        //////////////////////////////////////////////////////////////////////////////////////////
+                        // style: {paddingLeft: `${row.depth * 2}rem`,},
+                     })}
+                  >
+                     <Icon fontSize="medium">{row.isExpanded ? "expand_less" : "chevron_right"}</Icon>
+                  </span>
+               ) : null,
+         },
+      );
+   }
+
+   const columns = useMemo<any>(() => columnsToMemo, [table]);
    const data = useMemo<any>(() => table.rows, [table]);
+   const gridTemplateColumns = widths.join(" ");
 
    if (!columns || !data)
    {
@@ -95,6 +176,7 @@ function DataTable({
       {columns, data, initialState: {pageIndex: 0}},
       useGlobalFilter,
       useSortBy,
+      useExpanded,
       usePagination
    );
 
@@ -113,7 +195,7 @@ function DataTable({
       previousPage,
       setPageSize,
       setGlobalFilter,
-      state: {pageIndex, pageSize, globalFilter},
+      state: {pageIndex, pageSize, globalFilter, expanded},
    }: any = tableInstance;
 
    // Set the default value for the entries per page when component mounts
@@ -193,79 +275,45 @@ function DataTable({
       entriesEnd = pageSize * (pageIndex + 1);
    }
 
-   return (
-      <TableContainer sx={{boxShadow: "none"}}>
-         {entriesPerPage && ((hidePaginationDropdown !== undefined && ! hidePaginationDropdown) || canSearch) ? (
-            <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
-               {entriesPerPage && (hidePaginationDropdown === undefined || ! hidePaginationDropdown) &&  (
-                  <Box display="flex" alignItems="center">
-                     <Autocomplete
-                        disableClearable
-                        value={pageSize.toString()}
-                        options={entries}
-                        onChange={(event, newValues: any) =>
-                        {
-                           if(typeof newValues === "string")
-                           {
-                              setEntriesPerPage(parseInt(newValues, 10));
-                           }
-                           else
-                           {
-                              setEntriesPerPage(parseInt(newValues[0], 10));
-                           }
-                        }}
-                        size="small"
-                        sx={{width: "5rem"}}
-                        renderInput={(params) => <MDInput {...params} />}
-                     />
-                     <MDTypography variant="caption" color="secondary">
-                        &nbsp;&nbsp;entries per page
-                     </MDTypography>
-                  </Box>
-               )}
-               {canSearch && (
-                  <Box width="12rem" ml="auto">
-                     <MDInput
-                        placeholder="Search..."
-                        value={search}
-                        size="small"
-                        fullWidth
-                        onChange={({currentTarget}: any) =>
-                        {
-                           setSearch(search);
-                           onSearchChange(currentTarget.value);
-                        }}
-                     />
-                  </Box>
-               )}
-            </Box>
-         ) : null}
+   function getTable(includeHead: boolean, rows: any, isFooter: boolean)
+   {
+      let boxStyle = {};
+      if(fixedStickyLastRow)
+      {
+         boxStyle = isFooter ? {overflowY: "visible", borderTop: "0.0625rem solid #f0f2f5;"} : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "auto"};
+      }
+
+      const className = isFooter ? "hideScrollbars" : "";
+      return <Box sx={boxStyle} className={className}>
          <Table {...getTableProps()}>
-            <Box component="thead">
-               {headerGroups.map((headerGroup: any, i: number) => (
-                  <TableRow key={i} {...headerGroup.getHeaderGroupProps()}>
-                     {headerGroup.headers.map((column: any) => (
-                        column.type !== "hidden" && (
-                           <DataTableHeadCell
-                              key={i++}
-                              {...column.getHeaderProps(isSorted && column.getSortByToggleProps())}
-                              width={column.width ? column.width : "auto"}
-                              align={column.align ? column.align : "left"}
-                              sorted={setSortedValue(column)}
-                           >
-                              {column.render("header")}
-                           </DataTableHeadCell>
-                        )
+            {
+               includeHead && (
+                  <Box component="thead" sx={{position: "sticky", top: 0, background: "white"}}>
+                     {headerGroups.map((headerGroup: any, i: number) => (
+                        <TableRow key={i} {...headerGroup.getHeaderGroupProps()} sx={{display: "grid", gridTemplateColumns: gridTemplateColumns}}>
+                           {headerGroup.headers.map((column: any) => (
+                              column.type !== "hidden" && (
+                                 <DataTableHeadCell
+                                    key={i++}
+                                    {...column.getHeaderProps(isSorted && column.getSortByToggleProps())}
+                                    align={column.align ? column.align : "left"}
+                                    sorted={setSortedValue(column)}
+                                 >
+                                    {column.render("header")}
+                                 </DataTableHeadCell>
+                              )
+                           ))}
+                        </TableRow>
                      ))}
-                  </TableRow>
-               ))}
-            </Box>
+                  </Box>
+               )
+            }
             <TableBody {...getTableBodyProps()}>
-               {page.map((row: any, key: any) =>
+               {rows.map((row: any, key: any) =>
                {
                   prepareRow(row);
                   return (
-                     <TableRow sx={{verticalAlign: "top"}} key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
@@ -308,6 +356,9 @@ function DataTable({
                                        <ImageCell imageUrl={row.values["imageUrl"]} label={row.values["imageLabel"]} />
                                     )
                                  }
+                                 {
+                                    (cell.column.id === "__expander") && cell.render("cell")
+                                 }
                               </DataTableBodyCell>
                            )
                         ))}
@@ -316,6 +367,65 @@ function DataTable({
                })}
             </TableBody>
          </Table>
+      </Box>
+   }
+
+   return (
+      <TableContainer sx={{boxShadow: "none"}}>
+         {entriesPerPage && ((hidePaginationDropdown !== undefined && !hidePaginationDropdown) || canSearch) ? (
+            <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
+               {entriesPerPage && (hidePaginationDropdown === undefined || !hidePaginationDropdown) && (
+                  <Box display="flex" alignItems="center">
+                     <Autocomplete
+                        disableClearable
+                        value={pageSize.toString()}
+                        options={entries}
+                        onChange={(event, newValues: any) =>
+                        {
+                           if (typeof newValues === "string")
+                           {
+                              setEntriesPerPage(parseInt(newValues, 10));
+                           }
+                           else
+                           {
+                              setEntriesPerPage(parseInt(newValues[0], 10));
+                           }
+                        }}
+                        size="small"
+                        sx={{width: "5rem"}}
+                        renderInput={(params) => <MDInput {...params} />}
+                     />
+                     <MDTypography variant="caption" color="secondary">
+                        &nbsp;&nbsp;entries per page
+                     </MDTypography>
+                  </Box>
+               )}
+               {canSearch && (
+                  <Box width="12rem" ml="auto">
+                     <MDInput
+                        placeholder="Search..."
+                        value={search}
+                        size="small"
+                        fullWidth
+                        onChange={({currentTarget}: any) =>
+                        {
+                           setSearch(search);
+                           onSearchChange(currentTarget.value);
+                        }}
+                     />
+                  </Box>
+               )}
+            </Box>
+         ) : null}
+
+         {
+            fixedStickyLastRow ? (
+               <>
+                  {getTable(true, page.slice(0, page.length -1), false)}
+                  {getTable(false, page.slice(page.length-1), true)}
+               </>
+            ) : getTable(true, page, false)
+         }
 
          <Box
             display="flex"
@@ -367,16 +477,5 @@ function DataTable({
       </TableContainer>
    );
 }
-
-// Declaring default props for DataTable
-DataTable.defaultProps = {
-   entriesPerPage: 10,
-   entriesPerPageOptions: ["5", "10", "15", "20", "25"],
-   canSearch: false,
-   showTotalEntries: true,
-   pagination: {variant: "gradient", color: "info"},
-   isSorted: true,
-   noEndBorder: false,
-};
 
 export default DataTable;

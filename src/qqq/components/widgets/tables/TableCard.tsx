@@ -54,11 +54,13 @@ interface Props
    noRowsFoundHTML?: string;
    rowsPerPage?: number;
    hidePaginationDropdown?: boolean;
+   fixedStickyLastRow?: boolean;
+   fixedHeight?: number;
    data: TableDataInput;
 }
 
 const qController = Client.getInstance();
-function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown}: Props): JSX.Element
+function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, fixedStickyLastRow, fixedHeight}: Props): JSX.Element
 {
    const [qInstance, setQInstance] = useState(null as QInstance);
 
@@ -79,6 +81,8 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown}:
                   table={data}
                   entriesPerPage={rowsPerPage}
                   hidePaginationDropdown={hidePaginationDropdown}
+                  fixedStickyLastRow={fixedStickyLastRow}
+                  fixedHeight={fixedHeight}
                   showTotalEntries={false}
                   isSorted={false}
                   noEndBorder

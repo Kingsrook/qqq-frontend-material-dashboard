@@ -122,6 +122,8 @@ function TableWidget(props: Props): JSX.Element
             noRowsFoundHTML={props.widgetData?.noRowsFoundHTML}
             rowsPerPage={props.widgetData?.rowsPerPage}
             hidePaginationDropdown={props.widgetData?.hidePaginationDropdown}
+            fixedStickyLastRow={props.widgetData?.fixedStickyLastRow}
+            fixedHeight={props.widgetData?.fixedHeight}
             data={{columns: props.widgetData?.columns, rows: props.widgetData?.rows}}
          />
       </Widget>
