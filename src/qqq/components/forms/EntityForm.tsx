@@ -426,6 +426,11 @@ function EntityForm(props: Props): JSX.Element
       actions.setSubmitting(true);
       await (async () =>
       {
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // we will be manipulating the values sent to the backend, so clone values so they remained unchanged for the form widgets //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const valuesToPost = JSON.parse(JSON.stringify(values));
+
          for(let fieldName of tableMetaData.fields.keys())
          {
             const fieldMetaData = tableMetaData.fields.get(fieldName);
@@ -438,17 +443,17 @@ function EntityForm(props: Props): JSX.Element
             // changing from, say, 12:15:30 to just 12:15:00... this seems to get around that, for cases when the       //
             // user didn't change the value in the field (but if the user did change the value, then we will submit it) //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if(fieldMetaData.type === QFieldType.DATE_TIME && values[fieldName])
+            if(fieldMetaData.type === QFieldType.DATE_TIME && valuesToPost[fieldName])
             {
-               console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${values[fieldName]}]`)
-               if (initialValues[fieldName] == values[fieldName])
+               console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${valuesToPost[fieldName]}]`)
+               if (initialValues[fieldName] == valuesToPost[fieldName])
                {
                   console.log(" - Is the same, so, deleting from the post");
-                  delete (values[fieldName]);
+                  delete (valuesToPost[fieldName]);
                }
                else
                {
-                  values[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(values[fieldName]);
+                  valuesToPost[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(valuesToPost[fieldName]);
                }
             }
 
@@ -461,10 +466,10 @@ function EntityForm(props: Props): JSX.Element
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             if(fieldMetaData.type === QFieldType.BLOB)
             {
-               if(typeof values[fieldName] === "string")
+               if(typeof valuesToPost[fieldName] === "string")
                {
                   console.log(`${fieldName} value was a string, so, we're deleting it from the values array, to not submit it to the backend, to not change it.`);
-                  delete(values[fieldName]);
+                  delete(valuesToPost[fieldName]);
                }
             }
          }
@@ -473,7 +478,7 @@ function EntityForm(props: Props): JSX.Element
          {
             // todo - audit that it's a dupe
             await qController
-               .update(tableName, props.id, values)
+               .update(tableName, props.id, valuesToPost)
                .then((record) =>
                {
                   if (props.isModal)
@@ -506,7 +511,7 @@ function EntityForm(props: Props): JSX.Element
          else
          {
             await qController
-               .create(tableName, values)
+               .create(tableName, valuesToPost)
                .then((record) =>
                {
                   if (props.isModal)
