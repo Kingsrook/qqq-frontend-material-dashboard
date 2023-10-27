@@ -329,7 +329,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             <Grid m={3} mt={9} container>
                <Grid item xs={0} lg={3} />
                <Grid item xs={12} lg={6}>
-                  <Card elevation={5}>
+                  <Card>
                      <Box p={3}>
                         <MDTypography variant="h5" component="div">
                            Working
