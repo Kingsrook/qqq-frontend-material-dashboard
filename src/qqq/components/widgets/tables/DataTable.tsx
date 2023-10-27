@@ -156,7 +156,8 @@ function DataTable({
                         // style: {paddingLeft: `${row.depth * 2}rem`,},
                      })}
                   >
-                     <Icon fontSize="medium">{row.isExpanded ? "expand_less" : "chevron_right"}</Icon>
+                     {/* float this icon to keep it "out of the flow" - in other words, to keep it from making the row taller than it otherwise would be... */}
+                     <Icon fontSize="medium" sx={{float: "left"}}>{row.isExpanded ? "expand_less" : "chevron_right"}</Icon>
                   </span>
                ) : null,
          },
@@ -313,7 +314,7 @@ function DataTable({
                {
                   prepareRow(row);
                   return (
-                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns}} key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? "#FAFAFA" : "initial")}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
