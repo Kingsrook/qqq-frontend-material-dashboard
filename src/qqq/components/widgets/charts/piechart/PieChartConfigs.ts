@@ -67,6 +67,18 @@ function configs(labels: any, datasets: any)
          maintainAspectRatio: false,
          responsive: true,
          plugins: {
+            tooltip: {
+               callbacks: {
+                  label: function(context: any)
+                  {
+                     ////////////////////////////////////////////////////////////////////////////////
+                     // our labels already have the value in them - so just use the label in the   //
+                     // tooltip (lib by default puts label + value, so we were duplicating value!) //
+                     ////////////////////////////////////////////////////////////////////////////////
+                     return context.label;
+                  }
+               }
+            },
             legend: {
                position: "bottom",
                labels: {
