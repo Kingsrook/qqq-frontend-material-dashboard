@@ -2019,7 +2019,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         page={pageNumber}
                         checkboxSelection
                         disableSelectionOnClick
-                        autoHeight
+                        autoHeight={false}
                         rows={rows}
                         // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                         columns={columnsModel}
@@ -2043,7 +2043,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         getRowId={(row) => row.__rowIndex}
                         selectionModel={rowSelectionModel}
                         hideFooterSelectedRowCount={true}
-                        sx={{border: 0}}
+                        sx={{border: 0, height: "calc(100vh - 250px)"}}
                      />
                   </Box>
                </Card>
