@@ -56,7 +56,7 @@ interface Props
    widgetMetaData?: QWidgetMetaData;
    widgetIndex: number;
    data: ParentWidgetData;
-   reloadWidgetCallback?: (widgetIndex: number, params: string) => void;
+   reloadWidgetCallback?: (params: string) => void;
    entityPrimaryKey?: string;
    tableName?: string;
    storeDropdownSelections?: boolean;
@@ -92,10 +92,15 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
       }
    }, [qInstance, data, childUrlParams]);
 
+   useEffect(() =>
+   {
+      setChildUrlParams(urlParams)
+   }, [urlParams]);
+
    const parentReloadWidgetCallback = (data: string) =>
    {
       setChildUrlParams(data);
-      reloadWidgetCallback(widgetIndex, data);
+      reloadWidgetCallback(data);
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////

@@ -26,7 +26,6 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import parse from "html-react-parser";
 import React, {useContext, useEffect, useReducer, useState} from "react";
-import {useLocation} from "react-router-dom";
 import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import TabPanel from "qqq/components/misc/TabPanel";
@@ -80,7 +79,6 @@ DashboardWidgets.defaultProps = {
 
 function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels}: Props): JSX.Element
 {
-   const location = useLocation();
    const [widgetData, setWidgetData] = useState([] as any[]);
    const [widgetCounter, setWidgetCounter] = useState(0);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -89,11 +87,22 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    const [haveLoadedParams, setHaveLoadedParams] = useState(false);
    const {accentColor} = useContext(QContext);
 
-   const [selectedTab, setSelectedTab] = useState(0);
+   let initialSelectedTab = 0;
+   let selectedTabKey: string = null;
+   if(parentWidgetMetaData && wrapWidgetsInTabPanels)
+   {
+      selectedTabKey = `qqq.widgets.selectedTabs.${parentWidgetMetaData.name}`
+      if (localStorage.getItem(selectedTabKey))
+      {
+         initialSelectedTab = Number(localStorage.getItem(selectedTabKey));
+      }
+   }
+   const [selectedTab, setSelectedTab] = useState(initialSelectedTab);
 
    const changeTab = (newValue: number) =>
    {
       setSelectedTab(newValue);
+      localStorage.setItem(selectedTabKey, String(newValue));
    };
 
    useEffect(() =>
@@ -260,7 +269,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetIndex={i}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
-                     reloadWidgetCallback={reloadWidget}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
                )
