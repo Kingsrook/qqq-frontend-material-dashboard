@@ -1136,8 +1136,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                   <body>
                      Generating file <u>${filename}</u>${totalRecords ? " with " + totalRecords.toLocaleString() + " record" + (totalRecords == 1 ? "" : "s") : ""}...
                      <form id="exportForm" method="post" action="${url}" >
-                        <!-- todo#authHeader - remove this. -->
-                        <input type="hidden" name="Authorization" value="${qController.getAuthorizationHeaderValue()}">
                         <input type="hidden" name="fields" value="${visibleFields.join(",")}">
                         <input type="hidden" name="filter" id="filter">
                      </form>

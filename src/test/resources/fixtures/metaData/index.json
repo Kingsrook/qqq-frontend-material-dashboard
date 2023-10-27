@@ -302,8 +302,7 @@
          "label": "Greetings App",
          "iconName": "emoji_people",
          "widgets": [
-            "PersonsByCreateDateBarChart",
-            "QuickSightChartRenderer"
+            "SampleTableWidget"
          ],
          "children": [
             {
@@ -738,139 +737,11 @@
       "icon": "/kr-icon.png"
    },
    "widgets": {
-      "parcelTrackingDetails": {
-         "name": "parcelTrackingDetails",
-         "label": "Tracking Details",
-         "type": "childRecordList"
-      },
-      "deposcoSalesOrderLineItems": {
-         "name": "deposcoSalesOrderLineItems",
-         "label": "Line Items",
-         "type": "childRecordList"
-      },
-      "TotalShipmentsByDayBarChart": {
-         "name": "TotalShipmentsByDayBarChart",
-         "label": "Total Shipments By Day",
-         "type": "chart"
-      },
-      "TotalShipmentsByMonthLineChart": {
-         "name": "TotalShipmentsByMonthLineChart",
-         "label": "Total Shipments By Month",
-         "type": "chart"
-      },
-      "YTDShipmentsByCarrierPieChart": {
-         "name": "YTDShipmentsByCarrierPieChart",
-         "label": "Shipments By Carrier Year To Date",
-         "type": "chart"
-      },
-      "TodaysShipmentsStatisticsCard": {
-         "name": "TodaysShipmentsStatisticsCard",
-         "label": "Today's Shipments",
-         "type": "statistics"
-      },
-      "ShipmentsInTransitStatisticsCard": {
-         "name": "ShipmentsInTransitStatisticsCard",
-         "label": "Shipments In Transit",
-         "type": "statistics"
-      },
-      "OpenOrdersStatisticsCard": {
-         "name": "OpenOrdersStatisticsCard",
-         "label": "Open Orders",
-         "type": "statistics"
-      },
-      "ShippingExceptionsStatisticsCard": {
-         "name": "ShippingExceptionsStatisticsCard",
-         "label": "Shipping Exceptions",
-         "type": "statistics"
-      },
-      "WarehouseLocationCards": {
-         "name": "WarehouseLocationCards",
-         "type": "location"
-      },
-      "TotalShipmentsStatisticsCard": {
-         "name": "TotalShipmentsStatisticsCard",
-         "label": "Total Shipments",
-         "type": "statistics"
-      },
-      "SuccessfulDeliveriesStatisticsCard": {
-         "name": "SuccessfulDeliveriesStatisticsCard",
-         "label": "Successful Deliveries",
-         "type": "statistics"
-      },
-      "ServiceFailuresStatisticsCard": {
-         "name": "ServiceFailuresStatisticsCard",
-         "label": "Service Failures",
-         "type": "statistics"
-      },
-      "CarrierVolumeLineChart": {
-         "name": "CarrierVolumeLineChart",
-         "label": "Carrier Volume By Month",
-         "type": "lineChart"
-      },
-      "YTDSpendByCarrierTable": {
-         "name": "YTDSpendByCarrierTable",
-         "label": "Spend By Carrier Year To Date",
-         "type": "table"
-      },
-      "TimeInTransitBarChart": {
-         "name": "TimeInTransitBarChart",
-         "label": "Time In Transit Last 30 Days",
-         "type": "chart"
-      },
-      "OpenBillingWorksheetsTable": {
-         "name": "OpenBillingWorksheetsTable",
-         "label": "Open Billing Worksheets",
-         "type": "table"
-      },
-      "AssociatedParcelInvoicesTable": {
-         "name": "AssociatedParcelInvoicesTable",
-         "label": "Associated Parcel Invoices",
+      "SampleTableWidget": {
+         "name": "SampleTableWidget",
+         "label": "Sample Table Widget",
          "type": "table",
-         "icon": "receipt"
-      },
-      "BillingWorksheetLinesTable": {
-         "name": "BillingWorksheetLinesTable",
-         "label": "Billing Worksheet Lines",
-         "type": "table"
-      },
-      "RatingIssuesWidget": {
-         "name": "RatingIssuesWidget",
-         "label": "Rating Issues",
-         "type": "html",
-         "icon": "warning",
-         "gridColumns": 6
-      },
-      "UnassignedParcelInvoicesTable": {
-         "name": "UnassignedParcelInvoicesTable",
-         "label": "Unassigned Parcel Invoices",
-         "type": "table"
-      },
-      "ParcelInvoiceSummaryWidget": {
-         "name": "ParcelInvoiceSummaryWidget",
-         "label": "Parcel Invoice Summary",
-         "type": "multiStatistics"
-      },
-      "ParcelInvoiceLineExceptionsSummaryWidget": {
-         "name": "ParcelInvoiceLineExceptionsSummaryWidget",
-         "label": "Parcel Invoice Line Exceptions",
-         "type": "multiStatistics"
-      },
-      "BillingWorksheetStatusStepper": {
-         "name": "BillingWorksheetStatusStepper",
-         "label": "Billing Worksheet Progress",
-         "type": "stepper",
-         "icon": "refresh",
-         "gridColumns": 6
-      },
-      "PersonsByCreateDateBarChart": {
-         "name": "PersonsByCreateDateBarChart",
-         "label": "Persons By Create Date",
-         "type": "barChart"
-      },
-      "QuickSightChartRenderer": {
-         "name": "QuickSightChartRenderer",
-         "label": "Quick Sight",
-         "type": "quickSightChart"
+         "showExportButton": true
       },
       "scriptViewer": {
          "name": "scriptViewer",

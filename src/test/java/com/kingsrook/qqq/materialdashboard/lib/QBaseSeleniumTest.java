@@ -1,6 +1,11 @@
 package com.kingsrook.qqq.materialdashboard.lib;
 
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import com.kingsrook.qqq.backend.core.utils.CollectionUtils;
 import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +16,7 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 /*******************************************************************************
@@ -54,7 +60,15 @@ public class QBaseSeleniumTest
    @BeforeEach
    public void beforeEach()
    {
+      manageDownloadsDirectory();
+
+      HashMap<String, Object> chromePrefs = new HashMap<>();
+      chromePrefs.put("profile.default_content_settings.popups", 0);
+      chromePrefs.put("download.default_directory", getDownloadsDirectory());
+      chromeOptions.setExperimentalOption("prefs", chromePrefs);
+
       driver = new ChromeDriver(chromeOptions);
+
       driver.manage().window().setSize(new Dimension(1700, 1300));
       qSeleniumLib = new QSeleniumLib(driver);
 
@@ -64,6 +78,57 @@ public class QBaseSeleniumTest
          addJavalinRoutes(qSeleniumJavalin);
          qSeleniumJavalin.start();
       }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void manageDownloadsDirectory()
+   {
+      File downloadsDirectory = new File(getDownloadsDirectory());
+      if(!downloadsDirectory.exists())
+      {
+         if(!downloadsDirectory.mkdir())
+         {
+            fail("Could not create downloads directory: " + downloadsDirectory);
+         }
+      }
+
+      if(!downloadsDirectory.isDirectory())
+      {
+         fail("Downloads directory: " + downloadsDirectory + " is not a directory.");
+      }
+
+      for(File file : CollectionUtils.nonNullArray(downloadsDirectory.listFiles()))
+      {
+         if(!file.delete())
+         {
+            fail("Could not remove a file from the downloads directory: " + file.getAbsolutePath());
+         }
+      }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   protected String getDownloadsDirectory()
+   {
+      return ("/tmp/selenium-downloads");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   protected List<File> getDownloadedFiles()
+   {
+      File[] downloadedFiles = CollectionUtils.nonNullArray((new File(getDownloadsDirectory())).listFiles());
+      return (Arrays.stream(downloadedFiles).toList());
    }
 
 

@@ -29,7 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /*******************************************************************************
- ** Test for Associated Record Scripts functionality.
+ ** Test that goes to a record, clicks a link for another record, then
+ ** hits 'e' on keyboard to edit the second record - and confirms that we're
+ ** on the edit url for the second record, not the first (a former bug).
  *******************************************************************************/
 public class ClickLinkOnRecordThenEditShortcutTest extends QBaseSeleniumTest
 {

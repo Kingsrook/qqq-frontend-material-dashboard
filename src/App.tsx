@@ -73,6 +73,14 @@ export default function App()
    const [loggedInUser, setLoggedInUser] = useState({} as { name?: string, email?: string });
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
 
+   /////////////////////////////////////////////////////////
+   // tell the client how to do a logout if it sees a 401 //
+   /////////////////////////////////////////////////////////
+   Client.setUnauthorizedCallback(() =>
+   {
+      logout();
+   })
+
    const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
    {
       if (!cookies[SESSION_UUID_COOKIE_NAME])
@@ -167,18 +175,8 @@ export default function App()
                   console.log("Using existing sessionUUID cookie");
                }
 
-               /*
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               // todo#authHeader - this is our quick rollback plan - if we feel the need to stop using the cookie approach. //
-               // we turn off the shouldStoreNewToken block above, and turn on these 2 lines.                                //
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
-               localStorage.removeItem("accessToken");
-               */
-
                setIsFullyAuthenticated(true);
                qController.setGotAuthentication();
-               qController.setAuthorizationHeaderValue("Bearer " + accessToken);
 
                setLoggedInUser(user);
                console.log("Token load complete.");
@@ -199,8 +197,8 @@ export default function App()
             // use a random token if anonymous or mock //
             /////////////////////////////////////////////
             console.log("Generating random token...");
-            qController.setAuthorizationHeaderValue(Md5.hashStr(`${new Date()}`));
             setIsFullyAuthenticated(true);
+            qController.setGotAuthentication();
             setCookie(SESSION_UUID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
             console.log("Token generation complete.");
             return;

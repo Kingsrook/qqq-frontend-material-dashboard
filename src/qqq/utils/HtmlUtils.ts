@@ -63,6 +63,10 @@ export default class HtmlUtils
 
    /*******************************************************************************
     ** Download a server-side generated file (or the contents of a data: url)
+    **
+    ** todo - this could be simplified (i think?)
+    ** it was originally built like this when we had to submit full access token to backend...
+    **
     *******************************************************************************/
    static downloadUrlViaIFrame = (url: string, filename: string) =>
    {
@@ -95,18 +99,6 @@ export default class HtmlUtils
       form.setAttribute("target", "downloadIframe");
       iframe.appendChild(form);
 
-      /////////////////////////////////////////////////////////////////////////////////////////////
-      // todo#authHeader - remove after comfortable with sessionUUID                             //
-      // todo - this could be simplified (i think?)                                              //
-      // it was originally built like this when we had to submit full access token to backend... //
-      /////////////////////////////////////////////////////////////////////////////////////////////
-      const authorizationInput = document.createElement("input");
-      authorizationInput.setAttribute("type", "hidden");
-      authorizationInput.setAttribute("id", "authorizationInput");
-      authorizationInput.setAttribute("name", "Authorization");
-      authorizationInput.setAttribute("value", Client.getInstance().getAuthorizationHeaderValue());
-      form.appendChild(authorizationInput);
-
       const downloadInput = document.createElement("input");
       downloadInput.setAttribute("type", "hidden");
       downloadInput.setAttribute("name", "download");
@@ -118,15 +110,16 @@ export default class HtmlUtils
 
    /*******************************************************************************
     ** Open a server-side generated file from a url in a new window (or a data: url)
+    **
+    ** todo - this could be simplified (i think?)
+    ** it was originally built like this when we had to submit full access token to backend...
+    **
     *******************************************************************************/
    static openInNewWindow = (url: string, filename: string) =>
    {
       if(url.startsWith("data:"))
       {
          /////////////////////////////////////////////////////////////////////////////////////////////
-         // todo#authHeader - remove the Authorization input after comfortable with sessionUUID     //
-         // todo - this could be simplified (i think?)                                              //
-         // it was originally built like this when we had to submit full access token to backend... //
          /////////////////////////////////////////////////////////////////////////////////////////////
          const openInWindow = window.open("", "_blank");
          openInWindow.document.write(`<html lang="en">
@@ -154,7 +147,6 @@ export default class HtmlUtils
             <body>
                Opening ${filename}...
                <form id="exportForm" method="post" action="${url}" >
-                  <input type="hidden" name="Authorization" value="${Client.getInstance().getAuthorizationHeaderValue()}">
                </form>
             </body>
          </html>`);

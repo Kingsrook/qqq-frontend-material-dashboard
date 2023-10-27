@@ -30,7 +30,7 @@ import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
-import {Link, NavigateFunction, useNavigate} from "react-router-dom";
+import {NavigateFunction, useNavigate} from "react-router-dom";
 import colors from "qqq/components/legacy/colors";
 import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/DropdownMenu";
 
@@ -46,6 +46,7 @@ export interface WidgetData
    dropdownNeedsSelectedText?: string;
    hasPermission?: boolean;
    errorLoading?: boolean;
+
    [other: string]: any;
 }
 
@@ -53,6 +54,7 @@ export interface WidgetData
 interface Props
 {
    labelAdditionalComponentsLeft: LabelComponent[];
+   labelAdditionalElementsLeft: JSX.Element[];
    labelAdditionalComponentsRight: LabelComponent[];
    widgetMetaData?: QWidgetMetaData;
    widgetData?: WidgetData;
@@ -70,6 +72,7 @@ Widget.defaultProps = {
    widgetMetaData: {},
    widgetData: {},
    labelAdditionalComponentsLeft: [],
+   labelAdditionalElementsLeft: [],
    labelAdditionalComponentsRight: [],
 };
 
@@ -88,34 +91,8 @@ export class LabelComponent
 {
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
-      return (<div>Unsupported component type</div>)
-   }
-}
-
-
-/*******************************************************************************
- **
- *******************************************************************************/
-export class HeaderLink extends LabelComponent
-{
-   label: string;
-   to: string
-
-   constructor(label: string, to: string)
-   {
-      super();
-      this.label = label;
-      this.to = to;
-   }
-
-   render = (args: LabelComponentRenderArgs): JSX.Element =>
-   {
-      return (
-         <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative" top="-0.25rem">
-            {this.to ? <Link to={this.to}>{this.label}</Link> : null}
-         </Typography>
-      );
-   }
+      return (<div>Unsupported component type</div>);
+   };
 }
 
 
@@ -184,8 +161,8 @@ export class AddNewRecordButton extends LabelComponent
 
    openEditForm = (navigate: any, table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any) =>
    {
-      navigate(`#/createChild=${table.name}/defaultValues=${JSON.stringify(defaultValues)}/disabledFields=${JSON.stringify(disabledFields)}`)
-   }
+      navigate(`#/createChild=${table.name}/defaultValues=${JSON.stringify(defaultValues)}/disabledFields=${JSON.stringify(disabledFields)}`);
+   };
 
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
@@ -194,35 +171,7 @@ export class AddNewRecordButton extends LabelComponent
             <Button sx={{mt: 0.75}} onClick={() => this.openEditForm(args.navigate, this.table, null, this.defaultValues, this.disabledFields)}>{this.label}</Button>
          </Typography>
       );
-   }
-}
-
-
-/*******************************************************************************
- **
- *******************************************************************************/
-export class ExportDataButton extends LabelComponent
-{
-   callbackToExport: any;
-   tooltipTitle: string;
-   isDisabled: boolean;
-
-   constructor(callbackToExport: any, isDisabled = false, tooltipTitle: string = "Export")
-   {
-      super();
-      this.callbackToExport = callbackToExport;
-      this.isDisabled = isDisabled;
-      this.tooltipTitle = tooltipTitle;
-   }
-
-   render = (args: LabelComponentRenderArgs): JSX.Element =>
-   {
-      return (
-         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
-            <Tooltip title={this.tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callbackToExport()} disabled={this.isDisabled}><Icon>save_alt</Icon></Button></Tooltip>
-         </Typography>
-      );
-   }
+   };
 }
 
 
@@ -270,7 +219,7 @@ export class Dropdown extends LabelComponent
             />
          </Box>
       );
-   }
+   };
 }
 
 
@@ -294,7 +243,7 @@ export class ReloadControl extends LabelComponent
             <Tooltip title="Refresh"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}><Icon>refresh</Icon></Button></Tooltip>
          </Typography>
       );
-   }
+   };
 }
 
 
@@ -415,7 +364,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
          if (index < 0)
          {
-            throw(`Could not find table name for label ${tableName}`);
+            throw (`Could not find table name for label ${tableName}`);
          }
 
          dropdownData[index] = (changedData) ? changedData.id : null;
@@ -437,7 +386,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             }
          }
 
-         reloadWidget(dropdownData)
+         reloadWidget(dropdownData);
       }
    }
 
@@ -465,7 +414,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          console.log(`No reload widget callback in ${props.widgetMetaData.label}`);
       }
-   }
+   };
 
    const toggleFullScreenWidget = () =>
    {
@@ -477,14 +426,14 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       {
          setFullScreenWidgetClassName("fullScreenWidget");
       }
-   }
+   };
 
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
 
    const isSet = (v: any): boolean =>
    {
       return (v !== null && v !== undefined);
-   }
+   };
 
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // to avoid taking up the space of the Box with the label and icon and label-components (since it has a height), only output that box if we need any of the components //
@@ -493,6 +442,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    if (hasPermission)
    {
       needLabelBox ||= (labelComponentsLeft && labelComponentsLeft.length > 0);
+      needLabelBox ||= (props.labelAdditionalElementsLeft && props.labelAdditionalElementsLeft.length > 0);
       needLabelBox ||= (labelComponentsRight && labelComponentsRight.length > 0);
       needLabelBox ||= isSet(props.widgetMetaData?.icon);
       needLabelBox ||= isSet(props.widgetData?.label);
@@ -577,6 +527,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                         })
                      )
                   }
+                  {props.labelAdditionalElementsLeft}
                </Box>
                <Box>
                   {

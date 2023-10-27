@@ -229,19 +229,13 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const download = (url: string, fileName: string) =>
    {
       /////////////////////////////////////////////////////////////////////////////////////////////
-      // todo - this could be simplified.                                                        //
+      // todo - this could be simplified, i think?                                               //
       // it was originally built like this when we had to submit full access token to backend... //
       /////////////////////////////////////////////////////////////////////////////////////////////
       let xhr = new XMLHttpRequest();
       xhr.open("POST", url);
       xhr.responseType = "blob";
       let formData = new FormData();
-
-      ////////////////////////////////////
-      // todo#authHeader - delete this. //
-      ////////////////////////////////////
-      const qController = Client.getInstance();
-      formData.append("Authorization", qController.getAuthorizationHeaderValue());
 
       // @ts-ignore
       xhr.send(formData);

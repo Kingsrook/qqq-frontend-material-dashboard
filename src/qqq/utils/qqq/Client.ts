@@ -29,11 +29,18 @@ import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException
 class Client
 {
    private static qController: QController;
+   private static unauthorizedCallback: () => void;
 
    private static handleException(exception: QException)
    {
-      // todo - check for 401 and clear cookie et al & logout?
       console.log(`Caught Exception: ${JSON.stringify(exception)}`);
+
+      if(exception && exception.status == "401" && Client.unauthorizedCallback)
+      {
+         console.log("This is a 401 - calling the unauthorized callback.");
+         Client.unauthorizedCallback();
+      }
+
       throw (exception);
    }
 
@@ -45,6 +52,11 @@ class Client
       }
 
       return this.qController;
+   }
+
+   static setUnauthorizedCallback(unauthorizedCallback: () => void)
+   {
+      Client.unauthorizedCallback = unauthorizedCallback;
    }
 }
 
