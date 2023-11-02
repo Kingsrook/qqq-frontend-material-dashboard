@@ -110,12 +110,15 @@ function DataTable({
    }
 
    let showExpandColumn = false;
-   for (let i = 0; i < table.rows.length; i++)
+   if(table.rows)
    {
-      if(table.rows[i].subRows)
+      for (let i = 0; i < table.rows.length; i++)
       {
-         showExpandColumn = true;
-         break;
+         if (table.rows[i].subRows)
+         {
+            showExpandColumn = true;
+            break;
+         }
       }
    }
 
