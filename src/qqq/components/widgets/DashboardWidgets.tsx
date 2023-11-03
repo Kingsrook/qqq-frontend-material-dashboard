@@ -507,7 +507,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
                   if (!omitWrappingGridContainer)
                   {
-                     renderedWidget = (<Grid id={widgetMetaData.name} item lg={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                     // @ts-ignore
+                     renderedWidget = (<Grid id={widgetMetaData.name} item xxl={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         {renderedWidget}
                      </Grid>);
                   }
