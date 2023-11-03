@@ -84,8 +84,12 @@ function configs(labels: any, datasets: any)
                labels: {
                   usePointStyle: true,
                   pointStyle: "circle",
-                  pointStyleWidth: 3,
-                  padding: 20
+                  padding: 12,
+                  boxHeight: 8,
+                  boxWidth: 8,
+                  font: {
+                     size: 14
+                  }
                }
             },
          },

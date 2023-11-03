@@ -51,8 +51,12 @@ export const options = {
          labels: {
             usePointStyle: true,
             pointStyle: "circle",
-            pointStyleWidth: 3,
-            padding: 20
+            boxHeight: 8,
+            boxWidth: 8,
+            padding: 12,
+            font: {
+               size: 14
+            }
          }
       }
    },
