@@ -70,6 +70,7 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
    {
       mainNumberElement = <Link to={chartSubheaderData.mainNumberUrl}>{mainNumberElement}</Link>
    }
+   mainNumberElement = <Box pr={1}>{mainNumberElement}</Box>
 
    let previousNumberElement = (
       <>
@@ -86,11 +87,11 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
    }
 
    return chartSubheaderData ? (
-      <Box display="inline-flex" alignItems="flex-end">
+      <Box display="inline-flex" alignItems="flex-end" flexWrap="wrap">
          {mainNumberElement}
          {
             chartSubheaderData.vsPreviousPercent != null && iconName != null && (
-               <Box display="inline-flex" alignItems="flex-end" pb={1} pl={0.5}>
+               <Box display="inline-flex" alignItems="flex-end" pb={1} ml={-0.5}>
                   <Icon fontSize="medium" sx={{color: color}}>{iconName}</Icon>
                   <Typography display="inline" variant="body2" sx={{color: color}}>{chartSubheaderData.vsPreviousPercent}%</Typography>
                   {previousNumberElement}
