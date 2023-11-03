@@ -94,7 +94,7 @@ function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Elem
             </Box>
             <Grid container alignItems="center">
                <Grid item xs={12} justifyContent="center">
-                  <Box width="100%" height="250px" py={2} pr={2} pl={2}>
+                  <Box width="100%" height="300px" py={2} pr={2} pl={2}>
                      {useMemo(
                         () => (
                            <Pie data={data} options={options} getElementsAtEvent={handleClick} />
