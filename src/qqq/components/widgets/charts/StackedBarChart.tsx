@@ -46,6 +46,10 @@ export const options = {
       duration: 0
    },
    plugins: {
+      tooltip: {
+         // todo - some configs around this
+         enabled: false
+      },
       legend: {
          position: "bottom",
          labels: {
