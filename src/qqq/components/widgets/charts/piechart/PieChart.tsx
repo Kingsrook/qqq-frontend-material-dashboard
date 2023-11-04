@@ -65,7 +65,10 @@ function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Elem
 
    if (chartData && chartData.dataset)
    {
-      chartData.dataset.backgroundColors = chartColors;
+      if(!chartData.dataset.backgroundColors)
+      {
+         chartData.dataset.backgroundColors = chartColors;
+      }
    }
    const {data, options} = configs(chartData?.labels || [], chartData?.dataset || {});
 
