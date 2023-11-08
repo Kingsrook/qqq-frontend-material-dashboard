@@ -471,6 +471,10 @@ function EntityForm(props: Props): JSX.Element
                   console.log(`${fieldName} value was a string, so, we're deleting it from the values array, to not submit it to the backend, to not change it.`);
                   delete(valuesToPost[fieldName]);
                }
+               else
+               {
+                  valuesToPost[fieldName] = values[fieldName];
+               }
             }
          }
 
