@@ -46,7 +46,7 @@ public class QBaseSeleniumTest
       String headless = System.getenv("QQQ_SELENIUM_HEADLESS");
       if("true".equals(headless))
       {
-         chromeOptions.setHeadless(true);
+         chromeOptions.addArguments("--headless=new");
       }
 
       WebDriverManager.chromiumdriver().setup();
