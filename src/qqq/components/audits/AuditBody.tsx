@@ -402,14 +402,16 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
 
                      return (
                         <Box key={audit0.values.get("id")} className="auditGroupBlock">
-                           <Box display="flex" flexDirection="row" justifyContent="center" fontSize={14}>
-                              <Box borderTop={1} mt={1.25} mr={1} width="100%" borderColor="#B0B0B0" />
-                              <Box whiteSpace="nowrap">
-                                 {ValueUtils.getFullWeekday(audit0.values.get("timestamp"))} {timestampParts[0]}
-                                 {timestampParts[0] == todayFormatted ? " (Today)" : ""}
-                                 {timestampParts[0] == yesterdayFormatted ? " (Yesterday)" : ""}
+                           <Box position="sticky" top="0" zIndex={3}>
+                              <Box display="flex" flexDirection="row" justifyContent="center" fontSize={14} position={"relative"} top={"-1px"} pb={"6px"} sx={{backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,1) 80%, rgba(255,255,255,0))"}}>
+                                 <Box borderTop={1} mt={1.25} mr={1} width="100%" borderColor="#B0B0B0" />
+                                 <Box whiteSpace="nowrap">
+                                    {ValueUtils.getFullWeekday(audit0.values.get("timestamp"))} {timestampParts[0]}
+                                    {timestampParts[0] == todayFormatted ? " (Today)" : ""}
+                                    {timestampParts[0] == yesterdayFormatted ? " (Yesterday)" : ""}
+                                 </Box>
+                                 <Box borderTop={1} mt={1.25} ml={1} width="100%" borderColor="#B0B0B0" />
                               </Box>
-                              <Box borderTop={1} mt={1.25} ml={1} width="100%" borderColor="#B0B0B0" />
                            </Box>
 
                            {
