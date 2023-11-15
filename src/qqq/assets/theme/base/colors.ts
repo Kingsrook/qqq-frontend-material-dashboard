@@ -216,7 +216,7 @@ const colors: Types = {
    },
 
    dark: {
-      main: "#344767",
+      main: "#212121",
       focus: "#2c3c58",
    },
 

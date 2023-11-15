@@ -25,6 +25,7 @@ import Icon from "@mui/material/Icon";
 import {ReactNode, useContext} from "react";
 import {Link} from "react-router-dom";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import pxToRem from "qqq/assets/theme/functions/pxToRem";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
@@ -113,16 +114,16 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
       <Box mr={{xs: 0, xl: 8}}>
          <MuiBreadcrumbs
             sx={{
-               fontSize: pxToRem(18),
+               fontSize: "1.125rem",
                fontWeight: "500",
-               color: "#212121",
+               color: colors.dark.main,
                "& a": {
                   color: "#757575"
                },
                "& .MuiBreadcrumbs-separator": {
-                  fontSize: pxToRem(18),
+                  fontSize: "1.125rem",
                   fontWeight: "500",
-                  color: "#212121"
+                  color: colors.dark.main
                },
             }}
          >
@@ -137,11 +138,14 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
          </MuiBreadcrumbs>
          <MDTypography
             pt={1}
-            fontWeight="bold"
             textTransform="capitalize"
-            variant="h5"
+            variant="h3"
             color={light ? "white" : "dark"}
             noWrap
+            sx={{
+               fontSize: "1.75rem",
+               fontWeight: "600"
+            }}
          >
             {pageHeader}
          </MDTypography>
