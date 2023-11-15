@@ -199,9 +199,10 @@ const typography: Types = {
   },
 
   h3: {
-    fontSize: pxToRem(30),
+    fontSize: "1.75rem",
     lineHeight: 1.375,
     ...baseHeadingProperties,
+    fontWeight: 600
   },
 
   h4: {

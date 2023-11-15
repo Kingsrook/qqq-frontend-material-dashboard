@@ -79,6 +79,12 @@ interface Types
       main: string;
       focus: string;
    }
+   gray:
+      | {
+      light: string;
+      main: string;
+      focus: string;
+   }
       | any;
    primary: ColorsTypes | any;
    secondary: ColorsTypes | any;
@@ -172,6 +178,11 @@ const colors: Types = {
    white: {
       main: "#ffffff",
       focus: "#ffffff",
+   },
+
+   gray: {
+      main: "#757575",
+      focus: "#757575",
    },
 
    black: {

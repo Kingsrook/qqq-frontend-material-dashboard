@@ -159,7 +159,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             options={history}
             autoHighlight
             blurOnSelect
-            style={{width: "200px"}}
+            style={{width: "16rem"}}
             onOpen={handleHistoryOnOpen}
             onChange={handleAutocompleteOnChange}
             PopperComponent={CustomPopper}

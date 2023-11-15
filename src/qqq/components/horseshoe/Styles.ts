@@ -20,6 +20,7 @@
  */
 
 import {Theme} from "@mui/material/styles";
+import colors from "qqq/assets/theme/base/colors";
 
 function navbar(theme: Theme | any, ownerState: any)
 {
@@ -154,6 +155,16 @@ const navbarDesktopMenu = ({breakpoints}: Theme) => ({
 });
 
 const recentlyViewedMenu = ({breakpoints}: Theme) => ({
+   "& .MuiInputLabel-root": {
+      color: colors.gray.main,
+      fontWeight: "500",
+      fontSize: "1rem"
+   },
+   "& .MuiInputAdornment-root": {
+      marginTop: "0.5rem",
+      color: colors.gray.main,
+      fontSize: "1rem"
+   },
    "& .MuiOutlinedInput-root": {
       borderRadius: "0",
       padding: "0"

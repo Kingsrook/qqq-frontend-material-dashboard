@@ -26,7 +26,6 @@ import {ReactNode, useContext} from "react";
 import {Link} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
-import pxToRem from "qqq/assets/theme/functions/pxToRem";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 interface Props
@@ -118,7 +117,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
                fontWeight: "500",
                color: colors.dark.main,
                "& a": {
-                  color: "#757575"
+                  color: colors.gray.main
                },
                "& .MuiBreadcrumbs-separator": {
                   fontSize: "1.125rem",
@@ -142,10 +141,6 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
             variant="h3"
             color={light ? "white" : "dark"}
             noWrap
-            sx={{
-               fontSize: "1.75rem",
-               fontWeight: "600"
-            }}
          >
             {pageHeader}
          </MDTypography>
