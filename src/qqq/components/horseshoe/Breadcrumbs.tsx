@@ -25,6 +25,7 @@ import Icon from "@mui/material/Icon";
 import {ReactNode, useContext} from "react";
 import {Link} from "react-router-dom";
 import QContext from "QContext";
+import pxToRem from "qqq/assets/theme/functions/pxToRem";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
 interface Props
@@ -112,35 +113,23 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
       <Box mr={{xs: 0, xl: 8}}>
          <MuiBreadcrumbs
             sx={{
+               fontSize: pxToRem(18),
+               fontWeight: "500",
+               color: "#757575",
+               "& a": {
+                  color: "#757575"
+               },
                "& .MuiBreadcrumbs-separator": {
                   color: ({palette: {white, grey}}) => (light ? white.main : grey[600]),
                },
             }}
          >
             <Link to="/">
-               <MDTypography
-                  component="span"
-                  variant="body2"
-                  color={light ? "white" : "dark"}
-                  opacity={light ? 0.8 : 0.5}
-                  sx={{lineHeight: 0}}
-               >
-                  <Icon>{icon}</Icon>
-               </MDTypography>
+               <Icon>{icon}</Icon>
             </Link>
             {fullRoutes.map((fullRoute: string) => (
                <Link to={fullRoute} key={fullRoute}>
-                  <MDTypography
-                     component="span"
-                     variant="button"
-                     fontWeight="regular"
-                     textTransform="capitalize"
-                     color={light ? "white" : "dark"}
-                     opacity={light ? 0.8 : 0.5}
-                     sx={{lineHeight: 0}}
-                  >
-                     {fullPathToLabel(fullRoute, fullRoute.replace(/.*\//, ""))}
-                  </MDTypography>
+                  {fullPathToLabel(fullRoute, fullRoute.replace(/.*\//, ""))}
                </Link>
             ))}
          </MuiBreadcrumbs>
