@@ -115,12 +115,14 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
             sx={{
                fontSize: pxToRem(18),
                fontWeight: "500",
-               color: "#757575",
+               color: "#212121",
                "& a": {
                   color: "#757575"
                },
                "& .MuiBreadcrumbs-separator": {
-                  color: ({palette: {white, grey}}) => (light ? white.main : grey[600]),
+                  fontSize: pxToRem(18),
+                  fontWeight: "500",
+                  color: "#212121"
                },
             }}
          >
