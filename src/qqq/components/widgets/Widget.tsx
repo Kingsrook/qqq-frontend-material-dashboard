@@ -455,7 +455,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////
    const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
    let labelElement = (
-      <Typography sx={{position: "relative", top: -4, cursor: "default"}} variant="h6" fontWeight="medium" display="inline">
+      <Typography sx={{position: "relative", top: -4, cursor: "default"}} variant="h6" display="inline">
          {labelToUse}
       </Typography>
    );

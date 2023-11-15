@@ -218,9 +218,10 @@ const typography: Types = {
   },
 
   h6: {
-    fontSize: pxToRem(16),
+    fontSize: "1.125rem",
     lineHeight: 1.625,
     ...baseHeadingProperties,
+    fontWeight: 500
   },
 
   subtitle1: {

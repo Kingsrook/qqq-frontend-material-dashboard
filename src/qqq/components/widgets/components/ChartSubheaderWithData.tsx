@@ -65,7 +65,7 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
       iconName = chartSubheaderData.isUpVsPrevious ? UP_ICON : DOWN_ICON;
    }
 
-   let mainNumberElement = <Typography variant="h2" display="inline">{ValueUtils.getFormattedNumber(chartSubheaderData.mainNumber)}</Typography>;
+   let mainNumberElement = <Typography variant="h3" display="inline">{ValueUtils.getFormattedNumber(chartSubheaderData.mainNumber)}</Typography>;
    if(chartSubheaderData.mainNumberUrl)
    {
       mainNumberElement = <Link to={chartSubheaderData.mainNumberUrl}>{mainNumberElement}</Link>
@@ -74,7 +74,7 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
 
    let previousNumberElement = (
       <>
-         <Typography display="inline" variant="body2" sx={{color: colors.black.main}}>
+         <Typography display="inline" variant="body2" sx={{color: colors.gray.main, fontSize: ".875rem", fontWeight: 500}}>
             &nbsp;{chartSubheaderData.vsDescription}
             {chartSubheaderData.vsPreviousNumber && (<>&nbsp;({ValueUtils.getFormattedNumber(chartSubheaderData.vsPreviousNumber)})</>)}
          </Typography>
@@ -91,9 +91,9 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
          {mainNumberElement}
          {
             chartSubheaderData.vsPreviousPercent != null && iconName != null && (
-               <Box display="inline-flex" alignItems="flex-end" pb={1} ml={-0.5}>
-                  <Icon fontSize="medium" sx={{color: color}}>{iconName}</Icon>
-                  <Typography display="inline" variant="body2" sx={{color: color}}>{chartSubheaderData.vsPreviousPercent}%</Typography>
+               <Box display="inline-flex" alignItems="baseline" pb={0.5} ml={-0.5}>
+                  <Icon fontSize="medium" sx={{color: color, alignSelf: "flex-end"}}>{iconName}</Icon>
+                  <Typography display="inline" variant="body2" sx={{color: color, fontSize: ".875rem", fontWeight: 500}}>{chartSubheaderData.vsPreviousPercent}%</Typography>
                   {previousNumberElement}
                </Box>
             )
