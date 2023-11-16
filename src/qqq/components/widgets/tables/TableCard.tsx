@@ -74,7 +74,7 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
    }, []);
 
    return (
-      <Box py={1}>
+      <Box py={1} mx={-2}>
          {
             data && data.columns && !noRowsFoundHTML ?
                <DataTable
