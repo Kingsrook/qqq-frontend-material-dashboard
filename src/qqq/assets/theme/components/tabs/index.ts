@@ -33,7 +33,10 @@ const tabs: Types = {
          borderBottomColor: grey[400],
          minHeight: "unset",
          padding: "0",
-         margin: "0"
+         margin: "0",
+         "& button": {
+            fontWeight: 500
+         }
       },
 
       scroller: {
