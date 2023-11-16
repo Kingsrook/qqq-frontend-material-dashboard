@@ -91,8 +91,8 @@ function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Elem
 
    return (
       <Card sx={{boxShadow: "none", height: "100%", width: "100%", display: "flex", flexGrow: 1, border: 0}}>
-         <Box mt={1}>
-            <Box px={3}>
+         <Box>
+            <Box>
                {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
             </Box>
             <Grid container alignItems="center">
