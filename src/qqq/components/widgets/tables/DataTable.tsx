@@ -31,6 +31,7 @@ import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import {useEffect, useMemo, useState} from "react";
 import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable, useExpanded} from "react-table";
+import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDPagination from "qqq/components/legacy/MDPagination";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -284,7 +285,7 @@ function DataTable({
       let boxStyle = {};
       if(fixedStickyLastRow)
       {
-         boxStyle = isFooter ? {overflowY: "visible", borderTop: "0.0625rem solid #f0f2f5;"} : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "auto"};
+         boxStyle = isFooter ? {overflowY: "visible", borderTop: `0.0625rem solid ${colors.grayLines.main};`} : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "auto"};
       }
 
       const className = isFooter ? "hideScrollbars" : "";
@@ -317,13 +318,14 @@ function DataTable({
                {
                   prepareRow(row);
                   return (
-                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? "#FAFAFA" : "initial")}} key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? colors.grayLines.main : "initial")}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
                                  key={key}
                                  noBorder={noEndBorder && rows.length - 1 === key}
                                  align={cell.column.align ? cell.column.align : "left"}
+                                 sx={{borderColor: colors.grayLines.main}}
                                  {...cell.getCellProps()}
                               >
                                  {
