@@ -31,7 +31,7 @@ import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import {NavigateFunction, useNavigate} from "react-router-dom";
-import colors from "qqq/components/legacy/colors";
+import colors from "qqq/assets/theme/base/colors";
 import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/DropdownMenu";
 
 export interface WidgetData
@@ -247,7 +247,7 @@ export class ReloadControl extends LabelComponent
    {
       return (
          <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.175rem">
-            <Tooltip title="Refresh"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}><Icon>refresh</Icon></Button></Tooltip>
+            <Tooltip title="Refresh"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}><Icon sx={{color: colors.gray.main, fontSize: 1.125}}>refresh</Icon></Button></Tooltip>
          </Typography>
       );
    };
