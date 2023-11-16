@@ -28,6 +28,7 @@ import Typography from "@mui/material/Typography";
 // @ts-ignore
 import {htmlToText} from "html-to-text";
 import React, {useEffect, useState} from "react";
+import colors from "qqq/assets/theme/base/colors";
 import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {WidgetData} from "qqq/components/widgets/Widget";
 import HtmlUtils from "qqq/utils/HtmlUtils";
@@ -125,7 +126,7 @@ function TableWidget(props: Props): JSX.Element
    {
       labelAdditionalElementsLeft.push(
          <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.25rem">
-            <Tooltip title="Export"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={false}><Icon sx={{color: "#757575", fontSize: 1.125}}>save_alt</Icon></Button></Tooltip>
+            <Tooltip title="Export"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={false}><Icon sx={{color: colors.gray.main, fontSize: 1.125}}>save_alt</Icon></Button></Tooltip>
          </Typography>
       );
    }
