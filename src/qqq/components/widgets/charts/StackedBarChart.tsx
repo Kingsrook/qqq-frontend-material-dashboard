@@ -45,18 +45,39 @@ export const options = {
    animation: {
       duration: 0
    },
+   elements: {
+      bar: {
+         borderRadius: 4
+      }
+   },
    plugins: {
       tooltip: {
          // todo - some configs around this
-         enabled: false
+         callbacks: {
+            title: function(context: any)
+            {
+               return ("");
+            },
+            label: function(context: any)
+            {
+               if(context.dataset.label.startsWith(context.label))
+               {
+                  return `${context.label} (${context.formattedValue})`;
+               }
+               else
+               {
+                  return ("");
+               }
+            }
+         }
       },
       legend: {
          position: "bottom",
          labels: {
             usePointStyle: true,
             pointStyle: "circle",
-            boxHeight: 8,
-            boxWidth: 8,
+            boxHeight: 6,
+            boxWidth: 6,
             padding: 12,
             font: {
                size: 14
