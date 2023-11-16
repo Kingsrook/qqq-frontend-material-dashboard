@@ -94,7 +94,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////////////
       qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
-      qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
+      qSeleniumLib.waitForSelectorContaining("H3", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////
       // take breadcrumb back to table query             //
@@ -110,7 +110,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       //////////////////////
       qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
       addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
-      qSeleniumLib.waitForSelectorContaining("H5", "Person").click();
+      qSeleniumLib.waitForSelectorContaining("H3", "Person").click();
       qSeleniumLib.waitForSelectorContaining("DIV", "Current Filter: Some People")
          .findElement(By.cssSelector("CIRCLE"));
       qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "2");
@@ -119,7 +119,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       // click into a view screen //
       //////////////////////////////
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
-      qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
+      qSeleniumLib.waitForSelectorContaining("H3", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////////////////////////////////
       // take breadcrumb back to table query                                       //
@@ -158,7 +158,7 @@ public class SavedFiltersTest extends QBaseSeleniumTest
       // click into a view screen //
       //////////////////////////////
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
-      qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
+      qSeleniumLib.waitForSelectorContaining("H3", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////
       // take breadcrumb back to table query                                         //
