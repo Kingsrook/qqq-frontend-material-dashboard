@@ -75,9 +75,6 @@ function navbar(theme: Theme | any, ownerState: any)
       paddingRight: absolute ? pxToRem(8) : 0,
       paddingLeft: absolute ? pxToRem(16) : 0,
 
-      marginLeft: "-.5rem",
-      width: "calc(100% + .5rem)",
-
       "& > *": {
          transition: transitions.create("all", {
             easing: transitions.easing.easeInOut,
