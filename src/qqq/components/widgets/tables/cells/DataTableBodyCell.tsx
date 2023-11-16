@@ -22,6 +22,7 @@
 import Box from "@mui/material/Box";
 import {Theme} from "@mui/material/styles";
 import {ReactNode} from "react";
+import colors from "qqq/assets/theme/base/colors";
 
 // Declaring prop types for DataTableBodyCell
 interface Props
@@ -40,14 +41,26 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
          py={1.5}
          px={3}
          sx={({palette: {light}, typography: {size}, borders: {borderWidth}}: Theme) => ({
-            fontSize: size.sm,
-            borderBottom: noBorder ? "none" : `${borderWidth[1]} solid ${light.main}`,
+            borderBottom: noBorder ? "none" : `${borderWidth[1]} solid ${colors.grayLines.main}`,
+            fontSize: "0.875rem",
+            "@media (min-width: 1440px)": {
+               fontSize: "1rem"
+            },
+            "@media (max-width: 1440px)": {
+               fontSize: "0.875rem"
+            },
+            "&:nth-child(1)": {
+               paddingLeft: "1rem"
+            },
+            "&:last-child": {
+               paddingRight: "1rem"
+            }
          })}
       >
          <Box
             display="initial"
             width="max-content"
-            color="text"
+            color={colors.dark.main}
          >
             {children}
          </Box>

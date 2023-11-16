@@ -23,6 +23,7 @@ import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
 import {ReactNode} from "react";
+import colors from "qqq/assets/theme/base/colors";
 import {useMaterialUIController} from "qqq/context";
 
 // Declaring props types for DataTableHeadCell
@@ -46,18 +47,28 @@ function DataTableHeadCell({width, children, sorted, align, ...rest}: Props): JS
          py={1.5}
          px={3}
          sx={({palette: {light}, borders: {borderWidth}}: Theme) => ({
-            borderBottom: `${borderWidth[1]} solid ${light.main}`,
+            borderBottom: `${borderWidth[1]} solid ${colors.grayLines.main}`,
+            "&:nth-child(1)": {
+               paddingLeft: "1rem"
+            },
+            "&:last-child": {
+               paddingRight: "1rem"
+            },
          })}
       >
          <Box
             {...rest}
             sx={({typography: {size, fontWeightBold}}: Theme) => ({
                position: "relative",
-               opacity: "0.7",
+               color: colors.grey[700],
                textAlign: align,
-               fontSize: size.xxs,
-               fontWeight: fontWeightBold,
-               textTransform: "uppercase",
+               "@media (min-width: 1440px)": {
+                  fontSize: "1rem"
+               },
+               "@media (max-width: 1440px)": {
+                  fontSize: "0.875rem"
+               },
+               fontWeight: 600,
                cursor: sorted && "pointer",
                userSelect: sorted && "none",
             })}
