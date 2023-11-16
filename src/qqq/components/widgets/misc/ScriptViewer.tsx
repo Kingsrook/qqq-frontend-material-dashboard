@@ -392,14 +392,8 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       return JSON.stringify(new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])]));
    }
 
-   /*
-    position: relative;
-    left: -356px;
-    width: calc(100% + 380px);
-   */
-
    return (
-      <Grid container className="scriptViewer">
+      <Grid container className="scriptViewer" m={-2} pt={4} width={"calc(100% + 2rem)"}>
          <Grid item xs={12}>
             <Box>
                {

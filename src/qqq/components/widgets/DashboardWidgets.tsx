@@ -497,6 +497,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       );
    };
 
+   if(wrapWidgetsInTabPanels)
+   {
+      omitWrappingGridContainer = true;
+   }
+
    const body: JSX.Element =
       (
          <>
@@ -515,7 +520,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
                   if (wrapWidgetsInTabPanels)
                   {
-                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 0 0 1.25rem", width: "100%", marginBottom: "-1.5rem"}}>
+                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{
+                        padding: 0,
+                        margin: "-1rem",
+                        marginBottom: "-3.5rem",
+                        width: "calc(100% + 2rem)"
+                     }}>
                         {renderedWidget}
                      </TabPanel>);
                   }

@@ -106,9 +106,15 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
    ///////////////////////////////////////////////////////////////////////////////////////////
    // if this parent widget is in card form, and its children are too, then we need some px //
    ///////////////////////////////////////////////////////////////////////////////////////////
-   const px = (widgetMetaData && widgetMetaData.isCard && widgets && widgets[0] && widgets[0].isCard) ? 3 : 0;
+   const parentIsCard = widgetMetaData && widgetMetaData.isCard;
+   const childrenAreCards = widgetMetaData && widgets && widgets[0] && widgets[0].isCard;
+   const px = (parentIsCard && childrenAreCards) ? 3 : 0;
 
-   // @ts-ignore
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if this is a parent, which is not a card, then we need to omit the padding, i think, on the Widget that ultimately gets rendered //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const omitPadding = !parentIsCard;
+
    return (
       qInstance && data ? (
          <Widget
@@ -116,6 +122,7 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
             widgetData={data}
             storeDropdownSelections={storeDropdownSelections}
             reloadWidgetCallback={parentReloadWidgetCallback}
+            omitPadding={omitPadding}
          >
             <Box sx={{height: "100%", width: "100%"}} px={px}>
                <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData} wrapWidgetsInTabPanels={data.layoutType == "TABS"}/>

@@ -64,6 +64,7 @@ interface Props
    isChild?: boolean;
    footerHTML?: string;
    storeDropdownSelections?: boolean;
+   omitPadding: boolean;
 }
 
 Widget.defaultProps = {
@@ -74,6 +75,7 @@ Widget.defaultProps = {
    labelAdditionalComponentsLeft: [],
    labelAdditionalElementsLeft: [],
    labelAdditionalComponentsRight: [],
+   omitPadding: false,
 };
 
 
@@ -460,7 +462,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////
    const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
    let labelElement = (
-      <Typography sx={{cursor: "default"}} variant="h6" display="inline">
+      <Typography sx={{cursor: "default", pl: props.widgetMetaData.isCard ? "auto" : "1rem", pt: props.widgetMetaData.type == "parentWidget" ? "1rem" : "auto"}} variant="h6" display="inline">
          {labelToUse}
       </Typography>
    );
@@ -480,21 +482,17 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                   {
                      hasPermission ?
                         props.widgetMetaData?.icon && (
-                           <Box
-                              ml={1}
-                              mr={2}
-                              mt={-4}
-                              sx={{
-                                 display: "flex",
-                                 justifyContent: "center",
-                                 alignItems: "center",
-                                 width: "64px",
-                                 height: "64px",
-                                 borderRadius: "8px",
-                                 background: colors.info.main,
-                                 color: "#ffffff",
-                                 float: "left"
-                              }}
+                           <Box ml={1} mr={2} mt={-4} sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "64px",
+                              height: "64px",
+                              borderRadius: "8px",
+                              background: colors.info.main,
+                              color: "#ffffff",
+                              float: "left"
+                           }}
                            >
                               <Icon fontSize="medium" color="inherit">
                                  {props.widgetMetaData.icon}
@@ -502,20 +500,17 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                            </Box>
                         ) :
                         (
-                           <Box
-                              ml={3}
-                              mt={-4}
-                              sx={{
-                                 display: "flex",
-                                 justifyContent: "center",
-                                 alignItems: "center",
-                                 width: "64px",
-                                 height: "64px",
-                                 borderRadius: "8px",
-                                 background: colors.info.main,
-                                 color: "#ffffff",
-                                 float: "left"
-                              }}
+                           <Box ml={3} mt={-4} sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "64px",
+                              height: "64px",
+                              borderRadius: "8px",
+                              background: colors.info.main,
+                              color: "#ffffff",
+                              float: "left"
+                           }}
                            >
                               <Icon fontSize="medium" color="inherit">lock</Icon>
                            </Box>
@@ -583,11 +578,12 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
       </Box>;
 
+   const padding = props.omitPadding? "auto" : "24px 16px";
    return props.widgetMetaData?.isCard
-      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", py: "24px", px: "16px"}} className={fullScreenWidgetClassName}>
+      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", p: padding}} className={fullScreenWidgetClassName}>
          {widgetContent}
       </Card>
-      : <span style={{width: "100%"}}>{widgetContent}</span>;
+      : <span style={{width: "100%", padding: padding}}>{widgetContent}</span>;
 }
 
 export default Widget;
