@@ -95,45 +95,37 @@ function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Elem
             <Box>
                {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
             </Box>
-            <Grid container alignItems="center">
-               <Grid item xs={12} justifyContent="center">
-                  <Box width="100%" height="300px" py={2} pr={2} pl={2}>
-                     {useMemo(
-                        () => (
-                           <Pie data={data} options={options} getElementsAtEvent={handleClick} />
-                        ),
-                        [chartData]
-                     )}
+            <Box width="100%" height="300px">
+               {useMemo(
+                  () => (
+                     <Pie data={data} options={options} getElementsAtEvent={handleClick} />
+                  ),
+                  [chartData]
+               )}
+            </Box>
+            {
+               !chartData && (
+                  <Box sx={{
+                     position: "absolute",
+                     top: "40%",
+                     left: "50%",
+                     transform: "translate(-50%, -50%)",
+                     display: "flex",
+                     justifyContent: "center"
+                  }}>
+                     <Skeleton sx={{width: "150px", height: "150px"}} variant="circular" />
                   </Box>
-                  {
-                     !chartData && (
-                        <Box sx={{
-                           position: "absolute",
-                           top: "40%",
-                           left: "50%",
-                           transform: "translate(-50%, -50%)",
-                           display: "flex",
-                           justifyContent: "center"
-                        }}>
-                           <Skeleton sx={{width: "150px", height: "150px"}} variant="circular" />
-                        </Box>
-                     )
-                  }
-               </Grid>
-            </Grid>
+               )
+            }
             {
                description && (
                   <>
                      <Divider />
-                     <Grid container>
-                        <Grid item xs={12}>
-                           <Box pb={2} px={2} display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
-                              <MDTypography variant="button" color="text" fontWeight="light">
-                                 {parse(description)}
-                              </MDTypography>
-                           </Box>
-                        </Grid>
-                     </Grid>
+                     <Box display="flex" flexDirection={{xs: "column", sm: "row"}} mt="auto">
+                        <MDTypography variant="button" color="text" fontWeight="light">
+                           {parse(description)}
+                        </MDTypography>
+                     </Box>
                   </>
                )
             }
