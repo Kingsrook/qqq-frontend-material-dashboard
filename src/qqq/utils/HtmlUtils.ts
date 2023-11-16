@@ -134,7 +134,7 @@ export default class HtmlUtils
       openInWindow.document.write(`<html lang="en">
             <head>
                <style>
-                  * { font-family: "Roboto","Helvetica","Arial",sans-serif; }
+                  * { font-family: "SF Pro Display","Roboto","Helvetica","Arial",sans-serif; }
                </style>
                <title>${filename}</title>
                <script>

@@ -153,7 +153,7 @@ interface Types
 }
 
 const baseProperties = {
-   fontFamily: "\"Roboto\", \"Helvetica\", \"Arial\", sans-serif",
+   fontFamily: "\"SF Pro Display\", \"Roboto\", \"Helvetica\", \"Arial\", sans-serif",
    fontWeightLighter: 100,
    fontWeightLight: 300,
    fontWeightRegular: 400,

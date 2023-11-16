@@ -67,7 +67,7 @@ const options = {
             font: {
                size: 14,
                weight: 300,
-               family: "Roboto",
+               family: "SF Pro Display,Roboto",
                style: "normal",
                lineHeight: 2,
             },
@@ -88,7 +88,7 @@ const options = {
             font: {
                size: 14,
                weight: 300,
-               family: "Roboto",
+               family: "SF Pro Display,Roboto",
                style: "normal",
                lineHeight: 2,
             },
