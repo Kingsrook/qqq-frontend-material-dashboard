@@ -42,7 +42,7 @@ const card: Types = {
          wordWrap: "break-word",
          backgroundColor: white.main,
          backgroundClip: "border-box",
-         border: `${borderWidth[1]} solid ${rgba(black.main, 0.25)}`,
+         border: `${borderWidth[1]} solid ${colors.grayLines.main}`,
          borderRadius: borderRadius.xl,
          overflow: "visible",
       },
