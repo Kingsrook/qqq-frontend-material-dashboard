@@ -30,7 +30,6 @@ import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -95,8 +94,8 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
          .click();
 
       qSeleniumLib.waitForCondition("Should have downloaded 1 file", () -> getDownloadedFiles().size() == 1);
+      qSeleniumLib.waitForCondition("Expected file name", () -> getDownloadedFiles().get(0).getName().matches("Sample Table Widget.*.csv"));
       File csvFile = getDownloadedFiles().get(0);
-      assertThat(csvFile.getName()).matches("Sample Table Widget.*.csv");
       String fileContents = FileUtils.readFileToString(csvFile, StandardCharsets.UTF_8);
       assertEquals("""
          "Id","Name"
@@ -105,7 +104,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
          "3","Bart J."
          """, fileContents);
 
-      // qSeleniumLib.waitForever();
+      qSeleniumLib.waitForever();
    }
 
 }
