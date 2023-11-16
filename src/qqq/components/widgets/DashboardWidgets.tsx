@@ -254,7 +254,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          const topRightInsideCardIcon = widgetMetaData.icons.get("topRightInsideCard");
          if (topRightInsideCardIcon)
          {
-            labelAdditionalComponentsRight.push(new HeaderIcon(topRightInsideCardIcon.name, topRightInsideCardIcon.color));
+            labelAdditionalComponentsRight.push(new HeaderIcon(topRightInsideCardIcon.name, topRightInsideCardIcon.path, topRightInsideCardIcon.color));
          }
       }
 
@@ -343,7 +343,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      widgetData={widgetData[i]}
                   >
-                     <Box px={3} pt={0} pb={2}>
+                     <Box>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
                            {
                               widgetData && widgetData[i] && widgetData[i].html ? (
@@ -515,7 +515,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
                   if (wrapWidgetsInTabPanels)
                   {
-                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 0 0 1.5rem", width: "100%", marginBottom: "-1.5rem"}}>
+                     renderedWidget = (<TabPanel index={i} value={selectedTab} style={{padding: "1rem 0 0 1.25rem", width: "100%", marginBottom: "-1.5rem"}}>
                         {renderedWidget}
                      </TabPanel>);
                   }
@@ -528,7 +528,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    const tabs = widgetMetaDataList && wrapWidgetsInTabPanels ?
       <Tabs
-         sx={{m: 0, mb: 1.5}}
+         sx={{m: 0, mb: 1.5, ml: -2, mr: -2, mt: -3,
+            "& .MuiTabs-scroller": {
+               ml: 0
+            }
+         }}
          value={selectedTab}
          onChange={(event, newValue) => changeTab(newValue)}
          variant="standard"
@@ -545,7 +549,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             {tabs}
             {
                omitWrappingGridContainer ? body : (
-                  <Grid container spacing={3} pb={4}>
+                  <Grid container spacing={2.5}>
                      {body}
                   </Grid>
                )
