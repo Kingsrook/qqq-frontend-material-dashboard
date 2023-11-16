@@ -22,6 +22,7 @@
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
@@ -174,8 +175,8 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    if(widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(
-         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
-            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon>save_alt</Icon></Button></Tooltip>
+         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.25rem">
+            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.125}}>save_alt</Icon></Button></Tooltip>
          </Typography>
       );
    }
@@ -216,40 +217,47 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          labelAdditionalElementsLeft={labelAdditionalElementsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
       >
-         <DataGridPro
-            autoHeight
-            rows={rows}
-            disableSelectionOnClick
-            columns={columns}
-            rowBuffer={10}
-            getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-            onRowClick={handleRowClick}
-            // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-            // components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
-            // pinnedColumns={pinnedColumns}
-            // onPinnedColumnsChange={handlePinnedColumnsChange}
-            // pagination
-            // paginationMode="server"
-            // rowsPerPageOptions={[20]}
-            // sortingMode="server"
-            // filterMode="server"
-            // page={pageNumber}
-            // checkboxSelection
-            rowCount={data && data.totalRows}
-            // onPageSizeChange={handleRowsPerPageChange}
-            // onStateChange={handleStateChange}
-            // density={density}
-            // loading={loading}
-            // filterModel={filterModel}
-            // onFilterModelChange={handleFilterChange}
-            // columnVisibilityModel={columnVisibilityModel}
-            // onColumnVisibilityModelChange={handleColumnVisibilityChange}
-            // onColumnOrderChange={handleColumnOrderChange}
-            // onSelectionModelChange={selectionChanged}
-            // onSortModelChange={handleSortChange}
-            // sortingOrder={[ "asc", "desc" ]}
-            // sortModel={columnSortModel}
-         />
+         <Box mx={-2} mb={-3}>
+            <DataGridPro
+               autoHeight
+               sx={{
+                  borderBottom: "none",
+                  borderLeft: "none",
+                  borderRight: "none"
+               }}
+               rows={rows}
+               disableSelectionOnClick
+               columns={columns}
+               rowBuffer={10}
+               getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+               onRowClick={handleRowClick}
+               // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
+               // components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
+               // pinnedColumns={pinnedColumns}
+               // onPinnedColumnsChange={handlePinnedColumnsChange}
+               // pagination
+               // paginationMode="server"
+               // rowsPerPageOptions={[20]}
+               // sortingMode="server"
+               // filterMode="server"
+               // page={pageNumber}
+               // checkboxSelection
+               rowCount={data && data.totalRows}
+               // onPageSizeChange={handleRowsPerPageChange}
+               // onStateChange={handleStateChange}
+               // density={density}
+               // loading={loading}
+               // filterModel={filterModel}
+               // onFilterModelChange={handleFilterChange}
+               // columnVisibilityModel={columnVisibilityModel}
+               // onColumnVisibilityModelChange={handleColumnVisibilityChange}
+               // onColumnOrderChange={handleColumnOrderChange}
+               // onSelectionModelChange={selectionChanged}
+               // onSortModelChange={handleSortChange}
+               // sortingOrder={[ "asc", "desc" ]}
+               // sortModel={columnSortModel}
+            />
+         </Box>
       </Widget>
    );
 }
