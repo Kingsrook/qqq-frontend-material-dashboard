@@ -102,16 +102,18 @@ export class LabelComponent
 export class HeaderIcon extends LabelComponent
 {
    iconName: string;
+   iconPath: string;
    color: string;
    coloredBG: boolean;
 
    iconColor: string;
    bgColor: string;
 
-   constructor(iconName: string, color: string, coloredBG: boolean = true)
+   constructor(iconName: string, iconPath: string, color: string, coloredBG: boolean = true)
    {
       super();
       this.iconName = iconName;
+      this.iconPath = iconPath;
       this.color = color;
       this.coloredBG = coloredBG;
 
@@ -122,19 +124,22 @@ export class HeaderIcon extends LabelComponent
 
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
-      return (
-         <Icon sx={{
-            m: 2,
-            mr: 0,
-            mb: 0,
-            width: "1.75rem",
-            height: "1.75rem",
-            color: this.iconColor,
-            backgroundColor: this.bgColor,
-            padding: "0.25rem",
-            borderRadius: "0.25rem"
-         }} fontSize="small">{this.iconName}</Icon>
-      )
+      const styles = {
+         width: "1.75rem",
+         height: "1.75rem",
+         color: this.iconColor,
+         backgroundColor: this.bgColor,
+         borderRadius: "0.25rem"
+      };
+
+      if(this.iconPath)
+      {
+         return (<Box sx={{textAlign: "center", ...styles}}><img src={this.iconPath} width="16" height="16" /></Box>)
+      }
+      else
+      {
+         return (<Icon sx={{padding: "0.25rem", ...styles}} fontSize="small">{this.iconName}</Icon>);
+      }
    }
 }
 
@@ -239,7 +244,7 @@ export class ReloadControl extends LabelComponent
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
       return (
-         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.375rem">
+         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.175rem">
             <Tooltip title="Refresh"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}><Icon>refresh</Icon></Button></Tooltip>
          </Typography>
       );
@@ -455,7 +460,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////
    const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
    let labelElement = (
-      <Typography sx={{position: "relative", top: -4, cursor: "default"}} variant="h6" display="inline">
+      <Typography sx={{cursor: "default"}} variant="h6" display="inline">
          {labelToUse}
       </Typography>
    );
@@ -470,8 +475,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          {
             needLabelBox &&
-            <Box pr={2} display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} minHeight={"3.5rem"}>
-               <Box pt={2} pb={1} ml={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} minHeight={"2.5rem"}>
+               <Box>
                   {
                      hasPermission ?
                         props.widgetMetaData?.icon && (
@@ -542,7 +547,12 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             </Box>
          }
          {
-            props.widgetMetaData?.isCard && (reloading ? <LinearProgress color="info" sx={{overflow: "hidden", borderRadius: "0"}} /> : <Box height="0.375rem" />)
+            ///////////////////////////////////////////////////////////////////
+            // turning this off... for now.  maybe make a property in future //
+            ///////////////////////////////////////////////////////////////////
+            /*
+            props.widgetMetaData?.isCard && (reloading ? <LinearProgress color="info" sx={{overflow: "hidden", borderRadius: "0", mx:-2}} /> : <Box height="0.375rem" />)
+            */
          }
          {
             errorLoading ? (
@@ -552,7 +562,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                </Box>
             ) : (
                hasPermission && props.widgetData?.dropdownNeedsSelectedText ? (
-                  <Box pb={3} pr={3} sx={{width: "100%", textAlign: "right"}}>
+                  <Box pb={3} sx={{width: "100%", textAlign: "right"}}>
                      <Typography variant="body2">
                         {props.widgetData?.dropdownNeedsSelectedText}
                      </Typography>
@@ -574,7 +584,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       </Box>;
 
    return props.widgetMetaData?.isCard
-      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%"}} className={fullScreenWidgetClassName}>
+      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", py: "24px", px: "16px"}} className={fullScreenWidgetClassName}>
          {widgetContent}
       </Card>
       : <span style={{width: "100%"}}>{widgetContent}</span>;
