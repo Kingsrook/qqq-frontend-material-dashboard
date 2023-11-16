@@ -71,11 +71,27 @@ function configs(labels: any, datasets: any)
                callbacks: {
                   label: function(context: any)
                   {
+                     let percentSuffix = "";
+                     try
+                     {
+                        //////////////////////////////////////////////////////////////////////////
+                        // make percent by dividing this slice's value by the sum of all values //
+                        //////////////////////////////////////////////////////////////////////////
+                        const thisSlice = context.dataset.data[context.dataIndex];
+                        const sum = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
+                        percentSuffix = " (" + Number(100 * thisSlice / sum).toFixed(1) + "%)";
+                     }
+                     catch(e)
+                     {
+                        // leave percentSuffix empty
+                     }
+
                      ////////////////////////////////////////////////////////////////////////////////
                      // our labels already have the value in them - so just use the label in the   //
                      // tooltip (lib by default puts label + value, so we were duplicating value!) //
+                     // oh, and we add percent if we can                                           //
                      ////////////////////////////////////////////////////////////////////////////////
-                     return context.label;
+                     return context.label + percentSuffix;
                   }
                }
             },
