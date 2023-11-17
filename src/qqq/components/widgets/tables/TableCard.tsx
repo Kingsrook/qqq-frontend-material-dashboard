@@ -118,7 +118,7 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
                               <TableRow sx={{verticalAlign: "top"}} key={`row-${i}`}>
                                  {Array(8).fill(0).map((_, j) =>
                                     <DataTableBodyCell key={`cell-${i}-${j}`} align="center">
-                                       <DefaultCell><Skeleton /></DefaultCell>
+                                       <DefaultCell isFooter={false}><Skeleton /></DefaultCell>
                                     </DataTableBodyCell>
                                  )}
                               </TableRow>

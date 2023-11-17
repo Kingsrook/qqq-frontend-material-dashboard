@@ -17,11 +17,18 @@ import {ReactNode} from "react";
 import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 
-function DefaultCell({children}: { children: ReactNode }): JSX.Element
+interface Props
+{
+   isFooter: boolean
+   children: ReactNode;
+}
+
+
+function DefaultCell({isFooter, children}: Props): JSX.Element
 {
    return (
       <MDTypography variant="button" color={colors.dark.main} sx={{
-         fontWeight: 600,
+         fontWeight: isFooter ? 600 : 500,
          "@media (min-width: 1440px)": {
             fontSize: "1rem"
          },

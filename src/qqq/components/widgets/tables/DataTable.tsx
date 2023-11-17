@@ -331,14 +331,13 @@ function DataTable({
                                  {
                                     cell.column.type === "default" && (
                                        cell.value && "number" === typeof cell.value ? (
-                                          <DefaultCell>{cell.value.toLocaleString()}</DefaultCell>
-                                       ) : (<DefaultCell>{cell.render("Cell")}</DefaultCell>)
+                                          <DefaultCell isFooter={isFooter}>{cell.value.toLocaleString()}</DefaultCell>
+                                       ) : (<DefaultCell isFooter={isFooter}>{cell.render("Cell")}</DefaultCell>)
                                     )
                                  }
                                  {
                                     cell.column.type === "htmlAndTooltip" && (
-                                       <DefaultCell>
-
+                                       <DefaultCell isFooter={isFooter}>
                                           <NoMaxWidthTooltip title={parse(row.values["tooltip"])}>
                                              <Box>
                                                 {parse(cell.value)}
@@ -349,7 +348,7 @@ function DataTable({
                                  }
                                  {
                                     cell.column.type === "html" && (
-                                       <DefaultCell>{parse(cell.value)}</DefaultCell>
+                                       <DefaultCell isFooter={isFooter}>{parse(cell.value)}</DefaultCell>
                                     )
                                  }
                                  {
