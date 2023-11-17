@@ -462,7 +462,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////
    const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
    let labelElement = (
-      <Typography sx={{cursor: "default", pl: "auto", pt: props.widgetMetaData.type == "parentWidget" ? "1rem" : "auto"}} variant="h6" display="inline">
+      <Typography sx={{cursor: "default", pl: "auto", pt: props.widgetMetaData.type == "parentWidget" ? "1rem" : "auto", fontWeight: 600}} variant="h6" display="inline">
          {labelToUse}
       </Typography>
    );
