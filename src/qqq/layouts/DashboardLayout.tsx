@@ -42,7 +42,7 @@ function DashboardLayout({children}: { children: ReactNode }): JSX.Element
             position: "relative",
 
             [breakpoints.up("xl")]: {
-               marginLeft: miniSidenav ? pxToRem(120) : pxToRem(250),
+               marginLeft: miniSidenav ? pxToRem(120) : pxToRem(245),
                transition: transitions.create(["margin-left", "margin-right"], {
                   easing: transitions.easing.easeInOut,
                   duration: transitions.duration.standard,
