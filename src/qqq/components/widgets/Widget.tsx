@@ -25,14 +25,13 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
-import LinearProgress from "@mui/material/LinearProgress";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
 import React, {useEffect, useState} from "react";
 import {NavigateFunction, useNavigate} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
-import DropdownMenu, {DropdownOption} from "qqq/components/widgets/components/DropdownMenu";
+import WidgetDropdownMenu, {DropdownOption} from "qqq/components/widgets/components/WidgetDropdownMenu";
 
 export interface WidgetData
 {
@@ -43,6 +42,7 @@ export interface WidgetData
       id: string,
       label: string
    }[][];
+   dropdownDefaultValueList?: string[];
    dropdownNeedsSelectedText?: string;
    hasPermission?: boolean;
    errorLoading?: boolean;
@@ -134,15 +134,15 @@ export class HeaderIcon extends LabelComponent
          borderRadius: "0.25rem"
       };
 
-      if(this.iconPath)
+      if (this.iconPath)
       {
-         return (<Box sx={{textAlign: "center", ...styles}}><img src={this.iconPath} width="16" height="16" /></Box>)
+         return (<Box sx={{textAlign: "center", ...styles}}><img src={this.iconPath} width="16" height="16" /></Box>);
       }
       else
       {
          return (<Icon sx={{padding: "0.25rem", ...styles}} fontSize="small">{this.iconName}</Icon>);
       }
-   }
+   };
 }
 
 
@@ -188,41 +188,111 @@ export class AddNewRecordButton extends LabelComponent
 export class Dropdown extends LabelComponent
 {
    label: string;
+   dropdownMetaData: any;
    options: DropdownOption[];
+   dropdownDefaultValue?: string;
    dropdownName: string;
    onChangeCallback: any;
 
-   constructor(label: string, options: DropdownOption[], dropdownName: string, onChangeCallback: any)
+   constructor(label: string, dropdownMetaData: any, options: DropdownOption[], dropdownDefaultValue: string, dropdownName: string, onChangeCallback: any)
    {
       super();
       this.label = label;
+      this.dropdownMetaData = dropdownMetaData;
       this.options = options;
+      this.dropdownDefaultValue = dropdownDefaultValue;
       this.dropdownName = dropdownName;
       this.onChangeCallback = onChangeCallback;
    }
 
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
+      const label = `Select ${this.label}`;
       let defaultValue = null;
       const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${args.widgetProps.widgetMetaData.name}.${this.dropdownName}`;
       if (args.widgetProps.storeDropdownSelections)
       {
-         ///////////////////////////////////////////////////////////////////////////////////////
-         // see if an existing value is stored in local storage, and if so set it in dropdown //
-         ///////////////////////////////////////////////////////////////////////////////////////
-         defaultValue = JSON.parse(localStorage.getItem(localStorageKey));
-         args.dropdownData[args.componentIndex] = defaultValue?.id;
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         // see if an existing value is stored in local storage, and if so set it in dropdown      //
+         // originally we used the full object from localStorage - but - in case the label         //
+         // changed since it was stored, we'll instead just find the option by id (or in case that //
+         // option isn't available anymore, then we'll select nothing instead of a missing value   //
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         try
+         {
+            const localStorageOption = JSON.parse(localStorage.getItem(localStorageKey));
+            if(localStorageOption)
+            {
+               const id = localStorageOption.id;
+               for (let i = 0; i < this.options.length; i++)
+               {
+                  if (this.options[i].id == id)
+                  {
+                     defaultValue = this.options[i]
+                     args.dropdownData[args.componentIndex] = defaultValue?.id;
+                  }
+               }
+            }
+         }
+         catch(e)
+         {
+            console.log(`Error getting default value for dropdown [${this.dropdownName}] from local storage`, e)
+         }
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      // if there wasn't a value selected, but there is a default from the backend, then use it. //
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      if (defaultValue == null && this.dropdownDefaultValue != null)
+      {
+         for (let i = 0; i < this.options.length; i++)
+         {
+            if(this.options[i].id == this.dropdownDefaultValue)
+            {
+               defaultValue = this.options[i];
+               args.dropdownData[args.componentIndex] = defaultValue?.id;
+
+               if (args.widgetProps.storeDropdownSelections)
+               {
+                  localStorage.setItem(localStorageKey, JSON.stringify(defaultValue));
+               }
+
+               this.onChangeCallback(label, defaultValue);
+               break;
+            }
+         }
+      }
+
+      /////////////////////////////////////////////////////////////////////////////
+      // if there's a 'label for null value' (and no default from the backend),  //
+      // then add that as an option (and select it if nothing else was selected) //
+      /////////////////////////////////////////////////////////////////////////////
+      let options = this.options;
+      if (this.dropdownMetaData.labelForNullValue && !this.dropdownDefaultValue)
+      {
+         const nullOption = {id: null as string, label: this.dropdownMetaData.labelForNullValue};
+         options = [nullOption, ...this.options];
+
+         if (!defaultValue)
+         {
+            defaultValue = nullOption;
+         }
       }
 
       return (
          <Box my={2} sx={{float: "right"}}>
-            <DropdownMenu
+            <WidgetDropdownMenu
                name={this.dropdownName}
                defaultValue={defaultValue}
-               sx={{width: 200, marginLeft: "15px"}}
-               label={`Select ${this.label}`}
-               dropdownOptions={this.options}
+               sx={{marginLeft: "1rem"}}
+               label={label}
+               startIcon={this.dropdownMetaData.startIconName}
+               allowBackAndForth={this.dropdownMetaData.allowBackAndForth}
+               backAndForthInverted={this.dropdownMetaData.backAndForthInverted}
+               disableClearable={this.dropdownMetaData.disableClearable}
+               dropdownOptions={options}
                onChangeCallback={this.onChangeCallback}
+               width={this.dropdownMetaData.width ?? 225}
             />
          </Box>
       );
@@ -332,7 +402,12 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          props.widgetData.dropdownDataList?.map((dropdownData: any, index: number) =>
          {
             // console.log(`${props.widgetMetaData.name} building a Dropdown, data is: ${dropdownData}`);
-            updatedStateLabelComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], dropdownData, props.widgetData.dropdownNameList[index], handleDataChange));
+            let defaultValue = null;
+            if(props.widgetData.dropdownDefaultValueList && props.widgetData.dropdownDefaultValueList.length >= index)
+            {
+               defaultValue = props.widgetData.dropdownDefaultValueList[index];
+            }
+            updatedStateLabelComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], props.widgetMetaData.dropdowns[index], dropdownData, defaultValue, props.widgetData.dropdownNameList[index], handleDataChange));
          });
          setLabelComponentsRight(updatedStateLabelComponentsRight);
       }
@@ -460,16 +535,16 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    // first look for a label in the widget data, which would override that in the metadata //
    // note - previously this had a ?: and one was pl={2}, the other was pl={3}...          //
    //////////////////////////////////////////////////////////////////////////////////////////
-   const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label
+   const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label;
    let labelElement = (
       <Typography sx={{cursor: "default", pl: "auto", pt: props.widgetMetaData.type == "parentWidget" ? "1rem" : "auto", fontWeight: 600}} variant="h6" display="inline">
          {labelToUse}
       </Typography>
    );
 
-   if(props.widgetMetaData.tooltip)
+   if (props.widgetMetaData.tooltip)
    {
-      labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={false} followCursor={true} placement="bottom-start">{labelElement}</Tooltip>
+      labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={false} followCursor={true} placement="bottom-start">{labelElement}</Tooltip>;
    }
 
    const errorLoading = props.widgetData?.errorLoading !== undefined && props.widgetData?.errorLoading === true;
@@ -578,7 +653,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
       </Box>;
 
-   const padding = props.omitPadding? "auto" : "24px 16px";
+   const padding = props.omitPadding ? "auto" : "24px 16px";
    return props.widgetMetaData?.isCard
       ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", p: padding}} className={fullScreenWidgetClassName}>
          {widgetContent}

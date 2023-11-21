@@ -1,0 +1,333 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {Collapse, Theme, InputAdornment} from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Icon from "@mui/material/Icon";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import {SxProps} from "@mui/system";
+import {Field, Form, Formik} from "formik";
+import React, {useState} from "react";
+import colors from "qqq/assets/theme/base/colors";
+import MDInput from "qqq/components/legacy/MDInput";
+import ValueUtils from "qqq/utils/qqq/ValueUtils";
+
+
+export interface DropdownOption
+{
+   id: string;
+   label: string;
+}
+
+/////////////////////////
+// inputs and defaults //
+/////////////////////////
+interface Props
+{
+   name: string;
+   defaultValue?: any;
+   label?: string;
+   startIcon?: string;
+   width?: number;
+   disableClearable?: boolean;
+   allowBackAndForth?: boolean;
+   backAndForthInverted?: boolean;
+   dropdownOptions?: DropdownOption[];
+   onChangeCallback?: (dropdownLabel: string, data: any) => void;
+   sx?: SxProps<Theme>;
+}
+
+interface StartAndEndDate
+{
+   startDate?: string,
+   endDate?: string
+}
+
+function parseCustomTimeValuesFromDefaultValue(defaultValue: any): StartAndEndDate
+{
+   const customTimeValues: StartAndEndDate = {};
+   if (defaultValue && defaultValue.id)
+   {
+      var parts = defaultValue.id.split(",");
+      if (parts.length >= 2)
+      {
+         customTimeValues["startDate"] = ValueUtils.formatDateTimeValueForForm(parts[1]);
+      }
+      if (parts.length >= 3)
+      {
+         customTimeValues["endDate"] = ValueUtils.formatDateTimeValueForForm(parts[2]);
+      }
+   }
+
+   return (customTimeValues);
+}
+
+function makeBackendValuesFromFrontendValues(frontendDefaultValues: StartAndEndDate): StartAndEndDate
+{
+   const backendTimeValues: StartAndEndDate = {};
+   if (frontendDefaultValues && frontendDefaultValues.startDate)
+   {
+      backendTimeValues.startDate = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.startDate);
+   }
+   if (frontendDefaultValues && frontendDefaultValues.endDate)
+   {
+      backendTimeValues.endDate = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(frontendDefaultValues.endDate);
+   }
+   return (backendTimeValues);
+}
+
+function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disableClearable, allowBackAndForth, backAndForthInverted, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
+{
+   const [customTimesVisible, setCustomTimesVisible] = useState(defaultValue && defaultValue.id && defaultValue.id.startsWith("custom,"));
+   const [customTimeValuesFrontend, setCustomTimeValuesFrontend] = useState(parseCustomTimeValuesFromDefaultValue(defaultValue) as StartAndEndDate);
+   const [customTimeValuesBackend, setCustomTimeValuesBackend] = useState(makeBackendValuesFromFrontendValues(customTimeValuesFrontend) as StartAndEndDate);
+   const [debounceTimeout, setDebounceTimeout] = useState(null as any);
+
+   const [isOpen, setIsOpen] = useState(false);
+   const [value, setValue] = useState(defaultValue);
+   const [inputValue, setInputValue] = useState("");
+
+   const [backDisabled, setBackDisabled] = useState(false);
+   const [forthDisabled, setForthDisabled] = useState(false);
+
+   const doForceOpen = (event: React.MouseEvent<HTMLDivElement>) =>
+   {
+      setIsOpen(true);
+   };
+
+   function getSelectedIndex(value: DropdownOption)
+   {
+      let currentIndex = null;
+      for (let i = 0; i < dropdownOptions.length; i++)
+      {
+         if (value && dropdownOptions[i].id == value.id)
+         {
+            currentIndex = i;
+            break;
+         }
+      }
+      return currentIndex;
+   }
+
+   const navigateBackAndForth = (event: React.MouseEvent, direction: -1 | 1) =>
+   {
+      event.stopPropagation();
+      let currentIndex = getSelectedIndex(value);
+
+      if (currentIndex == null)
+      {
+         console.log("No current value.... TODO");
+         return;
+      }
+
+      if (currentIndex == 0 && direction == -1)
+      {
+         console.log("Can't go -1");
+         return;
+      }
+
+      if (currentIndex == dropdownOptions.length - 1 && direction == 1)
+      {
+         console.log("Can't go +1");
+         return;
+      }
+
+      handleOnChange(event, dropdownOptions[currentIndex + direction], "navigatedBackAndForth");
+   };
+
+
+   const handleOnChange = (event: any, newValue: any, reason: string) =>
+   {
+      setValue(newValue);
+
+      const isTimeframeCustom = name == "timeframe" && newValue && newValue.id == "custom";
+      setCustomTimesVisible(isTimeframeCustom);
+
+      if (isTimeframeCustom)
+      {
+         callOnChangeCallbackIfCustomTimeframeHasDateValues();
+      }
+      else
+      {
+         onChangeCallback(label, newValue);
+      }
+
+      let currentIndex = getSelectedIndex(value);
+      if(currentIndex == 0)
+      {
+         backAndForthInverted ? setForthDisabled(true) : setBackDisabled(true);
+      }
+      else
+      {
+         backAndForthInverted ? setForthDisabled(false) : setBackDisabled(false);
+      }
+
+      if (currentIndex == dropdownOptions.length - 1)
+      {
+         backAndForthInverted ? setBackDisabled(true) : setForthDisabled(true);
+      }
+      else
+      {
+         backAndForthInverted ? setBackDisabled(false) : setForthDisabled(false);
+      }
+   };
+
+   const handleOnInputChange = (event: any, newValue: any, reason: string) =>
+   {
+      setInputValue(newValue);
+   };
+
+   const callOnChangeCallbackIfCustomTimeframeHasDateValues = () =>
+   {
+      if (customTimeValuesBackend["startDate"] && customTimeValuesBackend["endDate"])
+      {
+         onChangeCallback(label, {id: `custom,${customTimeValuesBackend["startDate"]},${customTimeValuesBackend["endDate"]}`, label: "Custom"});
+      }
+   };
+
+   let customTimes = <></>;
+   if (name == "timeframe")
+   {
+      const handleSubmit = async (values: any, actions: any) =>
+      {
+      };
+
+      const dateChanged = (fieldName: "startDate" | "endDate", event: any) =>
+      {
+         customTimeValuesFrontend[fieldName] = event.target.value;
+         customTimeValuesBackend[fieldName] = ValueUtils.frontendLocalZoneDateTimeStringToUTCStringForBackend(event.target.value);
+
+         clearTimeout(debounceTimeout);
+         const newDebounceTimeout = setTimeout(() =>
+         {
+            callOnChangeCallbackIfCustomTimeframeHasDateValues();
+         }, 500);
+         setDebounceTimeout(newDebounceTimeout);
+      };
+
+      customTimes = <Box sx={{display: "inline-block", position: "relative", top: "-7px"}}>
+         <Collapse orientation="horizontal" in={customTimesVisible}>
+            <Formik initialValues={customTimeValuesFrontend} onSubmit={handleSubmit}>
+               {({}) => (
+                  <Form id="timeframe-form" autoComplete="off">
+                     <Field name="startDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe Start" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 2, width: 198}} onChange={(event: any) => dateChanged("startDate", event)} />
+                     <Field name="endDate" type="datetime-local" as={MDInput} variant="standard" label="Custom Timeframe End" InputLabelProps={{shrink: true}} InputProps={{size: "small"}} sx={{ml: 2, width: 198}} onChange={(event: any) => dateChanged("endDate", event)} />
+                  </Form>
+               )}
+            </Formik>
+         </Collapse>
+      </Box>;
+   }
+
+   const startAdornment = startIcon ? <Icon sx={{fontSize: "1.25rem!important", color: colors.gray.main, paddingLeft: allowBackAndForth ? "auto" : "0.25rem", width: allowBackAndForth ? "1.5rem" : "1.75rem"}}>{startIcon}</Icon> : null;
+
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // we tried this end-adornment, for a different style of down-arrow - but by using it, we then messed something else up (i forget what), so... not used right now //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const endAdornment = <InputAdornment position="end" sx={{position: "absolute", right: allowBackAndForth ? "-0.5rem" : "0.5rem"}}><Icon sx={{fontSize: "1.75rem!important", color: colors.gray.main}}>keyboard_arrow_down</Icon></InputAdornment>;
+
+   const fontSize = "1rem";
+   let optionPaddingLeftRems = 0.75;
+   if(startIcon)
+   {
+      optionPaddingLeftRems += allowBackAndForth ? 1.5 : 1.75
+   }
+   if(allowBackAndForth)
+   {
+      optionPaddingLeftRems += 2.5;
+   }
+
+   return (
+      dropdownOptions ? (
+         <Box sx={{whiteSpace: "nowrap", display: "flex",
+            "& .MuiPopperUnstyled-root": {
+               border: `1px solid ${colors.grayLines.main}`,
+               borderTop: "none",
+               borderRadius: "0 0 0.75rem 0.75rem",
+               padding: 0,
+            }, "& .MuiPaper-rounded": {
+               borderRadius: "0 0 0.75rem 0.75rem",
+            }
+         }} className="dashboardDropdownMenu">
+            <Autocomplete
+               id={`${label}-combo-box`}
+
+               defaultValue={defaultValue}
+               value={value}
+               onChange={handleOnChange}
+               inputValue={inputValue}
+               onInputChange={handleOnInputChange}
+
+               isOptionEqualToValue={(option, value) => option.id === value.id}
+
+               open={isOpen}
+               onOpen={() => setIsOpen(true)}
+               onClose={() => setIsOpen(false)}
+
+               size="small"
+               disablePortal
+               disableClearable={disableClearable}
+               options={dropdownOptions}
+               sx={{
+                  ...sx,
+                  cursor: "pointer",
+                  display: "inline-block",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                     border: "none"
+                  },
+               }}
+               renderInput={(params: any) =>
+                  <>
+                     <Box sx={{width: `${width}px`, background: "white", borderRadius: isOpen ? "0.75rem 0.75rem 0 0" : "0.75rem", border: `1px solid ${colors.grayLines.main}`, "& *": {cursor: "pointer"}}} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
+                        {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+                        <TextField {...params} placeholder={label} sx={{
+                           "& .MuiInputBase-input": {
+                              fontSize: fontSize
+                           }
+                        }} InputProps={{...params.InputProps, startAdornment: startAdornment/*, endAdornment: endAdornment*/}}
+                        />
+                        {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
+                     </Box>
+                  </>
+               }
+               renderOption={(props, option: DropdownOption) => (
+                  <li {...props} style={{whiteSpace: "normal", fontSize: fontSize, paddingLeft: `${optionPaddingLeftRems}rem`}}>{option.label}</li>
+               )}
+
+               noOptionsText={<Box fontSize={fontSize}>No options found</Box>}
+
+               slotProps={{
+                  popper: {
+                     sx: {
+                        width: `${width}px!important`
+                     }
+                  }
+               }}
+            />
+            {customTimes}
+         </Box>
+      ) : null
+   );
+}
+
+export default WidgetDropdownMenu;
