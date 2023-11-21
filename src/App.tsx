@@ -517,7 +517,7 @@ export default function App()
                name: loggedInUser?.name ?? "Anonymous",
                key: "username",
                noCollapse: true,
-               icon: <Avatar src={profilePicture} alt="{user?.name}" />,
+               icon: <Avatar src={profilePicture} alt="{loggedInUser?.name}" />,
             };
             setProfileRoutes(profileRoutes);
 
