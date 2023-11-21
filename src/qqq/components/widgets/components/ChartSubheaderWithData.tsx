@@ -74,7 +74,7 @@ function StackedBarChart({chartSubheaderData}: Props): JSX.Element
 
    let previousNumberElement = (
       <>
-         <Typography display="inline" variant="body2" sx={{color: colors.gray.main, fontSize: ".875rem", fontWeight: 500}}>
+         <Typography display="block" variant="body2" sx={{color: colors.gray.main, fontSize: ".875rem", fontWeight: 500}}>
             &nbsp;{chartSubheaderData.vsDescription}
             {chartSubheaderData.vsPreviousNumber && (<>&nbsp;({ValueUtils.getFormattedNumber(chartSubheaderData.vsPreviousNumber)})</>)}
          </Typography>
