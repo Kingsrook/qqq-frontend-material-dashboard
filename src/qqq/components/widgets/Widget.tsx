@@ -280,7 +280,7 @@ export class Dropdown extends LabelComponent
       }
 
       return (
-         <Box my={2} sx={{float: "right"}}>
+         <Box mb={2} sx={{float: "right"}}>
             <WidgetDropdownMenu
                name={this.dropdownName}
                defaultValue={defaultValue}
