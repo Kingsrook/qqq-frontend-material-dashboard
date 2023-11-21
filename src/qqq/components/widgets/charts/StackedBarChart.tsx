@@ -62,7 +62,7 @@ export const options = {
             {
                if(context.dataset.label.startsWith(context.label))
                {
-                  return `${context.label} (${context.formattedValue})`;
+                  return `${context.label}: ${context.formattedValue}`;
                }
                else
                {
