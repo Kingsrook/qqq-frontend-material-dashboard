@@ -65,6 +65,7 @@ function collapseItem(theme: Theme, ownerState: any)
       cursor: "pointer",
       userSelect: "none",
       whiteSpace: "nowrap",
+      overflow: "hidden",
       boxShadow: active && !whiteSidenav && !darkMode && !transparentSidenav ? md : "none",
       [breakpoints.up("xl")]: {
          transition: transitions.create(["box-shadow", "background-color"], {
