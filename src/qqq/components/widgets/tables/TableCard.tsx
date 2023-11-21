@@ -85,7 +85,6 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
                   fixedHeight={fixedHeight}
                   showTotalEntries={false}
                   isSorted={false}
-                  noEndBorder
                />
                : noRowsFoundHTML ?
                   <Box p={3} pt={1} pb={1} sx={{textAlign: "center"}}>

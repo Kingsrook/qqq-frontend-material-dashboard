@@ -285,11 +285,12 @@ function DataTable({
       let boxStyle = {};
       if(fixedStickyLastRow)
       {
-         boxStyle = isFooter ? {overflowY: "visible", borderTop: `0.0625rem solid ${colors.grayLines.main};`} : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "auto"};
+         boxStyle = isFooter
+            ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, overflow: "auto", scrollbarGutter: "stable"}
+            : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
       }
 
-      const className = isFooter ? "hideScrollbars" : "";
-      return <Box sx={boxStyle} className={className}>
+      return <Box sx={boxStyle}>
          <Table {...getTableProps()}>
             {
                includeHead && (
@@ -317,15 +318,38 @@ function DataTable({
                {rows.map((row: any, key: any) =>
                {
                   prepareRow(row);
+
+                  let overrideNoEndBorder = false;
+
+                  //////////////////////////////////////////////////////////////////////////////////
+                  // don't do an end-border on nested rows - unless they're the last one in a set //
+                  //////////////////////////////////////////////////////////////////////////////////
+                  if(row.depth > 0)
+                  {
+                     overrideNoEndBorder = true;
+                     if(key + 1 < rows.length && rows[key + 1].depth == 0)
+                     {
+                        overrideNoEndBorder = false;
+                     }
+                  }
+
+                  ///////////////////////////////////////
+                  // don't do end-border on the footer //
+                  ///////////////////////////////////////
+                  if(isFooter)
+                  {
+                     overrideNoEndBorder = true;
+                  }
+
                   return (
-                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? colors.grayLines.main : "initial")}} key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? "#FAFAFA" : "initial")}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
                                  key={key}
-                                 noBorder={noEndBorder && rows.length - 1 === key}
+                                 noBorder={noEndBorder || overrideNoEndBorder}
+                                 depth={row.depth}
                                  align={cell.column.align ? cell.column.align : "left"}
-                                 sx={{borderColor: colors.grayLines.main}}
                                  {...cell.getCellProps()}
                               >
                                  {
@@ -370,6 +394,7 @@ function DataTable({
                      </TableRow>
                   );
                })}
+
             </TableBody>
          </Table>
       </Box>
