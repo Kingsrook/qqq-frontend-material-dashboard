@@ -172,6 +172,7 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
          onChangeCallback(label, newValue);
       }
 
+      /* this had bugs (seemed to not take immediate effect?), so don't use for now.
       let currentIndex = getSelectedIndex(value);
       if(currentIndex == 0)
       {
@@ -190,6 +191,7 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
       {
          backAndForthInverted ? setBackDisabled(false) : setForthDisabled(false);
       }
+      */
    };
 
    const handleOnInputChange = (event: any, newValue: any, reason: string) =>
