@@ -116,6 +116,9 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
                fontSize: "1.125rem",
                fontWeight: "500",
                color: colors.dark.main,
+               "& li": {
+                  lineHeight: "unset!important"
+               },
                "& a": {
                   color: colors.gray.main
                },
@@ -127,7 +130,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
             }}
          >
             <Link to="/">
-               <Icon sx={{fontSize: "1.25rem!important"}}>{icon}</Icon>
+               <Icon sx={{fontSize: "1.25rem!important", position: "relative", top: "0.25rem"}}>{icon}</Icon>
             </Link>
             {fullRoutes.map((fullRoute: string) => (
                <Link to={fullRoute} key={fullRoute}>
