@@ -204,7 +204,9 @@ function AppHome({app}: Props): JSX.Element
       <BaseLayout>
          <Box>
             {app.widgets && (
-               <DashboardWidgets widgetMetaDataList={widgets} />
+               <Box pb={app.sections ? 2.375 : 0}>
+                  <DashboardWidgets widgetMetaDataList={widgets} />
+               </Box>
             )}
             <Grid container spacing={3}>
                {
