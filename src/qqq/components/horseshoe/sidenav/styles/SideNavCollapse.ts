@@ -64,7 +64,7 @@ function collapseItem(theme: Theme, ownerState: any)
       borderRadius: borderRadius.md,
       cursor: "pointer",
       userSelect: "none",
-      whiteSpace: "nowrap",
+      whiteSpace: "wrap",
       overflow: "hidden",
       boxShadow: active && !whiteSidenav && !darkMode && !transparentSidenav ? md : "none",
       [breakpoints.up("xl")]: {
@@ -72,6 +72,10 @@ function collapseItem(theme: Theme, ownerState: any)
             easing: transitions.easing.easeInOut,
             duration: transitions.duration.shorter,
          }),
+      },
+
+      "& .MuiListItemText-primary": {
+         lineHeight: "revert"
       },
 
       "&:hover, &:focus": {
