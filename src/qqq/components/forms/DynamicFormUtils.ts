@@ -89,6 +89,7 @@ class DynamicFormUtils
       label += field.isRequired ? " *" : "";
 
       return ({
+         fieldMetaData: field,
          name: field.name,
          label: label,
          isRequired: field.isRequired,

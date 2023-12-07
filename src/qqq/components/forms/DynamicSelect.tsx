@@ -29,6 +29,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import {ErrorMessage, useFormikContext} from "formik";
 import React, {useEffect, useState} from "react";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import Client from "qqq/utils/qqq/Client";
 
@@ -76,6 +77,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
    const [firstRender, setFirstRender] = useState(true);
+   const {inputBorderColor} = colors;
 
    ////////////////////////////////////////////////////////////////////////////////////////////////
    // default value - needs to be an array (from initialValues (array) prop) for multiple mode - //
@@ -230,7 +232,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       // attributes.  so, doing this, w/ key=id, seemed to fix it.                                 //
       ///////////////////////////////////////////////////////////////////////////////////////////////
       return (
-         <li {...props} key={option.id}>
+         <li {...props} key={option.id} style={{fontSize: "1rem"}}>
             {content}
          </li>
       );
@@ -250,7 +252,22 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       <Box>
          <Autocomplete
             id={overrideId ?? fieldName}
-            sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
+            sx={{
+               "& .MuiOutlinedInput-root": {
+                  borderRadius: "0.75rem",
+               },
+               "& .MuiInputBase-root": {
+                  padding: "0.5rem",
+                  background: isDisabled ? "#f0f2f5!important" : "initial",
+               },
+               "& .MuiOutlinedInput-root .MuiAutocomplete-input": {
+                  padding: "0",
+                  fontSize: "1rem"
+               },
+               "& .Mui-disabled .MuiOutlinedInput-notchedOutline": {
+                  borderColor: inputBorderColor
+               }
+            }}
             open={open}
             fullWidth
             onOpen={() =>
@@ -305,7 +322,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
                <TextField
                   {...params}
                   label={fieldLabel}
-                  variant="standard"
+                  variant="outlined"
                   autoComplete="off"
                   type="search"
                   InputProps={{
@@ -341,6 +358,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
                   id={`bulkEditSwitch-${fieldName}`}
                   checked={switchChecked}
                   onClick={bulkEditSwitchChanged}
+                  sx={{top: "-4px",
+                     "& .MuiSwitch-track": {
+                        height: 20,
+                        borderRadius: 10,
+                        top: -3,
+                        position: "relative"
+                     }
+                  }}
                />
             </Box>
             <Box width="100%">

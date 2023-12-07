@@ -34,12 +34,8 @@ function EntityCreate({table}: Props): JSX.Element
 {
    return (
       <BaseLayout>
-         <Box mt={4}>
-            <Grid container spacing={3}>
-               <Grid item xs={12} lg={12}>
-                  <EntityForm table={table} />
-               </Grid>
-            </Grid>
+         <Box mb={3}>
+            <EntityForm table={table} />
          </Box>
       </BaseLayout>
    );

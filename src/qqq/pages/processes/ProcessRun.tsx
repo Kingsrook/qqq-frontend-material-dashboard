@@ -414,228 +414,238 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                //////////////////////////////////////////////////
                // render all of the components for this screen //
                //////////////////////////////////////////////////
-               step.components && (step.components.map((component: QFrontendComponent, index: number) => (
-                  <div key={index}>
-                     {
-                        component.type === QComponentType.HELP_TEXT && (
-                           component.values.previewText ?
-                              <>
-                                 <Box mt={1}>
-                                    <Button onClick={toggleShowFullHelpText} startIcon={<Icon>{showFullHelpText ? "expand_less" : "expand_more"}</Icon>} sx={{pl: 1}}>
-                                       {showFullHelpText ? "Hide " : "Show "}
-                                       {component.values.previewText}
-                                    </Button>
-                                 </Box>
-                                 <Box mt={1} style={{display: showFullHelpText ? "block" : "none"}}>
-                                    <Typography variant="body2" color="info">
-                                       {ValueUtils.breakTextIntoLines(component.values.text)}
-                                    </Typography>
-                                 </Box>
-                              </>
-                              :
-                              <MDTypography variant="button" color="info">
-                                 {ValueUtils.breakTextIntoLines(component.values.text)}
-                              </MDTypography>
-                        )
-                     }
-                     {
-                        component.type === QComponentType.BULK_EDIT_FORM && (
-                           tableMetaData && localTableSections ?
-                              <Grid container spacing={3} mt={2}>
-                                 {
-                                    localTableSections.length == 0 &&
-                                    <Grid item xs={12}>
-                                       <Alert color="error">There are no editable fields on this table.</Alert>
+               step.components && (step.components.map((component: QFrontendComponent, index: number) =>
+               {
+                  let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"]
+                  if(component.type == QComponentType.BULK_EDIT_FORM)
+                  {
+                     helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+                  }
+
+                  return (
+                     <div key={index}>
+                        {
+                           component.type === QComponentType.HELP_TEXT && (
+                              component.values.previewText ?
+                                 <>
+                                    <Box mt={1}>
+                                       <Button onClick={toggleShowFullHelpText} startIcon={<Icon>{showFullHelpText ? "expand_less" : "expand_more"}</Icon>} sx={{pl: 1}}>
+                                          {showFullHelpText ? "Hide " : "Show "}
+                                          {component.values.previewText}
+                                       </Button>
+                                    </Box>
+                                    <Box mt={1} style={{display: showFullHelpText ? "block" : "none"}}>
+                                       <Typography variant="body2" color="info">
+                                          {ValueUtils.breakTextIntoLines(component.values.text)}
+                                       </Typography>
+                                    </Box>
+                                 </>
+                                 :
+                                 <MDTypography variant="button" color="info">
+                                    {ValueUtils.breakTextIntoLines(component.values.text)}
+                                 </MDTypography>
+                           )
+                        }
+                        {
+                           component.type === QComponentType.BULK_EDIT_FORM && (
+                              tableMetaData && localTableSections ?
+                                 <Grid container spacing={3} mt={2}>
+                                    {
+                                       localTableSections.length == 0 &&
+                                       <Grid item xs={12}>
+                                          <Alert color="error">There are no editable fields on this table.</Alert>
+                                       </Grid>
+                                    }
+                                    <Grid item xs={12} lg={3}>
+                                       {
+                                          localTableSections.length > 0 && <QRecordSidebar tableSections={localTableSections} stickyTop="20px" />
+                                       }
                                     </Grid>
-                                 }
-                                 <Grid item xs={12} lg={3}>
-                                    {
-                                       localTableSections.length > 0 && <QRecordSidebar tableSections={localTableSections} stickyTop="20px" />
-                                    }
-                                 </Grid>
-                                 <Grid item xs={12} lg={9}>
-
-                                    {localTableSections.map((section: QTableSection, index: number) =>
-                                    {
-                                       const name = section.name;
-
-                                       if (section.isHidden)
+                                    <Grid item xs={12} lg={9}>
                                        {
-                                          return;
-                                       }
-
-                                       const sectionFormFields = {};
-                                       for (let i = 0; i < section.fieldNames.length; i++)
-                                       {
-                                          const fieldName = section.fieldNames[i];
-                                          if (formFields[fieldName])
+                                          localTableSections.map((section: QTableSection, index: number) =>
                                           {
-                                             // @ts-ignore
-                                             sectionFormFields[fieldName] = formFields[fieldName];
-                                          }
-                                       }
+                                             const name = section.name;
 
-                                       if (Object.keys(sectionFormFields).length > 0)
-                                       {
-                                          const sectionFormData = {
-                                             formFields: sectionFormFields,
-                                             values: values,
-                                             errors: errors,
-                                             touched: touched
-                                          };
+                                             if (section.isHidden)
+                                             {
+                                                return;
+                                             }
 
-                                          return (
-                                             <Box key={name} pb={3}>
-                                                <Card id={name} sx={{scrollMarginTop: "20px"}} elevation={5}>
-                                                   <MDTypography variant="h5" p={3} pb={1}>
-                                                      {section.label}
-                                                   </MDTypography>
-                                                   <Box px={2}>
-                                                      <QDynamicForm formData={sectionFormData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
+                                             const sectionFormFields = {};
+                                             for (let i = 0; i < section.fieldNames.length; i++)
+                                             {
+                                                const fieldName = section.fieldNames[i];
+                                                if (formFields[fieldName])
+                                                {
+                                                   // @ts-ignore
+                                                   sectionFormFields[fieldName] = formFields[fieldName];
+                                                }
+                                             }
+
+                                             if (Object.keys(sectionFormFields).length > 0)
+                                             {
+                                                const sectionFormData = {
+                                                   formFields: sectionFormFields,
+                                                   values: values,
+                                                   errors: errors,
+                                                   touched: touched
+                                                };
+
+                                                return (
+                                                   <Box key={name} pb={3}>
+                                                      <Card id={name} sx={{scrollMarginTop: "20px"}} elevation={5}>
+                                                         <MDTypography variant="h5" p={3} pb={1}>
+                                                            {section.label}
+                                                         </MDTypography>
+                                                         <Box px={2}>
+                                                            <QDynamicForm formData={sectionFormData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableMetaData?.name};`} />
+                                                         </Box>
+                                                      </Card>
                                                    </Box>
-                                                </Card>
-                                             </Box>
-                                          );
+                                                );
+                                             }
+                                             else
+                                             {
+                                                return (<br />);
+                                             }
+                                          })
                                        }
-                                       else
-                                       {
-                                          return (<br />);
-                                       }
-                                    }
-                                    )}
+                                    </Grid>
                                  </Grid>
-                              </Grid>
-                              : <QDynamicForm formData={formData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} />
-                        )
-                     }
-                     {
-                        component.type === QComponentType.EDIT_FORM && (
-                           <QDynamicForm formData={formData} />
-                        )
-                     }
-                     {
-                        component.type === QComponentType.VIEW_FORM && step.viewFields && (
-                           <div>
-                              {step.viewFields.map((field: QFieldMetaData) => (
-                                 field.hasAdornment(AdornmentType.ERROR) ? (
-                                    processValues[field.name] && (
+                                 : <QDynamicForm formData={formData} bulkEditMode bulkEditSwitchChangeHandler={bulkEditSwitchChanged} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableMetaData?.name};`} />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.EDIT_FORM && (
+                              <QDynamicForm formData={formData} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.VIEW_FORM && step.viewFields && (
+                              <div>
+                                 {step.viewFields.map((field: QFieldMetaData) => (
+                                    field.hasAdornment(AdornmentType.ERROR) ? (
+                                       processValues[field.name] && (
+                                          <Box key={field.name} display="flex" py={1} pr={2}>
+                                             <MDTypography variant="button" fontWeight="regular">
+                                                {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
+                                             </MDTypography>
+                                          </Box>
+                                       )
+                                    ) : (
                                        <Box key={field.name} display="flex" py={1} pr={2}>
-                                          <MDTypography variant="button" fontWeight="regular">
+                                          <MDTypography variant="button" fontWeight="bold">
+                                             {field.label}
+                                             : &nbsp;
+                                          </MDTypography>
+                                          <MDTypography variant="button" fontWeight="regular" color="text">
                                              {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
                                           </MDTypography>
                                        </Box>
-                                    )
-                                 ) : (
-                                    <Box key={field.name} display="flex" py={1} pr={2}>
-                                       <MDTypography variant="button" fontWeight="bold">
-                                          {field.label}
-                                          : &nbsp;
-                                       </MDTypography>
-                                       <MDTypography variant="button" fontWeight="regular" color="text">
-                                          {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
+                                    )))
+                                 }
+                              </div>
+                           )
+                        }
+                        {
+                           component.type === QComponentType.DOWNLOAD_FORM && (
+                              <Grid container display="flex" justifyContent="center">
+                                 <Grid item xs={12} sm={12} xl={8} m={3} p={3} mt={6} sx={{border: "1px solid gray", borderRadius: "1rem"}}>
+                                    <Box mx={2} mt={-6} p={1} sx={{width: "fit-content", borderColor: "rgb(70%, 70%, 70%)", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "#FFFFFF"}} width="initial" color="white">
+                                       Download
+                                    </Box>
+                                    <Box display="flex" py={1} pr={2}>
+                                       <MDTypography variant="button" fontWeight="bold" onClick={() => download(`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`, processValues.downloadFileName)} sx={{cursor: "pointer"}}>
+                                          <Box display="flex" alignItems="center" gap={1} py={1} pr={2}>
+                                             <Icon fontSize="large">download_for_offline</Icon>
+                                             {processValues.downloadFileName}
+                                          </Box>
                                        </MDTypography>
                                     </Box>
-                                 )))
-                              }
-                           </div>
-                        )
-                     }
-                     {
-                        component.type === QComponentType.DOWNLOAD_FORM && (
-                           <Grid container display="flex" justifyContent="center">
-                              <Grid item xs={12} sm={12} xl={8} m={3} p={3} mt={6} sx={{border: "1px solid gray", borderRadius: "1rem"}}>
-                                 <Box mx={2} mt={-6} p={1} sx={{width: "fit-content", borderColor: "rgb(70%, 70%, 70%)", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "#FFFFFF"}} width="initial" color="white">
-                                    Download
-                                 </Box>
-                                 <Box display="flex" py={1} pr={2}>
-                                    <MDTypography variant="button" fontWeight="bold" onClick={() => download(`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`, processValues.downloadFileName)} sx={{cursor: "pointer"}}>
-                                       <Box display="flex" alignItems="center" gap={1} py={1} pr={2}>
-                                          <Icon fontSize="large">download_for_offline</Icon>
-                                          {processValues.downloadFileName}
-                                       </Box>
-                                    </MDTypography>
-                                 </Box>
+                                 </Grid>
                               </Grid>
-                           </Grid>
-                        )
-                     }
-                     {
-                        component.type === QComponentType.VALIDATION_REVIEW_SCREEN && (
-                           <ValidationReview
-                              qInstance={qInstance}
-                              process={processMetaData}
-                              table={tableMetaData}
-                              processValues={processValues}
-                              step={step}
-                              previewRecords={records}
-                              formValues={formData.values}
-                              doFullValidationRadioChangedHandler={(event: any) =>
-                              {
-                                 const {value} = event.currentTarget;
+                           )
+                        }
+                        {
+                           component.type === QComponentType.VALIDATION_REVIEW_SCREEN && (
+                              <ValidationReview
+                                 qInstance={qInstance}
+                                 process={processMetaData}
+                                 table={tableMetaData}
+                                 processValues={processValues}
+                                 step={step}
+                                 previewRecords={records}
+                                 formValues={formData.values}
+                                 doFullValidationRadioChangedHandler={(event: any) =>
+                                 {
+                                    const {value} = event.currentTarget;
 
-                                 //////////////////////////////////////////////////////////////
-                                 // call the formik function to set the value in this field. //
-                                 //////////////////////////////////////////////////////////////
-                                 setFieldValue("doFullValidation", value);
+                                    //////////////////////////////////////////////////////////////
+                                    // call the formik function to set the value in this field. //
+                                    //////////////////////////////////////////////////////////////
+                                    setFieldValue("doFullValidation", value);
 
-                                 setOverrideOnLastStep(value !== "true");
-                              }}
-                           />
-                        )
-                     }
-                     {
-                        component.type === QComponentType.PROCESS_SUMMARY_RESULTS && (
-                           <ProcessSummaryResults qInstance={qInstance} process={processMetaData} table={tableMetaData} processValues={processValues} step={step} />
-                        )
-                     }
-                     {
-                        component.type === QComponentType.GOOGLE_DRIVE_SELECT_FOLDER && (
-                           // todo - make these booleans configurable (values on the component)
-                           <GoogleDriveFolderPickerWrapper showSharedDrivesView={true} showDefaultFoldersView={false} qInstance={qInstance} />
-                        )
-                     }
-                     {
-                        component.type === QComponentType.RECORD_LIST && step.recordListFields && recordConfig.columns && (
-                           <div>
-                              <MDTypography variant="button" fontWeight="bold">Records</MDTypography>
-                              {" "}
-                              <br />
-                              <Box height="100%">
-                                 <DataGridPro
-                                    components={{Pagination: CustomPagination}}
-                                    page={recordConfig.pageNo}
-                                    disableSelectionOnClick
-                                    autoHeight
-                                    rows={recordConfig.rows}
-                                    columns={recordConfig.columns}
-                                    rowBuffer={10}
-                                    rowCount={recordConfig.totalRecords}
-                                    pageSize={recordConfig.rowsPerPage}
-                                    rowsPerPageOptions={[10, 25, 50]}
-                                    onPageSizeChange={recordConfig.handleRowsPerPageChange}
-                                    onPageChange={recordConfig.handlePageChange}
-                                    onRowClick={recordConfig.handleRowClick}
-                                    getRowId={(row) => row.__idForDataGridPro__}
-                                    paginationMode="server"
-                                    pagination
-                                    density="compact"
-                                    loading={recordConfig.loading}
-                                    disableColumnFilter
-                                 />
+                                    setOverrideOnLastStep(value !== "true");
+                                 }}
+                              />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.PROCESS_SUMMARY_RESULTS && (
+                              <ProcessSummaryResults qInstance={qInstance} process={processMetaData} table={tableMetaData} processValues={processValues} step={step} />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.GOOGLE_DRIVE_SELECT_FOLDER && (
+                              // todo - make these booleans configurable (values on the component)
+                              <GoogleDriveFolderPickerWrapper showSharedDrivesView={true} showDefaultFoldersView={false} qInstance={qInstance} />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.RECORD_LIST && step.recordListFields && recordConfig.columns && (
+                              <div>
+                                 <MDTypography variant="button" fontWeight="bold">Records</MDTypography>
+                                 {" "}
+                                 <br />
+                                 <Box height="100%">
+                                    <DataGridPro
+                                       components={{Pagination: CustomPagination}}
+                                       page={recordConfig.pageNo}
+                                       disableSelectionOnClick
+                                       autoHeight
+                                       rows={recordConfig.rows}
+                                       columns={recordConfig.columns}
+                                       rowBuffer={10}
+                                       rowCount={recordConfig.totalRecords}
+                                       pageSize={recordConfig.rowsPerPage}
+                                       rowsPerPageOptions={[10, 25, 50]}
+                                       onPageSizeChange={recordConfig.handleRowsPerPageChange}
+                                       onPageChange={recordConfig.handlePageChange}
+                                       onRowClick={recordConfig.handleRowClick}
+                                       getRowId={(row) => row.__idForDataGridPro__}
+                                       paginationMode="server"
+                                       pagination
+                                       density="compact"
+                                       loading={recordConfig.loading}
+                                       disableColumnFilter
+                                    />
+                                 </Box>
+                              </div>
+                           )
+                        }
+                        {
+                           component.type === QComponentType.HTML && (
+                              processValues[`${step.name}.html`] &&
+                              <Box fontSize="1rem">
+                                 {parse(processValues[`${step.name}.html`])}
                               </Box>
-                           </div>
-                        )
-                     }
-                     {
-                        component.type === QComponentType.HTML && (
-                           processValues[`${step.name}.html`] &&
-                           <Box fontSize="1rem">
-                              {parse(processValues[`${step.name}.html`])}
-                           </Box>
-                        )
-                     }
-                  </div>
-               )))}
+                           )
+                        }
+                     </div>
+                  );
+               }))
+            }
          </>
       );
    };
