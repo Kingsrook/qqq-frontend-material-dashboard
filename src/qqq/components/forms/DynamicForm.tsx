@@ -108,10 +108,10 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                      let formattedHelpContent = <HelpContent helpContents={field.fieldMetaData.helpContents} roles={helpRoles} helpContentKey={`${helpContentKeyPrefix ?? ""}field:${fieldName}`} />;
                      if(formattedHelpContent)
                      {
-                        formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.5rem">{formattedHelpContent}</Box>
+                        formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.25rem">{formattedHelpContent}</Box>
                      }
 
-                     const labelElement = <Box fontSize="1rem" fontWeight="500">
+                     const labelElement = <Box fontSize="1rem" fontWeight="500" marginBottom="0.25rem">
                         <label htmlFor={field.name}>{field.label}</label>
                      </Box>
 
