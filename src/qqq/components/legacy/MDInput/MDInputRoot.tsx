@@ -69,7 +69,15 @@ export default styled(TextField)(({theme, ownerState}: { theme?: Theme; ownerSta
    });
 
    return {
-      backgroundColor: disabled ? `${grey[200]} !important` : transparent.main,
+      "& .MuiInputBase-root": {
+         backgroundColor: disabled ? `${grey[200]} !important` : transparent.main,
+         borderRadius: "0.75rem",
+      },
+      "& input": {
+         backgroundColor: `${transparent.main}!important`,
+         padding: "0.5rem",
+         fontSize: "1rem",
+      },
       pointerEvents: disabled ? "none" : "auto",
       ...(error && errorStyles()),
       ...(success && successStyles()),

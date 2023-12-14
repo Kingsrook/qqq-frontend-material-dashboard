@@ -32,6 +32,7 @@ import React, {useState} from "react";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import HelpContent from "qqq/components/misc/HelpContent";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 interface Props
@@ -41,16 +42,13 @@ interface Props
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
    record?: QRecord;
+   helpRoles?: string[];
+   helpContentKeyPrefix?: string;
 }
 
-function QDynamicForm(props: Props): JSX.Element
+function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHandler, record, helpRoles, helpContentKeyPrefix}: Props): JSX.Element
 {
-   const {
-      formData, formLabel, bulkEditMode, bulkEditSwitchChangeHandler,
-   } = props;
-   const {
-      formFields, values, errors, touched,
-   } = formData;
+   const {formFields, values, errors, touched} = formData;
 
    const formikProps = useFormikContext();
    const [fileName, setFileName] = useState(null as string);
@@ -70,14 +68,15 @@ function QDynamicForm(props: Props): JSX.Element
    {
       setFileName(null);
       formikProps.setFieldValue(fieldName, null);
-      props.record?.values.delete(fieldName)
-      props.record?.displayValues.delete(fieldName)
+      record?.values.delete(fieldName)
+      record?.displayValues.delete(fieldName)
    };
 
    const bulkEditSwitchChanged = (name: string, value: boolean) =>
    {
       bulkEditSwitchChangeHandler(name, value);
    };
+
 
    return (
       <Box>
@@ -96,15 +95,25 @@ function QDynamicForm(props: Props): JSX.Element
                   && Object.keys(formFields).map((fieldName: any) =>
                   {
                      const field = formFields[fieldName];
+                     if (field.omitFromQDynamicForm)
+                     {
+                        return null;
+                     }
+
                      if (values[fieldName] === undefined)
                      {
                         values[fieldName] = "";
                      }
 
-                     if (field.omitFromQDynamicForm)
+                     let formattedHelpContent = <HelpContent helpContents={field.fieldMetaData.helpContents} roles={helpRoles} helpContentKey={`${helpContentKeyPrefix ?? ""}field:${fieldName}`} />;
+                     if(formattedHelpContent)
                      {
-                        return null;
+                        formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.25rem">{formattedHelpContent}</Box>
                      }
+
+                     const labelElement = <Box fontSize="1rem" fontWeight="500" marginBottom="0.25rem">
+                        <label htmlFor={field.name}>{field.label}</label>
+                     </Box>
 
                      if (field.type === "file")
                      {
@@ -112,13 +121,12 @@ function QDynamicForm(props: Props): JSX.Element
                         return (
                            <Grid item xs={12} sm={6} key={fieldName}>
                               <Box mb={1.5}>
-
-                                 <InputLabel shrink={true}>{field.label}</InputLabel>
+                                 {labelElement}
                                  {
-                                    props.record && props.record.values.get(fieldName) && <Box fontSize="0.875rem" pb={1}>
+                                    record && record.values.get(fieldName) && <Box fontSize="0.875rem" pb={1}>
                                        Current File:
                                        <Box display="inline-flex" pl={1}>
-                                          {ValueUtils.getDisplayValue(pseudoField, props.record, "view")}
+                                          {ValueUtils.getDisplayValue(pseudoField, record, "view")}
                                           <Tooltip placement="bottom" title="Remove current file">
                                              <Icon className="blobIcon" fontSize="small" onClick={(e) => removeFile(fieldName)}>delete</Icon>
                                           </Tooltip>
@@ -162,18 +170,20 @@ function QDynamicForm(props: Props): JSX.Element
 
                         return (
                            <Grid item xs={12} sm={6} key={fieldName}>
+                              {labelElement}
                               <DynamicSelect
                                  tableName={field.possibleValueProps.tableName}
                                  processName={field.possibleValueProps.processName}
                                  fieldName={fieldName}
                                  isEditable={field.isEditable}
-                                 fieldLabel={field.label}
+                                 fieldLabel=""
                                  initialValue={values[fieldName]}
                                  initialDisplayValue={field.possibleValueProps.initialDisplayValue}
                                  bulkEditMode={bulkEditMode}
                                  bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                                  otherValues={otherValuesMap}
                               />
+                              {formattedHelpContent}
                            </Grid>
                         );
                      }
@@ -182,9 +192,11 @@ function QDynamicForm(props: Props): JSX.Element
                      // todo? placeholder={password.placeholder}
                      return (
                         <Grid item xs={12} sm={6} key={fieldName}>
+                           {labelElement}
                            <QDynamicFormField
+                              id={field.name}
                               type={field.type}
-                              label={field.label}
+                              label=""
                               isEditable={field.isEditable}
                               name={fieldName}
                               displayFormat={field.displayFormat}
@@ -195,6 +207,7 @@ function QDynamicForm(props: Props): JSX.Element
                               success={`${values[fieldName]}` !== "" && !errors[fieldName] && touched[fieldName]}
                               formFieldObject={field}
                            />
+                           {formattedHelpContent}
                         </Grid>
                      );
                   })}
@@ -207,6 +220,7 @@ function QDynamicForm(props: Props): JSX.Element
 QDynamicForm.defaultProps = {
    formLabel: undefined,
    bulkEditMode: false,
+   helpRoles: ["ALL_SCREENS"],
    bulkEditSwitchChangeHandler: () =>
    {
    },

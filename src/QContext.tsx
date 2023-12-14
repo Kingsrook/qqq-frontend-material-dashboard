@@ -51,6 +51,7 @@ interface QContext
    ///////////////////////////////////
    pathToLabelMap?: {[path: string]: string};
    branding?: QBrandingMetaData;
+   helpHelpActive?: boolean;
 }
 
 const defaultState = {
@@ -59,6 +60,7 @@ const defaultState = {
    dotMenuOpen: false,
    keyboardHelpOpen: false,
    pathToLabelMap: {},
+   helpHelpActive: false,
 };
 
 const QContext = createContext<QContext>(defaultState);

@@ -45,13 +45,16 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
 import React, {useContext, useEffect, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
 import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -98,6 +101,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
+   const [t1Section, setT1Section] = useState(null as QTableSection);
    const [t1SectionName, setT1SectionName] = useState(null as string);
    const [t1SectionElement, setT1SectionElement] = useState(null as JSX.Element);
    const [nonT1TableSections, setNonT1TableSections] = useState([] as QTableSection[]);
@@ -117,7 +121,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive} = useContext(QContext);
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -351,6 +355,23 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       return (visibleJoinTables);
    };
 
+
+   /*******************************************************************************
+    ** get an element (or empty) to use as help content for a section
+    *******************************************************************************/
+   const getSectionHelp = (section: QTableSection) =>
+   {
+      const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
+      const formattedHelpContent = <HelpContent helpContents={section.helpContents} roles={helpRoles} helpContentKey={`table:${tableName};section:${section.name}`} />;
+
+      return formattedHelpContent && (
+         <Box px={"1.5rem"} fontSize={"0.875rem"} color={colors.blueGray.main}>
+            {formattedHelpContent}
+         </Box>
+      )
+   }
+
+
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -502,15 +523,24 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                         {
                            let [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
                            let label = field.label;
+
+                           const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
+                           const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
+                           const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableName};field:${fieldName}`} />;
+
+                           const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>
+
                            return (
                               <Box key={fieldName} flexDirection="row" pr={2}>
-                                 <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)">
-                                    {label}:
+                                 <>
+                                    {
+                                       showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
+                                    }
                                     <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
-                                 </Typography>
-                                 <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
-                                    {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
-                                 </Typography>
+                                    <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
+                                       {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                                    </Typography>
+                                 </>
                               </Box>
                            )
                         })
@@ -531,6 +561,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                               <Typography variant="h6" p={3} pb={1}>
                                  {section.label}
                               </Typography>
+                              {getSectionHelp(section)}
                               <Box p={3} pt={0} flexDirection="column">
                                  {fields}
                               </Box>
@@ -549,6 +580,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             {
                setT1SectionElement(sectionFieldElements.get(section.name));
                setT1SectionName(section.name);
+               setT1Section(section);
             }
             else
             {
@@ -879,6 +911,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                                    {renderActionsMenu}
                                                 </Box>
                                              </Box>
+                                             {t1Section && getSectionHelp(t1Section)}
                                              {t1SectionElement ? (<Box p={3} pt={0}>{t1SectionElement}</Box>) : null}
                                           </Card>
                                        </Grid>

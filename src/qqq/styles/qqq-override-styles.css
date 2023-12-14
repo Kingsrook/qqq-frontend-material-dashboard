@@ -100,9 +100,12 @@
 }
 
 /* move the green check / red x down to align with the calendar icon */
-.MuiFormControl-root
+.MuiFormControl-root:has(input[type="datetime-local"]),
+.MuiFormControl-root:has(input[type="date"]),
+.MuiFormControl-root:has(input[type="time"]),
+.MuiFormControl-root:has(.MuiInputBase-inputAdornedEnd)
 {
-   background-position-y: 1.4rem !important;
+   background-position: right 2rem center;
 }
 
 .MuiInputAdornment-sizeMedium *
@@ -563,4 +566,34 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    display: inline;
    right: .5rem
+}
+
+/* help-content */
+.helpContent
+{
+   color: #757575;
+}
+
+.helpContent .header
+{
+   color: #212121;
+   font-weight: 500;
+   display: block;
+   margin-bottom: 0.25rem;
+}
+
+.MuiTooltip-tooltip .helpContent P + P
+{
+   margin-top: 1rem;
+}
+
+.helpContent UL
+{
+   margin-left: 1rem;
+}
+
+/* for query screen column-header tooltips, move them up a little bit, to be more closely attached to the text. */
+.dataGridHeaderTooltip
+{
+   top: -1.25rem;
 }

@@ -25,6 +25,7 @@ import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field, useFormikContext} from "formik";
 import React, {useState} from "react";
 import AceEditor from "react-ace";
+import colors from "qqq/assets/theme/base/colors";
 import BooleanFieldSwitch from "qqq/components/forms/BooleanFieldSwitch";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -52,6 +53,7 @@ function QDynamicFormField({
 {
    const [switchChecked, setSwitchChecked] = useState(false);
    const [isDisabled, setIsDisabled] = useState(!isEditable || bulkEditMode);
+   const {inputBorderColor} = colors;
 
    const {setFieldValue} = useFormikContext();
 
@@ -122,7 +124,7 @@ function QDynamicFormField({
                width="100%"
                height="300px"
                value={value}
-               style={{border: "1px solid gray"}}
+               style={{border: `1px solid ${inputBorderColor}`, borderRadius: "0.75rem"}}
             />
          </>
       );
@@ -131,7 +133,7 @@ function QDynamicFormField({
    {
       field = (
          <>
-            <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="standard" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
+            <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="outlined" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
                onKeyPress={(e: any) =>
                {
                   if (e.key === "Enter")
@@ -171,6 +173,14 @@ function QDynamicFormField({
                   id={`bulkEditSwitch-${name}`}
                   checked={switchChecked}
                   onClick={bulkEditSwitchChanged}
+                  sx={{top: "-4px",
+                     "& .MuiSwitch-track": {
+                        height: 20,
+                        borderRadius: 10,
+                        top: -3,
+                        position: "relative"
+                     }
+                  }}
                />
             </Box>
             <Box width="100%" sx={{background: (type == "checkbox" && isDisabled) ? "#f0f2f5!important" : "initial"}}>
