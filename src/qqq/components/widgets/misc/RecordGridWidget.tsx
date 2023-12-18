@@ -216,6 +216,12 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
       })();
    };
 
+   /*******************************************************************************
+    ** So that we can useGridApiContext to add event handlers for mouse down and
+    ** row double-click (to make it so you don't accidentally click into records),
+    ** we have to define a grid component, so even though we don't want a custom
+    ** toolbar, that's why we have this (and why it returns empty)
+    *******************************************************************************/
    function CustomToolbar()
    {
       const handleMouseDown: GridEventListener<"cellMouseDown"> = ( params, event, details ) =>
