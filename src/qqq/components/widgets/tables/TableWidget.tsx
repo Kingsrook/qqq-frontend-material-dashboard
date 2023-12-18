@@ -86,14 +86,18 @@ function TableWidget(props: Props): JSX.Element
                }
 
                const cell = rows[i][columns[j].accessor];
-               const text = htmlToText(cell,
-                  {
-                     selectors: [
-                        {selector: "a", format: "inline"},
-                        {selector: ".MuiIcon-root", format: "skip"},
-                        {selector: ".button", format: "skip"}
-                     ]
-                  });
+               let text = cell;
+               if(columns[j].type != "default")
+               {
+                  text = htmlToText(cell,
+                     {
+                        selectors: [
+                           {selector: "a", format: "inline"},
+                           {selector: ".MuiIcon-root", format: "skip"},
+                           {selector: ".button", format: "skip"}
+                        ]
+                     });
+               }
                csv += `"${ValueUtils.cleanForCsv(text)}"`;
             }
             csv += "\n";
