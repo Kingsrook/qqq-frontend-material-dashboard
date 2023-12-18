@@ -215,6 +215,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                initialDisplayValue={selectedPossibleValue?.label}
                inForm={false}
                onChange={(value: any) => valueChangeHandler(null, 0, value)}
+               variant="standard"
             />
          </Box>;
       case ValueMode.PVS_MULTI:
@@ -242,6 +243,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                initialValues={initialValues}
                inForm={false}
                onChange={(value: any) => valueChangeHandler(null, "all", value)}
+               variant="standard"
             />
          </Box>;
    }

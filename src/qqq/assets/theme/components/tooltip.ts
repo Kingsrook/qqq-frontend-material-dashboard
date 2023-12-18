@@ -48,7 +48,7 @@ const tooltip: Types = {
       borderRadius: borderRadius.md,
       opacity: 0.7,
       padding: "1rem",
-      boxShadow: "rgba(0, 0, 0, 0.2) 0px 3px 3px -2px, rgba(0, 0, 0, 0.14) 0px 3px 4px 0px, rgba(0, 0, 0, 0.12) 0px 1px 8px 0px"
+      boxShadow: "0px 0px 12px rgba(128, 128, 128, 0.40)"
     },
 
     arrow: {

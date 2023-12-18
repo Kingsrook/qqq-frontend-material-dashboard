@@ -36,7 +36,7 @@ import {LicenseInfo} from "@mui/x-license-pro";
 import jwt_decode from "jwt-decode";
 import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
 import {useCookies} from "react-cookie";
-import {Navigate, Route, Routes, useLocation,} from "react-router-dom";
+import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
 import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
 import QContext from "QContext";
@@ -226,6 +226,7 @@ export default function App()
    const {miniSidenav, direction, layout, openConfigurator, sidenavColor} = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
+   const [queryParams] = useSearchParams();
 
    const [needToLoadRoutes, setNeedToLoadRoutes] = useState(true);
    const [sideNavRoutes, setSideNavRoutes] = useState([]);
@@ -659,6 +660,8 @@ export default function App()
    const [tableProcesses, setTableProcesses] = useState(null);
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
+   const [helpHelpActive] = useState(queryParams.has("helpHelp"));
+
    return (
 
       appRoutes && (
@@ -669,6 +672,7 @@ export default function App()
             tableProcesses: tableProcesses,
             dotMenuOpen: dotMenuOpen,
             keyboardHelpOpen: keyboardHelpOpen,
+            helpHelpActive: helpHelpActive,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor),
             setTableMetaData: (tableMetaData: QTableMetaData) => setTableMetaData(tableMetaData),

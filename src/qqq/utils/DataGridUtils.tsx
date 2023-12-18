@@ -25,10 +25,13 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {GridCallbackDetails, GridColDef, GridFilterItem, GridRowParams, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
+import {GridColDef, GridFilterItem, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
-import React, {useRef, useState} from "react";
-import {Link, NavigateFunction, useNavigate} from "react-router-dom";
+import {GridColumnHeaderParams} from "@mui/x-data-grid/models/params/gridColumnHeaderParams";
+import React from "react";
+import {Link, NavigateFunction} from "react-router-dom";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -339,6 +342,20 @@ export default class DataGridUtils
       column.renderCell = (cellValues: any) => (
          (cellValues.value)
       );
+
+      const helpRoles = ["QUERY_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
+      const showHelp = hasHelpContent(field.helpContents, helpRoles); // todo - maybe - take helpHelpActive from context all the way down to here?
+      if(showHelp)
+      {
+         const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={headerName} helpContentKey={`table:${tableMetaData.name};field:${fieldName}`} />;
+         column.renderHeader = (params: GridColumnHeaderParams) => (
+            <Tooltip title={formattedHelpContent}>
+               <div className="MuiDataGrid-columnHeaderTitle" style={{lineHeight: "initial"}}>
+                  {headerName}
+               </div>
+            </Tooltip>
+         );
+      }
 
       return (column);
    }

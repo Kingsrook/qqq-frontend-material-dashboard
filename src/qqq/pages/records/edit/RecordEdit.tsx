@@ -43,18 +43,8 @@ function EntityEdit({table, isCopy}: Props): JSX.Element
 
    return (
       <BaseLayout>
-         <Box mt={4}>
-            <Grid container spacing={3}>
-               <Grid item xs={12} lg={12}>
-                  <Box mb={3}>
-                     <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                           <EntityForm table={table} id={id} isCopy={isCopy} />
-                        </Grid>
-                     </Grid>
-                  </Box>
-               </Grid>
-            </Grid>
+         <Box mb={3}>
+            <EntityForm table={table} id={id} isCopy={isCopy} />
          </Box>
       </BaseLayout>
    );

@@ -138,7 +138,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    if(data && data.viewAllLink)
    {
       labelAdditionalElementsLeft.push(
-         <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative" top="-0.25rem">
+         <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative">
             <Link to={data.viewAllLink}>View All</Link>
          </Typography>
       )
@@ -178,8 +178,8 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    if(widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(
-         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.25rem">
-            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.125}}>save_alt</Icon></Button></Tooltip>
+         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative">
+            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.25}}>save_alt</Icon></Button></Tooltip>
          </Typography>
       );
    }
@@ -250,6 +250,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          widgetData={data}
          labelAdditionalElementsLeft={labelAdditionalElementsLeft}
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+         labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
          <Box mx={-2} mb={-3}>
             <DataGridPro

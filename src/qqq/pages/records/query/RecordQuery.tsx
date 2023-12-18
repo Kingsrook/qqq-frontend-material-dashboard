@@ -30,7 +30,6 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Collapse, TablePagination, Typography} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -51,7 +50,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector, useGridApiRef, GridPreferencePanelsValue} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridExportMenuItemProps, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridSelector, useGridApiRef, GridPreferencePanelsValue, GridColumnResizeParams} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -80,6 +79,8 @@ const COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT = "qqq.columnSort";
 const FILTER_LOCAL_STORAGE_KEY_ROOT = "qqq.filter";
 const ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT = "qqq.rowsPerPage";
 const PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT = "qqq.pinnedColumns";
+const COLUMN_ORDERING_LOCAL_STORAGE_KEY_ROOT = "qqq.columnOrdering";
+const COLUMN_WIDTHS_LOCAL_STORAGE_KEY_ROOT = "qqq.columnWidths";
 const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 
@@ -137,6 +138,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const sortLocalStorageKey = `${COLUMN_SORT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const rowsPerPageLocalStorageKey = `${ROWS_PER_PAGE_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const pinnedColumnsLocalStorageKey = `${PINNED_COLUMNS_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const columnOrderingLocalStorageKey = `${COLUMN_ORDERING_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
+   const columnWidthsLocalStorageKey = `${COLUMN_WIDTHS_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const seenJoinTablesLocalStorageKey = `${SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const columnVisibilityLocalStorageKey = `${COLUMN_VISIBILITY_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const filterLocalStorageKey = `${FILTER_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
@@ -147,6 +150,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    let defaultRowsPerPage = 10;
    let defaultDensity = "standard" as GridDensity;
    let defaultPinnedColumns = {left: ["__check__", "id"]} as GridPinnedColumns;
+   let defaultColumnOrdering = null as string[];
+   let defaultColumnWidths = {} as {[fieldName: string]: number};
    let seenJoinTables: {[tableName: string]: boolean} = {};
    let defaultTableVariant: QTableVariant = null;
 
@@ -167,6 +172,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if (localStorage.getItem(pinnedColumnsLocalStorageKey))
    {
       defaultPinnedColumns = JSON.parse(localStorage.getItem(pinnedColumnsLocalStorageKey));
+   }
+   if (localStorage.getItem(columnOrderingLocalStorageKey))
+   {
+      defaultColumnOrdering = JSON.parse(localStorage.getItem(columnOrderingLocalStorageKey));
+   }
+   if (localStorage.getItem(columnWidthsLocalStorageKey))
+   {
+      defaultColumnWidths = JSON.parse(localStorage.getItem(columnWidthsLocalStorageKey));
    }
    if (localStorage.getItem(rowsPerPageLocalStorageKey))
    {
@@ -646,6 +659,38 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             let linkBase = metaData.getTablePath(table);
             linkBase += linkBase.endsWith("/") ? "" : "/";
             const columns = DataGridUtils.setupGridColumns(tableMetaData, linkBase, metaData, "alphabetical");
+
+            ///////////////////////////////////////////////////////////////////////
+            // if there's a column-ordering (e.g., from local storage), apply it //
+            ///////////////////////////////////////////////////////////////////////
+            if(defaultColumnOrdering)
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // note - may need to put this in its own function, e.g., for restoring "Saved Columns" when we add that //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+               columns.sort((a: GridColDef, b: GridColDef) =>
+               {
+                  const aIndex = defaultColumnOrdering.indexOf(a.field);
+                  const bIndex = defaultColumnOrdering.indexOf(b.field);
+                  return aIndex - bIndex;
+               });
+            }
+
+            ///////////////////////////////////////////////////////////////////////
+            // if there are column widths (e.g., from local storage), apply them //
+            ///////////////////////////////////////////////////////////////////////
+            if(defaultColumnWidths)
+            {
+               for (let i = 0; i < columns.length; i++)
+               {
+                  const width = defaultColumnWidths[columns[i].field];
+                  if(width)
+                  {
+                     columns[i].width = width;
+                  }
+               }
+            }
+
             setColumnsModel(columns);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -963,11 +1008,24 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setVisibleJoinTables(newVisibleJoinTables);
    }
 
+
+   /*******************************************************************************
+    ** Event handler for column ordering change
+    *******************************************************************************/
    const handleColumnOrderChange = (columnOrderChangeParams: GridColumnOrderChangeParams) =>
    {
-      // TODO: make local storaged
-      console.log(JSON.stringify(columnsModel));
-      console.log(columnOrderChangeParams);
+      const columnOrdering = gridApiRef.current.state.columns.all;
+      localStorage.setItem(columnOrderingLocalStorageKey, JSON.stringify(columnOrdering));
+   };
+
+
+   /*******************************************************************************
+    ** Event handler for column resizing
+    *******************************************************************************/
+   const handleColumnResize = (params: GridColumnResizeParams, event: MuiEvent, details: GridCallbackDetails) =>
+   {
+      defaultColumnWidths[params.colDef.field] = params.width;
+      localStorage.setItem(columnWidthsLocalStorageKey, JSON.stringify(defaultColumnWidths));
    };
 
    const handleFilterChange = (filterModel: GridFilterModel, doSetQueryFilter = true, isChangeFromDataGrid = false) =>
@@ -1872,13 +1930,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          );
       }
 
+      ////////////////////////////////////////////////////////////////////////////////////
+      // if the table uses variants, then put the variant-selector into the goto dialog //
+      ////////////////////////////////////////////////////////////////////////////////////
+      let gotoVariantSubHeader = <></>;
+      if(tableMetaData?.usesVariants)
+      {
+         gotoVariantSubHeader = <Box mb={2}>{getTableVariantHeader()}</Box>
+      }
+
       return (
          <BaseLayout>
-            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={
-               <Box mb={2}>
-                  {getTableVariantHeader()}
-               </Box>
-            } />
+            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={gotoVariantSubHeader} />
          </BaseLayout>
       );
    }
@@ -2009,6 +2072,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         columnVisibilityModel={columnVisibilityModel}
                         onColumnVisibilityModelChange={handleColumnVisibilityChange}
                         onColumnOrderChange={handleColumnOrderChange}
+                        onColumnResize={handleColumnResize}
                         onSelectionModelChange={selectionChanged}
                         onSortModelChange={handleSortChangeForDataGrid}
                         sortingOrder={["asc", "desc"]}

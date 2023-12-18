@@ -29,6 +29,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import {ErrorMessage, useFormikContext} from "formik";
 import React, {useEffect, useState} from "react";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import Client from "qqq/utils/qqq/Client";
 
@@ -49,6 +50,7 @@ interface Props
    bulkEditMode?: boolean;
    bulkEditSwitchChangeHandler?: any;
    otherValues?: Map<string, any>;
+   variant: "standard" | "outlined";
 }
 
 DynamicSelect.defaultProps = {
@@ -63,6 +65,7 @@ DynamicSelect.defaultProps = {
    isMultiple: false,
    bulkEditMode: false,
    otherValues: new Map<string, any>(),
+   variant: "outlined",
    bulkEditSwitchChangeHandler: () =>
    {
    },
@@ -70,12 +73,13 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues}: Props)
+function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant}: Props)
 {
    const [open, setOpen] = useState(false);
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
    const [firstRender, setFirstRender] = useState(true);
+   const {inputBorderColor} = colors;
 
    ////////////////////////////////////////////////////////////////////////////////////////////////
    // default value - needs to be an array (from initialValues (array) prop) for multiple mode - //
@@ -230,7 +234,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       // attributes.  so, doing this, w/ key=id, seemed to fix it.                                 //
       ///////////////////////////////////////////////////////////////////////////////////////////////
       return (
-         <li {...props} key={option.id}>
+         <li {...props} key={option.id} style={{fontSize: "1rem"}}>
             {content}
          </li>
       );
@@ -244,13 +248,35 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       bulkEditSwitchChangeHandler(fieldName, newSwitchValue);
    };
 
-   // console.log(`default value: ${JSON.stringify(defaultValue)}`);
+   ////////////////////////////////////////////
+   // for outlined style, adjust some styles //
+   ////////////////////////////////////////////
+   let autocompleteSX = {};
+   if (variant == "outlined")
+   {
+      autocompleteSX = {
+         "& .MuiOutlinedInput-root": {
+            borderRadius: "0.75rem",
+         },
+         "& .MuiInputBase-root": {
+            padding: "0.5rem",
+            background: isDisabled ? "#f0f2f5!important" : "initial",
+         },
+         "& .MuiOutlinedInput-root .MuiAutocomplete-input": {
+            padding: "0",
+            fontSize: "1rem"
+         },
+         "& .Mui-disabled .MuiOutlinedInput-notchedOutline": {
+            borderColor: inputBorderColor
+         }
+      }
+   }
 
    const autocomplete = (
       <Box>
          <Autocomplete
             id={overrideId ?? fieldName}
-            sx={{background: isDisabled ? "#f0f2f5!important" : "initial"}}
+            sx={autocompleteSX}
             open={open}
             fullWidth
             onOpen={() =>
@@ -305,7 +331,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
                <TextField
                   {...params}
                   label={fieldLabel}
-                  variant="standard"
+                  variant={variant}
                   autoComplete="off"
                   type="search"
                   InputProps={{
@@ -341,6 +367,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
                   id={`bulkEditSwitch-${fieldName}`}
                   checked={switchChecked}
                   onClick={bulkEditSwitchChanged}
+                  sx={{top: "-4px",
+                     "& .MuiSwitch-track": {
+                        height: 20,
+                        borderRadius: 10,
+                        top: -3,
+                        position: "relative"
+                     }
+                  }}
                />
             </Box>
             <Box width="100%">

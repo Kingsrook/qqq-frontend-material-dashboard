@@ -56,6 +56,7 @@ interface Props
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalElementsLeft: JSX.Element[];
    labelAdditionalComponentsRight: LabelComponent[];
+   labelBoxAdditionalSx?: any;
    widgetMetaData?: QWidgetMetaData;
    widgetData?: WidgetData;
    children: JSX.Element;
@@ -75,6 +76,7 @@ Widget.defaultProps = {
    labelAdditionalComponentsLeft: [],
    labelAdditionalElementsLeft: [],
    labelAdditionalComponentsRight: [],
+   labelBoxAdditionalSx: {},
    omitPadding: false,
 };
 
@@ -174,7 +176,7 @@ export class AddNewRecordButton extends LabelComponent
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
       return (
-         <Typography variant="body2" p={2} pr={0} display="inline" position="relative" top="0.25rem">
+         <Typography variant="body2" p={2} pr={0} display="inline" position="relative" top="-0.5rem">
             <Button sx={{mt: 0.75}} onClick={() => this.openEditForm(args.navigate, this.table, null, this.defaultValues, this.disabledFields)}>{this.label}</Button>
          </Typography>
       );
@@ -552,7 +554,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          {
             needLabelBox &&
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%"}} minHeight={"2.5rem"}>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%", ...props.labelBoxAdditionalSx}} minHeight={"2.5rem"}>
                <Box>
                   {
                      hasPermission ?

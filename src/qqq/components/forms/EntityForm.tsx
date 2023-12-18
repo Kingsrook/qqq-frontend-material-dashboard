@@ -37,10 +37,12 @@ import React, {useContext, useEffect, useReducer, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -79,6 +81,7 @@ function EntityForm(props: Props): JSX.Element
    const [validations, setValidations] = useState({});
    const [initialValues, setInitialValues] = useState({} as { [key: string]: any });
    const [formFields, setFormFields] = useState(null as Map<string, any>);
+   const [t1section, setT1Section] = useState(null as QTableSection);
    const [t1sectionName, setT1SectionName] = useState(null as string);
    const [nonT1Sections, setNonT1Sections] = useState([] as QTableSection[]);
 
@@ -151,7 +154,9 @@ function EntityForm(props: Props): JSX.Element
       {
          return <div>Loading...</div>;
       }
-      return <QDynamicForm formData={formData} record={record} />;
+
+      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+      return <QDynamicForm formData={formData} record={record} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableName};`} />;
    }
 
    if (!asyncLoadInited)
@@ -330,6 +335,7 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////
          const dynamicFormFieldsBySection = new Map<string, any>();
          let t1sectionName;
+         let t1section;
          const nonT1Sections: QTableSection[] = [];
          for (let i = 0; i < tableSections.length; i++)
          {
@@ -382,6 +388,7 @@ function EntityForm(props: Props): JSX.Element
             if (section.tier === "T1")
             {
                t1sectionName = section.name;
+               t1section = section;
             }
             else
             {
@@ -389,6 +396,7 @@ function EntityForm(props: Props): JSX.Element
             }
          }
          setT1SectionName(t1sectionName);
+         setT1Section(t1section);
          setNonT1Sections(nonT1Sections);
          setFormFields(dynamicFormFieldsBySection);
          setValidations(Yup.object().shape(formValidations));
@@ -552,6 +560,19 @@ function EntityForm(props: Props): JSX.Element
    const formId = props.id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 
    let body;
+
+   const getSectionHelp = (section: QTableSection) =>
+   {
+      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+      const formattedHelpContent = <HelpContent helpContents={section.helpContents} roles={helpRoles} helpContentKey={`table:${tableMetaData.name};section:${section.name}`} />;
+
+      return formattedHelpContent && (
+         <Box px={"1.5rem"} fontSize={"0.875rem"}>
+            {formattedHelpContent}
+         </Box>
+      )
+   }
+
    if (notAllowedError)
    {
       body = (
@@ -573,23 +594,26 @@ function EntityForm(props: Props): JSX.Element
    }
    else
    {
-      const cardElevation = props.isModal ? 3 : 1;
+      const cardElevation = props.isModal ? 3 : 0;
       body = (
          <Box mb={3}>
-            <Grid container spacing={3}>
-               <Grid item xs={12}>
-                  {alertContent ? (
-                     <Box mb={3}>
-                        <Alert severity="error" onClose={() => setAlertContent(null)}>{alertContent}</Alert>
-                     </Box>
-                  ) : ("")}
-                  {warningContent ? (
-                     <Box mb={3}>
-                        <Alert severity="warning" onClose={() => setWarningContent(null)}>{warningContent}</Alert>
-                     </Box>
-                  ) : ("")}
+            {
+               (alertContent || warningContent) &&
+               <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                     {alertContent ? (
+                        <Box mb={3}>
+                           <Alert severity="error" onClose={() => setAlertContent(null)}>{alertContent}</Alert>
+                        </Box>
+                     ) : ("")}
+                     {warningContent ? (
+                        <Box mb={3}>
+                           <Alert severity="warning" onClose={() => setWarningContent(null)}>{warningContent}</Alert>
+                        </Box>
+                     ) : ("")}
+                  </Grid>
                </Grid>
-            </Grid>
+            }
             <Grid container spacing={3}>
                {
                   !props.isModal &&
@@ -627,10 +651,11 @@ function EntityForm(props: Props): JSX.Element
                                        <MDTypography variant="h5">{formTitle}</MDTypography>
                                     </Box>
                                  </Box>
+                                 {t1section && getSectionHelp(t1section)}
                                  {
                                     t1sectionName && formFields ? (
-                                       <Box pb={1} px={3}>
-                                          <Box p={3} width="100%">
+                                       <Box px={3}>
+                                          <Box pb={"0.25rem"} width="100%">
                                              {getFormSection(values, touched, formFields.get(t1sectionName), errors)}
                                           </Box>
                                        </Box>
@@ -644,8 +669,9 @@ function EntityForm(props: Props): JSX.Element
                                     <MDTypography variant="h6" p={3} pb={1}>
                                        {section.label}
                                     </MDTypography>
+                                    {getSectionHelp(section)}
                                     <Box pb={1} px={3}>
-                                       <Box p={3} width="100%">
+                                       <Box pb={"0.75rem"} width="100%">
                                           {getFormSection(values, touched, formFields.get(section.name), errors)}
                                        </Box>
                                     </Box>
