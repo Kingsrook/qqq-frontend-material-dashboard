@@ -26,11 +26,11 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
-import {GridColDef, GridFilterItem, GridRowsProp} from "@mui/x-data-grid-pro";
+import {GridColDef, GridFilterItem, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import {GridColumnHeaderParams} from "@mui/x-data-grid/models/params/gridColumnHeaderParams";
 import React from "react";
-import {Link} from "react-router-dom";
+import {Link, NavigateFunction} from "react-router-dom";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -84,6 +84,36 @@ const QGridDateTimeOperators = [
 
 export default class DataGridUtils
 {
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static handleRowClick = (path: string, event: MuiEvent<React.MouseEvent>, gridMouseDownX: number, gridMouseDownY: number, navigate: NavigateFunction, instance: any) =>
+   {
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // strategy for when to trigger or not trigger a row click:                                                      //
+      // To avoid a drag-event that highlighted text in a cell:                                                        //
+      // - we capture the x & y upon mouse-down - then compare them in this method (which fires when the mouse is up)  //
+      //   if they are more than 5 pixels away from the mouse-down, then assume it's a drag, not a click.              //
+      // - avoid clicking the row upon double-click, by setting a 500ms timer here - and in the onDoubleClick handler, //
+      //   cancelling the timer.                                                                                       //
+      // - also avoid a click, then click-again-and-start-dragging, by always cancelling the timer in mouse-down.      //
+      // All in, these seem to have good results - the only downside being the half-second delay...                    //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const diff = Math.max(Math.abs(event.clientX - gridMouseDownX), Math.abs(event.clientY - gridMouseDownY));
+      if (diff < 5)
+      {
+         console.log("clearing timeout");
+         clearTimeout(instance.current.timer);
+         instance.current.timer = setTimeout(() =>
+         {
+            navigate(path);
+         }, 100);
+      }
+      else
+      {
+         console.log(`row-click mouse-up happened ${diff} x or y pixels away from the mouse-down - so not considering it a click.`);
+      }
+   }
 
    /*******************************************************************************
     **

@@ -27,8 +27,8 @@ import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridRowParams, MuiEvent} from "@mui/x-data-grid-pro";
-import React, {useEffect, useState} from "react";
+import {DataGridPro, GridCallbackDetails, GridEventListener, GridFilterModel, gridPreferencePanelStateSelector, GridRowParams, GridSelectionModel, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
+import React, {useEffect, useRef, useState} from "react";
 import {useNavigate, Link} from "react-router-dom";
 import Widget, {AddNewRecordButton, LabelComponent} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
@@ -48,12 +48,15 @@ const qController = Client.getInstance();
 
 function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
 {
+   const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
    const [records, setRecords] = useState([] as QRecord[])
    const [columns, setColumns] = useState([]);
    const [allColumns, setAllColumns] = useState([])
    const [csv, setCsv] = useState(null as string);
    const [fileName, setFileName] = useState(null as string);
+   const [gridMouseDownX, setGridMouseDownX] = useState(0);
+   const [gridMouseDownY, setGridMouseDownY] = useState(0);
    const navigate = useNavigate();
 
    useEffect(() =>
@@ -196,18 +199,49 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    }
 
 
+   /////////////////////////////////////////////////////////////////
+   // if a grid preference window is open, ignore and reset timer //
+   /////////////////////////////////////////////////////////////////
    const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
       (async () =>
       {
          const qInstance = await qController.loadMetaData()
-         const tablePath = qInstance.getTablePathByName(data.childTableMetaData.name)
+         let tablePath = qInstance.getTablePathByName(data.childTableMetaData.name)
          if(tablePath)
          {
-            navigate(`${tablePath}/${params.id}`);
+            tablePath = `${tablePath}/${params.id}`;
+            DataGridUtils.handleRowClick(tablePath, event, gridMouseDownX, gridMouseDownY, navigate, instance);
          }
       })();
    };
+
+   /*******************************************************************************
+    ** So that we can useGridApiContext to add event handlers for mouse down and
+    ** row double-click (to make it so you don't accidentally click into records),
+    ** we have to define a grid component, so even though we don't want a custom
+    ** toolbar, that's why we have this (and why it returns empty)
+    *******************************************************************************/
+   function CustomToolbar()
+   {
+      const handleMouseDown: GridEventListener<"cellMouseDown"> = ( params, event, details ) =>
+      {
+         setGridMouseDownX(event.clientX);
+         setGridMouseDownY(event.clientY);
+         clearTimeout(instance.current.timer);
+      };
+
+      const handleDoubleClick: GridEventListener<"rowDoubleClick"> = (event: any) =>
+      {
+         clearTimeout(instance.current.timer);
+      };
+
+      const apiRef = useGridApiContext();
+      useGridApiEventHandler(apiRef, "cellMouseDown", handleMouseDown);
+      useGridApiEventHandler(apiRef, "rowDoubleClick", handleDoubleClick);
+
+      return (<GridToolbarContainer />);
+   }
 
 
    return (
@@ -233,7 +267,9 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
                getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                onRowClick={handleRowClick}
                // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-               // components={{Toolbar: CustomToolbar, Pagination: CustomPagination, LoadingOverlay: Loading}}
+               components={{
+                  Toolbar: CustomToolbar
+               }}
                // pinnedColumns={pinnedColumns}
                // onPinnedColumnsChange={handlePinnedColumnsChange}
                // pagination

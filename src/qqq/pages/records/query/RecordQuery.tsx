@@ -948,37 +948,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          return;
       }
 
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // strategy for when to trigger or not trigger a row click:                                                      //
-      // To avoid a drag-event that highlighted text in a cell:                                                        //
-      // - we capture the x & y upon mouse-down - then compare them in this method (which fires when the mouse is up)  //
-      //   if they are more than 5 pixels away from the mouse-down, then assume it's a drag, not a click.              //
-      // - avoid clicking the row upon double-click, by setting a 500ms timer here - and in the onDoubleClick handler, //
-      //   cancelling the timer.                                                                                       //
-      // - also avoid a click, then click-again-and-start-dragging, by always cancelling the timer in mouse-down.      //
-      // All in, these seem to have good results - the only downside being the half-second delay...                    //
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      const diff = Math.max(Math.abs(event.clientX - gridMouseDownX), Math.abs(event.clientY - gridMouseDownY));
-      if (diff < 5)
+      let id = encodeURIComponent(params.id);
+      if (table.primaryKeyField !== "id")
       {
-         console.log("clearing timeout");
-         clearTimeout(instance.current.timer);
-         instance.current.timer = setTimeout(() =>
-         {
-            if (table.primaryKeyField !== "id")
-            {
-               navigate(`${metaData.getTablePathByName(tableName)}/${encodeURIComponent(params.row[tableMetaData.primaryKeyField])}`);
-            }
-            else
-            {
-               navigate(`${metaData.getTablePathByName(tableName)}/${encodeURIComponent(params.id)}`);
-            }
-         }, 100);
+         id = encodeURIComponent(params.row[tableMetaData.primaryKeyField]);
       }
-      else
-      {
-         console.log(`row-click mouse-up happened ${diff} x or y pixels away from the mouse-down - so not considering it a click.`);
-      }
+      const tablePath = `${metaData.getTablePathByName(table.name)}/${id}`;
+      DataGridUtils.handleRowClick(tablePath, event, gridMouseDownX, gridMouseDownY, navigate, instance);
    };
 
 
