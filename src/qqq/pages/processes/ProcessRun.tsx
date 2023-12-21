@@ -1113,7 +1113,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             if (recordIds instanceof QQueryFilter)
             {
                queryStringPairsForInit.push("recordsParam=filterJSON");
-               queryStringPairsForInit.push(`filterJSON=${JSON.stringify(recordIds)}`);
+               queryStringPairsForInit.push(`filterJSON=${encodeURIComponent(JSON.stringify(recordIds))}`);
             }
             else if (typeof recordIds === "object" && recordIds.length)
             {
@@ -1126,7 +1126,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          if (tableVariantLocalStorageKey && localStorage.getItem(tableVariantLocalStorageKey))
          {
             let tableVariant = JSON.parse(localStorage.getItem(tableVariantLocalStorageKey));
-            queryStringPairsForInit.push(`tableVariant=${JSON.stringify(tableVariant)}`);
+            queryStringPairsForInit.push(`tableVariant=${encodeURIComponent(JSON.stringify(tableVariant))}`);
          }
 
          try
@@ -1281,7 +1281,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    mainCardStyles.minHeight = `calc(100vh - ${isModal ? 150 : 400}px)`;
    if (!processError && (qJobRunning || activeStep === null) && !isModal && !isWidget)
    {
-      mainCardStyles.background = "none";
+      mainCardStyles.background = "#FFFFFF";
       mainCardStyles.boxShadow = "none";
    }
    if (isWidget)
