@@ -291,7 +291,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    let startIcon = <Badge badgeContent={criteriaIsValid && !tooComplex ? 1 : 0} color="warning" variant="dot" onMouseOver={startIconMouseOver} onMouseOut={startIconMouseOut} onClick={resetCriteria}><Icon>{startIconName}</Icon></Badge>
    if(criteriaIsValid)
    {
-      startIcon = <Tooltip title={"Remove this condition"} enterDelay={tooltipEnterDelay}>{startIcon}</Tooltip>
+      startIcon = <Tooltip title={"Remove this condition from your filter"} enterDelay={tooltipEnterDelay}>{startIcon}</Tooltip>
    }
 
    let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>

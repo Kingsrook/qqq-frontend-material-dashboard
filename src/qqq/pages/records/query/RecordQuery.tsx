@@ -2153,10 +2153,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
                <Box display="flex" alignItems="center" flexWrap="wrap" position="relative" top={"-0.5rem"} left={"0.5rem"} minHeight="2.5rem">
                   <Tooltip enterDelay={1000} title={
-                     <Box textAlign="left">
-                        Fields that are frequently used for filter conditions can be added here for quick access.<br /><br />
-                        Use the <Icon fontSize="medium" sx={{position: "relative", top: "0.5rem"}}>add_circle_outline</Icon> button to add a field.<br /><br />
-                        To remove a field, click it and then use the <Icon fontSize="medium" sx={{position: "relative", top: "0.5rem"}}>highlight_off</Icon> button.
+                     <Box textAlign="left" width="200px">
+                        Fields that you frequently use for filter conditions can be added here for quick access.<br /><br />
+                        Use the
+                        <Icon fontSize="medium" sx={{position: "relative", top: "0.25rem", fontSize: "1rem", mx: "0.25rem"}}>add_circle_outline</Icon>
+                        button to add a Quick Filter field.<br /><br />
+                        To remove a Quick Filter field, click the field name, and then use the
+                        <Icon fontSize="medium" sx={{position: "relative", top: "0.25rem", fontSize: "1rem", mx: "0.25rem"}}>highlight_off</Icon>
+                        button.
                      </Box>} placement="left">
                      <Typography variant="h6" sx={{cursor: "default"}}>Quick Filter:</Typography>
                   </Tooltip>
