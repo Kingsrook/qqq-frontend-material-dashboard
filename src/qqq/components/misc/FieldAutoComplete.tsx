@@ -34,14 +34,16 @@ interface FieldAutoCompleteProps
    tableMetaData: QTableMetaData;
    handleFieldChange: (event: any, newValue: any, reason: string) => void;
    defaultValue?: {field: QFieldMetaData, table: QTableMetaData, fieldName: string};
-   autoFocus?: boolean
-   hiddenFieldNames?: string[]
+   autoFocus?: boolean;
+   forceOpen?: boolean;
+   hiddenFieldNames?: string[];
 }
 
 FieldAutoComplete.defaultProps =
    {
       defaultValue: null,
       autoFocus: false,
+      forceOpen: null,
       hiddenFieldNames: []
    };
 
@@ -61,7 +63,7 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
    }
 }
 
-export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, hiddenFieldNames}: FieldAutoCompleteProps): JSX.Element
+export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames}: FieldAutoCompleteProps): JSX.Element
 {
    const fieldOptions: any[] = [];
    makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames);
@@ -124,6 +126,15 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
       return option.fieldName === value.fieldName;
    }
 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////
+   // seems like, if we always add the open attribute, then if its false or null, then the autocomplete //
+   // doesn't open at all... so, only add the attribute at all, if forceOpen is true                    //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////
+   const alsoOpen: {[key: string]: any} = {}
+   if(forceOpen)
+   {
+      alsoOpen["open"] = forceOpen;
+   }
 
    return (
       <Autocomplete
@@ -140,6 +151,7 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
          autoSelect={true}
          autoHighlight={true}
          slotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
+         {...alsoOpen}
       />
 
    );

@@ -424,6 +424,12 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    top: -60px !important;
 }
 
+.MuiDataGrid-panel:has(.customFilterPanel)
+{
+   /* overwrite what the grid tries to do here, where it changes based on density... we always want the same. */
+   transform: translate(274px, 305px) !important;
+}
+
 /* within the data-grid, the filter-panel's container has a max-height.  mirror that, and set an overflow-y */
 .MuiDataGrid-panel .customFilterPanel
 {

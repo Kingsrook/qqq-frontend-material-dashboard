@@ -358,9 +358,9 @@ class FilterUtils
          ////////////////////////////////////////////////////////////////////////////////////////////////
          if (fieldType === QFieldType.DATE_TIME)
          {
-            for(let i = 0; i<values.length; i++)
+            for (let i = 0; i < values.length; i++)
             {
-               if(!values[i].type)
+               if (!values[i].type)
                {
                   values[i] = ValueUtils.formatDateTimeValueForForm(values[i]);
                }
@@ -402,7 +402,7 @@ class FilterUtils
                   if (field == null)
                   {
                      console.log("Couldn't find field for filter: " + criteria.fieldName);
-                     warningParts.push("Your filter contained an unrecognized field name: " + criteria.fieldName)
+                     warningParts.push("Your filter contained an unrecognized field name: " + criteria.fieldName);
                      continue;
                   }
 
@@ -432,11 +432,11 @@ class FilterUtils
                   //////////////////////////////////////////////////////////////////////////
                   // replace objects that look like expressions with expression instances //
                   //////////////////////////////////////////////////////////////////////////
-                  if(values && values.length)
+                  if (values && values.length)
                   {
                      for (let i = 0; i < values.length; i++)
                      {
-                        const expression = this.gridCriteriaValueToExpression(values[i])
+                        const expression = this.gridCriteriaValueToExpression(values[i]);
                         if (expression)
                         {
                            values[i] = expression;
@@ -508,16 +508,16 @@ class FilterUtils
       // if any values in the items are objects, but should be expression instances, //
       // then convert & replace them.                                               //
       /////////////////////////////////////////////////////////////////////////////////
-      if(defaultFilter && defaultFilter.items && defaultFilter.items.length)
+      if (defaultFilter && defaultFilter.items && defaultFilter.items.length)
       {
          defaultFilter.items.forEach((item) =>
          {
-            if(item.value && item.value.length)
+            if (item.value && item.value.length)
             {
                for (let i = 0; i < item.value.length; i++)
                {
-                  const expression = this.gridCriteriaValueToExpression(item.value[i])
-                  if(expression)
+                  const expression = this.gridCriteriaValueToExpression(item.value[i]);
+                  if (expression)
                   {
                      item.value[i] = expression;
                   }
@@ -525,8 +525,8 @@ class FilterUtils
             }
             else
             {
-               const expression = this.gridCriteriaValueToExpression(item.value)
-               if(expression)
+               const expression = this.gridCriteriaValueToExpression(item.value);
+               if (expression)
                {
                   item.value = expression;
                }
@@ -641,7 +641,7 @@ class FilterUtils
             let incomplete = false;
             if (item.operatorValue === "between" || item.operatorValue === "notBetween")
             {
-               if(!item.value || !item.value.length || item.value.length < 2 || this.isUnset(item.value[0]) || this.isUnset(item.value[1]))
+               if (!item.value || !item.value.length || item.value.length < 2 || this.isUnset(item.value[0]) || this.isUnset(item.value[1]))
                {
                   incomplete = true;
                }
@@ -745,6 +745,103 @@ class FilterUtils
       }
 
       return (filter);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static canFilterWorkAsBasic(tableMetaData: QTableMetaData, filter: QQueryFilter): { canFilterWorkAsBasic: boolean; reasonsWhyItCannot?: string[] }
+   {
+      const reasonsWhyItCannot: string[] = [];
+
+      if(filter == null)
+      {
+         return ({canFilterWorkAsBasic: true});
+      }
+
+      if(filter.booleanOperator == "OR")
+      {
+         reasonsWhyItCannot.push("Filter uses the 'OR' operator.")
+      }
+
+      if(filter.criteria)
+      {
+         const usedFields: {[name: string]: boolean} = {};
+         const warnedFields: {[name: string]: boolean} = {};
+         for (let i = 0; i < filter.criteria.length; i++)
+         {
+            const criteriaName = filter.criteria[i].fieldName;
+            if(!criteriaName)
+            {
+               continue;
+            }
+
+            if(usedFields[criteriaName])
+            {
+               if(!warnedFields[criteriaName])
+               {
+                  const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, criteriaName);
+                  let fieldLabel = field.label;
+                  if(tableForField.name != tableMetaData.name)
+                  {
+                     let fieldLabel = `${tableForField.label}: ${field.label}`;
+                  }
+                  reasonsWhyItCannot.push(`Filter contains more than 1 condition for the field: ${fieldLabel}`);
+                  warnedFields[criteriaName] = true;
+               }
+            }
+            usedFields[criteriaName] = true;
+         }
+      }
+
+      if(reasonsWhyItCannot.length == 0)
+      {
+         return ({canFilterWorkAsBasic: true});
+      }
+      else
+      {
+         return ({canFilterWorkAsBasic: false, reasonsWhyItCannot: reasonsWhyItCannot});
+      }
+   }
+
+   /*******************************************************************************
+    ** get the values associated with a criteria as a string, e.g., for showing
+    ** in a tooltip.
+    *******************************************************************************/
+   public static getValuesString(fieldMetaData: QFieldMetaData, criteria: QFilterCriteria, maxValuesToShow: number = 3): string
+   {
+      let valuesString = "";
+      if (criteria.values && criteria.values.length && fieldMetaData.type !== QFieldType.BOOLEAN)
+      {
+         let labels = [] as string[];
+
+         let maxLoops = criteria.values.length;
+         if (maxLoops > (maxValuesToShow + 2))
+         {
+            maxLoops = maxValuesToShow;
+         }
+
+         for (let i = 0; i < maxLoops; i++)
+         {
+            if (criteria.values[i] && criteria.values[i].label)
+            {
+               labels.push(criteria.values[i].label);
+            }
+            else
+            {
+               labels.push(criteria.values[i]);
+            }
+         }
+
+         if (maxLoops < criteria.values.length)
+         {
+            labels.push(" and " + (criteria.values.length - maxLoops) + " other values.");
+         }
+
+         valuesString = (labels.join(", "));
+      }
+      return valuesString;
    }
 
 }

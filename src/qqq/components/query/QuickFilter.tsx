@@ -20,6 +20,7 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
@@ -35,9 +36,10 @@ import React, {SyntheticEvent, useState} from "react";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {getDefaultCriteriaValue, getOperatorOptions, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
+import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 
-type CriteriaParamType = QFilterCriteriaWithId | null | "tooComplex";
+export type CriteriaParamType = QFilterCriteriaWithId | null | "tooComplex";
 
 interface QuickFilterProps
 {
@@ -47,27 +49,64 @@ interface QuickFilterProps
    criteriaParam: CriteriaParamType;
    updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean, doRemoveCriteria: boolean) => void;
    defaultOperator?: QCriteriaOperator;
-   toggleQuickFilterField?: (fieldName: string) => void;
+   handleRemoveQuickFilterField?: (fieldName: string) => void;
 }
 
+QuickFilter.defaultProps =
+   {
+      defaultOperator: QCriteriaOperator.EQUALS,
+      handleRemoveQuickFilterField: null
+   };
+
+let seedId = new Date().getTime() % 173237;
+
+/*******************************************************************************
+ ** Test if a CriteriaParamType represents an actual query criteria - or, if it's
+ ** null or the "tooComplex" placeholder.
+ *******************************************************************************/
 const criteriaParamIsCriteria = (param: CriteriaParamType): boolean =>
 {
    return (param != null && param != "tooComplex");
 };
 
-QuickFilter.defaultProps =
+/*******************************************************************************
+ ** Test of an OperatorOption equals a query Criteria - that is - that the
+ ** operators within them are equal - AND - if the OperatorOption has implicit
+ ** values (e.g., the booleans), then those options equal the criteria's options.
+ *******************************************************************************/
+const doesOperatorOptionEqualCriteria = (operatorOption: OperatorOption, criteria: QFilterCriteriaWithId): boolean =>
+{
+   if(operatorOption.value == criteria.operator)
    {
-      defaultOperator: QCriteriaOperator.EQUALS,
-      toggleQuickFilterField: null
-   };
+      if(operatorOption.implicitValues)
+      {
+         if(JSON.stringify(operatorOption.implicitValues) == JSON.stringify(criteria.values))
+         {
+            return (true);
+         }
+         else
+         {
+            return (false);
+         }
+      }
 
-let seedId = new Date().getTime() % 173237;
+      return (true);
+   }
 
+   return (false);
+}
+
+
+/*******************************************************************************
+ ** Get the object to use as the selected OperatorOption (e.g., value for that
+ ** autocomplete), given an array of options, the query's active criteria in this
+ ** field, and the default operator to use for this field
+ *******************************************************************************/
 const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: QFilterCriteriaWithId, defaultOperator: QCriteriaOperator): OperatorOption =>
 {
    if(criteria)
    {
-      const filteredOptions = operatorOptions.filter(o => o.value == criteria.operator);
+      const filteredOptions = operatorOptions.filter(o => doesOperatorOptionEqualCriteria(o, criteria));
       if(filteredOptions.length > 0)
       {
          return (filteredOptions[0]);
@@ -83,10 +122,14 @@ const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: Q
    return (null);
 }
 
-export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, toggleQuickFilterField}: QuickFilterProps): JSX.Element
+/*******************************************************************************
+ ** Component to render a QuickFilter - that is - a button, with a Menu under it,
+ ** with Operator and Value controls.
+ *******************************************************************************/
+export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, handleRemoveQuickFilterField}: QuickFilterProps): JSX.Element
 {
    const operatorOptions = fieldMetaData ? getOperatorOptions(tableMetaData, fullFieldName) : [];
-   const tableForField = tableMetaData; // todo!! const [_, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fullFieldName);
+   const [_, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fullFieldName);
 
    const [isOpen, setIsOpen] = useState(false);
    const [anchorEl, setAnchorEl] = useState(null);
@@ -97,17 +140,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(getOperatorSelectedValue(operatorOptions, criteria, defaultOperator));
    const [operatorInputValue, setOperatorInputValue] = useState(operatorSelectedValue?.label);
 
-   const maybeNewOperatorSelectedValue = getOperatorSelectedValue(operatorOptions, criteria, defaultOperator);
-   if(JSON.stringify(maybeNewOperatorSelectedValue) !== JSON.stringify(operatorSelectedValue))
-   {
-      setOperatorSelectedValue(maybeNewOperatorSelectedValue)
-      setOperatorInputValue(maybeNewOperatorSelectedValue.label)
-   }
+   const [startIconName, setStartIconName] = useState("filter_alt");
 
-   if(!fieldMetaData)
-   {
-      return (null);
-   }
+   const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle a change to the criteria from outside this component (e.g., the prop isn't the same as the state) //
@@ -117,16 +152,20 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       const newCriteria = criteriaParam as QFilterCriteriaWithId;
       setCriteria(newCriteria);
       const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
+      console.log(`B: setOperatorSelectedValue [${JSON.stringify(operatorOption)}]`);
       setOperatorSelectedValue(operatorOption);
       setOperatorInputValue(operatorOption.label);
    }
 
+   /*******************************************************************************
+    ** Test if we need to construct a new criteria object
+    *******************************************************************************/
    const criteriaNeedsReset = (): boolean =>
    {
       if(criteria != null && criteriaParam == null)
       {
          const defaultOperatorOption = operatorOptions.filter(o => o.value == defaultOperator)[0];
-         if(criteria.operator !== defaultOperatorOption.value || JSON.stringify(criteria.values) !== JSON.stringify(getDefaultCriteriaValue()))
+         if(criteria.operator !== defaultOperatorOption?.value || JSON.stringify(criteria.values) !== JSON.stringify(getDefaultCriteriaValue()))
          {
             return (true);
          }
@@ -135,44 +174,50 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       return (false);
    }
 
+   /*******************************************************************************
+    ** Construct a new criteria object - resetting the values tied to the oprator
+    ** autocomplete at the same time.
+    *******************************************************************************/
    const makeNewCriteria = (): QFilterCriteria =>
    {
       const operatorOption = operatorOptions.filter(o => o.value == defaultOperator)[0];
-      const criteria = new QFilterCriteriaWithId(fullFieldName, operatorOption.value, getDefaultCriteriaValue());
+      const criteria = new QFilterCriteriaWithId(fullFieldName, operatorOption?.value, getDefaultCriteriaValue());
       criteria.id = id;
+      console.log(`C: setOperatorSelectedValue [${JSON.stringify(operatorOption)}]`);
       setOperatorSelectedValue(operatorOption);
-      setOperatorInputValue(operatorOption.label);
+      setOperatorInputValue(operatorOption?.label);
       setCriteria(criteria);
       return(criteria);
    }
 
-   if (criteria == null || criteriaNeedsReset())
-   {
-      makeNewCriteria();
-   }
-
-   const toggleOpen = (event: any) =>
+   /*******************************************************************************
+    ** event handler to open the menu in response to the button being clicked.
+    *******************************************************************************/
+   const handleOpenMenu = (event: any) =>
    {
       setIsOpen(!isOpen);
       setAnchorEl(event.currentTarget);
    };
 
+   /*******************************************************************************
+    ** handler for the Menu when being closed
+    *******************************************************************************/
    const closeMenu = () =>
    {
       setIsOpen(false);
       setAnchorEl(null);
    };
 
-   /////////////////////////////////////////////
-   // event handler for operator Autocomplete //
-   // todo - too dupe?
-   /////////////////////////////////////////////
+   /*******************************************************************************
+    ** event handler for operator Autocomplete having its value changed
+    *******************************************************************************/
    const handleOperatorChange = (event: any, newValue: any, reason: string) =>
    {
       criteria.operator = newValue ? newValue.value : null;
 
       if (newValue)
       {
+         console.log(`D: setOperatorSelectedValue [${JSON.stringify(newValue)}]`);
          setOperatorSelectedValue(newValue);
          setOperatorInputValue(newValue.label);
 
@@ -183,6 +228,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       }
       else
       {
+         console.log("E: setOperatorSelectedValue [null]");
          setOperatorSelectedValue(null);
          setOperatorInputValue("");
       }
@@ -190,15 +236,18 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       updateCriteria(criteria, false, false);
    };
 
+   /*******************************************************************************
+    ** implementation of isOptionEqualToValue for Autocomplete - compares both the
+    ** value (e.g., what operator it is) and the implicitValues within the option
+    *******************************************************************************/
    function isOperatorOptionEqual(option: OperatorOption, value: OperatorOption)
    {
       return (option?.value == value?.value && JSON.stringify(option?.implicitValues) == JSON.stringify(value?.implicitValues));
    }
 
-   //////////////////////////////////////////////////
-   // event handler for value field (of all types) //
-   // todo - too dupe!
-   //////////////////////////////////////////////////
+   /*******************************************************************************
+    ** event handler for the value field (of all types), when it changes
+    *******************************************************************************/
    const handleValueChange = (event: React.ChangeEvent | SyntheticEvent, valueIndex: number | "all" = 0, newValue?: any) =>
    {
       // @ts-ignore
@@ -221,48 +270,17 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       updateCriteria(criteria, true, false);
    };
 
+   /*******************************************************************************
+    ** a noop event handler, e.g., for a too-complex
+    *******************************************************************************/
    const noop = () =>
    {
    };
 
-   const getValuesString = (): string =>
-   {
-      let valuesString = "";
-      if (criteria.values && criteria.values.length)
-      {
-         let labels = [] as string[];
-
-         let maxLoops = criteria.values.length;
-         if (maxLoops > 5)
-         {
-            maxLoops = 3;
-         }
-
-         for (let i = 0; i < maxLoops; i++)
-         {
-            if (criteria.values[i] && criteria.values[i].label)
-            {
-               labels.push(criteria.values[i].label);
-            }
-            else
-            {
-               labels.push(criteria.values[i]);
-            }
-         }
-
-         if (maxLoops < criteria.values.length)
-         {
-            labels.push(" and " + (criteria.values.length - maxLoops) + " other values.");
-         }
-
-         valuesString = (labels.join(", "));
-      }
-      return valuesString;
-   }
-
-   const [startIconName, setStartIconName] = useState("filter_alt");
-   const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
-
+   /*******************************************************************************
+    ** event handler that responds to 'x' button that removes the criteria from the
+    ** quick-filter, resetting it to a new filter.
+    *******************************************************************************/
    const resetCriteria = (e: React.MouseEvent<HTMLSpanElement>) =>
    {
       if(criteriaIsValid)
@@ -274,6 +292,10 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       }
    }
 
+   /*******************************************************************************
+    ** event handler for mouse-over on the filter icon - that changes to an 'x'
+    ** if there's a valid criteria in the quick-filter
+    *******************************************************************************/
    const startIconMouseOver = () =>
    {
       if(criteriaIsValid)
@@ -281,11 +303,56 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          setStartIconName("clear");
       }
    }
+
+   /*******************************************************************************
+    ** event handler for mouse-out on the filter icon - always resets it.
+    *******************************************************************************/
    const startIconMouseOut = () =>
    {
       setStartIconName("filter_alt");
    }
 
+   /*******************************************************************************
+    ** event handler for clicking the (x) icon that turns off this quick filter field.
+    ** hands off control to the function that was passed in (e.g., from RecordQuery).
+    *******************************************************************************/
+   const handleTurningOffQuickFilterField = () =>
+   {
+      closeMenu()
+      handleRemoveQuickFilterField(criteria?.fieldName);
+   }
+
+   ////////////////////////////////////////////////////////////////////////////////////
+   // if no field was input (e.g., record-query is still loading), return null early //
+   ////////////////////////////////////////////////////////////////////////////////////
+   if(!fieldMetaData)
+   {
+      return (null);
+   }
+
+   //////////////////////////////////////////////////////////////////////////////////////////
+   // if there should be a selected value in the operator autocomplete, and it's different //
+   // from the last selected one, then set the state vars that control that autocomplete   //
+   //////////////////////////////////////////////////////////////////////////////////////////
+   const maybeNewOperatorSelectedValue = getOperatorSelectedValue(operatorOptions, criteria, defaultOperator);
+   if(JSON.stringify(maybeNewOperatorSelectedValue) !== JSON.stringify(operatorSelectedValue))
+   {
+      console.log(`A: setOperatorSelectedValue [${JSON.stringify(maybeNewOperatorSelectedValue)}]`);
+      setOperatorSelectedValue(maybeNewOperatorSelectedValue)
+      setOperatorInputValue(maybeNewOperatorSelectedValue?.label)
+   }
+
+   /////////////////////////////////////////////////////////////////////////////////////
+   // if there wasn't a criteria, or we need to reset it (make a new one), then do so //
+   /////////////////////////////////////////////////////////////////////////////////////
+   if (criteria == null || criteriaNeedsReset())
+   {
+      makeNewCriteria();
+   }
+
+   /////////////////////////
+   // build up the button //
+   /////////////////////////
    const tooComplex = criteriaParam == "tooComplex";
    const tooltipEnterDelay = 500;
    let startIcon = <Badge badgeContent={criteriaIsValid && !tooComplex ? 1 : 0} color="warning" variant="dot" onMouseOver={startIconMouseOver} onMouseOut={startIconMouseOut} onClick={resetCriteria}><Icon>{startIconName}</Icon></Badge>
@@ -298,22 +365,29 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    if (criteriaIsValid)
    {
       buttonContent = (
-         <Tooltip title={`${operatorSelectedValue.label} ${getValuesString()}`} enterDelay={tooltipEnterDelay}>
+         <Tooltip title={`${operatorSelectedValue.label} ${FilterUtils.getValuesString(fieldMetaData, criteria)}`} enterDelay={tooltipEnterDelay}>
             {buttonContent}
          </Tooltip>
       );
    }
 
    let button = fieldMetaData && <Button
+      id={`quickFilter.${fullFieldName}`}
       sx={{mr: "0.25rem", px: "1rem", border: isOpen ? "1px solid gray" : "1px solid transparent"}}
       startIcon={startIcon}
-      onClick={tooComplex ? noop : toggleOpen}
+      onClick={tooComplex ? noop : handleOpenMenu}
       disabled={tooComplex}
    >{buttonContent}</Button>;
 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if the criteria on this field is the "tooComplex" sentinel, then wrap the button in a tooltip stating such, and return early. //
+   // note this was part of original design on this widget, but later deprecated...                                                 //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    if (tooComplex)
    {
-      // wrap button in span, so disabled button doesn't cause disabled tooltip
+      ////////////////////////////////////////////////////////////////////////////
+      // wrap button in span, so disabled button doesn't cause disabled tooltip //
+      ////////////////////////////////////////////////////////////////////////////
       return (
          <Tooltip title={`Your current filter is too complex to do a Quick Filter on ${fieldMetaData.label}.  Use the Filter button to edit.`} enterDelay={tooltipEnterDelay} slotProps={{popper: {sx: {top: "-0.75rem!important"}}}}>
             <span>{button}</span>
@@ -321,12 +395,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       );
    }
 
-   const doToggle = () =>
-   {
-      closeMenu()
-      toggleQuickFilterField(criteria?.fieldName);
-   }
-
+   //////////////////////////////
+   // return the button & menu //
+   //////////////////////////////
    const widthAndMaxWidth = 250
    return (
       <>
@@ -334,9 +405,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          {
             isOpen && <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={closeMenu} sx={{overflow: "visible"}}>
                {
-                  toggleQuickFilterField &&
+                  handleRemoveQuickFilterField &&
                   <Tooltip title={"Remove this field from Quick Filters"} placement="right">
-                     <IconButton size="small" sx={{position: "absolute", top: "-8px", right: "-8px", zIndex: 1}} onClick={doToggle}><Icon color="secondary">highlight_off</Icon></IconButton>
+                     <IconButton size="small" sx={{position: "absolute", top: "-8px", right: "-8px", zIndex: 1}} onClick={handleTurningOffQuickFilterField}><Icon color="secondary">highlight_off</Icon></IconButton>
                   </Tooltip>
                }
                <Box display="inline-block" width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="operatorColumn">

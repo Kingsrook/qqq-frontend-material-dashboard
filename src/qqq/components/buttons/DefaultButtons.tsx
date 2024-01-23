@@ -37,7 +37,7 @@ interface QCreateNewButtonProps
 export function QCreateNewButton({tablePath}: QCreateNewButtonProps): JSX.Element
 {
    return (
-      <Box ml={3} mr={2} width={standardWidth}>
+      <Box ml={3} mr={0} width={standardWidth}>
          <Link to={`${tablePath}/create`}>
             <MDButton variant="gradient" color="info" fullWidth startIcon={<Icon>add</Icon>}>
                Create New
