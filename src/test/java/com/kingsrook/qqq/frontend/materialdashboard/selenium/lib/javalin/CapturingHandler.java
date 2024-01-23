@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,51 +19,52 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashboard.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin;
 
 
-import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
-import org.junit.jupiter.api.Test;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /*******************************************************************************
- ** Test for the scripts table
+ ** javalin handler that captures the context, for later review, e.g., of the
+ ** query string or posted body
  *******************************************************************************/
-public class ScriptTableTest extends QBaseSeleniumTest
+public class CapturingHandler implements Handler
 {
+   Logger LOG = LogManager.getLogger(CapturingHandler.class);
+
+   private final QSeleniumJavalin qSeleniumJavalin;
+
+
+
+   /*******************************************************************************
+    ** Constructor
+    **
+    *******************************************************************************/
+   public CapturingHandler(QSeleniumJavalin qSeleniumJavalin)
+   {
+      this.qSeleniumJavalin = qSeleniumJavalin;
+   }
+
+
 
    /*******************************************************************************
     **
     *******************************************************************************/
    @Override
-   protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
+   public void handle(Context context) throws Exception
    {
-      super.addJavalinRoutes(qSeleniumJavalin);
-      qSeleniumJavalin
-         .withRouteToFile("/data/script/1", "data/script/1.json")
-         .withRouteToFile("/data/scriptType/1", "data/scriptType/1.json")
-         .withRouteToFile("/data/scriptRevision/query", "data/scriptRevision/query.json")
-         .withRouteToFile("/data/scriptLog/query", "data/scriptLog/query.json")
-         .withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json")
-         .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
-         .withRouteToFile("/widget/scriptViewer", "widget/scriptViewer.json")
-      ;
+      if(qSeleniumJavalin.capturing)
+      {
+         LOG.info("Capturing request for path [" + context.path() + "]");
+         qSeleniumJavalin.captured.add(new CapturedContext(context));
+      }
+      else
+      {
+         LOG.trace("Not capturing request for path [" + context.path() + "]");
+      }
    }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   @Test
-   void test()
-   {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
-
-      qSeleniumLib.waitForSelectorContaining("DIV.ace_line", "var hello;");
-      qSeleniumLib.waitForSelectorContaining("DIV", "2nd commit");
-      qSeleniumLib.waitForSelectorContaining("DIV", "Initial checkin");
-   }
-
 }

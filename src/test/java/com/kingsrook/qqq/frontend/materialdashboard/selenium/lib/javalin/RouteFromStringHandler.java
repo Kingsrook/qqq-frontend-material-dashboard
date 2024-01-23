@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,47 +19,49 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashboard.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin;
 
 
-import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /*******************************************************************************
- ** Test that goes to a record, clicks a link for another record, then
- ** hits 'e' on keyboard to edit the second record - and confirms that we're
- ** on the edit url for the second record, not the first (a former bug).
+ ** javalin handler for returning a static string for a route
  *******************************************************************************/
-public class ClickLinkOnRecordThenEditShortcutTest extends QBaseSeleniumTest
+public class RouteFromStringHandler implements Handler
 {
+   Logger LOG = LogManager.getLogger(RouteFromStringHandler.class);
+
+   private final String           route;
+   private final String           responseString;
+   private final QSeleniumJavalin qSeleniumJavalin;
+
+
+
+   /*******************************************************************************
+    ** Constructor
+    **
+    *******************************************************************************/
+   public RouteFromStringHandler(QSeleniumJavalin qSeleniumJavalin, String route, String responseString)
+   {
+      this.qSeleniumJavalin = qSeleniumJavalin;
+      this.route = route;
+      this.responseString = responseString;
+   }
+
+
 
    /*******************************************************************************
     **
     *******************************************************************************/
    @Override
-   protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
+   public void handle(Context context)
    {
-      super.addJavalinRoutes(qSeleniumJavalin);
-      qSeleniumJavalin.withRouteToFile("/data/script/1", "data/script/1.json");
-      qSeleniumJavalin.withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json");
+      qSeleniumJavalin.routeFilesServed.add(this.route);
+      LOG.debug("Serving route [" + this.route + "] via static String");
+      context.result(this.responseString);
    }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   @Test
-   void testClickLinkOnRecordThenEditShortcutTest()
-   {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
-      qSeleniumLib.waitForSelectorContaining("A", "100").click();
-
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").sendKeys("e");
-      assertTrue(qSeleniumLib.driver.getCurrentUrl().endsWith("/scriptRevision/100/edit"));
-   }
-
 }

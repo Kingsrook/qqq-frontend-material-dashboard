@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,14 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashboard.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
 
 
-import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashboard.lib.QQQMaterialDashboardSelectors;
-import com.kingsrook.qqq.materialdashboard.lib.QSeleniumLib;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.CapturedContext;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QQQMaterialDashboardSelectors;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QSeleniumLib;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.CapturedContext;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -69,13 +69,14 @@ public class QueryScreenTest extends QBaseSeleniumTest
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
       /////////////////////////////////////////////////////////////////////
-      WebElement filterInput = qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_FILTER_INPUT);
-      qSeleniumLib.waitForElementToHaveFocus(filterInput);
-      filterInput.sendKeys("id");
-      filterInput.sendKeys("\t");
-      driver.switchTo().activeElement().sendKeys("\t");
       qSeleniumJavalin.beginCapture();
-      driver.switchTo().activeElement().sendKeys("1");
+      addQueryFilterInput(qSeleniumLib, 0, "Id", "equals", "1", null);
+      // WebElement filterInput = qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_FILTER_INPUT);
+      // qSeleniumLib.waitForElementToHaveFocus(filterInput);
+      // filterInput.sendKeys("id");
+      // filterInput.sendKeys("\t");
+      // driver.switchTo().activeElement().sendKeys("\t");
+      // driver.switchTo().activeElement().sendKeys("1" + "\t");
 
       ///////////////////////////////////////////////////////////////////
       // assert that query & count both have the expected filter value //
@@ -188,5 +189,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       valueInput.sendKeys(value);
       qSeleniumLib.waitForMillis(100);
    }
+
+   // todo - table requires variant - prompt for it, choose it, see query; change variant, change on-screen, re-query
 
 }

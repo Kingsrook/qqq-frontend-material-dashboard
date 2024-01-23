@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashboard.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
 
 
 import java.net.URLEncoder;
@@ -31,9 +31,9 @@ import com.kingsrook.qqq.backend.core.model.actions.tables.query.QQueryFilter;
 import com.kingsrook.qqq.backend.core.model.actions.tables.query.expressions.NowWithOffset;
 import com.kingsrook.qqq.backend.core.model.actions.tables.query.expressions.ThisOrLastPeriod;
 import com.kingsrook.qqq.backend.core.utils.JsonUtils;
-import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashboard.lib.QQQMaterialDashboardSelectors;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QQQMaterialDashboardSelectors;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebElement;
 

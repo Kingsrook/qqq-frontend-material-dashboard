@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,19 +19,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.materialdashboard.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
 
 
-import com.kingsrook.qqq.materialdashboard.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.materialdashboard.lib.javalin.QSeleniumJavalin;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /*******************************************************************************
- ** Test for Associated Record Scripts functionality.
+ ** Test that goes to a record, clicks a link for another record, then
+ ** hits 'e' on keyboard to edit the second record - and confirms that we're
+ ** on the edit url for the second record, not the first (a former bug).
  *******************************************************************************/
-public class AssociatedRecordScriptTest extends QBaseSeleniumTest
+public class ClickLinkOnRecordThenEditShortcutTest extends QBaseSeleniumTest
 {
 
    /*******************************************************************************
@@ -41,8 +43,8 @@ public class AssociatedRecordScriptTest extends QBaseSeleniumTest
    protected void addJavalinRoutes(QSeleniumJavalin qSeleniumJavalin)
    {
       super.addJavalinRoutes(qSeleniumJavalin);
-      qSeleniumJavalin.withRouteToFile("/data/person/1", "data/person/1701.json");
-      qSeleniumJavalin.withRouteToFile("/data/person/1/developer", "data/person/1701.json");
+      qSeleniumJavalin.withRouteToFile("/data/script/1", "data/script/1.json");
+      qSeleniumJavalin.withRouteToFile("/data/scriptRevision/100", "data/scriptRevision/100.json");
    }
 
 
@@ -51,15 +53,13 @@ public class AssociatedRecordScriptTest extends QBaseSeleniumTest
     **
     *******************************************************************************/
    @Test
-   void testNavigatingBackAndForth()
+   void testClickLinkOnRecordThenEditShortcutTest()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person/1", "John Doe");
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").click();
-      
-      qSeleniumLib.waitForSelectorContaining("LI", "Developer Mode").click();
-      assertTrue(qSeleniumLib.driver.getCurrentUrl().endsWith("/1/dev"));
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
+      qSeleniumLib.waitForSelectorContaining("A", "100").click();
 
-      qSeleniumLib.waitForever();
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").sendKeys("e");
+      assertTrue(qSeleniumLib.driver.getCurrentUrl().endsWith("/scriptRevision/100/edit"));
    }
 
 }
