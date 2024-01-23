@@ -22,17 +22,23 @@
 package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
 
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import com.kingsrook.qqq.backend.core.instances.QInstanceValidator;
+import com.kingsrook.qqq.backend.core.model.metadata.QInstance;
 import com.kingsrook.qqq.backend.core.model.metadata.tables.QSupplementalTableMetaData;
+import com.kingsrook.qqq.backend.core.model.metadata.tables.QTableMetaData;
+import com.kingsrook.qqq.backend.core.utils.CollectionUtils;
 
 
 /*******************************************************************************
- **
+ ** table-level meta-data for this module (handled as QSupplementalTableMetaData)
  *******************************************************************************/
 public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
 {
    private List<List<String>> gotoFieldNames;
-
+   private List<String> defaultQuickFilterFieldNames;
 
 
    /*******************************************************************************
@@ -83,6 +89,75 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
    public MaterialDashboardTableMetaData withGotoFieldNames(List<List<String>> gotoFieldNames)
    {
       this.gotoFieldNames = gotoFieldNames;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Override
+   public void validate(QInstance qInstance, QTableMetaData tableMetaData, QInstanceValidator qInstanceValidator)
+   {
+      super.validate(qInstance, tableMetaData, qInstanceValidator);
+
+      String prefix = "MaterialDashboardTableMetaData supplementalTableMetaData for table [" + tableMetaData.getName() + "] ";
+
+      for(List<String> gotoFieldNameSubList : CollectionUtils.nonNullList(gotoFieldNames))
+      {
+         qInstanceValidator.assertCondition(!gotoFieldNameSubList.isEmpty(), prefix + "has an empty gotoFieldNames list");
+         validateListOfFieldNames(tableMetaData, gotoFieldNameSubList, qInstanceValidator, prefix + "gotoFieldNames: ");
+      }
+      validateListOfFieldNames(tableMetaData, defaultQuickFilterFieldNames, qInstanceValidator, prefix + "defaultQuickFilterFieldNames: ");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void validateListOfFieldNames(QTableMetaData tableMetaData, List<String> fieldNames, QInstanceValidator qInstanceValidator, String prefix)
+   {
+      Set<String> usedNames = new HashSet<>();
+      for(String fieldName : CollectionUtils.nonNullList(fieldNames))
+      {
+         if(qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldName), prefix + " unrecognized field name: " + fieldName))
+         {
+            qInstanceValidator.assertCondition(!usedNames.contains(fieldName), prefix + " has a duplicated field name: " + fieldName);
+            usedNames.add(fieldName);
+         }
+      }
+   }
+
+
+
+   /*******************************************************************************
+    ** Getter for defaultQuickFilterFieldNames
+    *******************************************************************************/
+   public List<String> getDefaultQuickFilterFieldNames()
+   {
+      return (this.defaultQuickFilterFieldNames);
+   }
+
+
+
+   /*******************************************************************************
+    ** Setter for defaultQuickFilterFieldNames
+    *******************************************************************************/
+   public void setDefaultQuickFilterFieldNames(List<String> defaultQuickFilterFieldNames)
+   {
+      this.defaultQuickFilterFieldNames = defaultQuickFilterFieldNames;
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for defaultQuickFilterFieldNames
+    *******************************************************************************/
+   public MaterialDashboardTableMetaData withDefaultQuickFilterFieldNames(List<String> defaultQuickFilterFieldNames)
+   {
+      this.defaultQuickFilterFieldNames = defaultQuickFilterFieldNames;
       return (this);
    }
 
