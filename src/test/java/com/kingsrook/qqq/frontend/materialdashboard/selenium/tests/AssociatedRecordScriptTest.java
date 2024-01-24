@@ -59,7 +59,7 @@ public class AssociatedRecordScriptTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("LI", "Developer Mode").click();
       assertTrue(qSeleniumLib.driver.getCurrentUrl().endsWith("/1/dev"));
 
-      qSeleniumLib.waitForever();
+      // qSeleniumLib.waitForever();
    }
 
 }

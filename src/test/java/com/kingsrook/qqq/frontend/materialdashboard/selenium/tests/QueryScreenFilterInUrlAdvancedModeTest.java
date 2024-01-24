@@ -32,16 +32,15 @@ import com.kingsrook.qqq.backend.core.model.actions.tables.query.expressions.Now
 import com.kingsrook.qqq.backend.core.model.actions.tables.query.expressions.ThisOrLastPeriod;
 import com.kingsrook.qqq.backend.core.utils.JsonUtils;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
-import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QQQMaterialDashboardSelectors;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QueryScreenLib;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.WebElement;
 
 
 /*******************************************************************************
  ** Test for the record query screen when a filter is given in the URL
  *******************************************************************************/
-public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
+public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
 {
 
    /*******************************************************************************
@@ -67,15 +66,23 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
    @Test
    void testUrlWithFilter()
    {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////////
+      // put table in advanced mode //
+      ////////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.gotoAdvancedMode();
+
       ////////////////////////////////////////
       // not-blank -- criteria w/ no values //
       ////////////////////////////////////////
       String filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.IS_NOT_BLANK)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(1);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"is not empty\"]");
 
       ///////////////////////////////
@@ -84,9 +91,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.BETWEEN, 1701, 74656)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(1);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"is between\"]");
       qSeleniumLib.waitForSelector("input[value=\"1701\"]");
       qSeleniumLib.waitForSelector("input[value=\"74656\"]");
@@ -97,9 +104,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.NOT_EQUALS, 1)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(1);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"does not equal\"]");
       qSeleniumLib.waitForSelector("input[value=\"St. Louis\"]");
 
@@ -109,9 +116,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.IN, 1, 2)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(1);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"is any of\"]");
       qSeleniumLib.waitForSelectorContaining(".MuiChip-label", "St. Louis");
       qSeleniumLib.waitForSelectorContaining(".MuiChip-label", "Chesterfield");
@@ -122,9 +129,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.GREATER_THAN, NowWithOffset.minus(5, ChronoUnit.DAYS))));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(1);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"is after\"]");
       qSeleniumLib.waitForSelector("input[value=\"5 days ago\"]");
 
@@ -135,9 +142,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("firstName", QCriteriaOperator.STARTS_WITH, "Dar"))
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.LESS_THAN_OR_EQUALS, ThisOrLastPeriod.this_(ChronoUnit.YEARS))));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      waitForQueryToHaveRan();
-      assertFilterButtonBadge(2);
-      clickFilterButton();
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(2);
+      queryScreenLib.clickFilterButton();
       qSeleniumLib.waitForSelector("input[value=\"is at or before\"]");
       qSeleniumLib.waitForSelector("input[value=\"start of this year\"]");
       qSeleniumLib.waitForSelector("input[value=\"starts with\"]");
@@ -147,39 +154,9 @@ public class QueryScreenFilterInUrlTest extends QBaseSeleniumTest
       // remove one //
       ////////////////
       qSeleniumLib.waitForSelectorContaining(".MuiIcon-root", "close").click();
-      assertFilterButtonBadge(1);
+      queryScreenLib.assertFilterButtonBadge(1);
 
-      qSeleniumLib.waitForever();
-   }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   private WebElement assertFilterButtonBadge(int valueInBadge)
-   {
-      return qSeleniumLib.waitForSelectorContaining(".MuiBadge-root", String.valueOf(valueInBadge));
-   }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   private WebElement waitForQueryToHaveRan()
-   {
-      return qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);
-   }
-
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   private void clickFilterButton()
-   {
-      qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
+      // qSeleniumLib.waitForever();
    }
 
 }

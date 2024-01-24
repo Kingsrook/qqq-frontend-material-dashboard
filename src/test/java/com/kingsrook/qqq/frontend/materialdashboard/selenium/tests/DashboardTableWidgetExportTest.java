@@ -104,7 +104,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
          "3","Bart J."
          """, fileContents);
 
-      qSeleniumLib.waitForever();
+      // qSeleniumLib.waitForever();
    }
 
 }

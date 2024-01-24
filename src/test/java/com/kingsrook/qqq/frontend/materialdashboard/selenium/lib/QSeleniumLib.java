@@ -212,6 +212,26 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void clickBackdrop()
+   {
+      for(WebElement webElement : this.waitForSelectorAll(".MuiBackdrop-root", 0))
+      {
+         try
+         {
+            webElement.click();
+         }
+         catch(Exception e)
+         {
+            // ignore.
+         }
+      }
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public WebElement waitForSelector(String cssSelector)
    {
       WebElement element = waitForSelectorAll(cssSelector, 1).get(0);
