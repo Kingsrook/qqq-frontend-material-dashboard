@@ -39,13 +39,13 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Icon from "@mui/material/Icon";
 import Menu from "@mui/material/Menu";
 import Tooltip from "@mui/material/Tooltip";
-import {GridFilterModel} from "@mui/x-data-grid-pro";
 import {GridApiPro} from "@mui/x-data-grid-pro/models/gridApiPro";
 import React, {forwardRef, useImperativeHandle, useReducer, useState} from "react";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
-import QuickFilter from "qqq/components/query/QuickFilter";
+import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";
+import QuickFilter, {quickFilterButtonStyles} from "qqq/components/query/QuickFilter";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 
@@ -53,11 +53,14 @@ interface BasicAndAdvancedQueryControlsProps
 {
    metaData: QInstance;
    tableMetaData: QTableMetaData;
-   queryFilter: QQueryFilter;
-   gridApiRef: React.MutableRefObject<GridApiPro>
 
+   quickFilterFieldNames: string[];
+   setQuickFilterFieldNames: (names: string[]) => void;
+
+   queryFilter: QQueryFilter;
    setQueryFilter: (queryFilter: QQueryFilter) => void;
-   handleFilterChange: (filterModel: GridFilterModel, doSetQueryFilter?: boolean, isChangeFromDataGrid?: boolean) => void;
+
+   gridApiRef: React.MutableRefObject<GridApiPro>;
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // this prop is used as a way to recognize changes in the query filter internal structure, //
@@ -73,30 +76,20 @@ let debounceTimeout: string | number | NodeJS.Timeout;
 
 /*******************************************************************************
  ** Component to provide the basic & advanced query-filter controls for the
- ** RecordQuery screen.
+ ** RecordQueryOrig screen.
  **
- ** Done as a forwardRef, so RecordQuery can call some functions, e.g., when user
+ ** Done as a forwardRef, so RecordQueryOrig can call some functions, e.g., when user
  ** does things on that screen, that we need to know about in here.
  *******************************************************************************/
 const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryControlsProps, ref) =>
 {
-   const {metaData, tableMetaData, queryFilter, gridApiRef, setQueryFilter, handleFilterChange, queryFilterJSON, mode, setMode} = props
-
-   /////////////////////////////////////////////////////////
-   // get the quick-filter-field-names from local storage //
-   /////////////////////////////////////////////////////////
-   const QUICK_FILTER_FIELD_NAMES_LOCAL_STORAGE_KEY_ROOT = "qqq.quickFilterFieldNames";
-   const quickFilterFieldNamesLocalStorageKey = `${QUICK_FILTER_FIELD_NAMES_LOCAL_STORAGE_KEY_ROOT}.${tableMetaData.name}`;
-   let defaultQuickFilterFieldNames: Set<string> = new Set<string>();
-   if (localStorage.getItem(quickFilterFieldNamesLocalStorageKey))
-   {
-      defaultQuickFilterFieldNames = new Set<string>(JSON.parse(localStorage.getItem(quickFilterFieldNamesLocalStorageKey)));
-   }
+   const {metaData, tableMetaData, quickFilterFieldNames, setQuickFilterFieldNames, setQueryFilter, queryFilter, gridApiRef, queryFilterJSON, mode, setMode} = props
 
    /////////////////////
    // state variables //
    /////////////////////
-   const [quickFilterFieldNames, setQuickFilterFieldNames] = useState(defaultQuickFilterFieldNames);
+   const [defaultQuickFilterFieldNames, setDefaultQuickFilterFieldNames] = useState(getDefaultQuickFilterFieldNames(tableMetaData));
+   const [defaultQuickFilterFieldNameMap, setDefaultQuickFilterFieldNameMap] = useState(Object.fromEntries(defaultQuickFilterFieldNames.map(k => [k, true])));
    const [addQuickFilterMenu, setAddQuickFilterMenu] = useState(null)
    const [addQuickFilterOpenCounter, setAddQuickFilterOpenCounter] = useState(0);
    const [showClearFiltersWarning, setShowClearFiltersWarning] = useState(false);
@@ -115,6 +108,10 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          addField(fieldName: string)
          {
             addQuickFilterField({fieldName: fieldName}, "columnMenu");
+         },
+         getCurrentMode()
+         {
+            return (mode);
          }
       }
    });
@@ -167,8 +164,6 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          {
             queryFilter.criteria.splice(foundIndex, 1);
             setQueryFilter(queryFilter);
-            const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
-            handleFilterChange(gridFilterModel, false);
          }
          return;
       }
@@ -189,8 +184,6 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          debounceTimeout = setTimeout(() =>
          {
             setQueryFilter(queryFilter);
-            const gridFilterModel = FilterUtils.buildGridFilterFromQFilter(tableMetaData, queryFilter);
-            handleFilterChange(gridFilterModel, false);
          }, needDebounce ? 500 : 1);
 
          forceUpdate();
@@ -229,22 +222,13 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
 
 
    /*******************************************************************************
-    ** set the quick-filter field names state variable and local-storage
-    *******************************************************************************/
-   const storeQuickFilterFieldNames = () =>
-   {
-      setQuickFilterFieldNames(new Set<string>([...quickFilterFieldNames.values()]));
-      localStorage.setItem(quickFilterFieldNamesLocalStorageKey, JSON.stringify([...quickFilterFieldNames.values()]));
-   }
-
-
-   /*******************************************************************************
     ** Event handler for QuickFilter component, to remove a quick filter field from
     ** the screen.
     *******************************************************************************/
    const handleRemoveQuickFilterField = (fieldName: string): void =>
    {
-      if(quickFilterFieldNames.has(fieldName))
+      const index = quickFilterFieldNames.indexOf(fieldName)
+      if(index >= 0)
       {
          //////////////////////////////////////
          // remove this field from the query //
@@ -252,8 +236,8 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          const criteria = new QFilterCriteria(fieldName, null, []);
          updateQuickCriteria(criteria, false, true);
 
-         quickFilterFieldNames.delete(fieldName);
-         storeQuickFilterFieldNames();
+         quickFilterFieldNames.splice(index, 1);
+         setQuickFilterFieldNames(quickFilterFieldNames);
       }
    };
 
@@ -281,7 +265,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
     ** Add a quick-filter field to the screen, from either the user selecting one,
     ** or from a new query being activated, etc.
     *******************************************************************************/
-   const addQuickFilterField = (newValue: any, reason: "blur" | "modeToggleClicked" | "defaultFilterLoaded" | "savedFilterSelected" | "columnMenu" | string) =>
+   const addQuickFilterField = (newValue: any, reason: "blur" | "modeToggleClicked" | "defaultFilterLoaded" | "savedFilterSelected" | "columnMenu" | "activatedView" | string) =>
    {
       console.log(`Adding quick filter field as: ${JSON.stringify(newValue)}`);
       if (reason == "blur")
@@ -295,18 +279,18 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       const fieldName = newValue ? newValue.fieldName : null;
       if (fieldName)
       {
-         if (!quickFilterFieldNames.has(fieldName))
+         if (quickFilterFieldNames.indexOf(fieldName) == -1)
          {
             /////////////////////////////////
             // add the field if we need to //
             /////////////////////////////////
-            quickFilterFieldNames.add(fieldName);
-            storeQuickFilterFieldNames();
+            quickFilterFieldNames.push(fieldName);
+            setQuickFilterFieldNames(quickFilterFieldNames);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // only do this when user has added the field (e.g., not when adding it because of a selected view or filter-in-url) //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if(reason != "modeToggleClicked" && reason != "defaultFilterLoaded" && reason != "savedFilterSelected")
+            if(reason != "modeToggleClicked" && reason != "defaultFilterLoaded" && reason != "savedFilterSelected" && reason != "activatedView")
             {
                setTimeout(() => document.getElementById(`quickFilter.${fieldName}`)?.click(), 5);
             }
@@ -342,7 +326,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       if (isYesButton || event.key == "Enter")
       {
          setShowClearFiltersWarning(false);
-         handleFilterChange({items: []} as GridFilterModel);
+         setQueryFilter(new QQueryFilter());
       }
    };
 
@@ -372,7 +356,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                   return (
                      <span key={i}>
                         {counter > 1 ? <span>{queryFilter.booleanOperator}&nbsp;</span> : <span/>}
-                        <b>{field.label}</b> {criteria.operator} <span style={{color: "blue"}}>{valuesString}</span>&nbsp;
+                        {FilterUtils.criteriaToHumanString(tableMetaData, criteria, true)}
                      </span>
                   );
                }
@@ -454,60 +438,21 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    }
 
 
-   //////////////////////////////////////////////////////////////////////////////
-   // if there aren't any quick-filters turned on, get defaults from the table //
-   // only run this block upon a first-render                                  //
-   //////////////////////////////////////////////////////////////////////////////
-   const [firstRender, setFirstRender] = useState(true);
-   if(firstRender)
+   /*******************************************************************************
+    ** count how many valid criteria are in the query - for showing badge
+    *******************************************************************************/
+   const countValidCriteria = (queryFilter: QQueryFilter): number =>
    {
-      setFirstRender(false);
-
-      if (defaultQuickFilterFieldNames == null || defaultQuickFilterFieldNames.size == 0)
+      let count = 0;
+      for (let i = 0; i < queryFilter?.criteria?.length; i++)
       {
-         defaultQuickFilterFieldNames = new Set<string>();
-
-         //////////////////////////////////////////////////////////////////////////////////////////////////
-         // check if there's materialDashboard tableMetaData, and if it has defaultQuickFilterFieldNames //
-         //////////////////////////////////////////////////////////////////////////////////////////////////
-         const mdbMetaData = tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
-         if (mdbMetaData)
+         const {criteriaIsValid} = validateCriteria(queryFilter.criteria[i], null);
+         if(criteriaIsValid)
          {
-            if (mdbMetaData?.defaultQuickFilterFieldNames?.length)
-            {
-               for (let i = 0; i < mdbMetaData.defaultQuickFilterFieldNames.length; i++)
-               {
-                  defaultQuickFilterFieldNames.add(mdbMetaData.defaultQuickFilterFieldNames[i]);
-               }
-            }
+            count++;
          }
-
-         /////////////////////////////////////////////
-         // if still none, then look for T1 section //
-         /////////////////////////////////////////////
-         if (defaultQuickFilterFieldNames.size == 0)
-         {
-            if (tableMetaData.sections)
-            {
-               const t1Sections = tableMetaData.sections.filter((s: QTableSection) => s.tier == "T1");
-               if (t1Sections.length)
-               {
-                  for (let i = 0; i < t1Sections.length; i++)
-                  {
-                     if (t1Sections[i].fieldNames)
-                     {
-                        for (let j = 0; j < t1Sections[i].fieldNames.length; j++)
-                        {
-                           defaultQuickFilterFieldNames.add(t1Sections[i].fieldNames[j]);
-                        }
-                     }
-                  }
-               }
-            }
-         }
-
-         setQuickFilterFieldNames(defaultQuickFilterFieldNames);
       }
+      return count;
    }
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -523,13 +468,13 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    ///////////////////////////////////////////////////
    // set some status flags based on current filter //
    ///////////////////////////////////////////////////
-   const hasValidFilters = queryFilter && queryFilter.criteria && queryFilter.criteria.length > 0; // todo - should be better (e.g., see if operator & values are set)
+   const hasValidFilters = queryFilter && countValidCriteria(queryFilter) > 0;
    const {canFilterWorkAsBasic, reasonsWhyItCannot} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
    let reasonWhyBasicIsDisabled = null;
    if(reasonsWhyItCannot && reasonsWhyItCannot.length > 0)
    {
       reasonWhyBasicIsDisabled = <>
-         Your current Filter cannot be managed using BASIC mode because:
+         Your current Filter cannot be managed using Basic mode because:
          <ul style={{marginLeft: "1rem"}}>
             {reasonsWhyItCannot.map((reason, i) => <li key={i}>{reason}</li>)}
          </ul>
@@ -542,15 +487,14 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
             {
                mode == "basic" &&
                <Box width="100px" flexShrink={1} flexGrow={1}>
-                  {
-                     tableMetaData &&
-                     [...quickFilterFieldNames.values()].map((fieldName) =>
+                  <>
                      {
-                        const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-                        let defaultOperator = getDefaultOperatorForField(field);
+                        tableMetaData && defaultQuickFilterFieldNames?.map((fieldName) =>
+                        {
+                           const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                           let defaultOperator = getDefaultOperatorForField(field);
 
-                        return (
-                           field && <QuickFilter
+                           return (<QuickFilter
                               key={fieldName}
                               fullFieldName={fieldName}
                               tableMetaData={tableMetaData}
@@ -558,50 +502,68 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                               criteriaParam={getQuickCriteriaParam(fieldName)}
                               fieldMetaData={field}
                               defaultOperator={defaultOperator}
-                              handleRemoveQuickFilterField={handleRemoveQuickFilterField} />
-                        );
-                     })
-                  }
-                  {
-                     tableMetaData &&
-                     <>
-                        <Tooltip enterDelay={500} title="Add a Quick Filter field" placement="top">
-                           <Button onClick={(e) => openAddQuickFilterMenu(e)} startIcon={<Icon>add_circle_outline</Icon>} sx={{border: "1px solid gray", whiteSpace: "nowrap", minWidth: "120px"}}>
-                              Add Field
-                           </Button>
-                        </Tooltip>
-                        <Menu
-                           anchorEl={addQuickFilterMenu}
-                           anchorOrigin={{vertical: "bottom", horizontal: "left"}}
-                           transformOrigin={{vertical: "top", horizontal: "left"}}
-                           transitionDuration={0}
-                           open={Boolean(addQuickFilterMenu)}
-                           onClose={closeAddQuickFilterMenu}
-                           keepMounted
-                        >
-                           <Box width="250px">
-                              <FieldAutoComplete
-                                 key={addQuickFilterOpenCounter} // use a unique key each time we open it, because we don't want the user's last selection to stick.
-                                 id={"add-quick-filter-field"}
-                                 metaData={metaData}
-                                 tableMetaData={tableMetaData}
-                                 defaultValue={null}
-                                 handleFieldChange={(e, newValue, reason) => addQuickFilterField(newValue, reason)}
-                                 autoFocus={true}
-                                 forceOpen={Boolean(addQuickFilterMenu)}
-                                 hiddenFieldNames={[...quickFilterFieldNames.values()]}
-                              />
-                           </Box>
-                        </Menu>
-                     </>
-                  }
+                              handleRemoveQuickFilterField={null} />);
+                        })
+                     }
+                     <Box display="inline-block" borderLeft="1px solid gray" height="1.75rem" width="1px" marginRight="0.5rem" position="relative" top="0.5rem" />
+                     {
+                        tableMetaData && quickFilterFieldNames?.map((fieldName) =>
+                        {
+                           const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                           let defaultOperator = getDefaultOperatorForField(field);
+
+                           return (defaultQuickFilterFieldNameMap[fieldName] ? null : <QuickFilter
+                              key={fieldName}
+                              fullFieldName={fieldName}
+                              tableMetaData={tableMetaData}
+                              updateCriteria={updateQuickCriteria}
+                              criteriaParam={getQuickCriteriaParam(fieldName)}
+                              fieldMetaData={field}
+                              defaultOperator={defaultOperator}
+                              handleRemoveQuickFilterField={handleRemoveQuickFilterField} />);
+                        })
+                     }
+                     {
+                        tableMetaData &&
+                        <>
+                           <Tooltip enterDelay={500} title="Add a Quick Filter field" placement="top">
+                              <Button onClick={(e) => openAddQuickFilterMenu(e)} startIcon={<Icon>add</Icon>} sx={{...quickFilterButtonStyles}}>
+                                 Add Filter
+                              </Button>
+                           </Tooltip>
+                           <Menu
+                              anchorEl={addQuickFilterMenu}
+                              anchorOrigin={{vertical: "bottom", horizontal: "left"}}
+                              transformOrigin={{vertical: "top", horizontal: "left"}}
+                              transitionDuration={0}
+                              open={Boolean(addQuickFilterMenu)}
+                              onClose={closeAddQuickFilterMenu}
+                              keepMounted
+                           >
+                              <Box width="250px">
+                                 <FieldAutoComplete
+                                    key={addQuickFilterOpenCounter} // use a unique key each time we open it, because we don't want the user's last selection to stick.
+                                    id={"add-quick-filter-field"}
+                                    metaData={metaData}
+                                    tableMetaData={tableMetaData}
+                                    defaultValue={null}
+                                    handleFieldChange={(e, newValue, reason) => addQuickFilterField(newValue, reason)}
+                                    autoFocus={true}
+                                    forceOpen={Boolean(addQuickFilterMenu)}
+                                    hiddenFieldNames={[...defaultQuickFilterFieldNames, ...quickFilterFieldNames]}
+                                 />
+                              </Box>
+                           </Menu>
+                        </>
+                     }
+                  </>
                </Box>
             }
             {
                metaData && tableMetaData && mode == "advanced" &&
                <>
                   <Tooltip enterDelay={500} title="Build an advanced Filter" placement="top">
-                     <Button onClick={(e) => openFilterBuilder(e)} startIcon={<Badge badgeContent={queryFilter?.criteria?.length} color="warning" sx={{"& .MuiBadge-badge": {color: "#FFFFFF"}}} anchorOrigin={{vertical: "top", horizontal: "left"}}><Icon>filter_list</Icon></Badge>} sx={{width: "180px", minWidth: "180px", border: "1px solid gray"}}>
+                     <Button onClick={(e) => openFilterBuilder(e)} startIcon={<Badge badgeContent={countValidCriteria(queryFilter)} color="warning" sx={{"& .MuiBadge-badge": {color: "#FFFFFF"}}} anchorOrigin={{vertical: "top", horizontal: "left"}}><Icon>filter_list</Icon></Badge>} sx={{width: "180px", minWidth: "180px", border: "1px solid gray"}}>
                         Filter Builder
                      </Button>
                   </Tooltip>
@@ -641,14 +603,13 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
             {
                metaData && tableMetaData &&
                <Box px={1} display="flex" alignItems="center">
-                  <Typography display="inline" sx={{fontSize: "1rem"}}>Mode:</Typography>
                   <Tooltip title={reasonWhyBasicIsDisabled}>
                      <ToggleButtonGroup
                         value={mode}
                         exclusive
                         onChange={(event, newValue) => modeToggleClicked(newValue)}
                         size="small"
-                        sx={{pl: 0.5}}
+                        sx={{pl: 0.5, width: "10rem"}}
                      >
                         <ToggleButton value="basic" disabled={!canFilterWorkAsBasic}>Basic</ToggleButton>
                         <ToggleButton value="advanced">Advanced</ToggleButton>
@@ -660,5 +621,51 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       </Box>
    );
 });
+
+export function getDefaultQuickFilterFieldNames(table: QTableMetaData): string[]
+{
+   const defaultQuickFilterFieldNames: string[] = [];
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////
+   // check if there's materialDashboard tableMetaData, and if it has defaultQuickFilterFieldNames //
+   //////////////////////////////////////////////////////////////////////////////////////////////////
+   const mdbMetaData = table?.supplementalTableMetaData?.get("materialDashboard");
+   if (mdbMetaData)
+   {
+      if (mdbMetaData?.defaultQuickFilterFieldNames?.length)
+      {
+         for (let i = 0; i < mdbMetaData.defaultQuickFilterFieldNames.length; i++)
+         {
+            defaultQuickFilterFieldNames.push(mdbMetaData.defaultQuickFilterFieldNames[i]);
+         }
+      }
+   }
+
+   /////////////////////////////////////////////
+   // if still none, then look for T1 section //
+   /////////////////////////////////////////////
+   if (defaultQuickFilterFieldNames.length == 0)
+   {
+      if (table.sections)
+      {
+         const t1Sections = table.sections.filter((s: QTableSection) => s.tier == "T1");
+         if (t1Sections.length)
+         {
+            for (let i = 0; i < t1Sections.length; i++)
+            {
+               if (t1Sections[i].fieldNames)
+               {
+                  for (let j = 0; j < t1Sections[i].fieldNames.length; j++)
+                  {
+                     defaultQuickFilterFieldNames.push(t1Sections[i].fieldNames[j]);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   return (defaultQuickFilterFieldNames);
+}
 
 export default BasicAndAdvancedQueryControls;
