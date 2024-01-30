@@ -72,7 +72,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    const [savedViews, setSavedViews] = useState([] as QRecord[]);
    const [savedViewsMenu, setSavedViewsMenu] = useState(null);
    const [savedViewsHaveLoaded, setSavedViewsHaveLoaded] = useState(false);
-   // const [viewIsModified, setViewIsModified] = useState(false);
+   const [isSubmitting, setIsSubmitting] = useState(false);
 
    const [saveFilterPopupOpen, setSaveFilterPopupOpen] = useState(false);
    const [isSaveFilterAs, setIsSaveFilterAs] = useState(false);
@@ -104,14 +104,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          .then(() =>
          {
             setSavedViewsHaveLoaded(true);
-            /*
-               if (currentSavedView != null)
-               {
-                  const isModified = JSON.stringify(view) !== currentSavedView.values.get("viewJson");
-                  console.log(`Is view modified? ${isModified}\n${JSON.stringify(view)}\n${currentSavedView.values.get("viewJson")}`);
-                  setViewIsModified(isModified);
-               }
-            */
          });
    }, [location, tableMetaData, currentSavedView, view]) // todo#elimGrid does this monitoring work??
 
@@ -396,8 +388,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          diffVisibilityFunction(activeView.queryColumns, savedView.queryColumns, "Turned off visibility for ");
          diffPinsFunction(savedView.queryColumns, activeView.queryColumns, "Changed pinned state for ");
 
-         // console.log(`Saved:  ${savedView.queryColumns.columns.map(c => c.name).join(",")}`);
-         // console.log(`Active: ${activeView.queryColumns.columns.map(c => c.name).join(",")}`);
          if(savedView.queryColumns.columns.map(c => c.name).join(",") != activeView.queryColumns.columns.map(c => c.name).join(","))
          {
             viewDiffs.push("Changed the order of 1 or more columns.");
@@ -515,7 +505,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    const handleDropdownOptionClick = (optionName: string) =>
    {
       setSaveOptionsOpen(false);
-      setPopupAlertContent(null);
+      setPopupAlertContent("");
       closeSavedViewsMenu();
       setSaveFilterPopupOpen(true);
       setIsSaveFilterAs(false);
@@ -556,11 +546,18 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    {
       try
       {
+         setPopupAlertContent("");
+         setIsSubmitting(true);
+
          const formData = new FormData();
          if (isDeleteFilter)
          {
             formData.append("id", currentSavedView.values.get("id"));
             await makeSavedViewRequest("deleteSavedView", formData);
+
+            setSaveFilterPopupOpen(false);
+            setSaveOptionsOpen(false);
+
             await(async() =>
             {
                handleDropdownOptionClick(CLEAR_OPTION);
@@ -603,10 +600,28 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                }
             })();
          }
+
+         setSaveFilterPopupOpen(false);
+         setSaveOptionsOpen(false);
       }
       catch (e: any)
       {
-         setPopupAlertContent(JSON.stringify(e.message));
+         let message = JSON.stringify(e);
+         if(typeof e == "string")
+         {
+            message = e;
+         }
+         else if(typeof e == "object" && e.message)
+         {
+            message = e.message;
+         }
+
+         setPopupAlertContent(message);
+         console.log(`Setting error: ${message}`);
+      }
+      finally
+      {
+         setIsSubmitting(false);
       }
    }
 
@@ -764,7 +779,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
             </Tooltip>
          }
          {
-            <Tooltip {...menuTooltipAttribs} title="Create a new view of this table, resetting the filter, columns, and settings to their defaults.">
+            <Tooltip {...menuTooltipAttribs} title="Create a new view of this table, resetting the filters and columns to their defaults.">
                <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
                   <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
                   New View
@@ -834,7 +849,11 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                   aria-describedby="alert-dialog-description"
                   onKeyPress={(e) =>
                   {
-                     if (e.key == "Enter")
+                     ////////////////////////////////////////////////////
+                     // make user actually hit delete button           //
+                     // but for other modes, let Enter submit the form //
+                     ////////////////////////////////////////////////////
+                     if (e.key == "Enter" && !isDeleteFilter)
                      {
                         handleFilterDialogButtonOnClick();
                      }
@@ -860,6 +879,11 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                      )
                   }
                   <DialogContent sx={{width: "500px"}}>
+                     {popupAlertContent ? (
+                        <Box mb={1}>
+                           <Alert severity="error" onClose={() => setPopupAlertContent("")}>{popupAlertContent}</Alert>
+                        </Box>
+                     ) : ("")}
                      {
                         (! currentSavedView || isSaveFilterAs || isRenameFilter) && ! isDeleteFilter ? (
                            <Box>
@@ -893,19 +917,14 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                            )
                         )
                      }
-                     {popupAlertContent ? (
-                        <Box m={1}>
-                           <Alert severity="error">{popupAlertContent}</Alert>
-                        </Box>
-                     ) : ("")}
                   </DialogContent>
                   <DialogActions>
                      <QCancelButton onClickHandler={handleSaveFilterPopupClose} disabled={false} />
                      {
                         isDeleteFilter ?
-                           <QDeleteButton onClickHandler={handleFilterDialogButtonOnClick} />
+                           <QDeleteButton onClickHandler={handleFilterDialogButtonOnClick} disabled={isSubmitting} />
                            :
-                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={(isSaveFilterAs || currentSavedView == null) && savedViewNameInputValue == null}/>
+                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={isSubmitting || ((isSaveFilterAs || currentSavedView == null) && savedViewNameInputValue == null)}/>
                      }
                   </DialogActions>
                </Dialog>
