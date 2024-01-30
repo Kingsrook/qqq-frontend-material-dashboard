@@ -375,11 +375,13 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
    let buttonAdditionalStyles: any = {};
    let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>
+   let buttonClassName = "filterNotActive";
    if (criteriaIsValid)
    {
       buttonAdditionalStyles.backgroundColor = accentColor + " !important";
       buttonAdditionalStyles.borderColor = accentColor + " !important";
       buttonAdditionalStyles.color = "white !important";
+      buttonClassName = "filterActive";
 
       buttonContent = (
          <Tooltip title={`${operatorSelectedValue.label} ${FilterUtils.getValuesString(fieldMetaData, criteria)}`} enterDelay={tooltipEnterDelay}>
@@ -390,6 +392,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
    let button = fieldMetaData && <Button
       id={`quickFilter.${fullFieldName}`}
+      className={buttonClassName}
       sx={{...quickFilterButtonStyles, ...buttonAdditionalStyles, mr: "0.5rem"}}
       onClick={tooComplex ? noop : handleOpenMenu}
       disabled={tooComplex}

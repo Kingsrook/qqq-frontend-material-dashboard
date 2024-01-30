@@ -80,9 +80,9 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
-   public WebElement assertQuickFilterButtonBadge(String fieldName)
+   public WebElement assertQuickFilterButtonIndicatesActiveFilter(String fieldName)
    {
-      return qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName + " .MuiBadge-root");
+      return qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName + ".filterActive");
    }
 
 
@@ -92,7 +92,6 @@ public class QueryScreenLib
     *******************************************************************************/
    public void clickQuickFilterButton(String fieldName)
    {
-      // qSeleniumLib.waitForSelectorContaining(".MuiDataGrid-toolbarContainer BUTTON", "Filter").click();
       qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName).click();
    }
 

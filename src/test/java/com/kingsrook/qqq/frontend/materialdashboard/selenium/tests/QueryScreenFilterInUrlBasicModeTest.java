@@ -75,7 +75,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.IS_NOT_BLANK)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("annualSalary");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("annualSalary");
       queryScreenLib.clickQuickFilterButton("annualSalary");
       qSeleniumLib.waitForSelector("input[value=\"is not empty\"]");
 
@@ -86,7 +86,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.BETWEEN, 1701, 74656)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("annualSalary");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("annualSalary");
       queryScreenLib.clickQuickFilterButton("annualSalary");
       qSeleniumLib.waitForSelector("input[value=\"is between\"]");
       qSeleniumLib.waitForSelector("input[value=\"1701\"]");
@@ -99,7 +99,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.NOT_EQUALS, 1)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("homeCityId");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("homeCityId");
       queryScreenLib.clickQuickFilterButton("homeCityId");
       qSeleniumLib.waitForSelector("input[value=\"does not equal\"]");
       qSeleniumLib.waitForSelector("input[value=\"St. Louis\"]");
@@ -111,7 +111,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.IN, 1, 2)));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("homeCityId");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("homeCityId");
       queryScreenLib.clickQuickFilterButton("homeCityId");
       qSeleniumLib.waitForSelector("input[value=\"is any of\"]");
       qSeleniumLib.waitForSelectorContaining(".MuiChip-label", "St. Louis");
@@ -124,7 +124,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.GREATER_THAN, NowWithOffset.minus(5, ChronoUnit.DAYS))));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("createDate");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("createDate");
       queryScreenLib.clickQuickFilterButton("createDate");
       qSeleniumLib.waitForSelector("input[value=\"is after\"]");
       qSeleniumLib.waitForSelector("input[value=\"5 days ago\"]");
@@ -137,8 +137,8 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.LESS_THAN_OR_EQUALS, ThisOrLastPeriod.this_(ChronoUnit.YEARS))));
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertQuickFilterButtonBadge("firstName");
-      queryScreenLib.assertQuickFilterButtonBadge("createDate");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("createDate");
       queryScreenLib.clickQuickFilterButton("createDate");
       qSeleniumLib.waitForSelector("input[value=\"is at or before\"]");
       qSeleniumLib.waitForSelector("input[value=\"start of this year\"]");

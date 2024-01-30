@@ -66,15 +66,10 @@ class FilterUtils
          console.log(param[i]);
          if (param[i] && param[i].id && param[i].label)
          {
-            //////////////////////////////////////////////////////////////////////////////////////////
-            // if the param looks like a possible value, return its id                              //
-            // during build of new custom filter panel, this ended up causing us                    //
-            // problems (because we wanted the full PV object in the filter model for the frontend) //
-            // so, we can keep the PV as-is here, and see calls to convertFilterPossibleValuesToIds //
-            // to do what this used to do.                                                          //
-            //////////////////////////////////////////////////////////////////////////////////////////
-            // rs.push(param[i].id);
-            rs.push(param[i]);
+            /////////////////////////////////////////////////////////////
+            // if the param looks like a possible value, return its id //
+            /////////////////////////////////////////////////////////////
+            rs.push(param[i].id);
          }
          else
          {

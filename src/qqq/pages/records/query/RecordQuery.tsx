@@ -33,7 +33,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Collapse, TablePagination, Typography} from "@mui/material";
+import {Alert, Collapse, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -44,7 +44,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, gridFilterableColumnDefinitionsSelector, GridFilterMenuItem, GridFilterModel, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
+import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -54,7 +54,7 @@ import {QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultBut
 import MenuButton from "qqq/components/buttons/MenuButton";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import SavedViews from "qqq/components/misc/SavedViews";
-import BasicAndAdvancedQueryControls, {getDefaultQuickFilterFieldNames} from "qqq/components/query/BasicAndAdvancedQueryControls";
+import BasicAndAdvancedQueryControls from "qqq/components/query/BasicAndAdvancedQueryControls";
 import {CustomColumnsPanel} from "qqq/components/query/CustomColumnsPanel";
 import {CustomFilterPanel} from "qqq/components/query/CustomFilterPanel";
 import CustomPaginationComponent from "qqq/components/query/CustomPaginationComponent";
@@ -2061,6 +2061,18 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                const queryFilter = filterJSON as QQueryFilter;
 
                await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilter);
+
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // so, URLs with filters, they might say NOT_EQUALS - but - everything else we do in here, uses NOT_EQUALS_OR_IS_NULL... //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               for (let i = 0; i < queryFilter?.criteria?.length; i++)
+               {
+                  const criteria = queryFilter.criteria[i];
+                  if(criteria.operator == QCriteriaOperator.NOT_EQUALS)
+                  {
+                     criteria.operator = QCriteriaOperator.NOT_EQUALS_OR_IS_NULL;
+                  }
+               }
 
                ///////////////////////////////////////////////////////////////////////////////////////////
                // set this new query filter in the view, and activate the full view                     //

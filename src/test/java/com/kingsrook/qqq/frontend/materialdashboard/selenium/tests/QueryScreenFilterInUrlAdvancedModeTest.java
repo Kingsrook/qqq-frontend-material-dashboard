@@ -98,18 +98,6 @@ public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelector("input[value=\"1701\"]");
       qSeleniumLib.waitForSelector("input[value=\"74656\"]");
 
-      //////////////////////////////////////////
-      // not-equals on a possible-value field //
-      //////////////////////////////////////////
-      filterJSON = JsonUtils.toJson(new QQueryFilter()
-         .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.NOT_EQUALS, 1)));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
-      queryScreenLib.waitForQueryToHaveRan();
-      queryScreenLib.assertFilterButtonBadge(1);
-      queryScreenLib.clickFilterButton();
-      qSeleniumLib.waitForSelector("input[value=\"does not equal\"]");
-      qSeleniumLib.waitForSelector("input[value=\"St. Louis\"]");
-
       //////////////////////////////////////
       // an IN for a possible-value field //
       //////////////////////////////////////
@@ -149,6 +137,27 @@ public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelector("input[value=\"start of this year\"]");
       qSeleniumLib.waitForSelector("input[value=\"starts with\"]");
       qSeleniumLib.waitForSelector("input[value=\"Dar\"]");
+
+      /////////////////////////////////////////////////
+      // replace the homeCityId possible-value route //
+      /////////////////////////////////////////////////
+      qSeleniumJavalin.stop();
+      qSeleniumJavalin.clearRoutes();
+      addJavalinRoutes(qSeleniumJavalin);
+      qSeleniumJavalin.withRouteToFile("/data/person/possibleValues/homeCityId", "data/person/possibleValues/homeCityId=1.json");
+      qSeleniumJavalin.restart();
+
+      //////////////////////////////////////////
+      // not-equals on a possible-value field //
+      //////////////////////////////////////////
+      filterJSON = JsonUtils.toJson(new QQueryFilter()
+         .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.NOT_EQUALS, 1)));
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.clickFilterButton();
+      qSeleniumLib.waitForSelector("input[value=\"does not equal\"]");
+      qSeleniumLib.waitForSelector("input[value=\"St. Louis\"]");
 
       ////////////////
       // remove one //
