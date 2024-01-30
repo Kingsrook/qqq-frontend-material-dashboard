@@ -60,6 +60,16 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void assertNoFilterButtonBadge(int valueInBadge)
+   {
+      qSeleniumLib.waitForSelectorContainingToNotExist(".MuiBadge-root", String.valueOf(valueInBadge));
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public WebElement waitForQueryToHaveRan()
    {
       return qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.QUERY_GRID_CELL);

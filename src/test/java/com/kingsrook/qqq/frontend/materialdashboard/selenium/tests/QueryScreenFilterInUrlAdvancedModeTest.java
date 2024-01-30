@@ -163,7 +163,7 @@ public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
       // remove one //
       ////////////////
       qSeleniumLib.waitForSelectorContaining(".MuiIcon-root", "close").click();
-      queryScreenLib.assertFilterButtonBadge(1);
+      queryScreenLib.assertNoFilterButtonBadge(1);
 
       // qSeleniumLib.waitForever();
    }

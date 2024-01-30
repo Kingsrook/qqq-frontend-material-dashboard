@@ -67,7 +67,6 @@ public class SavedViewsTest extends QBaseSeleniumTest
       QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
 
       qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
-      queryScreenLib.gotoAdvancedMode();
 
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Saved Views").click();
       qSeleniumLib.waitForSelectorContaining("LI", "Some People");
@@ -95,14 +94,14 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
-      /////////////////////////////////////////////////////
-      // take breadcrumb back to table query             //
+      ///////////////////////////////////////////////////
+      // take breadcrumb back to table query           //
       // assert the previously selected View is loaded //
-      /////////////////////////////////////////////////////
+      ///////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have View id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
       qSeleniumLib.waitForSelectorContaining("DIV", "Current View: Some People");
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "1");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
 
       //////////////////////
       // modify the query //

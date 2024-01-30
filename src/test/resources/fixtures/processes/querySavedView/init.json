@@ -10,7 +10,7 @@
                "createDate": "2023-02-20T18:39:11Z",
                "modifyDate": "2023-02-20T18:39:11Z",
                "tableName": "person",
-               "filterJson": "{\"filter\":{\"orderBys\":[{\"fieldName\":\"id\",\"isAscending\":false}],\"booleanOperator\":\"AND\"}}",
+               "viewJson": "{\"queryFilter\":{\"orderBys\":[{\"fieldName\":\"id\",\"isAscending\":false}],\"booleanOperator\":\"AND\"}}",
                "userId": "darin.kelkhoff@kingsrook.com"
             }
          },
@@ -22,7 +22,7 @@
                "createDate": "2023-02-20T18:40:58Z",
                "modifyDate": "2023-02-20T18:40:58Z",
                "tableName": "person",
-               "filterJson": "{\"filter\":{\"criteria\":[{\"fieldName\":\"firstName\",\"operator\":\"STARTS_WITH\",\"values\":[\"D\"]}],\"orderBys\":[{\"fieldName\":\"id\",\"isAscending\":false}],\"booleanOperator\":\"AND\"}}",
+               "viewJson": "{\"queryFilter\":{\"criteria\":[{\"fieldName\":\"firstName\",\"operator\":\"STARTS_WITH\",\"values\":[\"D\"]}],\"orderBys\":[{\"fieldName\":\"id\",\"isAscending\":false}],\"booleanOperator\":\"AND\"}}",
                "userId": "darin.kelkhoff@kingsrook.com"
             }
          }
