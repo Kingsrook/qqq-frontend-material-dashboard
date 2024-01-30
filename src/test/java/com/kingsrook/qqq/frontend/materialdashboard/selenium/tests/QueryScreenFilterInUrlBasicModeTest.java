@@ -55,7 +55,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
          .withRouteToFile("/data/person/query", "data/person/index.json")
          .withRouteToFile("/data/person/possibleValues/homeCityId", "data/person/possibleValues/homeCityId.json")
          .withRouteToFile("/data/person/variants", "data/person/variants.json")
-         .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
+         .withRouteToFile("/processes/querySavedView/init", "processes/querySavedView/init.json");
    }
 
 

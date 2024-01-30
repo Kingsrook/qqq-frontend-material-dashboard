@@ -92,7 +92,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    let accumulatedPath = "";
    for (let i = 0; i < routes.length; i++)
    {
-      if(routes[i] === "savedFilter")
+      if(routes[i] === "savedView")
       {
          continue;
       }

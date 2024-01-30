@@ -355,7 +355,7 @@ export default function App()
                routeList.push({
                   name: `${app.label}`,
                   key: app.name,
-                  route: `${path}/savedFilter/:id`,
+                  route: `${path}/savedView/:id`,
                   component: <RecordQuery table={table} key={table.name} />,
                });
 

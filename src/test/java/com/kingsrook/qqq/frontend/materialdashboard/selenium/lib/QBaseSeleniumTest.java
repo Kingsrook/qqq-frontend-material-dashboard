@@ -177,7 +177,7 @@ public class QBaseSeleniumTest
          .withRouteToFile("/metaData/table/city", "metaData/table/person.json")
          .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
          .withRouteToFile("/metaData/table/scriptRevision", "metaData/table/scriptRevision.json")
-         .withRouteToFile("/processes/querySavedFilter/init", "processes/querySavedFilter/init.json");
+         .withRouteToFile("/processes/querySavedView/init", "processes/querySavedView/init.json");
    }
 
 

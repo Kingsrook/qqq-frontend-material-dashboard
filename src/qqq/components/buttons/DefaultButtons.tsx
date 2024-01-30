@@ -123,7 +123,7 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
    );
 }
 
-export function QSavedFiltersMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
+export function QSavedViewsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
 {
    return (
       <Box width={standardWidth} ml={1}>
@@ -132,9 +132,9 @@ export function QSavedFiltersMenuButton({isOpen, onClickHandler}: QActionsMenuBu
             color="dark"
             onClick={onClickHandler}
             fullWidth
-            startIcon={<Icon>filter_alt</Icon>}
+            startIcon={<Icon>visibility</Icon>}
          >
-            saved&nbsp;filters&nbsp;
+            Saved&nbsp;Views&nbsp;
             <Icon>keyboard_arrow_down</Icon>
          </MDButton>
       </Box>
