@@ -113,6 +113,31 @@ class TableUtils
       return (null);
    }
 
+
+   /*******************************************************************************
+    ** for a field that might be from a join table, get its label - either the field's
+    ** label, if it's from "this" table - or the table's label: field's label, if it's
+    ** from a join table.
+    *******************************************************************************/
+   public static getFieldFullLabel(tableMetaData: QTableMetaData, fieldName: string): string
+   {
+      try
+      {
+         const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (fieldTable.name == tableMetaData.name)
+         {
+            return (field.label);
+         }
+         return `${fieldTable.label}: ${field.label}`;
+      }
+      catch (e)
+      {
+         console.log(`Error getting full field label for ${fieldName} in table ${tableMetaData?.name}: ${e}`);
+         return fieldName
+      }
+   }
+
+
    /*******************************************************************************
     **
     *******************************************************************************/
