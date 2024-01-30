@@ -32,7 +32,8 @@ import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
-import React, {SyntheticEvent, useState} from "react";
+import React, {SyntheticEvent, useContext, useState} from "react";
+import QContext from "QContext";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {getDefaultCriteriaValue, getOperatorOptions, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
@@ -59,6 +60,11 @@ QuickFilter.defaultProps =
    };
 
 let seedId = new Date().getTime() % 173237;
+
+export const quickFilterButtonStyles = {
+   fontSize: "0.75rem", color: "#757575", textTransform: "none", borderRadius: "2rem", border: "1px solid #757575",
+   minWidth: "3.5rem", minHeight: "auto", padding: "0.375rem 0.625rem", whiteSpace: "nowrap"
+}
 
 /*******************************************************************************
  ** Test if a CriteriaParamType represents an actual query criteria - or, if it's
@@ -143,6 +149,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const [startIconName, setStartIconName] = useState("filter_alt");
 
    const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
+
+   const {accentColor} = useContext(QContext);
+
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle a change to the criteria from outside this component (e.g., the prop isn't the same as the state) //
@@ -314,12 +323,15 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
    /*******************************************************************************
     ** event handler for clicking the (x) icon that turns off this quick filter field.
-    ** hands off control to the function that was passed in (e.g., from RecordQuery).
+    ** hands off control to the function that was passed in (e.g., from RecordQueryOrig).
     *******************************************************************************/
    const handleTurningOffQuickFilterField = () =>
    {
       closeMenu()
-      handleRemoveQuickFilterField(criteria?.fieldName);
+      if(handleRemoveQuickFilterField)
+      {
+         handleRemoveQuickFilterField(criteria?.fieldName);
+      }
    }
 
    ////////////////////////////////////////////////////////////////////////////////////
@@ -361,9 +373,14 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       startIcon = <Tooltip title={"Remove this condition from your filter"} enterDelay={tooltipEnterDelay}>{startIcon}</Tooltip>
    }
 
+   let buttonAdditionalStyles: any = {};
    let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>
    if (criteriaIsValid)
    {
+      buttonAdditionalStyles.backgroundColor = accentColor + " !important";
+      buttonAdditionalStyles.borderColor = accentColor + " !important";
+      buttonAdditionalStyles.color = "white !important";
+
       buttonContent = (
          <Tooltip title={`${operatorSelectedValue.label} ${FilterUtils.getValuesString(fieldMetaData, criteria)}`} enterDelay={tooltipEnterDelay}>
             {buttonContent}
@@ -373,8 +390,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
    let button = fieldMetaData && <Button
       id={`quickFilter.${fullFieldName}`}
-      sx={{mr: "0.25rem", px: "1rem", border: isOpen ? "1px solid gray" : "1px solid transparent"}}
-      startIcon={startIcon}
+      sx={{...quickFilterButtonStyles, ...buttonAdditionalStyles, mr: "0.5rem"}}
       onClick={tooComplex ? noop : handleOpenMenu}
       disabled={tooComplex}
    >{buttonContent}</Button>;
@@ -395,6 +411,39 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       );
    }
 
+   /*******************************************************************************
+    ** event handler for 'x' button - either resets the criteria or turns off the field.
+    *******************************************************************************/
+   const xClicked = (e: React.MouseEvent<HTMLSpanElement>) =>
+   {
+      e.stopPropagation();
+      if(criteriaIsValid)
+      {
+         resetCriteria(e);
+      }
+      else
+      {
+         handleTurningOffQuickFilterField();
+      }
+   }
+
+   /////////////////////////////////////////////////////////////////////////////////////
+   // only show the 'x' if it's to clear out a valid criteria on the field,           //
+   // or if we were given a callback to remove the quick-filter field from the screen //
+   /////////////////////////////////////////////////////////////////////////////////////
+   let xIcon = <span />;
+   if(criteriaIsValid || handleRemoveQuickFilterField)
+   {
+      xIcon = <span style={{position: "relative"}}><IconButton sx={{
+         fontSize: "0.75rem",
+         border: "1px solid gray",
+         padding: "0",
+         background: "#f0f2f5 !important",
+         position: "absolute",
+         left: "-1.125rem",
+      }} onClick={xClicked}><Icon>close</Icon></IconButton></span>
+   }
+
    //////////////////////////////
    // return the button & menu //
    //////////////////////////////
@@ -402,14 +451,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    return (
       <>
          {button}
+         {xIcon}
          {
             isOpen && <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={closeMenu} sx={{overflow: "visible"}}>
-               {
-                  handleRemoveQuickFilterField &&
-                  <Tooltip title={"Remove this field from Quick Filters"} placement="right">
-                     <IconButton size="small" sx={{position: "absolute", top: "-8px", right: "-8px", zIndex: 1}} onClick={handleTurningOffQuickFilterField}><Icon color="secondary">highlight_off</Icon></IconButton>
-                  </Tooltip>
-               }
                <Box display="inline-block" width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="operatorColumn">
                   <Autocomplete
                      id={"criteriaOperator"}
