@@ -73,13 +73,17 @@ export function QSaveButton({label, iconName, onClickHandler, disabled}: QSaveBu
 interface QDeleteButtonProps
 {
    onClickHandler: any
+   disabled?: boolean
 }
 
-export function QDeleteButton({onClickHandler}: QDeleteButtonProps): JSX.Element
+QDeleteButton.defaultProps = {
+   disabled: false
+};
+export function QDeleteButton({onClickHandler, disabled}: QDeleteButtonProps): JSX.Element
 {
    return (
       <Box ml={3} width={standardWidth}>
-         <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>}>
+         <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>} disabled={disabled}>
             Delete
          </MDButton>
       </Box>
