@@ -24,7 +24,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import Autocomplete, {AutocompleteRenderOptionState} from "@mui/material/Autocomplete";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl/FormControl";
 import Icon from "@mui/material/Icon/Icon";
@@ -182,7 +182,7 @@ FilterCriteriaRow.defaultProps =
    {
    };
 
-export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue: OperatorOption)
+export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue: OperatorOption): {criteriaIsValid: boolean, criteriaStatusTooltip: string}
 {
    let criteriaIsValid = true;
    let criteriaStatusTooltip = "This condition is fully defined and is part of your filter.";
@@ -211,37 +211,34 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
    }
    else
    {
-      if (operatorSelectedValue)
+      if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
       {
-         if (operatorSelectedValue.valueMode == ValueMode.NONE || operatorSelectedValue.implicitValues)
+         //////////////////////////////////
+         // don't need to look at values //
+         //////////////////////////////////
+      }
+      else if (criteria.operator == QCriteriaOperator.BETWEEN || criteria.operator == QCriteriaOperator.NOT_BETWEEN)
+      {
+         if (criteria.values.length < 2 || isNotSet(criteria.values[0]) || isNotSet(criteria.values[1]))
          {
-            //////////////////////////////////
-            // don't need to look at values //
-            //////////////////////////////////
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter two values to complete the definition of this condition.";
          }
-         else if (operatorSelectedValue.valueMode == ValueMode.DOUBLE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE_TIME)
+      }
+      else if (criteria.operator == QCriteriaOperator.IN || criteria.operator == QCriteriaOperator.NOT_IN)
+      {
+         if (criteria.values.length < 1 || isNotSet(criteria.values[0]))
          {
-            if (criteria.values.length < 2 || isNotSet(criteria.values[0]) || isNotSet(criteria.values[1]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter two values to complete the definition of this condition.";
-            }
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter one or more values complete the definition of this condition.";
          }
-         else if (operatorSelectedValue.valueMode == ValueMode.MULTI || operatorSelectedValue.valueMode == ValueMode.PVS_MULTI)
+      }
+      else
+      {
+         if (!criteria.values || isNotSet(criteria.values[0]))
          {
-            if (criteria.values.length < 1 || isNotSet(criteria.values[0]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter one or more values complete the definition of this condition.";
-            }
-         }
-         else
-         {
-            if (!criteria.values || isNotSet(criteria.values[0]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";
-            }
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";
          }
       }
    }
