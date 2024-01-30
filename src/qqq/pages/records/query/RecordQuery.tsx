@@ -1134,7 +1134,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       setRowsPerPage(view.rowsPerPage ?? defaultRowsPerPage);
       setMode(view.mode ?? defaultMode);
-      setQuickFilterFieldNames(view.quickFilterFieldNames) // todo not i think ?? getDefaultQuickFilterFieldNames(tableMetaData));
+      setQuickFilterFieldNames(view.quickFilterFieldNames ?? []) // todo not i think ?? getDefaultQuickFilterFieldNames(tableMetaData));
 
       //////////////////////////////////////////////////////////////////////////////////////////////////
       // do this last - in case anything in the view got modified in any of those other doSet methods //
@@ -1227,10 +1227,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    /*******************************************************************************
     ** Event handler from BasicAndAdvancedQueryControls for when quickFilterFields change
+    ** or other times we need to change them (e.g., activating a view)
     *******************************************************************************/
-   const doSetQuickFilterFieldNames = (names: string[]) =>
+   const doSetQuickFilterFieldNames = (names: string[]): void =>
    {
-      setQuickFilterFieldNames([...names]);
+      setQuickFilterFieldNames([...(names ?? [])]);
 
       view.quickFilterFieldNames = names;
       doSetView(view)
@@ -1501,10 +1502,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          // go back to a default query filter for the table //
          /////////////////////////////////////////////////////
          doSetQueryFilter(new QQueryFilter());
-         // todo not i think doSetQuickFilterFieldNames(getDefaultQuickFilterFieldNames(tableMetaData));
 
          const queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
          doSetQueryColumns(queryColumns)
+
+         /////////////////////////////////////////////////////
+         // also reset the (user-added) quick-filter fields //
+         /////////////////////////////////////////////////////
+         doSetQuickFilterFieldNames([]);
       }
    }
 

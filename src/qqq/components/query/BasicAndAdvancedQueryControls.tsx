@@ -550,7 +550,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                     handleFieldChange={(e, newValue, reason) => addQuickFilterField(newValue, reason)}
                                     autoFocus={true}
                                     forceOpen={Boolean(addQuickFilterMenu)}
-                                    hiddenFieldNames={[...defaultQuickFilterFieldNames, ...quickFilterFieldNames]}
+                                    hiddenFieldNames={[...(defaultQuickFilterFieldNames??[]), ...(quickFilterFieldNames??[])]}
                                  />
                               </Box>
                            </Menu>
