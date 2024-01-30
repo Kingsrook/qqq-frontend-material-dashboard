@@ -427,7 +427,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 .MuiDataGrid-panel:has(.customFilterPanel)
 {
    /* overwrite what the grid tries to do here, where it changes based on density... we always want the same. */
-   transform: translate(274px, 305px) !important;
+   /* transform: translate(274px, 305px) !important; */
+   transform: translate(274px, 276px) !important;
 }
 
 /* within the data-grid, the filter-panel's container has a max-height.  mirror that, and set an overflow-y */
@@ -614,4 +615,38 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 .dataGridHeaderTooltip
 {
    top: -1.25rem;
+}
+
+/* when grid contents weren't filling the height of the screen, the gray panel for pinned columns
+ was stretching to most of the grid height, but it wasn't the full height and so looked a little
+ broken.  just turing off this min height changes to not try to stretch at all, and is not broken. */
+.MuiDataGrid-pinnedColumns
+{
+   min-height: unset !important;
+}
+
+/* new style for toggle buttons */
+.MuiToggleButtonGroup-root
+{
+   padding: 0.25rem;
+   border: 1px solid #BDBDBD;
+   border-radius: 0.5rem !important;
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root
+{
+   text-transform: none;
+   font-size: 0.75rem;
+   color: black;
+   font-weight: 600;
+   border-radius: 0.375rem !important; /* overriding left/right edge overrides for first/last */
+   border: none;
+   flex: 1 1 0px;
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-selected
+{
+   background: rgba(117, 117, 117, 0.20);
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-disabled
+{
+   border: none;
 }
