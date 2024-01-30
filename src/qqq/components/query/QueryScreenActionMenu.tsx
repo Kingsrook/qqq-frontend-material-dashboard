@@ -1,0 +1,134 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
+import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import Divider from "@mui/material/Divider";
+import Icon from "@mui/material/Icon";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import React, {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {QActionsMenuButton} from "qqq/components/buttons/DefaultButtons";
+
+interface QueryScreenActionMenuProps
+{
+   metaData: QInstance;
+   tableMetaData: QTableMetaData;
+   tableProcesses: QProcessMetaData[];
+   bulkLoadClicked: () => void;
+   bulkEditClicked: () => void;
+   bulkDeleteClicked: () => void;
+   processClicked: (process: QProcessMetaData) => void;
+}
+
+QueryScreenActionMenu.defaultProps = {
+};
+
+export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
+{
+   const [anchorElement, setAnchorElement] = useState(null)
+
+   const navigate = useNavigate();
+
+   const openActionsMenu = (event: any) =>
+   {
+      setAnchorElement(event.currentTarget);
+   }
+
+   const closeActionsMenu = () =>
+   {
+      setAnchorElement(null);
+   }
+
+   const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
+   {
+      if (menuItems.length > 0)
+      {
+         menuItems.push(<Divider key="divider" />);
+      }
+   };
+
+   const runSomething = (handler: () => void) =>
+   {
+      closeActionsMenu();
+      handler();
+   }
+
+   const menuItems: JSX.Element[] = [];
+   if (tableMetaData.capabilities.has(Capability.TABLE_INSERT) && tableMetaData.insertPermission)
+   {
+      menuItems.push(<MenuItem key="bulkLoad" onClick={() => runSomething(bulkLoadClicked)}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
+   }
+   if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission)
+   {
+      menuItems.push(<MenuItem key="bulkEdit" onClick={() => runSomething(bulkEditClicked)}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
+   }
+   if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission)
+   {
+      menuItems.push(<MenuItem key="bulkDelete" onClick={() => runSomething(bulkDeleteClicked)}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
+   }
+
+   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
+   if (runRecordScriptProcess)
+   {
+      const process = runRecordScriptProcess;
+      menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+   }
+
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableMetaData.name)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+
+   if (tableProcesses && tableProcesses.length)
+   {
+      pushDividerIfNeeded(menuItems);
+   }
+
+   tableProcesses.sort((a, b) => a.label.localeCompare(b.label));
+   tableProcesses.map((process) =>
+   {
+      menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+   });
+
+   if (menuItems.length === 0)
+   {
+      menuItems.push(<MenuItem key="notAvaialableNow" disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>);
+   }
+
+   return (
+      <>
+         <QActionsMenuButton isOpen={anchorElement} onClickHandler={openActionsMenu} />
+         <Menu
+            anchorEl={anchorElement}
+            anchorOrigin={{vertical: "bottom", horizontal: "right",}}
+            transformOrigin={{vertical: "top", horizontal: "right",}}
+            open={anchorElement != null}
+            onClose={closeActionsMenu}
+            keepMounted
+         >
+            {menuItems}
+         </Menu>
+      </>
+   )
+}
