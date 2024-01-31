@@ -282,6 +282,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    {
       try
       {
+         if(!savedView.queryColumns || !savedView.queryColumns.columns || savedView.queryColumns.columns.length == 0)
+         {
+            viewDiffs.push("This view did not previously have columns saved with it, so the next time you save it they will be initialized.");
+            return;
+         }
+
          ////////////////////////////////////////////////////////////
          // nested function to help diff visible status of columns //
          ////////////////////////////////////////////////////////////
@@ -390,7 +396,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
 
          if(savedView.queryColumns.columns.map(c => c.name).join(",") != activeView.queryColumns.columns.map(c => c.name).join(","))
          {
-            viewDiffs.push("Changed the order of 1 or more columns.");
+            viewDiffs.push("Changed the order columns.");
          }
 
          diffWidthsFunction(savedView.queryColumns, activeView.queryColumns, "Changed width for ");
@@ -452,12 +458,26 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
 
       if(savedView.mode != activeView.mode)
       {
-         viewDiffs.push(`Mode changed from ${savedView.mode} to ${activeView.mode}`)
+         if(savedView.mode)
+         {
+            viewDiffs.push(`Mode changed from ${savedView.mode} to ${activeView.mode}`)
+         }
+         else
+         {
+            viewDiffs.push(`Mode set to ${activeView.mode}`)
+         }
       }
 
       if(savedView.rowsPerPage != activeView.rowsPerPage)
       {
-         viewDiffs.push(`Rows per page changed from ${savedView.rowsPerPage} to ${activeView.rowsPerPage}`)
+         if(savedView.rowsPerPage)
+         {
+            viewDiffs.push(`Rows per page changed from ${savedView.rowsPerPage} to ${activeView.rowsPerPage}`)
+         }
+         else
+         {
+            viewDiffs.push(`Rows per page set to ${activeView.rowsPerPage}`)
+         }
       }
 
       if(viewDiffs.length > 0)

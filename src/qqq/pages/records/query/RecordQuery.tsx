@@ -600,39 +600,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                doSetCurrentSavedView(null);
             }
          }
-
-         //... if (currentSavedViewId != null)
-         //... {
-         //...    /* hmm...
-         //...    if(currentSavedView && currentSavedView.values.get("id") == currentSavedViewId)
-         //...    {
-         //...       console.log("@dk - mmm, current saved filter is already the one we're trying to go to, so, avoid double-dipping...");
-         //...    }
-         //...    else
-         //...    */
-         //...    {
-         //...       console.log("@dk - have saved filter in url, going to query it now.");
-         //...       (async () =>
-         //...       {
-         //...          const formData = new FormData();
-         //...          formData.append("id", currentSavedViewId);
-         //...          formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
-         //...          const processResult = await qController.processInit("querySavedView", formData, qController.defaultMultipartFormDataHeaders());
-         //...          if (processResult instanceof QJobError)
-         //...          {
-         //...             const jobError = processResult as QJobError;
-         //...             console.error("Could not retrieve saved filter: " + jobError.userFacingError);
-         //...          }
-         //...          else
-         //...          {
-         //...             const result = processResult as QJobComplete;
-         //...             const qRecord = new QRecord(result.values.savedViewList[0]);
-         //...             console.log("@dk - got saved filter from backend, going to set it now");
-         //...             doSetCurrentSavedView(qRecord);
-         //...          }
-         //...       })();
-         //...    }
-         //... }
       }
       catch (e)
       {
@@ -755,7 +722,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          return;
       }
 
-      console.log(`@dk In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
+      console.log(`In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
       setLoading(true);
       setRows([]);
       (async () =>
@@ -1155,7 +1122,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const doSetQueryFilter = (queryFilter: QQueryFilter, isFromActivateView = false): void =>
    {
-      console.log(`@dk Setting a new query filter: ${JSON.stringify(queryFilter)}`);
+      console.log(`Setting a new query filter: ${JSON.stringify(queryFilter)}`);
 
       ///////////////////////////////////////////////////
       // in case there's no orderBys, set default here //
@@ -1449,6 +1416,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             const viewJson = savedView.values.get("viewJson")
             const newView = RecordQueryView.buildFromJSON(viewJson);
             newView.viewIdentity = "savedView:" + savedView.values.get("id");
+
+            ///////////////////////////////////////////////////////////////////
+            // e.g., translate possible values from ids to objects w/ labels //
+            ///////////////////////////////////////////////////////////////////
+            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, newView.queryFilter);
+
             activateView(newView);
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2006,7 +1979,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ////////////////////////////////////////////////////////////
    if (pageState == "initial")
    {
-      console.log("@dk - page state is initial - going to loadingMetaData...");
+      console.log("page state is initial - going to loadingMetaData...");
       setPageState("loadingMetaData");
       pageLoadingState.setLoading();
 
@@ -2037,7 +2010,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    if (pageState == "loadedMetaData")
    {
-      console.log("@dk - page state is loadedMetaData - going to loadingView...");
+      console.log("page state is loadedMetaData - going to loadingView...");
       setPageState("loadingView");
 
       (async () =>
@@ -2137,7 +2110,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    //////////////////////////////////////////////////////////////////////////////////////////////
    if (pageState == "loadedView")
    {
-      console.log("@dk - page state is loadedView - going to preparingGrid...");
+      console.log("page state is loadedView - going to preparingGrid...");
       setPageState("preparingGrid");
 
       (async () =>
@@ -2191,10 +2164,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
          */
 
-         console.log("@dk - finished preparing grid, going to page state ready");
+         console.log("finished preparing grid, going to page state ready");
          setPageState("ready");
 
-         // todo - is this sufficient?
+         ////////////////////////////////////////////
+         // if we need a variant, show that prompt //
+         ////////////////////////////////////////////
          if (tableMetaData?.usesVariants && !tableVariant)
          {
             promptForTableVariantSelection();
@@ -2277,7 +2252,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////
    if(pageState != "ready")
    {
-      console.log(`@dk - page state is ${pageState}... no-op while those complete async's run...`);
+      console.log(`page state is ${pageState}... no-op while those complete async's run...`);
       return (getLoadingScreen());
    }
 

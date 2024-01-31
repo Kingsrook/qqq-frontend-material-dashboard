@@ -350,7 +350,6 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                if(criteria && criteria.fieldName && criteria.operator)
                {
                   const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
-                  const valuesString = FilterUtils.getValuesString(field, criteria);
                   counter++;
 
                   return (

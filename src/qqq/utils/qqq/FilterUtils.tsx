@@ -311,7 +311,7 @@ class FilterUtils
    public static getValuesString(fieldMetaData: QFieldMetaData, criteria: QFilterCriteria, maxValuesToShow: number = 3): string
    {
       let valuesString = "";
-      if (criteria.values && criteria.values.length && fieldMetaData.type !== QFieldType.BOOLEAN)
+      if (criteria.values && criteria.values.length)
       {
          let labels = [] as string[];
 
@@ -323,7 +323,11 @@ class FilterUtils
 
          for (let i = 0; i < maxLoops; i++)
          {
-            if (criteria.values[i] && criteria.values[i].label)
+            if(fieldMetaData.type == QFieldType.BOOLEAN)
+            {
+               labels.push(criteria.values[i] == true ? "yes" : "no")
+            }
+            else if (criteria.values[i] && criteria.values[i].label)
             {
                labels.push(criteria.values[i].label);
             }

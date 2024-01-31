@@ -383,8 +383,17 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       buttonAdditionalStyles.color = "white !important";
       buttonClassName = "filterActive";
 
+      let valuesString = FilterUtils.getValuesString(fieldMetaData, criteria);
+      if(fieldMetaData.type == QFieldType.BOOLEAN)
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // for booleans, in here, the operator-label is "equals yes" or "equals no", so we don't want the values string //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         valuesString = "";
+      }
+
       buttonContent = (
-         <Tooltip title={`${operatorSelectedValue.label} ${FilterUtils.getValuesString(fieldMetaData, criteria)}`} enterDelay={tooltipEnterDelay}>
+         <Tooltip title={`${operatorSelectedValue.label} ${valuesString}`} enterDelay={tooltipEnterDelay}>
             {buttonContent}
          </Tooltip>
       );
