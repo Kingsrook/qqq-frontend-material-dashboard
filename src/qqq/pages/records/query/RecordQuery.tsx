@@ -78,7 +78,6 @@ import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
 const CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedViewId";
-const SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT = "qqq.seenJoinTables";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 const VIEW_LOCAL_STORAGE_KEY_ROOT = "qqq.recordQueryView";
 
@@ -159,7 +158,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // look for defaults in the local storage //
    ////////////////////////////////////////////
    const currentSavedViewLocalStorageKey = `${CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
-   const seenJoinTablesLocalStorageKey = `${SEEN_JOIN_TABLES_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const viewLocalStorageKey = `${VIEW_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
 
@@ -167,10 +165,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // define some default values (e.g., to be used if nothing in local storage or no active view) //
    /////////////////////////////////////////////////////////////////////////////////////////////////
    let defaultSort = [] as GridSortItem[];
-   let didDefaultVisibilityComeFromLocalStorage = false;
    let defaultRowsPerPage = 10;
    let defaultDensity = "standard" as GridDensity;
-   let seenJoinTables: {[tableName: string]: boolean} = {};
    let defaultTableVariant: QTableVariant = null;
    let defaultMode = "basic";
    let defaultQueryColumns: QQueryColumns = new PreLoadQueryColumns();
@@ -187,10 +183,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       if (localStorage.getItem(densityLocalStorageKey))
       {
          defaultDensity = JSON.parse(localStorage.getItem(densityLocalStorageKey));
-      }
-      if (localStorage.getItem(seenJoinTablesLocalStorageKey))
-      {
-         seenJoinTables = JSON.parse(localStorage.getItem(seenJoinTablesLocalStorageKey));
       }
       if (localStorage.getItem(tableVariantLocalStorageKey))
       {
@@ -719,6 +711,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if(pageState != "ready")
       {
+         console.log(`In updateTable, but pageSate[${pageState}] is not ready, so returning with noop`);
+         return;
+      }
+
+      if(tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
+      {
+         console.log("In updateTable, but a variant is needed, so returning with noop");
          return;
       }
 

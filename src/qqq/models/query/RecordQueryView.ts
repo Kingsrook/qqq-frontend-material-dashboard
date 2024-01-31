@@ -21,6 +21,7 @@
 
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import QQueryColumns, {PreLoadQueryColumns} from "qqq/models/query/QQueryColumns";
+import FilterUtils from "qqq/utils/qqq/FilterUtils";
 
 
 /*******************************************************************************
@@ -61,6 +62,23 @@ export default class RecordQueryView
       }
 
       view.queryFilter = json.queryFilter as QQueryFilter;
+
+      //////////////////////////////////////////////////////////////////////////////////////////
+      // it's important that some criteria values exist as expression objects - so - do that. //
+      //////////////////////////////////////////////////////////////////////////////////////////
+      for (let i = 0; i < view.queryFilter?.criteria?.length; i++)
+      {
+         const criteria = view.queryFilter.criteria[i]
+         for (let j = 0; j < criteria?.values?.length; j++)
+         {
+            const value = criteria.values[j];
+            const expression = FilterUtils.gridCriteriaValueToExpression(value);
+            if(expression)
+            {
+               criteria.values[j] = expression;
+            }
+         }
+      }
 
       if(json.queryColumns)
       {

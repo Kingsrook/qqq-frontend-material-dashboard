@@ -347,7 +347,8 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          <span>
             {queryFilter.criteria.map((criteria, i) =>
             {
-               if(criteria && criteria.fieldName && criteria.operator)
+               const {criteriaIsValid} = validateCriteria(criteria, null);
+               if(criteriaIsValid)
                {
                   const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
                   counter++;

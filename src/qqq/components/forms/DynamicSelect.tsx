@@ -321,9 +321,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
             {
                setOpen(false);
             }}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            isOptionEqualToValue={(option, value) => value !== null && value !== undefined && option.id === value.id}
             getOptionLabel={(option) =>
             {
+               if(option === null || option === undefined)
+               {
+                  return ("");
+               }
+
                // @ts-ignore
                if(option && option.length)
                {

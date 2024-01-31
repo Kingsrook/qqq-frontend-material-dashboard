@@ -47,7 +47,6 @@ import FormData from "form-data";
 import React, {useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {QCancelButton, QDeleteButton, QSaveButton, QSavedViewsMenuButton} from "qqq/components/buttons/DefaultButtons";
-import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import QQueryColumns from "qqq/models/query/QQueryColumns";
 import RecordQueryView from "qqq/models/query/RecordQueryView";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
@@ -390,8 +389,8 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
             }
          };
 
-         diffVisibilityFunction(savedView.queryColumns, activeView.queryColumns, "Turned on visibility for ");
-         diffVisibilityFunction(activeView.queryColumns, savedView.queryColumns, "Turned off visibility for ");
+         diffVisibilityFunction(savedView.queryColumns, activeView.queryColumns, "Turned on ");
+         diffVisibilityFunction(activeView.queryColumns, savedView.queryColumns, "Turned off ");
          diffPinsFunction(savedView.queryColumns, activeView.queryColumns, "Changed pinned state for ");
 
          if(savedView.queryColumns.columns.map(c => c.name).join(",") != activeView.queryColumns.columns.map(c => c.name).join(","))

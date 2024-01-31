@@ -53,6 +53,27 @@ export enum ValueMode
    PVS_MULTI = "PVS_MULTI",
 }
 
+const getValueModeRequiredCount = (valueMode: ValueMode): number =>
+{
+   switch (valueMode)
+   {
+      case ValueMode.NONE:
+         return (0);
+      case ValueMode.SINGLE:
+      case ValueMode.SINGLE_DATE:
+      case ValueMode.SINGLE_DATE_TIME:
+      case ValueMode.PVS_SINGLE:
+         return (1);
+      case ValueMode.DOUBLE:
+      case ValueMode.DOUBLE_DATE:
+      case ValueMode.DOUBLE_DATE_TIME:
+         return (2);
+      case ValueMode.MULTI:
+      case ValueMode.PVS_MULTI:
+         return (null);
+   }
+}
+
 export interface OperatorOption
 {
    label: string;
@@ -366,6 +387,24 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          if(newValue.implicitValues)
          {
             criteria.values = newValue.implicitValues;
+         }
+
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // we've seen cases where switching operators can sometimes put a null in as the first value... //
+         // that just causes a bad time (e.g., null pointers in Autocomplete), so, get rid of that.      //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         if(criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
+         {
+            criteria.values = [];
+         }
+
+         if(newValue.valueMode)
+         {
+            const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
+            if(requiredValueCount != null && criteria.values.length > requiredValueCount)
+            {
+               criteria.values.splice(requiredValueCount);
+            }
          }
       }
       else
