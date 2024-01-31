@@ -189,7 +189,7 @@ class FilterUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   private static gridCriteriaValueToExpression(value: any)
+   public static gridCriteriaValueToExpression(value: any)
    {
       if (value && value.length)
       {
@@ -311,6 +311,15 @@ class FilterUtils
    public static getValuesString(fieldMetaData: QFieldMetaData, criteria: QFilterCriteria, maxValuesToShow: number = 3): string
    {
       let valuesString = "";
+
+      if(criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+      {
+         ///////////////////////////////////////////////
+         // we don't want values for these operators. //
+         ///////////////////////////////////////////////
+         return valuesString;
+      }
+
       if (criteria.values && criteria.values.length)
       {
          let labels = [] as string[];
@@ -323,17 +332,41 @@ class FilterUtils
 
          for (let i = 0; i < maxLoops; i++)
          {
-            if(fieldMetaData.type == QFieldType.BOOLEAN)
+            const value = criteria.values[i];
+            if (value.type == "NowWithOffset")
             {
-               labels.push(criteria.values[i] == true ? "yes" : "no")
+               const expression = new NowWithOffsetExpression(value);
+               labels.push(expression.toString());
             }
-            else if (criteria.values[i] && criteria.values[i].label)
+            else if (value.type == "Now")
             {
-               labels.push(criteria.values[i].label);
+               const expression = new NowExpression(value);
+               labels.push(expression.toString());
+            }
+            else if (value.type == "ThisOrLastPeriod")
+            {
+               const expression = new ThisOrLastPeriodExpression(value);
+               labels.push(expression.toString());
+            }
+            else if(fieldMetaData.type == QFieldType.BOOLEAN)
+            {
+               labels.push(value == true ? "yes" : "no")
+            }
+            else if(fieldMetaData.type == QFieldType.DATE_TIME)
+            {
+               labels.push(ValueUtils.formatDateTime(value));
+            }
+            else if(fieldMetaData.type == QFieldType.DATE)
+            {
+               labels.push(ValueUtils.formatDate(value));
+            }
+            else if (value && value.label)
+            {
+               labels.push(value.label);
             }
             else
             {
-               labels.push(criteria.values[i]);
+               labels.push(value);
             }
          }
 
@@ -395,12 +428,15 @@ class FilterUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static operatorToHumanString(criteria: QFilterCriteria): string
+   public static operatorToHumanString(criteria: QFilterCriteria, field: QFieldMetaData): string
    {
       if(criteria == null || criteria.operator == null)
       {
          return (null);
       }
+
+      const isDate = field.type == QFieldType.DATE;
+      const isDateTime = field.type == QFieldType.DATE_TIME;
 
       try
       {
@@ -428,17 +464,41 @@ class FilterUtils
             case QCriteriaOperator.NOT_CONTAINS:
                return ("does not contain");
             case QCriteriaOperator.LESS_THAN:
+               if(isDate || isDateTime)
+               {
+                  return ("is before")
+               }
                return ("less than");
             case QCriteriaOperator.LESS_THAN_OR_EQUALS:
+               if(isDate)
+               {
+                  return ("is on or before")
+               }
+               if(isDateTime)
+               {
+                  return ("is at or before")
+               }
                return ("less than or equals");
             case QCriteriaOperator.GREATER_THAN:
+               if(isDate || isDateTime)
+               {
+                  return ("is after")
+               }
                return ("greater than or equals");
             case QCriteriaOperator.GREATER_THAN_OR_EQUALS:
+               if(isDate)
+               {
+                  return ("is on or after")
+               }
+               if(isDateTime)
+               {
+                  return ("is at or after")
+               }
                return ("greater than or equals");
             case QCriteriaOperator.IS_BLANK:
-               return ("is blank");
+               return ("is empty");
             case QCriteriaOperator.IS_NOT_BLANK:
-               return ("is not blank");
+               return ("is not empty");
             case QCriteriaOperator.BETWEEN:
                return ("is between");
             case QCriteriaOperator.NOT_BETWEEN:
@@ -470,12 +530,12 @@ class FilterUtils
       if(styled)
       {
          return (<>
-            <b>{fieldLabel}</b> {FilterUtils.operatorToHumanString(criteria)} <span style={{color: "#0062FF"}}>{valuesString}</span>&nbsp;
+            <b>{fieldLabel}</b> {FilterUtils.operatorToHumanString(criteria, field)} <span style={{color: "#0062FF"}}>{valuesString}</span>&nbsp;
          </>);
       }
       else
       {
-         return (`${fieldLabel} ${FilterUtils.operatorToHumanString(criteria)} ${valuesString}`);
+         return (`${fieldLabel} ${FilterUtils.operatorToHumanString(criteria, field)} ${valuesString}`);
       }
    }
 
