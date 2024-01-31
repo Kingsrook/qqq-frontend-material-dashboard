@@ -21,6 +21,7 @@
 
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
@@ -145,6 +146,11 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
 
             const rows = DataGridUtils.makeRows(valueCounts, fakeTableMetaData);
             const columns = DataGridUtils.setupGridColumns(fakeTableMetaData, null, null, "bySection");
+
+            if(fieldMetaData.type == QFieldType.DATE_TIME)
+            {
+               columns[0].headerName = fieldMetaData.label + " (grouped by hour)"
+            }
 
             columns.forEach((c) =>
             {
