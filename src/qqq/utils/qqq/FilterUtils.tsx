@@ -129,17 +129,27 @@ class FilterUtils
             }
          }
 
-         //////////////////////////////////////////////////////////////////////////
-         // replace objects that look like expressions with expression instances //
-         //////////////////////////////////////////////////////////////////////////
          if (values && values.length)
          {
             for (let i = 0; i < values.length; i++)
             {
+               //////////////////////////////////////////////////////////////////////////
+               // replace objects that look like expressions with expression instances //
+               //////////////////////////////////////////////////////////////////////////
                const expression = this.gridCriteriaValueToExpression(values[i]);
                if (expression)
                {
                   values[i] = expression;
+               }
+               else
+               {
+                  ///////////////////////////////////////////
+                  // make date-times work for the frontend //
+                  ///////////////////////////////////////////
+                  if (field.type == QFieldType.DATE_TIME)
+                  {
+                     values[i] = ValueUtils.formatDateTimeValueForForm(values[i]);
+                  }
                }
             }
          }

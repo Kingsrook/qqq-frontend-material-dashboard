@@ -104,7 +104,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          {
             setSavedViewsHaveLoaded(true);
          });
-   }, [location, tableMetaData, currentSavedView, view]) // todo#elimGrid does this monitoring work??
+   }, [location, tableMetaData])
 
 
    /*******************************************************************************
@@ -586,11 +586,11 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          {
             formData.append("tableName", tableMetaData.name);
 
-            ////////////////////////////////////////////////////////////////////////////////////////////////////
-            // clone view via json serialization/deserialization                                              //
-            // then replace the queryFilter in it with a copy that has had its possible values changed to ids //
-            // then stringify that for the backend                                                            //
-            ////////////////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////////
+            // clone view via json serialization/deserialization                                           //
+            // then replace the viewJson in it with a copy that has had its possible values changed to ids //
+            // then stringify that for the backend                                                         //
+            /////////////////////////////////////////////////////////////////////////////////////////////////
             const viewObject = JSON.parse(JSON.stringify(view));
             viewObject.queryFilter = JSON.parse(JSON.stringify(FilterUtils.convertFilterPossibleValuesToIds(viewObject.queryFilter)));
             formData.append("viewJson", JSON.stringify(viewObject));

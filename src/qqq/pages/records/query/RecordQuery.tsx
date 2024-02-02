@@ -132,6 +132,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
    const [firstRender, setFirstRender] = useState(true);
+   const [isFirstRenderAfterChangingTables, setIsFirstRenderAfterChangingTables] = useState(false);
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // manage "state" being passed from some screens (like delete) into query screen - by grabbing, and then deleting //
@@ -180,6 +181,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // only load things out of local storage on the first render
    if(firstRender)
    {
+      console.log("This is firstRender, so reading defaults from local storage...");
       if (localStorage.getItem(densityLocalStorageKey))
       {
          defaultDensity = JSON.parse(localStorage.getItem(densityLocalStorageKey));
@@ -192,6 +194,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          defaultView = RecordQueryView.buildFromJSON(localStorage.getItem(viewLocalStorageKey));
       }
+
+      setFirstRender(false);
    }
 
    if(defaultView == null)
@@ -279,7 +283,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [tableVariantPromptOpen, setTableVariantPromptOpen] = useState(false);
    const [alertContent, setAlertContent] = useState("");
    const [currentSavedView, setCurrentSavedView] = useState(null as QRecord);
-   const [filterIdInLocation, setFilterIdInLocation] = useState(null as number);
+   const [viewIdInLocation, setViewIdInLocation] = useState(null as number);
    const [loadingSavedView, setLoadingSavedView] = useState(false);
 
    /////////////////////////////////////////////////////
@@ -349,6 +353,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // add a LoadingState object, in case the initial loads (of meta data and view) are slow //
    ///////////////////////////////////////////////////////////////////////////////////////////
    const [pageLoadingState, _] = useState(new LoadingState(forceUpdate))
+
+   if(isFirstRenderAfterChangingTables)
+   {
+      setIsFirstRenderAfterChangingTables(false);
+
+      console.log("This is the first render after changing tables - so - setting state based on 'defaults' from localStorage");
+      setView(defaultView)
+   }
 
    /*******************************************************************************
     ** utility function to get the names of any join tables which are active,
@@ -526,50 +538,32 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess])
 
-   /////////////////////////////////////////////////////////////////////////////////////////
-   // monitor location changes - if our url looks like a process, then open that process. //
-   /////////////////////////////////////////////////////////////////////////////////////////
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const urlLooksLikeProcess = (): boolean =>
+   {
+      return (pathParts[pathParts.length - 2] === tableName);
+   }
+
+   //////////////////////////////////////////////////////////////////////////////////////////////
+   // monitor location changes - if our url looks like a savedView, then load that view, kinda //
+   //////////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
       try
       {
          /////////////////////////////////////////////////////////////////
-         // the path for a process looks like: .../table/process        //
-         // so if our tableName is in the -2 index, try to open process //
-         /////////////////////////////////////////////////////////////////
-         if (pathParts[pathParts.length - 2] === tableName)
-         {
-            const processName = pathParts[pathParts.length - 1];
-            const processList = allTableProcesses.filter(p => p.name == processName);
-            if (processList.length > 0)
-            {
-               setActiveModalProcess(processList[0]);
-               return;
-            }
-            else if (metaData?.processes.has(processName))
-            {
-               ///////////////////////////////////////////////////////////////////////////////////////
-               // check for generic processes - should this be a specific attribute on the process? //
-               ///////////////////////////////////////////////////////////////////////////////////////
-               setActiveModalProcess(metaData?.processes.get(processName));
-               return;
-            }
-            else
-            {
-               console.log(`Couldn't find process named ${processName}`);
-            }
-         }
-
-         /////////////////////////////////////////////////////////////////////
          // the path for a savedView looks like: .../table/savedView/32 //
-         // so if path has '/savedView/' get last parsed string           //
-         /////////////////////////////////////////////////////////////////////
+         // so if path has '/savedView/' get last parsed string         //
+         /////////////////////////////////////////////////////////////////
          let currentSavedViewId = null as number;
          if (location.pathname.indexOf("/savedView/") != -1)
          {
             const parts = location.pathname.split("/");
             currentSavedViewId = Number.parseInt(parts[parts.length - 1]);
-            setFilterIdInLocation(currentSavedViewId);
+            setViewIdInLocation(currentSavedViewId);
 
             /////////////////////////////////////////////////////////////////////////////////////////////
             // in case page-state has already advanced to "ready" (e.g., and we're dealing with a user //
@@ -597,13 +591,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          console.log(e);
       }
-
-      ////////////////////////////////////////////////////////////////////////////////////
-      // if we didn't open a process... not sure what we do in the table/query use-case //
-      ////////////////////////////////////////////////////////////////////////////////////
-      setActiveModalProcess(null);
-
-   }, [location, tableMetaData]);
+   }, [location]);
 
    /*******************************************************************************
     **
@@ -665,6 +653,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setTableVariantPromptOpen(true);
    }
+
 
    /*******************************************************************************
     **
@@ -1137,7 +1126,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////////////////////////////////
       // propagate filter's orderBy into grid's sort model //
       ///////////////////////////////////////////////////////
-      const gridSort = FilterUtils.getGridSortFromQueryFilter(view.queryFilter);
+      const gridSort = FilterUtils.getGridSortFromQueryFilter(queryFilter);
       setColumnSortModel(gridSort);
 
       ///////////////////////////////////////////////
@@ -1404,22 +1393,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     ** wrapper around setting current saved view (as a QRecord) - which also activates
     ** that view.
     *******************************************************************************/
-   const doSetCurrentSavedView = (savedView: QRecord) =>
+   const doSetCurrentSavedView = (savedViewRecord: QRecord) =>
    {
-      setCurrentSavedView(savedView);
+      setCurrentSavedView(savedViewRecord);
 
-      if(savedView)
+      if(savedViewRecord)
       {
          (async () =>
          {
-            const viewJson = savedView.values.get("viewJson")
+            const viewJson = savedViewRecord.values.get("viewJson")
             const newView = RecordQueryView.buildFromJSON(viewJson);
-            newView.viewIdentity = "savedView:" + savedView.values.get("id");
-
-            ///////////////////////////////////////////////////////////////////
-            // e.g., translate possible values from ids to objects w/ labels //
-            ///////////////////////////////////////////////////////////////////
-            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, newView.queryFilter);
 
             activateView(newView);
 
@@ -1431,7 +1414,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             ////////////////////////////////////////////////////////////////
             // todo can/should/does this move into the view's "identity"? //
             ////////////////////////////////////////////////////////////////
-            localStorage.setItem(currentSavedViewLocalStorageKey, `${savedView.values.get("id")}`);
+            localStorage.setItem(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
          })()
       }
       else
@@ -1488,11 +1471,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /*******************************************************************************
     ** utility function to fetch a saved view from the backend.
     *******************************************************************************/
-   const fetchSavedView = async (filterId: number): Promise<QRecord> =>
+   const fetchSavedView = async (id: number): Promise<QRecord> =>
    {
       let qRecord = null;
       const formData = new FormData();
-      formData.append("id", filterId);
+      formData.append("id", id);
       formData.append(QController.STEP_TIMEOUT_MILLIS_PARAM_NAME, 60 * 1000);
       const processResult = await qController.processInit("querySavedView", formData, qController.defaultMultipartFormDataHeaders());
       if (processResult instanceof QJobError)
@@ -1504,9 +1487,70 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          const result = processResult as QJobComplete;
          qRecord = new QRecord(result.values.savedViewList[0]);
+
+         //////////////////////////////////////////////////////////////////////////////
+         // make the view json a good and healthy object for the UI here.            //
+         // such as, making values be what they'd be in the UI (not necessarily      //
+         // what they're like in the backend); similarly, set anything that's unset. //
+         //////////////////////////////////////////////////////////////////////////////
+         const viewJson = qRecord.values.get("viewJson")
+         const view = RecordQueryView.buildFromJSON(viewJson);
+         view.viewIdentity = "savedView:" + id;
+
+         ///////////////////////////////////////////////////////////////////
+         // e.g., translate possible values from ids to objects w/ labels //
+         ///////////////////////////////////////////////////////////////////
+         await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, view.queryFilter);
+
+         ///////////////////////////
+         // set columns if absent //
+         ///////////////////////////
+         if(!view.queryColumns || !view.queryColumns.columns || view.queryColumns.columns?.length == 0)
+         {
+            view.queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
+         }
+
+         qRecord.values.set("viewJson", JSON.stringify(view))
       }
 
       return (qRecord);
+   }
+
+
+   /*******************************************************************************
+    ** event handler for selecting 'filter' action from columns menu in advanced mode.
+    *******************************************************************************/
+   const handleColumnMenuAdvancedFilterSelection = (fieldName: string) =>
+   {
+      const newCriteria = new QFilterCriteria(fieldName, null, []);
+
+      if(!queryFilter.criteria)
+      {
+         queryFilter.criteria = [];
+      }
+
+      const length = queryFilter.criteria.length;
+      if (length > 0 && !queryFilter.criteria[length - 1].fieldName)
+      {
+         /////////////////////////////////////////////////////////////////////////////////
+         // if the last criteria in the filter has no field name (e.g., a default state //
+         // when there's 1 criteria that's all blank - may happen other times too?),    //
+         // then replace that criteria with a new one for this field.                   //
+         /////////////////////////////////////////////////////////////////////////////////
+         queryFilter.criteria[length - 1] = newCriteria;
+      }
+      else
+      {
+         //////////////////////////////////////////////////////////////////////
+         // else, add a new criteria for this field onto the end of the list //
+         //////////////////////////////////////////////////////////////////////
+         queryFilter.criteria.push(newCriteria);
+      }
+
+      ///////////////////////////
+      // open the filter panel //
+      ///////////////////////////
+      gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters)
    }
 
 
@@ -1550,7 +1594,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const openColumnStatistics = async (column: GridColDef) =>
    {
-      setFilterForColumnStats(queryFilter);
+      setFilterForColumnStats(prepQueryFilterForBackend(queryFilter));
       setColumnStatsFieldName(column.field);
 
       const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, column.field);
@@ -1598,26 +1642,21 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             <GridColumnMenuContainer ref={ref} {...props}>
                <SortGridMenuItems onClick={hideMenu} column={currentColumn!} />
 
+               <MenuItem onClick={(e) =>
                {
-                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // in advanced mode, use the default GridFilterMenuItem, which punches into the advanced/filter-builder UI //
-                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  mode == "advanced" && <GridFilterMenuItem onClick={hideMenu} column={currentColumn!} />
-               }
-
-               {
-                  ///////////////////////////////////////////////////////////////////////////////////
-                  // for basic mode, use our own menu item to turn on this field as a quick-filter //
-                  ///////////////////////////////////////////////////////////////////////////////////
-                  mode == "basic" && <MenuItem onClick={(e) =>
+                  hideMenu(e);
+                  if(mode == "advanced")
                   {
-                     hideMenu(e);
+                     handleColumnMenuAdvancedFilterSelection(currentColumn.field);
+                  }
+                  else
+                  {
                      // @ts-ignore
                      basicAndAdvancedQueryControlsRef.current.addField(currentColumn.field);
-                  }}>
-                     Filter
-                  </MenuItem>
-               }
+                  }
+               }}>
+                  Filter
+               </MenuItem>
 
                <HideGridColMenuItem onClick={hideMenu} column={currentColumn!} />
                <GridColumnsMenuItem onClick={hideMenu} column={currentColumn!} />
@@ -1662,29 +1701,32 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const CustomColumnHeaderFilterIconButton = forwardRef<any, ColumnHeaderFilterIconButtonProps>(
       function ColumnHeaderFilterIconButton(props: ColumnHeaderFilterIconButtonProps, ref)
       {
-         if(mode == "basic")
+         let showFilter = false;
+         for (let i = 0; i < queryFilter?.criteria?.length; i++)
          {
-            let showFilter = false;
-            for (let i = 0; i < queryFilter?.criteria?.length; i++)
+            const criteria = queryFilter.criteria[i];
+            if(criteria.fieldName == props.field && validateCriteria(criteria, null).criteriaIsValid)
             {
-               const criteria = queryFilter.criteria[i];
-               if(criteria.fieldName == props.field && criteria.operator)
-               {
-                  // todo - test values too right?
-                  showFilter = true;
-               }
+               showFilter = true;
             }
+         }
 
-            if(showFilter)
+         if(showFilter)
+         {
+            return (<IconButton size="small" sx={{p: "2px"}} onClick={(event) =>
             {
-               return (<IconButton size="small" sx={{p: "2px"}} onClick={(event) =>
+               if(mode == "basic")
                {
                   // @ts-ignore !?
                   basicAndAdvancedQueryControlsRef.current.addField(props.field);
+               }
+               else
+               {
+                  gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters)
+               }
 
-                  event.stopPropagation();
-               }}><Icon fontSize="small">filter_alt</Icon></IconButton>);
-            }
+               event.stopPropagation();
+            }}><Icon fontSize="small">filter_alt</Icon></IconButton>);
          }
 
          return (<></>);
@@ -1815,7 +1857,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             totalRecords: totalRecords,
             columnsModel: columnsModel,
             columnVisibilityModel: columnVisibilityModel,
-            queryFilter: queryFilter
+            queryFilter: prepQueryFilterForBackend(queryFilter)
          }
 
       return (
@@ -2014,6 +2056,41 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       (async () =>
       {
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         // once we've loaded meta data, let's check the location to see if we should open a process //
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         try
+         {
+            /////////////////////////////////////////////////////////////////
+            // the path for a process looks like: .../table/process        //
+            // so if our tableName is in the -2 index, try to open process //
+            /////////////////////////////////////////////////////////////////
+            if (pathParts[pathParts.length - 2] === tableName)
+            {
+               const processName = pathParts[pathParts.length - 1];
+               const processList = allTableProcesses.filter(p => p.name == processName);
+               if (processList.length > 0)
+               {
+                  setActiveModalProcess(processList[0]);
+               }
+               else if (metaData?.processes.has(processName))
+               {
+                  ///////////////////////////////////////////////////////////////////////////////////////
+                  // check for generic processes - should this be a specific attribute on the process? //
+                  ///////////////////////////////////////////////////////////////////////////////////////
+                  setActiveModalProcess(metaData?.processes.get(processName));
+               }
+               else
+               {
+                  console.log(`Couldn't find process named ${processName}`);
+               }
+            }
+         }
+         catch (e)
+         {
+            console.log(e);
+         }
+
          if (searchParams && searchParams.has("filter"))
          {
             //////////////////////////////////////////////////////////////////////////////////////
@@ -2063,9 +2140,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                setAlertContent("Error parsing filter from URL");
             }
          }
-         else if (filterIdInLocation)
+         else if (viewIdInLocation)
          {
-            if(view.viewIdentity == `savedView:${filterIdInLocation}`)
+            if(view.viewIdentity == `savedView:${viewIdInLocation}`)
             {
                /////////////////////////////////////////////////////////////////////////////////////////////////
                // if the view id in the location is the same as the view that was most-recently active here,  //
@@ -2073,14 +2150,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                // we want to keep their current settings as the active view - thus - use the current 'view'   //
                // state variable (e.g., from local storage) as the view to be activated.                      //
                /////////////////////////////////////////////////////////////////////////////////////////////////
-               console.log(`Initializing view to a (potentially dirty) saved view (id=${filterIdInLocation})`);
+               console.log(`Initializing view to a (potentially dirty) saved view (id=${viewIdInLocation})`);
                activateView(view);
 
                /////////////////////////////////////////////////////////////////////////////////////////////////////////
                // now fetch that savedView, and set it in state, but don't activate it - because that would overwrite //
                // anything the user may have changed (e.g., anything in the local-storage/state view).                //
                /////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const savedViewRecord = await fetchSavedView(filterIdInLocation);
+               const savedViewRecord = await fetchSavedView(viewIdInLocation);
                setCurrentSavedView(savedViewRecord);
             }
             else
@@ -2088,12 +2165,32 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                // if there's a filterId in the location, but it isn't the last one the user had active, then set that as our active view //
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               console.log(`Initializing view to a clean saved view (id=${filterIdInLocation})`);
-               await handleSavedViewChange(filterIdInLocation);
+               console.log(`Initializing view to a clean saved view (id=${viewIdInLocation})`);
+               await handleSavedViewChange(viewIdInLocation);
             }
          }
          else
          {
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            // if the last time we were on this table, a currentSavedView was written to local storage - //
+            // then navigate back to that view's URL - unless - it looks like we're on a process!        //
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            if (localStorage.getItem(currentSavedViewLocalStorageKey) && !urlLooksLikeProcess())
+            {
+               const currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
+               console.log(`returning to previously active saved view ${currentSavedViewId}`);
+               navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
+               setViewIdInLocation(currentSavedViewId);
+
+               /////////////////////////////////////////////////////////////////////////////////////////////////////
+               // return - without activating any view, and actually, reset the pageState back to loadedMetaData, //
+               // so the useEffect that monitors location will see the change, and will set viewIdInLocation      //
+               // so upon a re-render we'll hit this block again.                                                 //
+               /////////////////////////////////////////////////////////////////////////////////////////////////////
+               setPageState("loadedMetaData")
+               return;
+            }
+
             //////////////////////////////////////////////////////////////////
             // view is ad-hoc - just activate the view that was last active //
             //////////////////////////////////////////////////////////////////
@@ -2207,6 +2304,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setQueryFilter(new QQueryFilter());
       setQueryColumns(new PreLoadQueryColumns());
       setRows([]);
+      setIsFirstRenderAfterChangingTables(true);
 
       return (getLoadingScreen());
    }
@@ -2262,15 +2360,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if(!tableMetaData)
    {
       return (getLoadingScreen());
-   }
-
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // for basic mode, set a custom ColumnHeaderFilterIconButton - w/ action to activate basic-mode quick-filter //
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   let restOfDataGridProCustomComponents: any = {}
-   if(mode == "basic")
-   {
-      restOfDataGridProCustomComponents.ColumnHeaderFilterIconButton = CustomColumnHeaderFilterIconButton;
    }
 
    ////////////////////////
@@ -2379,7 +2468,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                            ColumnMenu: CustomColumnMenu,
                            ColumnsPanel: CustomColumnsPanel,
                            FilterPanel: CustomFilterPanel,
-                           ... restOfDataGridProCustomComponents
+                           ColumnHeaderFilterIconButton: CustomColumnHeaderFilterIconButton,
                         }}
                         componentsProps={{
                            columnsPanel:
@@ -2454,7 +2543,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
 
             {
-               tableMetaData &&
+               tableMetaData && tableMetaData.usesVariants &&
                <TableVariantDialog table={tableMetaData} isOpen={tableVariantPromptOpen} closeHandler={(value: QTableVariant) =>
                {
                   setTableVariantPromptOpen(false);
