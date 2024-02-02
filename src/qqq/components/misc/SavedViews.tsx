@@ -104,7 +104,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          {
             setSavedViewsHaveLoaded(true);
          });
-   }, [location, tableMetaData, currentSavedView, view]) // todo#elimGrid does this monitoring work??
+   }, [location, tableMetaData])
 
 
    /*******************************************************************************

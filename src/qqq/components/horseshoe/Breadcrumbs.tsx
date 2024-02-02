@@ -92,7 +92,18 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    let accumulatedPath = "";
    for (let i = 0; i < routes.length; i++)
    {
+      ////////////////////////////////////////////////////////
+      // avoid showing "saved view" as a breadcrumb element //
+      ////////////////////////////////////////////////////////
       if(routes[i] === "savedView")
+      {
+         continue;
+      }
+
+      ///////////////////////////////////////////////////////////////////////
+      // avoid showing the table name if it's the element before savedView //
+      ///////////////////////////////////////////////////////////////////////
+      if(i < routes.length - 1 && routes[i+1] == "savedView")
       {
          continue;
       }

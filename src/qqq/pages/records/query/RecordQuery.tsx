@@ -538,40 +538,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess])
 
-   /////////////////////////////////////////////////////////////////////////////////////////
-   // monitor location changes - if our url looks like a process, then open that process. //
-   /////////////////////////////////////////////////////////////////////////////////////////
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const urlLooksLikeProcess = (): boolean =>
+   {
+      return (pathParts[pathParts.length - 2] === tableName);
+   }
+
+   //////////////////////////////////////////////////////////////////////////////////////////////
+   // monitor location changes - if our url looks like a savedView, then load that view, kinda //
+   //////////////////////////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
       try
       {
-         /////////////////////////////////////////////////////////////////
-         // the path for a process looks like: .../table/process        //
-         // so if our tableName is in the -2 index, try to open process //
-         /////////////////////////////////////////////////////////////////
-         if (pathParts[pathParts.length - 2] === tableName)
-         {
-            const processName = pathParts[pathParts.length - 1];
-            const processList = allTableProcesses.filter(p => p.name == processName);
-            if (processList.length > 0)
-            {
-               setActiveModalProcess(processList[0]);
-               return;
-            }
-            else if (metaData?.processes.has(processName))
-            {
-               ///////////////////////////////////////////////////////////////////////////////////////
-               // check for generic processes - should this be a specific attribute on the process? //
-               ///////////////////////////////////////////////////////////////////////////////////////
-               setActiveModalProcess(metaData?.processes.get(processName));
-               return;
-            }
-            else
-            {
-               console.log(`Couldn't find process named ${processName}`);
-            }
-         }
-
          /////////////////////////////////////////////////////////////////
          // the path for a savedView looks like: .../table/savedView/32 //
          // so if path has '/savedView/' get last parsed string         //
@@ -609,12 +591,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          console.log(e);
       }
-
-      ////////////////////////////////////////////////////////////////////////////////////
-      // if we didn't open a process... not sure what we do in the table/query use-case //
-      ////////////////////////////////////////////////////////////////////////////////////
-      setActiveModalProcess(null);
-
    }, [location]);
 
    /*******************************************************************************
@@ -677,6 +653,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setTableVariantPromptOpen(true);
    }
+
 
    /*******************************************************************************
     **
@@ -2079,6 +2056,41 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       (async () =>
       {
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         // once we've loaded meta data, let's check the location to see if we should open a process //
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         try
+         {
+            /////////////////////////////////////////////////////////////////
+            // the path for a process looks like: .../table/process        //
+            // so if our tableName is in the -2 index, try to open process //
+            /////////////////////////////////////////////////////////////////
+            if (pathParts[pathParts.length - 2] === tableName)
+            {
+               const processName = pathParts[pathParts.length - 1];
+               const processList = allTableProcesses.filter(p => p.name == processName);
+               if (processList.length > 0)
+               {
+                  setActiveModalProcess(processList[0]);
+               }
+               else if (metaData?.processes.has(processName))
+               {
+                  ///////////////////////////////////////////////////////////////////////////////////////
+                  // check for generic processes - should this be a specific attribute on the process? //
+                  ///////////////////////////////////////////////////////////////////////////////////////
+                  setActiveModalProcess(metaData?.processes.get(processName));
+               }
+               else
+               {
+                  console.log(`Couldn't find process named ${processName}`);
+               }
+            }
+         }
+         catch (e)
+         {
+            console.log(e);
+         }
+
          if (searchParams && searchParams.has("filter"))
          {
             //////////////////////////////////////////////////////////////////////////////////////
@@ -2161,9 +2173,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             ///////////////////////////////////////////////////////////////////////////////////////////////
             // if the last time we were on this table, a currentSavedView was written to local storage - //
-            // then navigate back to that view's URL                                                     //
+            // then navigate back to that view's URL - unless - it looks like we're on a process!        //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            if (localStorage.getItem(currentSavedViewLocalStorageKey))
+            if (localStorage.getItem(currentSavedViewLocalStorageKey) && !urlLooksLikeProcess())
             {
                const currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
                console.log(`returning to previously active saved view ${currentSavedViewId}`);
@@ -2531,7 +2543,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
 
             {
-               tableMetaData &&
+               tableMetaData && tableMetaData.usesVariants &&
                <TableVariantDialog table={tableMetaData} isOpen={tableVariantPromptOpen} closeHandler={(value: QTableVariant) =>
                {
                   setTableVariantPromptOpen(false);
