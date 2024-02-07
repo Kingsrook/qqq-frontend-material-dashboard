@@ -37,7 +37,7 @@ interface QCreateNewButtonProps
 export function QCreateNewButton({tablePath}: QCreateNewButtonProps): JSX.Element
 {
    return (
-      <Box ml={3} mr={0} width={standardWidth}>
+      <Box display="inline-block" ml={3} mr={0} width={standardWidth}>
          <Link to={`${tablePath}/create`}>
             <MDButton variant="gradient" color="info" fullWidth startIcon={<Icon>add</Icon>}>
                Create New
@@ -121,24 +121,6 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
             fullWidth
          >
             actions&nbsp;
-            <Icon>keyboard_arrow_down</Icon>
-         </MDButton>
-      </Box>
-   );
-}
-
-export function QSavedViewsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
-{
-   return (
-      <Box width={standardWidth} ml={1}>
-         <MDButton
-            variant={isOpen ? "contained" : "outlined"}
-            color="dark"
-            onClick={onClickHandler}
-            fullWidth
-            startIcon={<Icon>visibility</Icon>}
-         >
-            Saved&nbsp;Views&nbsp;
             <Icon>keyboard_arrow_down</Icon>
          </MDButton>
       </Box>

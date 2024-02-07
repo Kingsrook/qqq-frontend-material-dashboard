@@ -203,7 +203,7 @@ FilterCriteriaRow.defaultProps =
    {
    };
 
-export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue: OperatorOption): {criteriaIsValid: boolean, criteriaStatusTooltip: string}
+export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue?: OperatorOption): {criteriaIsValid: boolean, criteriaStatusTooltip: string}
 {
    let criteriaIsValid = true;
    let criteriaStatusTooltip = "This condition is fully defined and is part of your filter.";

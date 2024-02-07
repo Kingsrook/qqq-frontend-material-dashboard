@@ -37,6 +37,7 @@ import QContext from "QContext";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {getDefaultCriteriaValue, getOperatorOptions, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
+import XIcon from "qqq/components/query/XIcon";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 
@@ -62,8 +63,17 @@ QuickFilter.defaultProps =
 let seedId = new Date().getTime() % 173237;
 
 export const quickFilterButtonStyles = {
-   fontSize: "0.75rem", color: "#757575", textTransform: "none", borderRadius: "2rem", border: "1px solid #757575",
-   minWidth: "3.5rem", minHeight: "auto", padding: "0.375rem 0.625rem", whiteSpace: "nowrap"
+   fontSize: "0.75rem",
+   fontWeight: 600,
+   color: "#757575",
+   textTransform: "none",
+   borderRadius: "2rem",
+   border: "1px solid #757575",
+   minWidth: "3.5rem",
+   minHeight: "auto",
+   padding: "0.375rem 0.625rem",
+   whiteSpace: "nowrap",
+   marginBottom: "0.5rem"
 }
 
 /*******************************************************************************
@@ -439,23 +449,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       }
    }
 
-   /////////////////////////////////////////////////////////////////////////////////////
-   // only show the 'x' if it's to clear out a valid criteria on the field,           //
-   // or if we were given a callback to remove the quick-filter field from the screen //
-   /////////////////////////////////////////////////////////////////////////////////////
-   let xIcon = <span />;
-   if(criteriaIsValid || handleRemoveQuickFilterField)
-   {
-      xIcon = <span style={{position: "relative"}}><IconButton sx={{
-         fontSize: "0.75rem",
-         border: "1px solid gray",
-         padding: "0",
-         background: "#f0f2f5 !important",
-         position: "absolute",
-         left: "-1.125rem",
-      }} onClick={xClicked}><Icon>close</Icon></IconButton></span>
-   }
-
    //////////////////////////////
    // return the button & menu //
    //////////////////////////////
@@ -463,7 +456,13 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    return (
       <>
          {button}
-         {xIcon}
+         {
+            /////////////////////////////////////////////////////////////////////////////////////
+            // only show the 'x' if it's to clear out a valid criteria on the field,           //
+            // or if we were given a callback to remove the quick-filter field from the screen //
+            /////////////////////////////////////////////////////////////////////////////////////
+            (criteriaIsValid || handleRemoveQuickFilterField) && <XIcon shade={criteriaIsValid ? "accent" : "default"} position="forQuickFilter" onClick={xClicked} />
+         }
          {
             isOpen && <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={closeMenu} sx={{overflow: "visible"}}>
                <Box display="inline-block" width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="operatorColumn">
@@ -488,7 +487,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                      operatorOption={operatorSelectedValue}
                      criteria={criteria}
                      field={fieldMetaData}
-                     table={tableMetaData} // todo - joins?
+                     table={tableForField}
                      valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
                      initiallyOpenMultiValuePvs={true} // todo - maybe not?
                   />

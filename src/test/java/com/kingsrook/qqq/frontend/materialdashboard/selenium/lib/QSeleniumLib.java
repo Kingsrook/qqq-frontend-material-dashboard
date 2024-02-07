@@ -43,7 +43,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 
@@ -196,7 +196,7 @@ public class QSeleniumLib
    /*******************************************************************************
     **
     *******************************************************************************/
-   public void gotoAndWaitForBreadcrumbHeader(String path, String headerText)
+   public void gotoAndWaitForBreadcrumbHeaderToContain(String path, String expectedHeaderText)
    {
       driver.get(BASE_URL + path);
 
@@ -204,7 +204,7 @@ public class QSeleniumLib
          .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER)));
 
       LOG.debug("Navigated to [" + path + "].  Breadcrumb Header: " + header.getText());
-      assertEquals(headerText, header.getText());
+      assertThat(header.getText()).contains(expectedHeaderText);
    }
 
 

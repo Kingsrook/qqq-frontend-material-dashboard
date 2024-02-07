@@ -22,12 +22,10 @@
 import {Popper, InputAdornment} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Autocomplete from "@mui/material/Autocomplete";
-import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
-import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import React, {useContext, useEffect, useState} from "react";
@@ -35,6 +33,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/horseshoe/Breadcrumbs";
 import {navbar, navbarContainer, navbarRow, navbarMobileMenu, recentlyViewedMenu,} from "qqq/components/horseshoe/Styles";
+import MDTypography from "qqq/components/legacy/MDTypography";
 import {setTransparentNavbar, useMaterialUIController, setMiniSidenav} from "qqq/context";
 import HistoryUtils from "qqq/utils/HistoryUtils";
 
@@ -64,6 +63,8 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const fullPath = useLocation().pathname;
    const route = useLocation().pathname.split("/").slice(1);
    const navigate = useNavigate();
+
+   const {pageHeader} = useContext(QContext);
 
    useEffect(() =>
    {
@@ -234,25 +235,27 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       >
          <Toolbar sx={navbarContainer}>
             <Box color="inherit" mb={{xs: 1, md: 0}} sx={(theme) => navbarRow(theme, {isMini})}>
-               <IconButton
-                  size="small"
-                  disableRipple
-                  color="inherit"
-                  sx={navbarMobileMenu}
-                  onClick={handleMiniSidenav}
-               >
+               <IconButton size="small" disableRipple color="inherit" sx={navbarMobileMenu} onClick={handleMiniSidenav}>
                   <Icon sx={iconsStyle} fontSize="large">menu</Icon>
                </IconButton>
                <QBreadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
             </Box>
             {isMini ? null : (
                <Box sx={(theme) => navbarRow(theme, {isMini})}>
-                  <Box pr={0} mr={-2} mt={-4}>
+                  <Box pr={0} mr={-2}>
                      {renderHistory()}
                   </Box>
                </Box>
             )}
          </Toolbar>
+         {
+            pageHeader &&
+            <Box display="flex" justifyContent="space-between">
+               <MDTypography pt={1} textTransform="capitalize" variant="h3" color={light ? "white" : "dark"} noWrap>
+                  {pageHeader}
+               </MDTypography>
+            </Box>
+         }
       </AppBar>
    );
 }

@@ -59,7 +59,7 @@ public class ScriptTableTest extends QBaseSeleniumTest
    @Test
    void test()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/developer/script/1", "Hello, Script");
 
       qSeleniumLib.waitForSelectorContaining("DIV.ace_line", "var hello;");
       qSeleniumLib.waitForSelectorContaining("DIV", "2nd commit");

@@ -22,10 +22,15 @@
 package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
 
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QueryScreenLib;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.WebElement;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /*******************************************************************************
@@ -66,9 +71,9 @@ public class SavedViewsTest extends QBaseSeleniumTest
    {
       QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
 
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Saved Views").click();
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Views").click();
       qSeleniumLib.waitForSelectorContaining("LI", "Some People");
 
       ////////////////////////////////////////
@@ -85,7 +90,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       /////////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("LI", "Some People").click();
       qSeleniumLib.waitForCondition("Current URL should have view id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("DIV", "Current View: Some People");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
 
       //////////////////////////////
       // click into a view screen //
@@ -100,19 +105,20 @@ public class SavedViewsTest extends QBaseSeleniumTest
       ///////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have View id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("DIV", "Current View: Some People");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
 
       //////////////////////
       // modify the query //
       //////////////////////
-      /* todo - right now - this is changed - but - working through it with Views story... revisit before merge!
-      queryScreenLib.clickFilterButton();
-      queryScreenLib.addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
-      qSeleniumLib.waitForSelectorContaining("H3", "Person").click();
-      qSeleniumLib.waitForSelectorContaining("DIV", "Current Filter: Some People")
-         .findElement(By.cssSelector("CIRCLE"));
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "2");
+      queryScreenLib.clickQuickFilterButton("lastName");
+      WebElement valueInput = qSeleniumLib.waitForSelector(".filterValuesColumn INPUT");
+      valueInput.click();
+      valueInput.sendKeys("Kelkhoff");
+      qSeleniumLib.waitForMillis(100);
+
+      qSeleniumLib.clickBackdrop();
+      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
 
       //////////////////////////////
       // click into a view screen //
@@ -127,16 +133,15 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumJavalin.beginCapture();
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have filter id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("DIV", "Current View: Some People")
-         .findElement(By.cssSelector("CIRCLE"));
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "2");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
+      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
       CapturedContext capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
-      assertTrue(capturedContext.getBody().contains("Jam"));
+      assertTrue(capturedContext.getBody().contains("Kelkhoff"));
       qSeleniumJavalin.endCapture();
 
-      ////////////////////////////////////////////////////
+      //////////////////////////////////////////////////
       // navigate to the table with a View in the URL //
-      ////////////////////////////////////////////////////
+      //////////////////////////////////////////////////
       String filter = """
          {
             "criteria":
@@ -149,9 +154,8 @@ public class SavedViewsTest extends QBaseSeleniumTest
             ]
          }
          """.replace('\n', ' ').replaceAll(" ", "");
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8), "Person");
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "1");
-      qSeleniumLib.waitForSelectorContainingToNotExist("DIV", "Current View");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Save View As");
 
       //////////////////////////////
       // click into a view screen //
@@ -166,11 +170,10 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumJavalin.beginCapture();
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should not have filter id", () -> !driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-badge", "1");
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Save View As");
       capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
       assertTrue(capturedContext.getBody().matches("(?s).*id.*LESS_THAN.*10.*"));
       qSeleniumJavalin.endCapture();
-      */
    }
 
 }

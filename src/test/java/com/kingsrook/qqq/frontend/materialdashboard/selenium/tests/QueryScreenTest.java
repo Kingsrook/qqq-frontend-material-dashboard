@@ -61,7 +61,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.gotoAdvancedMode();
       queryScreenLib.clickFilterButton();
@@ -86,13 +86,13 @@ public class QueryScreenTest extends QBaseSeleniumTest
       ///////////////////////////////////////
       qSeleniumLib.waitForSeconds(1); // todo grr.
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER).click();
-      qSeleniumLib.waitForSelectorContaining(".MuiBadge-root", "1");
+      qSeleniumLib.waitForSelectorContaining(".filterBuilderCountBadge", "1");
 
       ///////////////////////////////////////////////////////////////////
       // click the 'x' clear icon, then yes, then expect another query //
       ///////////////////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
-      qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelector("#clearFiltersButton").click());
+      qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelector(".filterBuilderXIcon BUTTON").click());
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Yes").click();
 
       ////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
    {
       QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.gotoAdvancedMode();
       queryScreenLib.clickFilterButton();

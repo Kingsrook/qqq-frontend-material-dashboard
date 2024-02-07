@@ -52,7 +52,7 @@ public class QueryScreenLib
     *******************************************************************************/
    public WebElement assertFilterButtonBadge(int valueInBadge)
    {
-      return qSeleniumLib.waitForSelectorContaining(".MuiBadge-root", String.valueOf(valueInBadge));
+      return qSeleniumLib.waitForSelectorContaining(".filterBuilderCountBadge", String.valueOf(valueInBadge));
    }
 
 
@@ -62,7 +62,7 @@ public class QueryScreenLib
     *******************************************************************************/
    public void assertNoFilterButtonBadge(int valueInBadge)
    {
-      qSeleniumLib.waitForSelectorContainingToNotExist(".MuiBadge-root", String.valueOf(valueInBadge));
+      qSeleniumLib.waitForSelectorContainingToNotExist(".filterBuilderCountBadge", String.valueOf(valueInBadge));
    }
 
 

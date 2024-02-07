@@ -30,6 +30,7 @@ import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFil
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {ThisOrLastPeriodExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
+import Box from "@mui/material/Box";
 import {GridSortModel} from "@mui/x-data-grid-pro";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -539,9 +540,14 @@ class FilterUtils
 
       if(styled)
       {
-         return (<>
-            <b>{fieldLabel}</b> {FilterUtils.operatorToHumanString(criteria, field)} <span style={{color: "#0062FF"}}>{valuesString}</span>&nbsp;
-         </>);
+         return (
+            <Box display="inline" whiteSpace="nowrap" color="#FFFFFF" mb={"0.5rem"}>
+               <Box display="inline" p="0.125rem" pl="0.5rem" sx={{background: "#0062FF"}} borderRadius="0.5rem 0 0 0.5rem">{fieldLabel} </Box>
+               <Box display="inline" p="0.125rem" sx={{background: "#757575"}} borderRadius={valuesString ? "0" : "0 0.5rem 0.5rem 0"}> {FilterUtils.operatorToHumanString(criteria, field)} </Box>
+               {valuesString && <Box display="inline" p="0.125rem" pr="0.5rem" sx={{background: "#009971"}} borderRadius="0 0.5rem 0.5rem 0"> {valuesString}</Box>}
+               &nbsp;
+            </Box>
+         )
       }
       else
       {

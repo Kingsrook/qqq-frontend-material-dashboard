@@ -63,7 +63,7 @@ public class AuditTest extends QBaseSeleniumTest
       qSeleniumJavalin.withRouteToFile("/data/audit/query", "data/audit/query-empty.json");
       qSeleniumJavalin.restart();
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person/1701", "John Doe");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person/1701", "John Doe");
 
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Actions").click();
       qSeleniumLib.waitForSelectorContaining("LI", "Audit").click();
@@ -90,7 +90,7 @@ public class AuditTest extends QBaseSeleniumTest
       qSeleniumJavalin.withRouteToFile(auditQueryPath, "data/audit/query.json");
       qSeleniumJavalin.restart();
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person/1701", "John Doe");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person/1701", "John Doe");
 
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Actions").click();
       qSeleniumLib.waitForSelectorContaining("LI", "Audit").click();
@@ -121,7 +121,7 @@ public class AuditTest extends QBaseSeleniumTest
       qSeleniumJavalin.withRouteToFile(auditQueryPath, "data/audit/query.json");
       qSeleniumJavalin.restart();
 
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person/1701", "John Doe");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person/1701", "John Doe");
 
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Actions").click();
       qSeleniumLib.waitForSelectorContaining("LI", "Audit").click();

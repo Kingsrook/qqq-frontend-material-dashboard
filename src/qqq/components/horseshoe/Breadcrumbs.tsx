@@ -70,7 +70,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    }
 
    const routes: string[] | any = route.slice(0, -1);
-   const {pageHeader, pathToLabelMap, branding} = useContext(QContext);
+   const {pathToLabelMap, branding} = useContext(QContext);
 
    const fullPathToLabel = (fullPath: string, route: string): string =>
    {
@@ -149,15 +149,6 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
                </Link>
             ))}
          </MuiBreadcrumbs>
-         <MDTypography
-            pt={1}
-            textTransform="capitalize"
-            variant="h3"
-            color={light ? "white" : "dark"}
-            noWrap
-         >
-            {pageHeader}
-         </MDTypography>
       </Box>
    );
 }

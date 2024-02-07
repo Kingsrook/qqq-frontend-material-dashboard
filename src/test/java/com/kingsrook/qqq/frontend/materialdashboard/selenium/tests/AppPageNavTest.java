@@ -57,7 +57,7 @@ public class AppPageNavTest extends QBaseSeleniumTest
    @Test
    void testHomeToAppPageViaLeftNav()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/", "Greetings App");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/", "Greetings App");
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.SIDEBAR_ITEM, "People App").click();
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.SIDEBAR_ITEM, "Greetings App").click();
    }
@@ -70,7 +70,7 @@ public class AppPageNavTest extends QBaseSeleniumTest
    @Test
    void testAppPageToTablePage()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp", "Greetings App");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp", "Greetings App");
       qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelectorContaining("a", "Person").click());
       qSeleniumLib.waitForSelectorContaining(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER, "Person");
    }

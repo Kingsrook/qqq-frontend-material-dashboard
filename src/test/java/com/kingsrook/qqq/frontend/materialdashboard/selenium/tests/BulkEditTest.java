@@ -71,7 +71,7 @@ public class BulkEditTest extends QBaseSeleniumTest
    // @RepeatedTest(100)
    void test()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person", "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
       qSeleniumLib.waitForSelectorContaining("button", "selection").click();
       qSeleniumLib.waitForSelectorContaining("li", "This page").click();
       qSeleniumLib.waitForSelectorContaining("div", "records on this page are selected");

@@ -29,6 +29,13 @@
    min-height: calc(100vh - 450px) !important;
 }
 
+/* we want to leave columns w/ the sortable attribute (so they have it in the column menu),
+but we've turned off the click-to-sort function, so remove hand cursor */
+.recordQuery .MuiDataGrid-columnHeader--sortable
+{
+   cursor: default !important;
+}
+
 /* Disable red outlines on clicked cells */
 .MuiDataGrid-cell:focus,
 .MuiDataGrid-columnHeader:focus,
@@ -402,7 +409,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    margin-right: 8px;
 }
 
-.custom-columns-panel .MuiSwitch-thumb
+.custom-columns-panel .MuiSwitch-thumb,
+.fieldListMenuBody .MuiSwitch-thumb
 {
    width: 15px !important;
    height: 15px !important;
@@ -428,7 +436,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    /* overwrite what the grid tries to do here, where it changes based on density... we always want the same. */
    /* transform: translate(274px, 305px) !important; */
-   transform: translate(274px, 276px) !important;
+   transform: translate(274px, 264px) !important;
 }
 
 /* within the data-grid, the filter-panel's container has a max-height.  mirror that, and set an overflow-y */
