@@ -33,7 +33,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Collapse, Typography} from "@mui/material";
+import {Alert, Collapse, Menu, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -44,21 +44,22 @@ import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
+import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnHeaderParams, GridColumnHeaderSortIconProps, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import SavedViews from "qqq/components/misc/SavedViews";
 import BasicAndAdvancedQueryControls from "qqq/components/query/BasicAndAdvancedQueryControls";
-import {CustomColumnsPanel} from "qqq/components/query/CustomColumnsPanel";
 import {CustomFilterPanel} from "qqq/components/query/CustomFilterPanel";
 import CustomPaginationComponent from "qqq/components/query/CustomPaginationComponent";
 import ExportMenuItem from "qqq/components/query/ExportMenuItem";
+import FieldListMenu from "qqq/components/query/FieldListMenu";
 import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import QueryScreenActionMenu from "qqq/components/query/QueryScreenActionMenu";
 import SelectionSubsetDialog from "qqq/components/query/SelectionSubsetDialog";
@@ -74,6 +75,7 @@ import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -246,14 +248,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    const [pageState, setPageState] = useState("initial" as PageState)
 
-   ///////////////////////////////////////////////////
-   // state used by the custom column-chooser panel //
-   ///////////////////////////////////////////////////
-   const initialColumnChooserOpenGroups = {} as { [name: string]: boolean };
-   initialColumnChooserOpenGroups[tableName] = true;
-   const [columnChooserOpenGroups, setColumnChooserOpenGroups] = useState(initialColumnChooserOpenGroups);
-   const [columnChooserFilterText, setColumnChooserFilterText] = useState("");
-
    /////////////////////////////////
    // meta-data and derived state //
    /////////////////////////////////
@@ -285,6 +279,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const [currentSavedView, setCurrentSavedView] = useState(null as QRecord);
    const [viewIdInLocation, setViewIdInLocation] = useState(null as number);
    const [loadingSavedView, setLoadingSavedView] = useState(false);
+   const [exportMenuAnchorElement, setExportMenuAnchorElement] = useState(null);
+   const [tableDefaultView, setTableDefaultView] = useState(new RecordQueryView());
 
    /////////////////////////////////////////////////////
    // state related to avoiding accidental row clicks //
@@ -342,7 +338,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////
    // page context references //
    /////////////////////////////
-   const {setPageHeader, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
+   const {accentColor, accentColorLight, setPageHeader, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
+
+   //////////////////////////////////////////////////////////////////
+   // we use our own header - so clear out the context page header //
+   //////////////////////////////////////////////////////////////////
+   setPageHeader(null);
 
    //////////////////////
    // ole' faithful... //
@@ -416,6 +417,97 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (false);
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const prepQueryFilterForBackend = (sourceFilter: QQueryFilter) =>
+   {
+      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.booleanOperator);
+      for (let i = 0; i < sourceFilter?.criteria?.length; i++)
+      {
+         const criteria = sourceFilter.criteria[i];
+         const {criteriaIsValid} = validateCriteria(criteria, null);
+         if (criteriaIsValid)
+         {
+            if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////
+               // do this to avoid submitting an empty-string argument for blank/not-blank operators... //
+               ///////////////////////////////////////////////////////////////////////////////////////////
+               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, []));
+            }
+            else
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // else push a clone of the criteria - since it may get manipulated below (convertFilterPossibleValuesToIds) //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName)
+               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, FilterUtils.cleanseCriteriaValueForQQQ(criteria.values, field)));
+            }
+         }
+      }
+      filterForBackend.skip = pageNumber * rowsPerPage;
+      filterForBackend.limit = rowsPerPage;
+
+      return filterForBackend;
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function openExportMenu(event: any)
+   {
+      setExportMenuAnchorElement(event.currentTarget);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function closeExportMenu()
+   {
+      setExportMenuAnchorElement(null);
+   }
+
+
+   ///////////////////////////////////////////
+   // build the export menu, for the header //
+   ///////////////////////////////////////////
+   let exportMenu = <></>
+   try
+   {
+      const exportMenuItemRestProps =
+         {
+            tableMetaData: tableMetaData,
+            totalRecords: totalRecords,
+            columnsModel: columnsModel,
+            columnVisibilityModel: columnVisibilityModel,
+            queryFilter: prepQueryFilterForBackend(queryFilter)
+         }
+
+      exportMenu = (<>
+         <IconButton sx={{p: 0, fontSize: "0.75rem", mb: 1, color: colors.secondary.main, fontVariationSettings: "'wght' 100"}} onClick={openExportMenu}><Icon fontSize="small">save_alt</Icon></IconButton>
+         <Menu
+            anchorEl={exportMenuAnchorElement}
+            anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+            transformOrigin={{vertical: "top", horizontal: "center"}}
+            open={exportMenuAnchorElement != null}
+            onClose={closeExportMenu}
+            sx={{top: "0.5rem"}}
+            keepMounted>
+            <ExportMenuItem format="csv" {...exportMenuItemRestProps} />
+            <ExportMenuItem format="xlsx" {...exportMenuItemRestProps} />
+            <ExportMenuItem format="json" {...exportMenuItemRestProps} />
+         </Menu>
+      </>);
+   }
+   catch(e)
+   {
+      console.log("Error preparing export menu for page header: " + e);
+   }
+
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -459,9 +551,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          return(
             <div>
-               {label}
+               {label} {exportMenu}
                <CustomWidthTooltip title={tooltipHTML}>
-                  <IconButton sx={{p: 0, fontSize: "0.5rem", mb: 1, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">emergency</Icon></IconButton>
+                  <IconButton sx={{ml: "0.5rem", p: 0, fontSize: "0.5rem", mb: 1, color: "#9f9f9f", fontVariationSettings: "'wght' 100"}}><Icon fontSize="small">emergency</Icon></IconButton>
                </CustomWidthTooltip>
                {tableVariant && getTableVariantHeader(tableVariant)}
             </div>);
@@ -470,7 +562,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          return (
             <div>
-               {label}
+               {label} {exportMenu}
                {tableVariant && getTableVariantHeader(tableVariant)}
             </div>);
       }
@@ -569,7 +661,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             // in case page-state has already advanced to "ready" (e.g., and we're dealing with a user //
             // hitting back & forth between filters), then do a load of the new saved-view right here  //
             /////////////////////////////////////////////////////////////////////////////////////////////
-            if(pageState == "ready")
+            if (pageState == "ready")
             {
                handleSavedViewChange(currentSavedViewId);
             }
@@ -593,6 +685,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }, [location]);
 
+
+   /*******************************************************************************
+    ** set the current view in state & local-storage - but do NOT update any
+    ** child-state data.
+    *******************************************************************************/
+   const doSetView = (view: RecordQueryView): void =>
+   {
+      setView(view);
+      setViewAsJson(JSON.stringify(view));
+      localStorage.setItem(viewLocalStorageKey, JSON.stringify(view));
+   }
+
+
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -606,6 +711,40 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       forceUpdate();
    };
+
+
+   /*******************************************************************************
+    ** function called by columns menu to turn a column on or off
+    *******************************************************************************/
+   const handleChangeOneColumnVisibility = (field: QFieldMetaData, table: QTableMetaData, newValue: boolean) =>
+   {
+      ///////////////////////////////////////
+      // set the field's value in the view //
+      ///////////////////////////////////////
+      let fieldName = field.name;
+      if(table && table.name != tableMetaData.name)
+      {
+         fieldName = `${table.name}.${field.name}`;
+      }
+
+      view.queryColumns.setIsVisible(fieldName, newValue)
+
+      /////////////////////
+      // update the grid //
+      /////////////////////
+      setColumnVisibilityModel(queryColumns.toColumnVisibilityModel());
+
+      /////////////////////////////////////////////////
+      // update the view (e.g., write local storage) //
+      /////////////////////////////////////////////////
+      doSetView(view)
+
+      ///////////////////
+      // ole' faithful //
+      ///////////////////
+      forceUpdate();
+   }
+
 
    /*******************************************************************************
     **
@@ -656,42 +795,31 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
 
    /*******************************************************************************
-    **
+    ** return array of table names that need ... added to query
     *******************************************************************************/
-   const prepQueryFilterForBackend = (sourceFilter: QQueryFilter) =>
+   const ensureOrderBysFromJoinTablesAreVisibleTables = (queryFilter: QQueryFilter, visibleJoinTablesParam?: Set<string>): string[] =>
    {
-      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.booleanOperator);
-      for (let i = 0; i < sourceFilter?.criteria?.length; i++)
+      const rs: string[] = [];
+      const vjtToUse = visibleJoinTablesParam ?? visibleJoinTables;
+
+      for (let i = 0; i < queryFilter?.orderBys?.length; i++)
       {
-         const criteria = sourceFilter.criteria[i];
-         const {criteriaIsValid} = validateCriteria(criteria, null);
-         if (criteriaIsValid)
+         const fieldName = queryFilter.orderBys[i].fieldName;
+         if(fieldName.indexOf(".") > -1)
          {
-            if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+            const joinTableName = fieldName.replaceAll(/\..*/g, "");
+            if(!vjtToUse.has(joinTableName))
             {
-               ///////////////////////////////////////////////////////////////////////////////////////////
-               // do this to avoid submitting an empty-string argument for blank/not-blank operators... //
-               ///////////////////////////////////////////////////////////////////////////////////////////
-               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, []));
-            }
-            else
-            {
-               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               // else push a clone of the criteria - since it may get manipulated below (convertFilterPossibleValuesToIds) //
-               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName)
-               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, FilterUtils.cleanseCriteriaValueForQQQ(criteria.values, field)));
+               const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+               handleChangeOneColumnVisibility(field, fieldTable, true);
+               rs.push(fieldTable.name);
             }
          }
       }
-      filterForBackend.skip = pageNumber * rowsPerPage;
-      filterForBackend.limit = rowsPerPage;
 
-      // FilterUtils.convertFilterPossibleValuesToIds(filterForBackend);
-      // todo - expressions?
-      // todo - utc
-      return filterForBackend;
+      return (rs);
    }
+
 
    /*******************************************************************************
     ** This is the method that actually executes a query to update the data in the table.
@@ -729,6 +857,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          if (tableMetaData?.exposedJoins)
          {
             const visibleJoinTables = getVisibleJoinTables();
+            const tablesToAdd = ensureOrderBysFromJoinTablesAreVisibleTables(queryFilter, visibleJoinTables);
+
+            tablesToAdd?.forEach(t => visibleJoinTables.add(t));
+
             queryJoins = TableUtils.getQueryJoins(tableMetaData, visibleJoinTables);
          }
 
@@ -1062,15 +1194,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       doSetQueryFilter(queryFilter);
    };
 
+
    /*******************************************************************************
-    ** set the current view in state & local-storage - but do NOT update any
-    ** child-state data.
+    **
     *******************************************************************************/
-   const doSetView = (view: RecordQueryView): void =>
+   const handleColumnHeaderClick = (params: GridColumnHeaderParams, event: MuiEvent, details: GridCallbackDetails): void =>
    {
-      setView(view);
-      setViewAsJson(JSON.stringify(view));
-      localStorage.setItem(viewLocalStorageKey, JSON.stringify(view));
+      event.defaultMuiPrevented = true;
    }
 
 
@@ -1113,6 +1243,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log(`Setting a new query filter: ${JSON.stringify(queryFilter)}`);
 
       ///////////////////////////////////////////////////
+      // when we have a new filter, go back to page 0. //
+      ///////////////////////////////////////////////////
+      setPageNumber(0);
+
+      ///////////////////////////////////////////////////
       // in case there's no orderBys, set default here //
       ///////////////////////////////////////////////////
       if(!queryFilter.orderBys || queryFilter.orderBys.length == 0)
@@ -1121,6 +1256,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          view.queryFilter = queryFilter;
       }
 
+      ////////////////////////////////////////////////////////////////////////////////////////////////
+      // in case the order-by is from a join table, and that table doesn't have any visible fields, //
+      // then activate the order-by field itself                                                    //
+      ////////////////////////////////////////////////////////////////////////////////////////////////
+      ensureOrderBysFromJoinTablesAreVisibleTables(queryFilter);
+
+      //////////////////////////////
+      // set the filter state var //
+      //////////////////////////////
       setQueryFilter(queryFilter);
 
       ///////////////////////////////////////////////////////
@@ -1423,6 +1567,22 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const buildTableDefaultView = (): RecordQueryView =>
+   {
+      const newDefaultView = new RecordQueryView();
+      newDefaultView.queryFilter = new QQueryFilter([], [new QFilterOrderBy(tableMetaData.primaryKeyField, false)]);
+      newDefaultView.queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
+      newDefaultView.viewIdentity = "empty";
+      newDefaultView.rowsPerPage = defaultRowsPerPage;
+      newDefaultView.quickFilterFieldNames = [];
+      newDefaultView.mode = defaultMode;
+      return newDefaultView;
+   }
+
    /*******************************************************************************
     ** event handler for SavedViews component, to handle user selecting a view
     ** (or clearing / selecting new)
@@ -1453,18 +1613,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setCurrentSavedView(null);
          localStorage.removeItem(currentSavedViewLocalStorageKey);
 
-         /////////////////////////////////////////////////////
-         // go back to a default query filter for the table //
-         /////////////////////////////////////////////////////
-         doSetQueryFilter(new QQueryFilter());
-
-         const queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
-         doSetQueryColumns(queryColumns)
-
-         /////////////////////////////////////////////////////
-         // also reset the (user-added) quick-filter fields //
-         /////////////////////////////////////////////////////
-         doSetQuickFilterFieldNames([]);
+         ///////////////////////////////////////////////
+         // activate a new default view for the table //
+         ///////////////////////////////////////////////
+         activateView(buildTableDefaultView())
       }
    }
 
@@ -1848,36 +2000,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
       };
 
-      //////////////////////////////////////////////////////////////////
-      // props that get passed into all of the ExportMenuItem's below //
-      //////////////////////////////////////////////////////////////////
-      const exportMenuItemRestProps =
-         {
-            tableMetaData: tableMetaData,
-            totalRecords: totalRecords,
-            columnsModel: columnsModel,
-            columnVisibilityModel: columnVisibilityModel,
-            queryFilter: prepQueryFilterForBackend(queryFilter)
-         }
-
       return (
          <GridToolbarContainer>
             <div>
-               <Button id="refresh-button" onClick={() => updateTable("refresh button")} startIcon={<Icon>refresh</Icon>} sx={{pr: "1.25rem"}}>
-                  Refresh
-               </Button>
+               <Button id="refresh-button" onClick={() => updateTable("refresh button")} startIcon={<Icon>refresh</Icon>} sx={{pl: "1rem", pr: "0.5rem", minWidth: "unset"}}></Button>
             </div>
-            {/* @ts-ignore */}
-            <GridToolbarColumnsButton nonce={undefined} />
             <div style={{position: "relative"}}>
                {/* @ts-ignore */}
                <GridToolbarDensitySelector nonce={undefined} />
-               {/* @ts-ignore */}
-               <GridToolbarExportContainer nonce={undefined}>
-                  <ExportMenuItem format="csv" {...exportMenuItemRestProps} />
-                  <ExportMenuItem format="xlsx" {...exportMenuItemRestProps} />
-                  <ExportMenuItem format="json" {...exportMenuItemRestProps} />
-               </GridToolbarExportContainer>
             </div>
 
             <div style={{zIndex: 10}}>
@@ -1990,15 +2120,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       );
    }
 
-   /*******************************************************************************
-    ** maybe something to do with how page header is in a context, but, it didn't
-    ** work to check pageLoadingState.isLoadingSlow inside an element that we put
-    ** in the page header, so, this works instead.
-    *******************************************************************************/
-   const setPageHeaderToLoadingSlow = (): void =>
-   {
-      setPageHeader("Loading...")
-   }
 
    /////////////////////////////////////////////////////////////////////////////////
    // use this to make changes to the queryFilter more likely to re-run the query //
@@ -2023,12 +2144,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log("page state is initial - going to loadingMetaData...");
       setPageState("loadingMetaData");
       pageLoadingState.setLoading();
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // reset the page header to blank, and tell the pageLoadingState object that if it becomes slow, to show 'Loading' //
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      setPageHeader("");
-      pageLoadingState.setUponSlowCallback(setPageHeaderToLoadingSlow);
 
       (async () =>
       {
@@ -2056,6 +2171,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       (async () =>
       {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // now that we know the table - build a default view - initially, only used by SavedViews component, for showing if there's anything to be saved. //
+         // but also used when user selects new-view from the view menu                                                                                    //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const newDefaultView = buildTableDefaultView();
+         setTableDefaultView(newDefaultView);
+
          //////////////////////////////////////////////////////////////////////////////////////////////
          // once we've loaded meta data, let's check the location to see if we should open a process //
          //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2212,7 +2334,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       (async () =>
       {
          const visibleJoinTables = getVisibleJoinTables();
-         setPageHeader(getPageHeader(tableMetaData, visibleJoinTables, tableVariant));
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // todo - we used to be able to set "warnings" here (i think, like, for if a field got deleted from a table... //
@@ -2362,11 +2483,135 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       return (getLoadingScreen());
    }
 
+   let savedViewsComponent = null;
+   if(metaData && metaData.processes.has("querySavedView"))
+   {
+      savedViewsComponent = (<SavedViews qController={qController} metaData={metaData} tableMetaData={tableMetaData} view={view} viewAsJson={viewAsJson} currentSavedView={currentSavedView} tableDefaultView={tableDefaultView} viewOnChangeCallback={handleSavedViewChange} loadingSavedView={loadingSavedView} />);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const buildColumnMenu = () =>
+   {
+      //////////////////////////////////////////
+      // default (no saved view, and "clean") //
+      //////////////////////////////////////////
+      let buttonBackground = "none";
+      let buttonBorder = colors.grayLines.main;
+      let buttonColor = colors.gray.main;
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // diff the current view with either the current saved one, if there's one active, else the table default //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const baseView = currentSavedView ? JSON.parse(currentSavedView.values.get("viewJson")) as RecordQueryView : tableDefaultView;
+      const viewDiffs: string[] = [];
+      SavedViewUtils.diffColumns(tableMetaData, baseView, view, viewDiffs)
+
+      if(viewDiffs.length == 0 && currentSavedView)
+      {
+         /////////////////////////////////////////////////////////////////
+         // if 's a saved view, and it's "clean", show it in main style //
+         /////////////////////////////////////////////////////////////////
+         buttonBackground = accentColor;
+         buttonBorder = accentColor;
+         buttonColor = "#FFFFFF";
+      }
+      else if(viewDiffs.length > 0)
+      {
+         ///////////////////////////////////////////////////
+         // else if there are diffs, show alt/light style //
+         ///////////////////////////////////////////////////
+         buttonBackground = accentColorLight;
+         buttonBorder = accentColorLight;
+         buttonColor = accentColor;
+      }
+
+      const columnMenuButtonStyles = {
+         borderRadius: "0.75rem",
+         border: `1px solid ${buttonBorder}`,
+         color: buttonColor,
+         textTransform: "none",
+         fontWeight: 500,
+         fontSize: "0.875rem",
+         p: "0.5rem",
+         backgroundColor: buttonBackground,
+         "&:focus:not(:hover)": {
+            color: buttonColor,
+            backgroundColor: buttonBackground,
+         },
+         "&:hover": {
+            color: buttonColor,
+            backgroundColor: buttonBackground,
+         }
+      }
+
+      return (<Box order="2">
+         <FieldListMenu
+            idPrefix="columns"
+            tableMetaData={tableMetaData}
+            showTableHeaderEvenIfNoExposedJoins={true}
+            placeholder="Search Fields"
+            buttonProps={{sx: columnMenuButtonStyles}}
+            buttonChildren={<><Icon sx={{mr: "0.5rem"}}>view_week_outline</Icon> Columns ({view.queryColumns.getVisibleColumnCount()}) <Icon sx={{ml: "0.5rem"}}>keyboard_arrow_down</Icon></>}
+            isModeToggle={true}
+            toggleStates={view.queryColumns.getVisibilityToggleStates()}
+            handleToggleField={handleChangeOneColumnVisibility}
+         />
+      </Box>);
+   }
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // these numbers help set the height of the grid (so page won't scroll) based on spcae above & below it //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////
+   let spaceBelowGrid = 40;
+   let spaceAboveGrid = 205;
+   if(tableMetaData?.usesVariants)
+   {
+      spaceAboveGrid += 30;
+   }
+
+   if(mode == "advanced")
+   {
+      spaceAboveGrid += 60;
+   }
+
    ////////////////////////
    // main screen render //
    ////////////////////////
    return (
       <BaseLayout>
+         <Box display="flex" justifyContent="space-between">
+            <Box>
+               <Typography textTransform="capitalize" variant="h3" noWrap>
+                  {pageLoadingState.isLoading() && ""}
+                  {pageLoadingState.isLoadingSlow() && "Loading..."}
+                  {pageLoadingState.isNotLoading() && getPageHeader(tableMetaData, visibleJoinTables, tableVariant)}
+               </Typography>
+            </Box>
+            <Box>
+               <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
+               <Box display="inline-block" width="150px">
+                  {
+                     tableMetaData &&
+                     <QueryScreenActionMenu
+                        metaData={metaData}
+                        tableMetaData={tableMetaData}
+                        tableProcesses={tableProcesses}
+                        bulkLoadClicked={bulkLoadClicked}
+                        bulkEditClicked={bulkEditClicked}
+                        bulkDeleteClicked={bulkDeleteClicked}
+                        processClicked={processClicked}
+                     />
+                  }
+               </Box>
+               {
+                  table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+                  <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
+               }
+            </Box>
+         </Box>
          <div className="recordQuery">
             {/*
             // see code in ExportMenuItem that would use this
@@ -2411,34 +2656,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      </Collapse>
                   ) : null
                }
-               <Box display="flex" justifyContent="flex-end" alignItems="flex-start" mb={2}>
-                  <Box display="flex" marginRight="auto">
-                     {
-                        metaData && metaData.processes.has("querySavedView") &&
-                        <SavedViews qController={qController} metaData={metaData} tableMetaData={tableMetaData} view={view} viewAsJson={viewAsJson} currentSavedView={currentSavedView} viewOnChangeCallback={handleSavedViewChange} loadingSavedView={loadingSavedView} />
-                     }
-                  </Box>
-
-                  <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
-                  <Box display="flex" width="150px">
-                     {
-                        tableMetaData &&
-                        <QueryScreenActionMenu
-                           metaData={metaData}
-                           tableMetaData={tableMetaData}
-                           tableProcesses={tableProcesses}
-                           bulkLoadClicked={bulkLoadClicked}
-                           bulkEditClicked={bulkEditClicked}
-                           bulkDeleteClicked={bulkDeleteClicked}
-                           processClicked={processClicked}
-                        />
-                     }
-                  </Box>
-                  {
-                     table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-                     <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
-                  }
-               </Box>
 
                {
                   metaData && tableMetaData &&
@@ -2454,6 +2671,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      gridApiRef={gridApiRef}
                      mode={mode}
                      setMode={doSetMode}
+                     savedViewsComponent={savedViewsComponent}
+                     columnMenuComponent={buildColumnMenu()}
                   />
                }
 
@@ -2466,20 +2685,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                            Pagination: CustomPagination,
                            LoadingOverlay: CustomLoadingOverlay,
                            ColumnMenu: CustomColumnMenu,
-                           ColumnsPanel: CustomColumnsPanel,
                            FilterPanel: CustomFilterPanel,
+                           // @ts-ignore - this turns these off, whether TS likes it or not...
+                           ColumnsPanel: "", ColumnSortedDescendingIcon: "", ColumnSortedAscendingIcon: "", ColumnUnsortedIcon: "",
                            ColumnHeaderFilterIconButton: CustomColumnHeaderFilterIconButton,
                         }}
                         componentsProps={{
-                           columnsPanel:
-                              {
-                                 tableMetaData: tableMetaData,
-                                 metaData: metaData,
-                                 initialOpenedGroups: columnChooserOpenGroups,
-                                 openGroupsChanger: setColumnChooserOpenGroups,
-                                 initialFilterText: columnChooserFilterText,
-                                 filterTextChanger: setColumnChooserFilterText
-                              },
                            filterPanel:
                               {
                                  tableMetaData: tableMetaData,
@@ -2522,12 +2733,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         onSelectionModelChange={handleSelectionChanged}
                         onSortModelChange={handleSortChange}
                         sortingOrder={["asc", "desc"]}
-                        sortModel={columnSortModel}
+                        onColumnHeaderClick={handleColumnHeaderClick}
                         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                         getRowId={(row) => row.__rowIndex}
                         selectionModel={rowSelectionModel}
                         hideFooterSelectedRowCount={true}
-                        sx={{border: 0, height: tableMetaData?.usesVariants ? "calc(100vh - 300px)" : "calc(100vh - 270px)"}}
+                        sx={{border: 0, height: `calc(100vh - ${spaceAboveGrid + spaceBelowGrid}px)`}}
                      />
                   </Box>
                </Card>
@@ -2548,7 +2759,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                {
                   setTableVariantPromptOpen(false);
                   setTableVariant(value);
-                  setPageHeader(getPageHeader(tableMetaData, visibleJoinTables, value));
                }} />
             }
 

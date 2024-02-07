@@ -25,10 +25,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {FiberManualRecord} from "@mui/icons-material";
-import {Alert} from "@mui/material";
+import {Alert, Button, Link} from "@mui/material";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -42,15 +39,15 @@ import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import {TooltipProps} from "@mui/material/Tooltip/Tooltip";
-import Typography from "@mui/material/Typography";
 import FormData from "form-data";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
-import {QCancelButton, QDeleteButton, QSaveButton, QSavedViewsMenuButton} from "qqq/components/buttons/DefaultButtons";
-import QQueryColumns from "qqq/models/query/QQueryColumns";
+import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
+import {QCancelButton, QDeleteButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import RecordQueryView from "qqq/models/query/RecordQueryView";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
-import TableUtils from "qqq/utils/qqq/TableUtils";
+import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 
 interface Props
 {
@@ -58,13 +55,14 @@ interface Props
    metaData: QInstance;
    tableMetaData: QTableMetaData;
    currentSavedView: QRecord;
+   tableDefaultView: RecordQueryView;
    view?: RecordQueryView;
    viewAsJson?: string;
    viewOnChangeCallback?: (selectedSavedViewId: number) => void;
    loadingSavedView: boolean
 }
 
-function SavedViews({qController, metaData, tableMetaData, currentSavedView, view, viewAsJson, viewOnChangeCallback, loadingSavedView}: Props): JSX.Element
+function SavedViews({qController, metaData, tableMetaData, currentSavedView, tableDefaultView, view, viewAsJson, viewOnChangeCallback, loadingSavedView}: Props): JSX.Element
 {
    const navigate = useNavigate();
 
@@ -91,6 +89,8 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    const CLEAR_OPTION = "New View";
    const dropdownOptions = [DUPLICATE_OPTION, RENAME_OPTION, DELETE_OPTION, CLEAR_OPTION];
 
+   const {accentColor, accentColorLight} = useContext(QContext);
+
    const openSavedViewsMenu = (event: any) => setSavedViewsMenu(event.currentTarget);
    const closeSavedViewsMenu = () => setSavedViewsMenu(null);
 
@@ -107,384 +107,13 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
    }, [location, tableMetaData])
 
 
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   const fieldNameToLabel = (fieldName: string): string =>
-   {
-      try
-      {
-         const [fieldMetaData, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-         if(fieldTable.name != tableMetaData.name)
-         {
-            return (tableMetaData.label + ": " + fieldMetaData.label);
-         }
-
-         return (fieldMetaData.label);
-      }
-      catch(e)
-      {
-         return (fieldName);
-      }
-   }
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   const diffFilters = (savedView: RecordQueryView, activeView: RecordQueryView, viewDiffs: string[]): void =>
-   {
-      try
-      {
-         ////////////////////////////////////////////////////////////////////////////////
-         // inner helper function for reporting on the number of criteria for a field. //
-         // e.g., will tell us "added criteria X" or "removed 2 criteria on Y"         //
-         ////////////////////////////////////////////////////////////////////////////////
-         const diffCriteriaFunction = (base: QQueryFilter, compare: QQueryFilter, messagePrefix: string, isCheckForChanged = false) =>
-         {
-            const baseCriteriaMap: { [name: string]: QFilterCriteria[] } = {};
-            base?.criteria?.forEach((criteria) =>
-            {
-               if(!baseCriteriaMap[criteria.fieldName])
-               {
-                  baseCriteriaMap[criteria.fieldName] = []
-               }
-               baseCriteriaMap[criteria.fieldName].push(criteria)
-            });
-
-            const compareCriteriaMap: { [name: string]: QFilterCriteria[] } = {};
-            compare?.criteria?.forEach((criteria) =>
-            {
-               if(!compareCriteriaMap[criteria.fieldName])
-               {
-                  compareCriteriaMap[criteria.fieldName] = []
-               }
-               compareCriteriaMap[criteria.fieldName].push(criteria)
-            });
-
-            for (let fieldName of Object.keys(compareCriteriaMap))
-            {
-               const noBaseCriteria = baseCriteriaMap[fieldName]?.length ?? 0;
-               const noCompareCriteria = compareCriteriaMap[fieldName]?.length ?? 0;
-
-               if(isCheckForChanged)
-               {
-                  /////////////////////////////////////////////////////////////////////////////////////////////
-                  // first - if we're checking for changes to specific criteria (e.g., change id=5 to id<>5, //
-                  // or change id=5 to id=6, or change id=5 to id<>7)                                        //
-                  // our "sweet spot" is if there's a single criteria on each side of the check              //
-                  /////////////////////////////////////////////////////////////////////////////////////////////
-                  if(noBaseCriteria == 1 && noCompareCriteria == 1)
-                  {
-                     const baseCriteria = baseCriteriaMap[fieldName][0]
-                     const compareCriteria = compareCriteriaMap[fieldName][0]
-                     const baseValuesJSON = JSON.stringify(baseCriteria.values ?? [])
-                     const compareValuesJSON = JSON.stringify(compareCriteria.values ?? [])
-                     if(baseCriteria.operator != compareCriteria.operator || baseValuesJSON != compareValuesJSON)
-                     {
-                        viewDiffs.push(`Changed a filter from ${FilterUtils.criteriaToHumanString(tableMetaData, baseCriteria)} to ${FilterUtils.criteriaToHumanString(tableMetaData, compareCriteria)}`)
-                     }
-                  }
-                  else if(noBaseCriteria == noCompareCriteria)
-                  {
-                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                     // else - if the number of criteria on this field differs, that'll get caught in a non-isCheckForChanged call, so                                     //
-                     // todo, i guess - this is kinda weak - but if there's the same number of criteria on a field, then just ... do a shitty JSON compare between them... //
-                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                     const baseJSON = JSON.stringify(baseCriteriaMap[fieldName])
-                     const compareJSON = JSON.stringify(compareCriteriaMap[fieldName])
-                     if(baseJSON != compareJSON)
-                     {
-                        viewDiffs.push(`${messagePrefix} 1 or more filters on ${fieldNameToLabel(fieldName)}`);
-                     }
-                  }
-               }
-               else
-               {
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // else - we're not checking for changes to individual criteria - rather - we're just checking if criteria were added or removed. //
-                  // we'll do that by starting to see if the nubmer of criteria is different.                                                       //
-                  // and, only do it in only 1 direction, assuming we'll get called twice, with the base & compare sides flipped                    //
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  if(noBaseCriteria < noCompareCriteria)
-                  {
-                     if (noBaseCriteria == 0 && noCompareCriteria == 1)
-                     {
-                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // if the difference is 0 to 1 (1 to 0 when called in reverse), then we can report the full criteria that was added/removed //
-                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        viewDiffs.push(`${messagePrefix} filter: ${FilterUtils.criteriaToHumanString(tableMetaData, compareCriteriaMap[fieldName][0])}`)
-                     }
-                     else
-                     {
-                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // else, say 0 to 2, or 2 to 1 - just report on how many were changed...                                                //
-                        // todo this isn't great, as you might have had, say, (A,B), and now you have (C) - but all we'll say is "removed 1"... //
-                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        const noDiffs = noCompareCriteria - noBaseCriteria;
-                        viewDiffs.push(`${messagePrefix} ${noDiffs} filters on ${fieldNameToLabel(fieldName)}`)
-                     }
-                  }
-               }
-            }
-         };
-
-         diffCriteriaFunction(savedView.queryFilter, activeView.queryFilter, "Added");
-         diffCriteriaFunction(activeView.queryFilter, savedView.queryFilter, "Removed");
-         diffCriteriaFunction(savedView.queryFilter, activeView.queryFilter, "Changed", true);
-
-         //////////////////////
-         // boolean operator //
-         //////////////////////
-         if (savedView.queryFilter.booleanOperator != activeView.queryFilter.booleanOperator)
-         {
-            viewDiffs.push("Changed filter from 'And' to 'Or'")
-         }
-
-         ///////////////
-         // order-bys //
-         ///////////////
-         const savedOrderBys = savedView.queryFilter.orderBys;
-         const activeOrderBys = activeView.queryFilter.orderBys;
-         if (savedOrderBys.length != activeOrderBys.length)
-         {
-            viewDiffs.push("Changed sort")
-         }
-         else if (savedOrderBys.length > 0)
-         {
-            const toWord = ((b: boolean) => b ? "ascending" : "descending");
-            if (savedOrderBys[0].fieldName != activeOrderBys[0].fieldName && savedOrderBys[0].isAscending != activeOrderBys[0].isAscending)
-            {
-               viewDiffs.push(`Changed sort from ${fieldNameToLabel(savedOrderBys[0].fieldName)} ${toWord(savedOrderBys[0].isAscending)} to ${fieldNameToLabel(activeOrderBys[0].fieldName)} ${toWord(activeOrderBys[0].isAscending)}`)
-            }
-            else if (savedOrderBys[0].fieldName != activeOrderBys[0].fieldName)
-            {
-               viewDiffs.push(`Changed sort field from ${fieldNameToLabel(savedOrderBys[0].fieldName)} to ${fieldNameToLabel(activeOrderBys[0].fieldName)}`)
-            }
-            else if (savedOrderBys[0].isAscending != activeOrderBys[0].isAscending)
-            {
-               viewDiffs.push(`Changed sort direction from ${toWord(savedOrderBys[0].isAscending)} to ${toWord(activeOrderBys[0].isAscending)}`)
-            }
-         }
-      }
-      catch(e)
-      {
-         console.log(`Error looking for differences in filters ${e}`);
-      }
-   }
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   const diffColumns = (savedView: RecordQueryView, activeView: RecordQueryView, viewDiffs: string[]): void =>
-   {
-      try
-      {
-         if(!savedView.queryColumns || !savedView.queryColumns.columns || savedView.queryColumns.columns.length == 0)
-         {
-            viewDiffs.push("This view did not previously have columns saved with it, so the next time you save it they will be initialized.");
-            return;
-         }
-
-         ////////////////////////////////////////////////////////////
-         // nested function to help diff visible status of columns //
-         ////////////////////////////////////////////////////////////
-         const diffVisibilityFunction = (base: QQueryColumns, compare: QQueryColumns, messagePrefix: string) =>
-         {
-            const baseColumnsMap: { [name: string]: boolean } = {};
-            base.columns.forEach((column) =>
-            {
-               if (column.isVisible)
-               {
-                  baseColumnsMap[column.name] = true;
-               }
-            });
-
-            const diffFields: string[] = [];
-            for (let i = 0; i < compare.columns.length; i++)
-            {
-               const column = compare.columns[i];
-               if(column.isVisible)
-               {
-                  if (!baseColumnsMap[column.name])
-                  {
-                     diffFields.push(fieldNameToLabel(column.name));
-                  }
-               }
-            }
-
-            if (diffFields.length > 0)
-            {
-               if (diffFields.length > 5)
-               {
-                  viewDiffs.push(`${messagePrefix} ${diffFields.length} columns.`);
-               }
-               else
-               {
-                  viewDiffs.push(`${messagePrefix} column${diffFields.length == 1 ? "" : "s"}: ${diffFields.join(", ")}`);
-               }
-            }
-         };
-
-         ///////////////////////////////////////////////////////////
-         // nested function to help diff pinned status of columns //
-         ///////////////////////////////////////////////////////////
-         const diffPinsFunction = (base: QQueryColumns, compare: QQueryColumns, messagePrefix: string) =>
-         {
-            const baseColumnsMap: { [name: string]: string } = {};
-            base.columns.forEach((column) => baseColumnsMap[column.name] = column.pinned);
-
-            const diffFields: string[] = [];
-            for (let i = 0; i < compare.columns.length; i++)
-            {
-               const column = compare.columns[i];
-               if (baseColumnsMap[column.name] != column.pinned)
-               {
-                  diffFields.push(fieldNameToLabel(column.name));
-               }
-            }
-
-            if (diffFields.length > 0)
-            {
-               if (diffFields.length > 5)
-               {
-                  viewDiffs.push(`${messagePrefix} ${diffFields.length} columns.`);
-               }
-               else
-               {
-                  viewDiffs.push(`${messagePrefix} column${diffFields.length == 1 ? "" : "s"}: ${diffFields.join(", ")}`);
-               }
-            }
-         };
-
-         ///////////////////////////////////////////////////
-         // nested function to help diff width of columns //
-         ///////////////////////////////////////////////////
-         const diffWidthsFunction = (base: QQueryColumns, compare: QQueryColumns, messagePrefix: string) =>
-         {
-            const baseColumnsMap: { [name: string]: number } = {};
-            base.columns.forEach((column) => baseColumnsMap[column.name] = column.width);
-
-            const diffFields: string[] = [];
-            for (let i = 0; i < compare.columns.length; i++)
-            {
-               const column = compare.columns[i];
-               if (baseColumnsMap[column.name] != column.width)
-               {
-                  diffFields.push(fieldNameToLabel(column.name));
-               }
-            }
-
-            if (diffFields.length > 0)
-            {
-               if (diffFields.length > 5)
-               {
-                  viewDiffs.push(`${messagePrefix} ${diffFields.length} columns.`);
-               }
-               else
-               {
-                  viewDiffs.push(`${messagePrefix} column${diffFields.length == 1 ? "" : "s"}: ${diffFields.join(", ")}`);
-               }
-            }
-         };
-
-         diffVisibilityFunction(savedView.queryColumns, activeView.queryColumns, "Turned on ");
-         diffVisibilityFunction(activeView.queryColumns, savedView.queryColumns, "Turned off ");
-         diffPinsFunction(savedView.queryColumns, activeView.queryColumns, "Changed pinned state for ");
-
-         if(savedView.queryColumns.columns.map(c => c.name).join(",") != activeView.queryColumns.columns.map(c => c.name).join(","))
-         {
-            viewDiffs.push("Changed the order columns.");
-         }
-
-         diffWidthsFunction(savedView.queryColumns, activeView.queryColumns, "Changed width for ");
-      }
-      catch (e)
-      {
-         console.log(`Error looking for differences in columns: ${e}`);
-      }
-   }
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   const diffQuickFilterFieldNames = (savedView: RecordQueryView, activeView: RecordQueryView, viewDiffs: string[]): void =>
-   {
-      try
-      {
-         const diffFunction = (base: string[], compare: string[], messagePrefix: string) =>
-         {
-            const baseFieldNameMap: { [name: string]: boolean } = {};
-            base.forEach((name) => baseFieldNameMap[name] = true);
-            const diffFields: string[] = [];
-            for (let i = 0; i < compare.length; i++)
-            {
-               const name = compare[i];
-               if (!baseFieldNameMap[name])
-               {
-                  diffFields.push(fieldNameToLabel(name));
-               }
-            }
-
-            if (diffFields.length > 0)
-            {
-               viewDiffs.push(`${messagePrefix} basic filter${diffFields.length == 1 ? "" : "s"}: ${diffFields.join(", ")}`);
-            }
-         }
-
-         diffFunction(savedView.quickFilterFieldNames, activeView.quickFilterFieldNames, "Turned on");
-         diffFunction(activeView.quickFilterFieldNames, savedView.quickFilterFieldNames, "Turned off");
-      }
-      catch (e)
-      {
-         console.log(`Error looking for differences in quick filter field names: ${e}`);
-      }
-   }
-
-
+   const baseView = currentSavedView ? JSON.parse(currentSavedView.values.get("viewJson")) as RecordQueryView : tableDefaultView;
+   const viewDiffs = SavedViewUtils.diffViews(tableMetaData, baseView, view);
    let viewIsModified = false;
-   let viewDiffs:string[] = [];
-
-   if(currentSavedView != null)
+   if(viewDiffs.length > 0)
    {
-      const savedView = JSON.parse(currentSavedView.values.get("viewJson")) as RecordQueryView;
-      const activeView = view;
-
-      diffFilters(savedView, activeView, viewDiffs);
-      diffColumns(savedView, activeView, viewDiffs);
-      diffQuickFilterFieldNames(savedView, activeView, viewDiffs);
-
-      if(savedView.mode != activeView.mode)
-      {
-         if(savedView.mode)
-         {
-            viewDiffs.push(`Mode changed from ${savedView.mode} to ${activeView.mode}`)
-         }
-         else
-         {
-            viewDiffs.push(`Mode set to ${activeView.mode}`)
-         }
-      }
-
-      if(savedView.rowsPerPage != activeView.rowsPerPage)
-      {
-         if(savedView.rowsPerPage)
-         {
-            viewDiffs.push(`Rows per page changed from ${savedView.rowsPerPage} to ${activeView.rowsPerPage}`)
-         }
-         else
-         {
-            viewDiffs.push(`Rows per page set to ${activeView.rowsPerPage}`)
-         }
-      }
-
-      if(viewDiffs.length > 0)
-      {
-         viewIsModified = true;
-      }
+      viewIsModified = true;
    }
-
 
    /*******************************************************************************
     ** make request to load all saved filters from backend
@@ -534,8 +163,13 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
       switch(optionName)
       {
          case SAVE_OPTION:
+            if(currentSavedView == null)
+            {
+               setSavedViewNameInputValue("");
+            }
             break;
          case DUPLICATE_OPTION:
+            setSavedViewNameInputValue("");
             setIsSaveFilterAs(true);
             break;
          case CLEAR_OPTION:
@@ -760,13 +394,13 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
          keepMounted
          PaperProps={{style: {maxHeight: "calc(100vh - 200px)", minHeight: "200px"}}}
       >
-         <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>Actions</b></MenuItem>
+         <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>View Actions</b></MenuItem>
          {
             hasStorePermission &&
             <Tooltip {...menuTooltipAttribs} title={<>Save your current filters, columns and settings, for quick re-use at a later time.<br /><br />You will be prompted to enter a name if you choose this option.</>}>
                <MenuItem onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
                   <ListItemIcon><Icon>save</Icon></ListItemIcon>
-                  Save...
+                  {currentSavedView ? "Save..." : "Save As..."}
                </MenuItem>
             </Tooltip>
          }
@@ -815,48 +449,150 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                   </MenuItem>
                )
             ): (
-               <MenuItem >
-                  <i>No views have been saved for this table.</i>
+               <MenuItem>
+                  <i>You do not have any saved views for this table.</i>
                </MenuItem>
             )
          }
       </Menu>
    );
 
+   let buttonText = "Views";
+   let buttonBackground = "none";
+   let buttonBorder = colors.grayLines.main;
+   let buttonColor = colors.gray.main;
+
+   if(loadingSavedView)
+   {
+      buttonText = "Loading...";
+   }
+   else if(currentSavedView)
+   {
+      buttonText = currentSavedView.values.get("label")
+   }
+
+   if(currentSavedView)
+   {
+      if (viewIsModified)
+      {
+         buttonBackground = accentColorLight;
+         buttonBorder = buttonBackground;
+         buttonColor = accentColor;
+      }
+      else
+      {
+         buttonBackground = accentColor;
+         buttonBorder = buttonBackground;
+         buttonColor = "#FFFFFF";
+      }
+   }
+
+   const buttonStyles = {
+      border: `1px solid ${buttonBorder}`,
+      backgroundColor: buttonBackground,
+      color: buttonColor,
+      "&:focus:not(:hover)": {
+         color: buttonColor,
+         backgroundColor: buttonBackground,
+      },
+      "&:hover": {
+         color: buttonColor,
+         backgroundColor: buttonBackground,
+      }
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function isSaveButtonDisabled(): boolean
+   {
+      if(isSubmitting)
+      {
+         return (true);
+      }
+
+      const haveInputText = (savedViewNameInputValue != null && savedViewNameInputValue.trim() != "")
+
+      if(isSaveFilterAs || isRenameFilter || currentSavedView == null)
+      {
+         if(!haveInputText)
+         {
+            return (true);
+         }
+      }
+
+      return (false);
+   }
+
+   const linkButtonStyle = {
+      minWidth: "unset",
+      textTransform: "none",
+      fontSize: "0.875rem",
+      fontWeight: "500",
+      padding: "0.5rem"
+   };
+
    return (
       hasQueryPermission && tableMetaData ? (
-         <Box display="flex" flexGrow={1}>
-            <QSavedViewsMenuButton isOpen={savedViewsMenu} onClickHandler={openSavedViewsMenu} />
-            {renderSavedViewsMenu}
-            <Box display="flex" justifyContent="center" flexDirection="column">
+         <>
+            <Box order="1" mr={"0.5rem"}>
+               <Button
+                  onClick={openSavedViewsMenu}
+                  sx={{
+                     borderRadius: "0.75rem",
+                     textTransform: "none",
+                     fontWeight: 500,
+                     fontSize: "0.875rem",
+                     p: "0.5rem",
+                     ... buttonStyles
+                  }}
+               >
+                  <Icon sx={{mr: "0.5rem"}}>save</Icon>
+                  {buttonText}
+                  <Icon sx={{ml: "0.5rem"}}>keyboard_arrow_down</Icon>
+               </Button>
+               {renderSavedViewsMenu}
+            </Box>
+            <Box order="3" display="flex" justifyContent="center" flexDirection="column">
                <Box pl={2} pr={2} sx={{display: "flex", alignItems: "center"}}>
                   {
-                     savedViewsHaveLoaded && currentSavedView && (
-                        <Typography mr={2} variant="h6">Current View:&nbsp;
-                           <span style={{fontWeight: "initial"}}>
+                     !currentSavedView && viewIsModified && <>
+                        <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
+                           <b>Unsaved Changes</b>
+                           <ul style={{padding: "0.5rem 1rem"}}>
                               {
-                                 loadingSavedView
-                                    ? "..."
-                                    :
-                                    <>
-                                       {currentSavedView.values.get("label")}
-                                       {
-                                          viewIsModified && (
-                                             <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>The current view has been modified:
-                                                <ul style={{padding: "1rem"}}>
-                                                   {
-                                                      viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
-                                                   }
-                                                </ul>Click &quot;Save...&quot; to save the changes.</>}>
-                                                <FiberManualRecord sx={{color: "orange", paddingLeft: "2px", paddingTop: "4px"}} />
-                                             </Tooltip>
-                                          )
-                                       }
-                                    </>
+                                 viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
                               }
-                           </span>
-                        </Typography>
-                     )
+                           </ul>
+                        </>}>
+                           <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save View As&hellip;</Button>
+                        </Tooltip>
+
+                        {/* vertical rule */}
+                        <Box display="inline-block" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
+
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset All Changes</Button>
+                     </>
+                  }
+                  {
+                     currentSavedView && viewIsModified && <>
+                        <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
+                           <b>Unsaved Changes</b>
+                           <ul style={{padding: "0.5rem 1rem"}}>
+                              {
+                                 viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
+                              }
+                           </ul></>}>
+                           <Box display="inline" sx={{...linkButtonStyle, p: 0, cursor: "default", position: "relative", top: "-1px"}}>{viewDiffs.length} Unsaved Change{viewDiffs.length == 1 ? "" : "s"}</Box>
+                        </Tooltip>
+
+                        <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save&hellip;</Button>
+
+                        {/* vertical rule */}
+                        <Box display="inline-block" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
+
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset All Changes</Button>
+                     </>
                   }
                </Box>
             </Box>
@@ -917,7 +653,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                                  autoFocus
                                  name="custom-delimiter-value"
                                  placeholder="View Name"
-                                 label="View Name"
                                  inputProps={{width: "100%", maxLength: 100}}
                                  value={savedViewNameInputValue}
                                  sx={{width: "100%"}}
@@ -943,12 +678,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, vie
                         isDeleteFilter ?
                            <QDeleteButton onClickHandler={handleFilterDialogButtonOnClick} disabled={isSubmitting} />
                            :
-                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={isSubmitting || ((isSaveFilterAs || currentSavedView == null) && savedViewNameInputValue == null)}/>
+                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={isSaveButtonDisabled()}/>
                      }
                   </DialogActions>
                </Dialog>
             }
-         </Box>
+         </>
       ) : null
    );
 }

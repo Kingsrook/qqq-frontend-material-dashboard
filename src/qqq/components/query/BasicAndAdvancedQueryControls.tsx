@@ -27,8 +27,9 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Badge, ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
+import {Badge, ToggleButton, ToggleButtonGroup} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -37,15 +38,17 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Icon from "@mui/material/Icon";
-import Menu from "@mui/material/Menu";
 import Tooltip from "@mui/material/Tooltip";
 import {GridApiPro} from "@mui/x-data-grid-pro/models/gridApiPro";
-import React, {forwardRef, useImperativeHandle, useReducer, useState} from "react";
+import React, {forwardRef, useContext, useImperativeHandle, useReducer, useState} from "react";
+import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
-import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
+import FieldListMenu from "qqq/components/query/FieldListMenu";
 import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import QuickFilter, {quickFilterButtonStyles} from "qqq/components/query/QuickFilter";
+import XIcon from "qqq/components/query/XIcon";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 
@@ -53,6 +56,9 @@ interface BasicAndAdvancedQueryControlsProps
 {
    metaData: QInstance;
    tableMetaData: QTableMetaData;
+
+   savedViewsComponent: JSX.Element;
+   columnMenuComponent: JSX.Element;
 
    quickFilterFieldNames: string[];
    setQuickFilterFieldNames: (names: string[]) => void;
@@ -83,7 +89,7 @@ let debounceTimeout: string | number | NodeJS.Timeout;
  *******************************************************************************/
 const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryControlsProps, ref) =>
 {
-   const {metaData, tableMetaData, quickFilterFieldNames, setQuickFilterFieldNames, setQueryFilter, queryFilter, gridApiRef, queryFilterJSON, mode, setMode} = props
+   const {metaData, tableMetaData, savedViewsComponent, columnMenuComponent, quickFilterFieldNames, setQuickFilterFieldNames, setQueryFilter, queryFilter, gridApiRef, queryFilterJSON, mode, setMode} = props
 
    /////////////////////
    // state variables //
@@ -94,6 +100,8 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    const [addQuickFilterOpenCounter, setAddQuickFilterOpenCounter] = useState(0);
    const [showClearFiltersWarning, setShowClearFiltersWarning] = useState(false);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+   const {accentColor} = useContext(QContext);
 
    //////////////////////////////////////////////////////////////////////////////////
    // make some functions available to our parent - so it can tell us to do things //
@@ -279,6 +287,11 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       const fieldName = newValue ? newValue.fieldName : null;
       if (fieldName)
       {
+         if(defaultQuickFilterFieldNameMap[fieldName])
+         {
+            return;
+         }
+
          if (quickFilterFieldNames.indexOf(fieldName) == -1)
          {
             /////////////////////////////////
@@ -309,7 +322,22 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
 
 
    /*******************************************************************************
-    ** event handler for the Filter Buidler button - e.g., opens the parent's grid's
+    **
+    *******************************************************************************/
+   const handleFieldListMenuSelection = (field: QFieldMetaData, table: QTableMetaData): void =>
+   {
+      let fullFieldName = field.name;
+      if(table && table.name != tableMetaData.name)
+      {
+         fullFieldName = `${table.name}.${field.name}`;
+      }
+
+      addQuickFilterField({fieldName: fullFieldName}, "selectedFromAddFilterMenu");
+   }
+
+
+   /*******************************************************************************
+    ** event handler for the Filter Builder button - e.g., opens the parent's grid's
     ** filter panel
     *******************************************************************************/
    const openFilterBuilder = (e: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>) =>
@@ -326,9 +354,19 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       if (isYesButton || event.key == "Enter")
       {
          setShowClearFiltersWarning(false);
-         setQueryFilter(new QQueryFilter());
+         setQueryFilter(new QQueryFilter([], queryFilter.orderBys));
       }
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const removeCriteriaByIndex = (index: number) =>
+   {
+      queryFilter.criteria.splice(index, 1);
+      setQueryFilter(queryFilter);
+   }
 
 
    /*******************************************************************************
@@ -344,20 +382,20 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       let counter = 0;
 
       return (
-         <span>
+         <Box display="flex" flexWrap="wrap" fontSize="0.875rem">
             {queryFilter.criteria.map((criteria, i) =>
             {
                const {criteriaIsValid} = validateCriteria(criteria, null);
                if(criteriaIsValid)
                {
-                  const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
                   counter++;
 
                   return (
-                     <span key={i}>
-                        {counter > 1 ? <span>{queryFilter.booleanOperator}&nbsp;</span> : <span/>}
+                     <React.Fragment key={i}>
+                        {counter > 1 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{queryFilter.booleanOperator}&nbsp;</span> : <span/>}
                         {FilterUtils.criteriaToHumanString(tableMetaData, criteria, true)}
-                     </span>
+                        <XIcon position="forAdvancedQueryPreview" onClick={() => removeCriteriaByIndex(i)} />
+                     </React.Fragment>
                   );
                }
                else
@@ -365,7 +403,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                   return (<span />);
                }
             })}
-         </span>
+         </Box>
       );
    };
 
@@ -427,12 +465,15 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          return;
       }
 
-      for (let i = 0; i < queryFilter?.criteria?.length; i++)
+      if(mode == "basic")
       {
-         const criteria = queryFilter.criteria[i];
-         if (criteria && criteria.fieldName)
+         for (let i = 0; i < queryFilter?.criteria?.length; i++)
          {
-            addQuickFilterField(criteria, reason);
+            const criteria = queryFilter.criteria[i];
+            if (criteria && criteria.fieldName)
+            {
+               addQuickFilterField(criteria, reason);
+            }
          }
       }
    }
@@ -453,6 +494,70 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          }
       }
       return count;
+   }
+
+
+   /*******************************************************************************
+    ** Event handler for setting the sort from that menu
+    *******************************************************************************/
+   const handleSetSort = (field: QFieldMetaData, table: QTableMetaData, isAscending: boolean = true): void =>
+   {
+      const fullFieldName = table && table.name != tableMetaData.name ? `${table.name}.${field.name}` : field.name;
+      queryFilter.orderBys = [new QFilterOrderBy(fullFieldName, isAscending)]
+
+      setQueryFilter(queryFilter);
+      forceUpdate();
+   }
+
+
+   /*******************************************************************************
+    ** event handler for a click on a field's up or down arrow in the sort menu
+    *******************************************************************************/
+   const handleSetSortArrowClick = (field: QFieldMetaData, table: QTableMetaData, event: any): void =>
+   {
+      event.stopPropagation();
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // make sure this is an event handler for one of our icons (not something else in the dom here in our end-adornments) //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const isAscending = event.target.innerHTML == "arrow_upward";
+      const isDescending = event.target.innerHTML == "arrow_downward";
+      if(isAscending || isDescending)
+      {
+         handleSetSort(field, table, isAscending);
+      }
+   }
+
+
+   /*******************************************************************************
+    ** event handler for clicking the current sort up/down arrow, to toggle direction.
+    *******************************************************************************/
+   function toggleSortDirection(event: React.MouseEvent<HTMLSpanElement, MouseEvent>): void
+   {
+      event.stopPropagation();
+      try
+      {
+         queryFilter.orderBys[0].isAscending = !queryFilter.orderBys[0].isAscending;
+         setQueryFilter(queryFilter);
+         forceUpdate();
+      }
+      catch(e)
+      {
+         console.log(`Error toggling sort: ${e}`)
+      }
+   }
+
+   /////////////////////////////////
+   // set up the sort menu button //
+   /////////////////////////////////
+   let sortButtonContents = <>Sort...</>
+   if(queryFilter && queryFilter.orderBys && queryFilter.orderBys.length > 0)
+   {
+      const orderBy = queryFilter.orderBys[0];
+      const orderByFieldName = orderBy.fieldName;
+      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, orderByFieldName);
+      const fieldLabel = fieldTable.name == tableMetaData.name ? field.label : `${fieldTable.label}: ${field.label}`;
+      sortButtonContents =  <>Sort: {fieldLabel} <Icon onClick={toggleSortDirection} sx={{ml: "0.5rem"}}>{orderBy.isAscending ? "arrow_upward" : "arrow_downward"}</Icon></>
    }
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,140 +586,172 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       </>
    }
 
+   const borderGray = colors.grayLines.main;
+
+   const sortMenuComponent = (
+      <FieldListMenu
+         idPrefix="sort"
+         tableMetaData={tableMetaData}
+         placeholder="Search Fields"
+         buttonProps={{disableRipple: true, sx: {textTransform: "none", color: colors.gray.main, paddingRight: 0}}}
+         buttonChildren={sortButtonContents}
+         isModeSelectOne={true}
+         handleSelectedField={handleSetSort}
+         fieldEndAdornment={<Box whiteSpace="nowrap"><Icon>arrow_upward</Icon><Icon>arrow_downward</Icon></Box>}
+         handleAdornmentClick={handleSetSortArrowClick}
+      />);
+
    return (
-      <Box display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" position="relative" top={"-0.5rem"} left={"0.5rem"} minHeight="2.5rem">
-         <Box display="flex" alignItems="center" flexShrink={1} flexGrow={1}>
+      <Box pb={mode == "advanced" ? "0.25rem" : "0"}>
+
+         {/* First row:  Saved Views button (with Columns button in the middle of it), then space-between, then basic|advanced toggle */}
+         <Box display="flex" justifyContent="space-between" pt={"0.5rem"} pb={"0.5rem"}>
+            <Box display="flex">
+               {savedViewsComponent}
+               {columnMenuComponent}
+            </Box>
+            <Box>
+               <Tooltip title={reasonWhyBasicIsDisabled}>
+                  <ToggleButtonGroup
+                     value={mode}
+                     exclusive
+                     onChange={(event, newValue) => modeToggleClicked(newValue)}
+                     size="small"
+                     sx={{pl: 0.5, width: "10rem"}}
+                  >
+                     <ToggleButton value="basic" disabled={!canFilterWorkAsBasic}>Basic</ToggleButton>
+                     <ToggleButton value="advanced">Advanced</ToggleButton>
+                  </ToggleButtonGroup>
+               </Tooltip>
+            </Box>
+         </Box>
+
+         {/* Second row:  Basic or advanced mode - with sort-by control on the right (of each) */}
+         <Box pb={"0.25rem"}>
             {
+               ///////////////////////////////////////////////////////////////////////////////////
+               // basic mode - wrapping-list of fields & add-field button, then sort-by control //
+               ///////////////////////////////////////////////////////////////////////////////////
                mode == "basic" &&
-               <Box width="100px" flexShrink={1} flexGrow={1}>
-                  <>
-                     {
-                        tableMetaData && defaultQuickFilterFieldNames?.map((fieldName) =>
+               <Box display="flex" alignItems="flex-start" flexShrink={1} flexGrow={1}>
+                  <Box width="100px" flexShrink={1} flexGrow={1}>
+                     <>
                         {
-                           const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-                           let defaultOperator = getDefaultOperatorForField(field);
+                           tableMetaData && defaultQuickFilterFieldNames?.map((fieldName) =>
+                           {
+                              const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                              let defaultOperator = getDefaultOperatorForField(field);
 
-                           return (<QuickFilter
-                              key={fieldName}
-                              fullFieldName={fieldName}
-                              tableMetaData={tableMetaData}
-                              updateCriteria={updateQuickCriteria}
-                              criteriaParam={getQuickCriteriaParam(fieldName)}
-                              fieldMetaData={field}
-                              defaultOperator={defaultOperator}
-                              handleRemoveQuickFilterField={null} />);
-                        })
-                     }
-                     <Box display="inline-block" borderLeft="1px solid gray" height="1.75rem" width="1px" marginRight="0.5rem" position="relative" top="0.5rem" />
-                     {
-                        tableMetaData && quickFilterFieldNames?.map((fieldName) =>
+                              return (<QuickFilter
+                                 key={fieldName}
+                                 fullFieldName={fieldName}
+                                 tableMetaData={tableMetaData}
+                                 updateCriteria={updateQuickCriteria}
+                                 criteriaParam={getQuickCriteriaParam(fieldName)}
+                                 fieldMetaData={field}
+                                 defaultOperator={defaultOperator}
+                                 handleRemoveQuickFilterField={null} />);
+                           })
+                        }
+                        {/* vertical rule */}
+                        <Box display="inline-block" borderLeft={`1px solid ${borderGray}`} height="1.75rem" width="1px" marginRight="0.5rem" position="relative" top="0.5rem" />
                         {
-                           const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-                           let defaultOperator = getDefaultOperatorForField(field);
+                           tableMetaData && quickFilterFieldNames?.map((fieldName) =>
+                           {
+                              const [field] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+                              let defaultOperator = getDefaultOperatorForField(field);
 
-                           return (defaultQuickFilterFieldNameMap[fieldName] ? null : <QuickFilter
-                              key={fieldName}
-                              fullFieldName={fieldName}
+                              return (defaultQuickFilterFieldNameMap[fieldName] ? null : <QuickFilter
+                                 key={fieldName}
+                                 fullFieldName={fieldName}
+                                 tableMetaData={tableMetaData}
+                                 updateCriteria={updateQuickCriteria}
+                                 criteriaParam={getQuickCriteriaParam(fieldName)}
+                                 fieldMetaData={field}
+                                 defaultOperator={defaultOperator}
+                                 handleRemoveQuickFilterField={handleRemoveQuickFilterField} />);
+                           })
+                        }
+                        {
+                           tableMetaData && <FieldListMenu
+                              key={JSON.stringify(quickFilterFieldNames)} // use a unique key each time we open it, because we don't want the user's last selection to stick.
+                              idPrefix="addQuickFilter"
                               tableMetaData={tableMetaData}
-                              updateCriteria={updateQuickCriteria}
-                              criteriaParam={getQuickCriteriaParam(fieldName)}
-                              fieldMetaData={field}
-                              defaultOperator={defaultOperator}
-                              handleRemoveQuickFilterField={handleRemoveQuickFilterField} />);
-                        })
-                     }
-                     {
-                        tableMetaData &&
-                        <>
-                           <Tooltip enterDelay={500} title="Add a Quick Filter field" placement="top">
-                              <Button onClick={(e) => openAddQuickFilterMenu(e)} startIcon={<Icon>add</Icon>} sx={{...quickFilterButtonStyles}}>
-                                 Add Filter
-                              </Button>
-                           </Tooltip>
-                           <Menu
-                              anchorEl={addQuickFilterMenu}
-                              anchorOrigin={{vertical: "bottom", horizontal: "left"}}
-                              transformOrigin={{vertical: "top", horizontal: "left"}}
-                              transitionDuration={0}
-                              open={Boolean(addQuickFilterMenu)}
-                              onClose={closeAddQuickFilterMenu}
-                              keepMounted
-                           >
-                              <Box width="250px">
-                                 <FieldAutoComplete
-                                    key={addQuickFilterOpenCounter} // use a unique key each time we open it, because we don't want the user's last selection to stick.
-                                    id={"add-quick-filter-field"}
-                                    metaData={metaData}
-                                    tableMetaData={tableMetaData}
-                                    defaultValue={null}
-                                    handleFieldChange={(e, newValue, reason) => addQuickFilterField(newValue, reason)}
-                                    autoFocus={true}
-                                    forceOpen={Boolean(addQuickFilterMenu)}
-                                    hiddenFieldNames={[...(defaultQuickFilterFieldNames??[]), ...(quickFilterFieldNames??[])]}
-                                 />
-                              </Box>
-                           </Menu>
-                        </>
-                     }
-                  </>
+                              fieldNamesToHide={[...(defaultQuickFilterFieldNames ?? []), ...(quickFilterFieldNames ?? [])]}
+                              placeholder="Search Fields"
+                              buttonProps={{sx: quickFilterButtonStyles, startIcon: (<Icon>add</Icon>)}}
+                              buttonChildren={"Add Filter"}
+                              isModeSelectOne={true}
+                              handleSelectedField={handleFieldListMenuSelection}
+                           />
+                        }
+                     </>
+                  </Box>
+                  <Box>
+                     {sortMenuComponent}
+                  </Box>
                </Box>
             }
             {
+               //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // advanced mode - 2 rows - one for Filter Builder button & sort control, 2nd row for the filter-detail box //
+               //////////////////////////////////////////////////////////////////////////////////////////////////////////////
                metaData && tableMetaData && mode == "advanced" &&
-               <>
-                  <Tooltip enterDelay={500} title="Build an advanced Filter" placement="top">
-                     <Button onClick={(e) => openFilterBuilder(e)} startIcon={<Badge badgeContent={countValidCriteria(queryFilter)} color="warning" sx={{"& .MuiBadge-badge": {color: "#FFFFFF"}}} anchorOrigin={{vertical: "top", horizontal: "left"}}><Icon>filter_list</Icon></Badge>} sx={{width: "180px", minWidth: "180px", border: "1px solid gray"}}>
-                        Filter Builder
-                     </Button>
-                  </Tooltip>
-                  <div id="clearFiltersButton" style={{display: "inline-block", position: "relative", top: "2px", left: "-1.5rem", width: "1rem"}}>
-                     {
-                        hasValidFilters && (
+               <Box borderRadius="0.75rem" border={`1px solid ${borderGray}`}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                     <Box p="0.5rem">
+                        <Tooltip enterDelay={500} title="Build an advanced Filter" placement="top">
                            <>
-                              <Tooltip title="Clear Filter">
-                                 <Icon sx={{cursor: "pointer"}} onClick={() => setShowClearFiltersWarning(true)}>clear</Icon>
-                              </Tooltip>
-                              <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(true)} onKeyPress={(e) => handleClearFiltersAction(e)}>
-                                 <DialogTitle id="alert-dialog-title">Confirm</DialogTitle>
-                                 <DialogContent>
-                                    <DialogContentText>Are you sure you want to remove all conditions from the current filter?</DialogContentText>
-                                 </DialogContent>
-                                 <DialogActions>
-                                    <QCancelButton label="No" disabled={false} onClickHandler={() => setShowClearFiltersWarning(true)} />
-                                    <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() => handleClearFiltersAction(null, true)} />
-                                 </DialogActions>
-                              </Dialog>
+                              <Button
+                                 onClick={(e) => openFilterBuilder(e)}
+                                 startIcon={<Icon>build</Icon>}
+                                 sx={{borderRadius: "0.75rem", padding: "0.5rem", pl: "1rem", fontSize: "0.875rem", fontWeight: 500, border: `1px solid ${accentColor}`, textTransform: "none"}}
+                              >
+                                 Filter Builder
+                                 {
+                                    countValidCriteria(queryFilter) > 0 &&
+                                    <Box sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px">
+                                       {countValidCriteria(queryFilter) }
+                                    </Box>
+                                 }
+                              </Button>
+                              {
+                                 hasValidFilters && <XIcon shade="accent" position="default" onClick={() => setShowClearFiltersWarning(true)} />
+                              }
                            </>
-                        )
-                     }
-                  </div>
-                  <Box sx={{fontSize: "1rem"}} whiteSpace="nowrap" display="flex" ml={0.25} flexShrink={1} flexGrow={1} alignItems="center">
-                     Current Filter:
+                        </Tooltip>
+                        <Dialog open={showClearFiltersWarning} onClose={() => setShowClearFiltersWarning(false)} onKeyPress={(e) => handleClearFiltersAction(e)}>
+                           <DialogTitle id="alert-dialog-title">Confirm</DialogTitle>
+                           <DialogContent>
+                              <DialogContentText>Are you sure you want to remove all conditions from the current filter?</DialogContentText>
+                           </DialogContent>
+                           <DialogActions>
+                              <QCancelButton label="No" disabled={false} onClickHandler={() => setShowClearFiltersWarning(false)} />
+                              <QSaveButton label="Yes" iconName="check" disabled={false} onClickHandler={() => handleClearFiltersAction(null, true)} />
+                           </DialogActions>
+                        </Dialog>
+                     </Box>
+                     <Box pr={"0.5rem"}>
+                        {sortMenuComponent}
+                     </Box>
+                  </Box>
+                  <Box whiteSpace="nowrap" display="flex" flexShrink={1} flexGrow={1} alignItems="center">
                      {
-                        <Box display="inline-block" border="1px solid gray" borderRadius="0.5rem" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" width="100px" flexShrink={1} flexGrow={1} sx={{fontSize: "1rem"}} minHeight={"2rem"} p={0.25} ml={0.5}>
+                        <Box
+                           display="inline-block"
+                           borderTop={`1px solid ${borderGray}`}
+                           borderRadius="0 0 0.75rem 0.75rem"
+                           width="100%"
+                           sx={{fontSize: "1rem", background: "#FFFFFF"}}
+                           minHeight={"2.5rem"}
+                           p={"0.5rem"}
+                           pb={0} // comes from the elements inside
+                           boxShadow={"inset 0px 0px 4px 2px #EFEFED"}
+                        >
                            {queryToAdvancedString()}
                         </Box>
                      }
                   </Box>
-               </>
-            }
-         </Box>
-         <Box display="flex" alignItems="center">
-            {
-               metaData && tableMetaData &&
-               <Box px={1} display="flex" alignItems="center">
-                  <Tooltip title={reasonWhyBasicIsDisabled}>
-                     <ToggleButtonGroup
-                        value={mode}
-                        exclusive
-                        onChange={(event, newValue) => modeToggleClicked(newValue)}
-                        size="small"
-                        sx={{pl: 0.5, width: "10rem"}}
-                     >
-                        <ToggleButton value="basic" disabled={!canFilterWorkAsBasic}>Basic</ToggleButton>
-                        <ToggleButton value="advanced">Advanced</ToggleButton>
-                     </ToggleButtonGroup>
-                  </Tooltip>
                </Box>
             }
          </Box>

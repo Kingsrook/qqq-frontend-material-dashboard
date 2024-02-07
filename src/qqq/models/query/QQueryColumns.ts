@@ -114,6 +114,59 @@ export default class QQueryColumns
       return fields;
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public getVisibleColumnCount(): number
+   {
+      let rs = 0;
+      for (let i = 0; i < this.columns.length; i++)
+      {
+         if(this.columns[i].name == "__check__")
+         {
+            continue;
+         }
+
+         if(this.columns[i].isVisible)
+         {
+            rs++;
+         }
+      }
+      return (rs);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public getVisibilityToggleStates(): { [name: string]: boolean }
+   {
+      const rs: {[name: string]: boolean} = {};
+      for (let i = 0; i < this.columns.length; i++)
+      {
+         rs[this.columns[i].name] = this.columns[i].isVisible;
+      }
+      return (rs);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public setIsVisible(name: string, isVisible: boolean)
+   {
+      for (let i = 0; i < this.columns.length; i++)
+      {
+         if(this.columns[i].name == name)
+         {
+            this.columns[i].isVisible = isVisible;
+            break;
+         }
+      }
+   }
+
+
    /*******************************************************************************
     **
     *******************************************************************************/
