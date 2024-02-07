@@ -116,7 +116,7 @@ function MaterialUIControllerProvider({children}: { children: ReactNode }): JSX.
       whiteSidenav: false,
       sidenavColor: "info",
       transparentNavbar: true,
-      fixedNavbar: true,
+      fixedNavbar: false,
       openConfigurator: false,
       direction: "ltr",
       layout: "dashboard",

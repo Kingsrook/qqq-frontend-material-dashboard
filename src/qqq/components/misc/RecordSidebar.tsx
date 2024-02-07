@@ -41,7 +41,7 @@ interface Props
 
 QRecordSidebar.defaultProps = {
    light: false,
-   stickyTop: "110px",
+   stickyTop: "1rem",
 };
 
 interface SidebarEntry
@@ -76,7 +76,7 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
 
 
    return (
-      <Card sx={{borderRadius: "0.75rem", position: "sticky", top: stickyTop, overflow: "auto", maxHeight: "calc(100vh - 200px)"}}>
+      <Card sx={{borderRadius: "0.75rem", position: "sticky", top: stickyTop, overflow: "auto", maxHeight: "calc(100vh - 2rem)"}}>
          <Box component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
