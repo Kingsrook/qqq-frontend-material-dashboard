@@ -28,7 +28,7 @@ package com.kingsrook.qqq.frontend.materialdashboard.selenium.lib;
 public interface QQQMaterialDashboardSelectors
 {
    String SIDEBAR_ITEM      = ".MuiDrawer-paperAnchorDockedLeft li.MuiListItem-root";
-   String BREADCRUMB_HEADER = ".MuiToolbar-root h3";
+   String BREADCRUMB_HEADER = "h3";
 
    String QUERY_GRID_CELL    = ".MuiDataGrid-root .MuiDataGrid-cellContent";
    String QUERY_FILTER_INPUT = ".customFilterPanel input.MuiInput-input";

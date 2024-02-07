@@ -710,13 +710,13 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                  Filter Builder
                                  {
                                     countValidCriteria(queryFilter) > 0 &&
-                                    <Box sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px">
+                                    <Box sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px" className="filterBuilderCountBadge">
                                        {countValidCriteria(queryFilter) }
                                     </Box>
                                  }
                               </Button>
                               {
-                                 hasValidFilters && <XIcon shade="accent" position="default" onClick={() => setShowClearFiltersWarning(true)} />
+                                 hasValidFilters && <span className="filterBuilderXIcon"><XIcon shade="accent" position="default" onClick={() => setShowClearFiltersWarning(true)} /></span>
                               }
                            </>
                         </Tooltip>

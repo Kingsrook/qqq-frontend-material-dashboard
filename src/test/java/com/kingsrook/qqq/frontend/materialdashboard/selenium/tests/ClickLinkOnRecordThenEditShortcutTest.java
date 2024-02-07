@@ -55,7 +55,7 @@ public class ClickLinkOnRecordThenEditShortcutTest extends QBaseSeleniumTest
    @Test
    void testClickLinkOnRecordThenEditShortcutTest()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/developer/script/1", "Hello, Script");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/developer/script/1", "Hello, Script");
       qSeleniumLib.waitForSelectorContaining("A", "100").click();
 
       qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").sendKeys("e");

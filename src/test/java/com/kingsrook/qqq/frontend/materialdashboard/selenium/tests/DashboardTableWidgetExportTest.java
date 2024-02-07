@@ -76,7 +76,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
    @Test
    void testDashboardTableWidgetExport() throws IOException
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/", "Greetings App");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/", "Greetings App");
 
       ////////////////////////////////////////////////////////////////////////
       // assert that the table widget rendered its header and some contents //

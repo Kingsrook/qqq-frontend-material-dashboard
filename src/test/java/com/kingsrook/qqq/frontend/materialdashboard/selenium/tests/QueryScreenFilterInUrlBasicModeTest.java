@@ -73,7 +73,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       ////////////////////////////////////////
       String filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.IS_NOT_BLANK)));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("annualSalary");
       queryScreenLib.clickQuickFilterButton("annualSalary");
@@ -84,7 +84,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       ///////////////////////////////
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("annualSalary", QCriteriaOperator.BETWEEN, 1701, 74656)));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("annualSalary");
       queryScreenLib.clickQuickFilterButton("annualSalary");
@@ -97,7 +97,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       //////////////////////////////////////////
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.NOT_EQUALS, 1)));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("homeCityId");
       queryScreenLib.clickQuickFilterButton("homeCityId");
@@ -109,7 +109,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       //////////////////////////////////////
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("homeCityId", QCriteriaOperator.IN, 1, 2)));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("homeCityId");
       queryScreenLib.clickQuickFilterButton("homeCityId");
@@ -122,7 +122,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       /////////////////////////////////////////
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.GREATER_THAN, NowWithOffset.minus(5, ChronoUnit.DAYS))));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("createDate");
       queryScreenLib.clickQuickFilterButton("createDate");
@@ -135,7 +135,7 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       filterJSON = JsonUtils.toJson(new QQueryFilter()
          .withCriteria(new QFilterCriteria("firstName", QCriteriaOperator.STARTS_WITH, "Dar"))
          .withCriteria(new QFilterCriteria("createDate", QCriteriaOperator.LESS_THAN_OR_EQUALS, ThisOrLastPeriod.this_(ChronoUnit.YEARS))));
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("createDate");

@@ -53,7 +53,7 @@ public class AssociatedRecordScriptTest extends QBaseSeleniumTest
    @Test
    void testNavigatingBackAndForth()
    {
-      qSeleniumLib.gotoAndWaitForBreadcrumbHeader("/peopleApp/greetingsApp/person/1", "John Doe");
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person/1", "John Doe");
       qSeleniumLib.waitForSelectorContaining("BUTTON", "actions").click();
       
       qSeleniumLib.waitForSelectorContaining("LI", "Developer Mode").click();
