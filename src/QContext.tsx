@@ -19,9 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QAppMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppMetaData";
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {createContext} from "react";
@@ -32,7 +30,10 @@ interface QContext
    setPageHeader?: (header: string | JSX.Element) => void;
 
    accentColor: string;
-   setAccentColor?: (header: string) => void;
+   setAccentColor?: (color: string) => void;
+
+   accentColorLight: string;
+   setAccentColorLight?: (color: string) => void;
 
    dotMenuOpen: boolean;
    setDotMenuOpen?: (dotMenuOpen: boolean) => void;
@@ -57,6 +58,7 @@ interface QContext
 const defaultState = {
    pageHeader: "",
    accentColor: "#0062FF",
+   accentColorLight: "#C0D6F7",
    dotMenuOpen: false,
    keyboardHelpOpen: false,
    pathToLabelMap: {},
