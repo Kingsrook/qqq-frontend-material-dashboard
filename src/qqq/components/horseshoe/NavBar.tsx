@@ -251,7 +251,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
          {
             pageHeader &&
             <Box display="flex" justifyContent="space-between">
-               <MDTypography pt={1} textTransform="capitalize" variant="h3" color={light ? "white" : "dark"} noWrap>
+               <MDTypography pb="0.5rem" textTransform="capitalize" variant="h3" color={light ? "white" : "dark"} noWrap>
                   {pageHeader}
                </MDTypography>
             </Box>

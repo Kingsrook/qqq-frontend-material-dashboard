@@ -44,7 +44,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnHeaderParams, GridColumnHeaderSortIconProps, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
+import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnHeaderParams, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
 import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
@@ -515,6 +515,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       let label: string = tableMetaData?.label ?? "";
 
+      if(currentSavedView?.values?.get("label"))
+      {
+         label += " / " + currentSavedView?.values?.get("label");
+      }
+
       if (visibleJoinTables.size > 0)
       {
          let joinLabels = [];
@@ -675,7 +680,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
             else
             {
-               doSetCurrentSavedView(null);
+               doClearCurrentSavedView();
             }
          }
       }
@@ -1539,39 +1544,41 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const doSetCurrentSavedView = (savedViewRecord: QRecord) =>
    {
+      if(savedViewRecord == null)
+      {
+         console.log("doSetCurrentView called with a null view record - calling doClearCurrentSavedView instead.");
+         doClearCurrentSavedView();
+         return;
+      }
+
       setCurrentSavedView(savedViewRecord);
 
-      if(savedViewRecord)
-      {
-         (async () =>
-         {
-            const viewJson = savedViewRecord.values.get("viewJson")
-            const newView = RecordQueryView.buildFromJSON(viewJson);
+      const viewJson = savedViewRecord.values.get("viewJson")
+      const newView = RecordQueryView.buildFromJSON(viewJson);
 
-            activateView(newView);
+      activateView(newView);
 
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // todo - we used to be able to set "warnings" here (i think, like, for if a field got deleted from a table... //
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // setWarningAlert(models.warning);
+      ////////////////////////////////////////////////////////////////
+      // todo can/should/does this move into the view's "identity"? //
+      ////////////////////////////////////////////////////////////////
+      localStorage.setItem(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
+   }
 
-            ////////////////////////////////////////////////////////////////
-            // todo can/should/does this move into the view's "identity"? //
-            ////////////////////////////////////////////////////////////////
-            localStorage.setItem(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
-         })()
-      }
-      else
-      {
-         localStorage.removeItem(currentSavedViewLocalStorageKey);
-      }
+
+   /*******************************************************************************
+    ** wrapper around un-setting current saved view and removing its id from local-stroage
+    *******************************************************************************/
+   const doClearCurrentSavedView = () =>
+   {
+      setCurrentSavedView(null);
+      localStorage.removeItem(currentSavedViewLocalStorageKey);
    }
 
 
    /*******************************************************************************
     **
     *******************************************************************************/
-   const buildTableDefaultView = (): RecordQueryView =>
+   const buildTableDefaultView = (tableMetaData: QTableMetaData): RecordQueryView =>
    {
       const newDefaultView = new RecordQueryView();
       newDefaultView.queryFilter = new QQueryFilter([], [new QFilterOrderBy(tableMetaData.primaryKeyField, false)]);
@@ -1616,7 +1623,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          ///////////////////////////////////////////////
          // activate a new default view for the table //
          ///////////////////////////////////////////////
-         activateView(buildTableDefaultView())
+         activateView(buildTableDefaultView(tableMetaData))
       }
    }
 
@@ -1634,6 +1641,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          const jobError = processResult as QJobError;
          console.error("Could not retrieve saved filter: " + jobError.userFacingError);
+         setAlertContent("There was an error loading the selected view.");
       }
       else
       {
@@ -1646,26 +1654,135 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          // what they're like in the backend); similarly, set anything that's unset. //
          //////////////////////////////////////////////////////////////////////////////
          const viewJson = qRecord.values.get("viewJson")
-         const view = RecordQueryView.buildFromJSON(viewJson);
-         view.viewIdentity = "savedView:" + id;
+         const newView = RecordQueryView.buildFromJSON(viewJson);
+
+         setWarningAlert(null);
+         reconcileCurrentTableMetaDataWithView(newView, "loadingSavedView");
+
+         newView.viewIdentity = "savedView:" + id;
 
          ///////////////////////////////////////////////////////////////////
          // e.g., translate possible values from ids to objects w/ labels //
          ///////////////////////////////////////////////////////////////////
-         await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, view.queryFilter);
+         await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, newView.queryFilter);
 
          ///////////////////////////
          // set columns if absent //
          ///////////////////////////
-         if(!view.queryColumns || !view.queryColumns.columns || view.queryColumns.columns?.length == 0)
+         if(!newView.queryColumns || !newView.queryColumns.columns || newView.queryColumns.columns?.length == 0)
          {
-            view.queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
+            newView.queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
          }
 
-         qRecord.values.set("viewJson", JSON.stringify(view))
+         qRecord.values.set("viewJson", JSON.stringify(newView))
       }
 
       return (qRecord);
+   }
+
+
+   /*******************************************************************************
+    ** after a page-load, or before activating a saved view, make sure that no
+    ** fields are missing from its column list, and that no deleted-fields are still
+    ** being used.
+    *******************************************************************************/
+   const reconcileCurrentTableMetaDataWithView = (view: RecordQueryView, useCase: "initialPageLoad" | "loadingSavedView") =>
+   {
+      let changedView = false;
+      const removedFieldNames = new Set<string>();
+
+      if (view.queryColumns?.columns?.length > 0)
+      {
+         const fieldNamesInView: { [name: string]: boolean } = {};
+         view.queryColumns?.columns?.forEach(column => fieldNamesInView[column.name] = true);
+         for (let i = 0; i < tableDefaultView?.queryColumns?.columns.length; i++)
+         {
+            const currentColumn = tableDefaultView?.queryColumns?.columns[i];
+            if (!fieldNamesInView[currentColumn.name])
+            {
+               console.log(`Adding a new column to this view ${currentColumn.name}`);
+               view.queryColumns.addColumnForNewField(tableMetaData, currentColumn.name, useCase == "initialPageLoad");
+               changedView = true;
+            }
+            else
+            {
+               delete fieldNamesInView[currentColumn.name];
+            }
+         }
+
+         //////////////////////////////////////////////////////////////
+         // delete, from the view, any fields no longer in the table //
+         //////////////////////////////////////////////////////////////
+         for (let fieldName in fieldNamesInView)
+         {
+            console.log(`Deleting an old column from this view ${fieldName}`);
+            view.queryColumns.deleteColumnForOldField(tableMetaData, fieldName);
+            changedView = true;
+            removedFieldNames.add(fieldName);
+         }
+      }
+
+      /////////////////////////////////////////
+      // look for deleted fields as criteria //
+      /////////////////////////////////////////
+      for (let i = 0; i < view?.queryFilter?.criteria?.length; i++)
+      {
+         const fieldName = view.queryFilter.criteria[i].fieldName;
+         const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (field == null)
+         {
+            console.log(`Deleting an old criteria field from this view ${fieldName}`);
+            view.queryFilter.criteria.splice(i, 1);
+            changedView = true;
+            removedFieldNames.add(fieldName);
+            i--;
+         }
+      }
+      /////////////////////////////////////////
+      // look for deleted fields as orderBys //
+      /////////////////////////////////////////
+      for (let i = 0; i < view?.queryFilter?.orderBys?.length; i++)
+      {
+         const fieldName = view.queryFilter.orderBys[i].fieldName;
+         const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (field == null)
+         {
+            console.log(`Deleting an old orderBy field from this view ${fieldName}`);
+            view.queryFilter.orderBys.splice(i, 1);
+            changedView = true;
+            removedFieldNames.add(fieldName);
+            i--;
+         }
+      }
+
+      //////////////////////////////////////////////
+      // look for deleted fields as quick-filters //
+      //////////////////////////////////////////////
+      for (let i = 0; i < view?.quickFilterFieldNames?.length; i++)
+      {
+         const fieldName = view.quickFilterFieldNames[i];
+         const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (field == null)
+         {
+            console.log(`Deleting an old quikc-filter field from this view ${fieldName}`);
+            view.quickFilterFieldNames.splice(i, 1);
+            changedView = true;
+            removedFieldNames.add(fieldName);
+            i--;
+         }
+      }
+
+      if (changedView && useCase == "initialPageLoad")
+      {
+         activateView(view);
+      }
+
+      const removedFieldCount = removedFieldNames.size;
+      if(removedFieldCount > 0)
+      {
+         const plural = removedFieldCount > 1;
+         setWarningAlert(`${removedFieldCount} field${plural ? "s" : ""} that ${plural ? "were" : "was"} part of this view ${plural ? "are" : "is"} no longer in this table, and ${plural ? "were" : "was"} removed from this view (${[...removedFieldNames.values()].join(", ")}).`);
+      }
    }
 
 
@@ -1731,12 +1848,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             await navigator.clipboard.writeText(data);
             setSuccessAlert(`Copied ${counter} ${qFieldMetaData.label} value${counter == 1 ? "" : "s"}.`);
+            setTimeout(() => setSuccessAlert(null), 3000);
          }
          else
          {
-            setSuccessAlert(`There are no ${qFieldMetaData.label} values to copy.`);
+            setWarningAlert(`There are no ${qFieldMetaData.label} values to copy.`);
+            setTimeout(() => setWarningAlert(null), 3000);
          }
-         setTimeout(() => setSuccessAlert(null), 3000);
       }
    };
 
@@ -1811,7 +1929,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                </MenuItem>
 
                <HideGridColMenuItem onClick={hideMenu} column={currentColumn!} />
-               <GridColumnsMenuItem onClick={hideMenu} column={currentColumn!} />
 
                <Divider />
                <GridColumnPinningMenuItems onClick={hideMenu} column={currentColumn!} />
@@ -2157,6 +2274,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
          setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
 
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // now that we know the table - build a default view - initially, only used by SavedViews component, for showing if there's anything to be saved. //
+         // but also used when user selects new-view from the view menu                                                                                    //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const newDefaultView = buildTableDefaultView(tableMetaData);
+         setTableDefaultView(newDefaultView);
+
          setPageState("loadedMetaData");
       })();
    }
@@ -2171,13 +2295,6 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       (async () =>
       {
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // now that we know the table - build a default view - initially, only used by SavedViews component, for showing if there's anything to be saved. //
-         // but also used when user selects new-view from the view menu                                                                                    //
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         const newDefaultView = buildTableDefaultView();
-         setTableDefaultView(newDefaultView);
-
          //////////////////////////////////////////////////////////////////////////////////////////////
          // once we've loaded meta data, let's check the location to see if we should open a process //
          //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2255,7 +2372,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                /////////////////////////////////////////////////////////////////////////////////////////////
                // make sure that we clear out any currently saved view - we're no longer in such a state. //
                /////////////////////////////////////////////////////////////////////////////////////////////
-               doSetCurrentSavedView(null);
+               doClearCurrentSavedView();
             }
             catch(e)
             {
@@ -2331,68 +2448,32 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       console.log("page state is loadedView - going to preparingGrid...");
       setPageState("preparingGrid");
 
-      (async () =>
+      //////////////////////////////////////////////////////////////////////////////////////////////////////
+      // check if any new columns have been added to the table since last time this view was activated... //
+      // or if anything in the view is no longer in the table                                             //
+      //////////////////////////////////////////////////////////////////////////////////////////////////////
+      reconcileCurrentTableMetaDataWithView(view, "initialPageLoad");
+
+      ////////////////////////////////////////////////////////////////////////////////////////
+      // this ref may not be defined on the initial render, so, make this call in a timeout //
+      ////////////////////////////////////////////////////////////////////////////////////////
+      setTimeout(() =>
       {
-         const visibleJoinTables = getVisibleJoinTables();
+         // @ts-ignore
+         basicAndAdvancedQueryControlsRef?.current?.ensureAllFilterCriteriaAreActiveQuickFilters(view.queryFilter, "defaultFilterLoaded")
+      });
 
-         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // todo - we used to be able to set "warnings" here (i think, like, for if a field got deleted from a table... //
-         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // setWarningAlert(models.warning);
+      console.log("finished preparing grid, going to page state ready");
+      setPageState("ready");
 
-         ////////////////////////////////////////////////////////////////////////////////////////
-         // this ref may not be defined on the initial render, so, make this call in a timeout //
-         ////////////////////////////////////////////////////////////////////////////////////////
-         setTimeout(() =>
-         {
-            // @ts-ignore
-            basicAndAdvancedQueryControlsRef?.current?.ensureAllFilterCriteriaAreActiveQuickFilters(view.queryFilter, "defaultFilterLoaded")
-         });
+      ////////////////////////////////////////////
+      // if we need a variant, show that prompt //
+      ////////////////////////////////////////////
+      if (tableMetaData?.usesVariants && !tableVariant)
+      {
+         promptForTableVariantSelection();
+      }
 
-         //////////////////////////////////////////////////////////////////////////////////////////////////
-         // make sure that any if any sort columns are from a join table, that the join table is visible //
-         // todo - figure out what this is, see if still needed, etc...
-         //////////////////////////////////////////////////////////////////////////////////////////////////
-         /*
-         let resetColumnSortModel = false;
-         for (let i = 0; i < columnSortModel.length; i++)
-         {
-            const gridSortItem = columnSortModel[i];
-            if (gridSortItem.field.indexOf(".") > -1)
-            {
-               const tableName = gridSortItem.field.split(".")[0];
-               if (!visibleJoinTables?.has(tableName))
-               {
-                  columnSortModel.splice(i, 1);
-                  setColumnSortModel(columnSortModel);
-                  // todo - need to setQueryFilter?
-                  resetColumnSortModel = true;
-                  i--;
-               }
-            }
-         }
-
-         if (resetColumnSortModel && latestQueryId > 0)
-         {
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // let the next render (since columnSortModel is watched below) build the filter, using the new columnSort //
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            return;
-         }
-         */
-
-         console.log("finished preparing grid, going to page state ready");
-         setPageState("ready");
-
-         ////////////////////////////////////////////
-         // if we need a variant, show that prompt //
-         ////////////////////////////////////////////
-         if (tableMetaData?.usesVariants && !tableVariant)
-         {
-            promptForTableVariantSelection();
-            return;
-         }
-      })();
       return (getLoadingScreen());
    }
 
@@ -2584,13 +2665,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       <BaseLayout>
          <Box display="flex" justifyContent="space-between">
             <Box>
-               <Typography textTransform="capitalize" variant="h3" noWrap>
+               <Typography textTransform="capitalize" variant="h3">
                   {pageLoadingState.isLoading() && ""}
                   {pageLoadingState.isLoadingSlow() && "Loading..."}
                   {pageLoadingState.isNotLoading() && getPageHeader(tableMetaData, visibleJoinTables, tableVariant)}
                </Typography>
             </Box>
-            <Box>
+            <Box whiteSpace="nowrap">
                <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
                <Box display="inline-block" width="150px">
                   {
@@ -2622,37 +2703,31 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </iframe>
             */}
             <Box mb={3}>
-               {alertContent ? (
-                  <Box mb={3}>
-                     <Alert
-                        severity="error"
-                        onClose={() =>
-                        {
-                           setAlertContent(null);
-                        }}
-                     >
-                        {alertContent}
-                     </Alert>
-                  </Box>
-               ) : (
-                  ""
-               )}
+               {
+                  alertContent ? (
+                     <Collapse in={Boolean(alertContent)}>
+                        <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
+                     </Collapse>
+                  ) : null
+               }
                {
                   (tableLabel && showSuccessfullyDeletedAlert) ? (
-                     <Alert color="success" sx={{mb: 3}} onClose={() => setShowSuccessfullyDeletedAlert(false)}>{`${tableLabel} successfully deleted`}</Alert>
+                     <Collapse in={Boolean(showSuccessfullyDeletedAlert)}>
+                        <Alert color="success" sx={{mt: 1.5, mb: 0.5}} onClose={() => setShowSuccessfullyDeletedAlert(false)}>{`${tableLabel} successfully deleted`}</Alert>
+                     </Collapse>
                   ) : null
                }
                {
                   (successAlert) ? (
                      <Collapse in={Boolean(successAlert)}>
-                        <Alert color="success" sx={{mb: 3}} onClose={() => setSuccessAlert(null)}>{successAlert}</Alert>
+                        <Alert color="success" sx={{mt: 1.5, mb: 0.5}} onClose={() => setSuccessAlert(null)}>{successAlert}</Alert>
                      </Collapse>
                   ) : null
                }
                {
                   (warningAlert) ? (
                      <Collapse in={Boolean(warningAlert)}>
-                        <Alert color="warning" icon={<Icon>warning</Icon>} sx={{mb: 3}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
+                        <Alert color="warning" icon={<Icon>warning</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
                }
@@ -2700,11 +2775,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                               }
                         }}
                         localeText={{
-                           toolbarFilters: "Filter", // label on the filters button.  we prefer singular (1 filter has many "conditions" in it).
-                           toolbarFiltersLabel: "", // setting these 3 to "" turns off the "Show Filters" and "Hide Filters" tooltip (which can get in the way of the actual filters panel)
-                           toolbarFiltersTooltipShow: "",
-                           toolbarFiltersTooltipHide: "",
-                           toolbarFiltersTooltipActive: count => count !== 1 ? `${count} conditions` : `${count} condition`
+                           columnMenuSortAsc: "Sort ascending",
+                           columnMenuSortDesc: "Sort descending",
                         }}
                         pinnedColumns={pinnedColumns}
                         onPinnedColumnsChange={handlePinnedColumnsChange}

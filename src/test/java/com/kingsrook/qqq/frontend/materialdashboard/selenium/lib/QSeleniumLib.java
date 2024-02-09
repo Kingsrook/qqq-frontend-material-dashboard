@@ -63,6 +63,11 @@ public class QSeleniumLib
 
    private boolean autoHighlight = false;
 
+   //////////////////////////////////////////////////////////////////////////////////////
+   // useful to use on a WebElement, in a call like: .findElement(QSeleniumLib.PARENT) //
+   //////////////////////////////////////////////////////////////////////////////////////
+   public static final By PARENT = By.xpath("./..");
+
 
 
    /*******************************************************************************
@@ -241,6 +246,18 @@ public class QSeleniumLib
 
       conditionallyAutoHighlight(element);
       return element;
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void moveMouseCursorToElement(WebElement element)
+   {
+      Actions actions = new Actions(driver);
+      actions.moveToElement(element);
+      actions.perform();
    }
 
 

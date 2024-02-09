@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
 import java.net.URLEncoder;
@@ -90,13 +90,13 @@ public class SavedViewsTest extends QBaseSeleniumTest
       /////////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("LI", "Some People").click();
       qSeleniumLib.waitForCondition("Current URL should have view id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
+      queryScreenLib.assertSavedViewNameOnScreen("Some People");
 
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
       qSeleniumLib.waitForSeconds(1); // wait for the filters menu to fully disappear?  if this doesn't work, try a different word to look for...
-      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
+      queryScreenLib.waitForDataGridCellContaining("jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////
@@ -105,7 +105,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       ///////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have View id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
+      queryScreenLib.assertSavedViewNameOnScreen("Some People");
       queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
 
       //////////////////////
@@ -123,7 +123,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
+      queryScreenLib.waitForDataGridCellContaining("jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       ///////////////////////////////////////////////////////////////////////////////
@@ -133,7 +133,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumJavalin.beginCapture();
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have filter id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Some People");
+      queryScreenLib.assertSavedViewNameOnScreen("Some People");
       qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
       CapturedContext capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
       assertTrue(capturedContext.getBody().contains("Kelkhoff"));
@@ -143,16 +143,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       // navigate to the table with a View in the URL //
       //////////////////////////////////////////////////
       String filter = """
-         {
-            "criteria":
-            [
-               {
-                  "fieldName": "id",
-                  "operator": "LESS_THAN",
-                  "values": [10]
-               }
-            ]
-         }
+         {"criteria":[{"fieldName":"id", "operator":"LESS_THAN", "values":[10]}]}
          """.replace('\n', ' ').replaceAll(" ", "");
       qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8), "Person");
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Save View As");
@@ -160,7 +151,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       //////////////////////////////
       // click into a view screen //
       //////////////////////////////
-      qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", "jdoe@kingsrook.com").click();
+      queryScreenLib.waitForDataGridCellContaining("jdoe@kingsrook.com").click();
       qSeleniumLib.waitForSelectorContaining("H5", "Viewing Person: John Doe");
 
       /////////////////////////////////////////////////////////////////////////////////

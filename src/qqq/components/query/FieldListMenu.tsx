@@ -561,6 +561,14 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
    const textFieldId = `field-list-dropdown-${idPrefix}-textField`;
    let listItemPadding = isModeToggle ? "0.125rem": "0.5rem";
 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // for z-indexes, we set each table header to i+1, then the fields in that table to i (so they go behind it) //
+   // then we increment i by 2 for the next table (so the next header goes above the previous header)           //
+   // this fixes a thing where, if one table's name wrapped to 2 lines, then when the next table below it would //
+   // come up, if it was only 1 line, then the second line from the previous one would bleed through.           //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   let zIndex = 1;
+
    return (
       <>
          <Button onClick={openMenu} {...buttonProps}>
@@ -639,10 +647,12 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                               marginLeft = "-1rem";
                            }
 
+                           zIndex += 2;
+
                            return (
                               <React.Fragment key={tableWithFields.table?.name ?? "theTable"}>
                                  <>
-                                    {headerContents && <ListItem sx={{position: "sticky", top: "0", backgroundColor: "#FFFFFF", zIndex: 1, padding: listItemPadding, ml: marginLeft, display: "flex", alignItems: "flex-start"}}>{headerContents}</ListItem>}
+                                    {headerContents && <ListItem sx={{position: "sticky", top: -1, zIndex: zIndex+1, padding: listItemPadding, ml: marginLeft, display: "flex", alignItems: "flex-start", backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,1) 90%, rgba(255,255,255,0))"}}>{headerContents}</ListItem>}
                                     {
                                        tableWithFields.fields.map((field) =>
                                        {
@@ -703,7 +713,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                                           return <ListItem
                                              key={key}
                                              id={`field-list-dropdown-${idPrefix}-${index}`}
-                                             sx={{color: "#757575", p: 1, borderRadius: ".5rem", padding: listItemPadding, pl: paddingLeft, scrollMarginTop: "3rem", ...style}}
+                                             sx={{color: "#757575", p: 1, borderRadius: ".5rem", padding: listItemPadding, pl: paddingLeft, scrollMarginTop: "3rem", zIndex: zIndex, background: "#FFFFFF", ...style}}
                                              onMouseOver={(event) => handleMouseOver(event, field, tableWithFields.table)}
                                              {...onClick}
                                           >{contents}</ListItem>;

@@ -53,7 +53,7 @@ export enum ValueMode
    PVS_MULTI = "PVS_MULTI",
 }
 
-const getValueModeRequiredCount = (valueMode: ValueMode): number =>
+export const getValueModeRequiredCount = (valueMode: ValueMode): number =>
 {
    switch (valueMode)
    {

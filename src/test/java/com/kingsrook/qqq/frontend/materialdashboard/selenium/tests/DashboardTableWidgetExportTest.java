@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
+import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QSeleniumLib;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -89,7 +90,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
       // click the export button //
       /////////////////////////////
       qSeleniumLib.waitForSelector("#SampleTableWidget h6")
-         .findElement(By.xpath("./.."))
+         .findElement(QSeleniumLib.PARENT)
          .findElement(By.cssSelector("button"))
          .click();
 
