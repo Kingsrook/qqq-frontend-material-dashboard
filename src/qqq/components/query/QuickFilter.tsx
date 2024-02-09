@@ -400,16 +400,18 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       buttonAdditionalStyles.color = "white !important";
       buttonClassName = "filterActive";
 
-      let valuesString = FilterUtils.getValuesString(fieldMetaData, criteria);
-      if(fieldMetaData.type == QFieldType.BOOLEAN)
+      let valuesString = FilterUtils.getValuesString(fieldMetaData, criteria, 1, "+N");
+
+      ///////////////////////////////////////////
+      // don't show the Equals or In operators //
+      ///////////////////////////////////////////
+      let operatorString = (<>{operatorSelectedValue.label}&nbsp;</>);
+      if(operatorSelectedValue.value == QCriteriaOperator.EQUALS || operatorSelectedValue.value == QCriteriaOperator.IN)
       {
-         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // for booleans, in here, the operator-label is "equals yes" or "equals no", so we don't want the values string //
-         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         valuesString = "";
+         operatorString = (<></>)
       }
 
-      buttonContent = (<><span style={{fontWeight: 700}}>{buttonContent}:</span>&nbsp;<span style={{fontWeight: 400}}>{operatorSelectedValue.label}&nbsp;{valuesString}</span></>);
+      buttonContent = (<><span style={{fontWeight: 700}}>{buttonContent}:</span>&nbsp;<span style={{fontWeight: 400}}>{operatorString}{valuesString}</span></>);
    }
 
    const mouseEvents =
