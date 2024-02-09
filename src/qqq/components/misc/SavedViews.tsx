@@ -405,7 +405,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasStorePermission &&
+            hasStorePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Change the name for this saved view.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
                   <ListItemIcon><Icon>edit</Icon></ListItemIcon>
@@ -414,16 +414,16 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasStorePermission &&
-            <Tooltip {...menuTooltipAttribs} title="Make a copy this saved view, with a different name, separate from the original.">
+            hasStorePermission && currentSavedView != null &&
+            <Tooltip {...menuTooltipAttribs} title="Save a new copy this view, with a different name, separate from the original.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
                   <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
-                  Duplicate...
+                  Save As...
                </MenuItem>
             </Tooltip>
          }
          {
-            hasDeletePermission &&
+            hasStorePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Delete this saved view.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
                   <ListItemIcon><Icon>delete</Icon></ListItemIcon>
@@ -461,15 +461,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    let buttonBackground = "none";
    let buttonBorder = colors.grayLines.main;
    let buttonColor = colors.gray.main;
-
-   if(loadingSavedView)
-   {
-      buttonText = "Loading...";
-   }
-   else if(currentSavedView)
-   {
-      buttonText = currentSavedView.values.get("label")
-   }
 
    if(currentSavedView)
    {

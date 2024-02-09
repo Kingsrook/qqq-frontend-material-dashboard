@@ -60,6 +60,29 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void clickAdvancedFilterClearIcon()
+   {
+      qSeleniumLib.moveMouseCursorToElement(qSeleniumLib.waitForSelector(".filterBuilderButton"));
+      qSeleniumLib.waitForSelector(".filterBuilderXIcon BUTTON").click();
+      qSeleniumLib.waitForSelectorContaining("BUTTON", "Yes").click();
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void clickQuickFilterClearIcon(String fieldName)
+   {
+      qSeleniumLib.moveMouseCursorToElement(qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName));
+      qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName + "+span button").click();
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public void assertNoFilterButtonBadge(int valueInBadge)
    {
       qSeleniumLib.waitForSelectorContainingToNotExist(".filterBuilderCountBadge", String.valueOf(valueInBadge));
@@ -100,6 +123,16 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void assertQuickFilterButtonDoesNotIndicateActiveFilter(String fieldName)
+   {
+      qSeleniumLib.waitForSelectorToNotExist("#quickFilter\\." + fieldName + ".filterActive");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public void clickQuickFilterButton(String fieldName)
    {
       qSeleniumLib.waitForSelector("#quickFilter\\." + fieldName).click();
@@ -132,7 +165,26 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
-   public void addQueryFilterInput(QSeleniumLib qSeleniumLib, int index, String fieldLabel, String operator, String value, String booleanOperator)
+   public void assertSavedViewNameOnScreen(String savedViewName)
+   {
+      qSeleniumLib.waitForSelectorContaining("H3", savedViewName);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public WebElement waitForDataGridCellContaining(String containingText)
+   {
+      return qSeleniumLib.waitForSelectorContaining("DIV.MuiDataGrid-cell", containingText);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void addAdvancedQueryFilterInput(QSeleniumLib qSeleniumLib, int index, String fieldLabel, String operator, String value, String booleanOperator)
    {
       if(index > 0)
       {

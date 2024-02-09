@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
@@ -70,7 +70,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       // open the filter window, enter a value, wait for query to re-run //
       /////////////////////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
-      queryScreenLib.addQueryFilterInput(qSeleniumLib, 0, "Id", "equals", "1", null);
+      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 0, "Id", "equals", "1", null);
 
       ///////////////////////////////////////////////////////////////////
       // assert that query & count both have the expected filter value //
@@ -86,14 +86,13 @@ public class QueryScreenTest extends QBaseSeleniumTest
       ///////////////////////////////////////
       qSeleniumLib.waitForSeconds(1); // todo grr.
       qSeleniumLib.waitForSelector(QQQMaterialDashboardSelectors.BREADCRUMB_HEADER).click();
-      qSeleniumLib.waitForSelectorContaining(".filterBuilderCountBadge", "1");
+      queryScreenLib.assertFilterButtonBadge(1);
 
       ///////////////////////////////////////////////////////////////////
       // click the 'x' clear icon, then yes, then expect another query //
       ///////////////////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
-      qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelector(".filterBuilderXIcon BUTTON").click());
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Yes").click();
+      queryScreenLib.clickAdvancedFilterClearIcon();
 
       ////////////////////////////////////////////////////////////////////
       // assert that query & count both no longer have the filter value //
@@ -121,8 +120,8 @@ public class QueryScreenTest extends QBaseSeleniumTest
       queryScreenLib.clickFilterButton();
 
       qSeleniumJavalin.beginCapture();
-      queryScreenLib.addQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
-      queryScreenLib.addQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
+      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
+      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
 
       String expectedFilterContents0 = """
          {"fieldName":"firstName","operator":"CONTAINS","values":["Dar"]}""";

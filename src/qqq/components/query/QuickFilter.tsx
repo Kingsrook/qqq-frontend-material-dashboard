@@ -24,18 +24,16 @@ import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QField
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {Badge, Tooltip} from "@mui/material";
+import {Tooltip} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Icon from "@mui/material/Icon";
-import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
 import React, {SyntheticEvent, useContext, useState} from "react";
 import QContext from "QContext";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
-import {getDefaultCriteriaValue, getOperatorOptions, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
+import {getDefaultCriteriaValue, getOperatorOptions, getValueModeRequiredCount, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
 import XIcon from "qqq/components/query/XIcon";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
@@ -71,8 +69,7 @@ export const quickFilterButtonStyles = {
    border: "1px solid #757575",
    minWidth: "3.5rem",
    minHeight: "auto",
-   padding: "0.375rem 0.625rem",
-   whiteSpace: "nowrap",
+   padding: "0.375rem 0.625rem", whiteSpace: "nowrap",
    marginBottom: "0.5rem"
 }
 
@@ -149,6 +146,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
    const [isOpen, setIsOpen] = useState(false);
    const [anchorEl, setAnchorEl] = useState(null);
+   const [isMouseOver, setIsMouseOver] = useState(false);
 
    const [criteria, setCriteria] = useState(criteriaParamIsCriteria(criteriaParam) ? criteriaParam as QFilterCriteriaWithId : null);
    const [id, setId] = useState(criteriaParamIsCriteria(criteriaParam) ? (criteriaParam as QFilterCriteriaWithId).id : ++seedId);
@@ -156,11 +154,27 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(getOperatorSelectedValue(operatorOptions, criteria, defaultOperator));
    const [operatorInputValue, setOperatorInputValue] = useState(operatorSelectedValue?.label);
 
-   const [startIconName, setStartIconName] = useState("filter_alt");
-
    const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
 
    const {accentColor} = useContext(QContext);
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function handleMouseOverElement()
+   {
+      setIsMouseOver(true);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function handleMouseOutElement()
+   {
+      setIsMouseOver(false);
+   }
 
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +185,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       const newCriteria = criteriaParam as QFilterCriteriaWithId;
       setCriteria(newCriteria);
       const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
-      console.log(`B: setOperatorSelectedValue [${JSON.stringify(operatorOption)}]`);
       setOperatorSelectedValue(operatorOption);
       setOperatorInputValue(operatorOption.label);
    }
@@ -202,7 +215,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       const operatorOption = operatorOptions.filter(o => o.value == defaultOperator)[0];
       const criteria = new QFilterCriteriaWithId(fullFieldName, operatorOption?.value, getDefaultCriteriaValue());
       criteria.id = id;
-      console.log(`C: setOperatorSelectedValue [${JSON.stringify(operatorOption)}]`);
       setOperatorSelectedValue(operatorOption);
       setOperatorInputValue(operatorOption?.label);
       setCriteria(criteria);
@@ -216,6 +228,12 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    {
       setIsOpen(!isOpen);
       setAnchorEl(event.currentTarget);
+
+      setTimeout(() =>
+      {
+         const element = document.getElementById("value-" + criteria.id);
+         element?.focus();
+      })
    };
 
    /*******************************************************************************
@@ -236,7 +254,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
 
       if (newValue)
       {
-         console.log(`D: setOperatorSelectedValue [${JSON.stringify(newValue)}]`);
          setOperatorSelectedValue(newValue);
          setOperatorInputValue(newValue.label);
 
@@ -244,10 +261,27 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          {
             criteria.values = newValue.implicitValues;
          }
+
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // we've seen cases where switching operators can sometimes put a null in as the first value... //
+         // that just causes a bad time (e.g., null pointers in Autocomplete), so, get rid of that.      //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         if(criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
+         {
+            criteria.values = [];
+         }
+
+         if(newValue.valueMode)
+         {
+            const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
+            if(requiredValueCount != null && criteria.values.length > requiredValueCount)
+            {
+               criteria.values.splice(requiredValueCount);
+            }
+         }
       }
       else
       {
-         console.log("E: setOperatorSelectedValue [null]");
          setOperatorSelectedValue(null);
          setOperatorInputValue("");
       }
@@ -307,28 +341,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          e.stopPropagation();
          const newCriteria = makeNewCriteria();
          updateCriteria(newCriteria, false, true);
-         setStartIconName("filter_alt");
       }
-   }
-
-   /*******************************************************************************
-    ** event handler for mouse-over on the filter icon - that changes to an 'x'
-    ** if there's a valid criteria in the quick-filter
-    *******************************************************************************/
-   const startIconMouseOver = () =>
-   {
-      if(criteriaIsValid)
-      {
-         setStartIconName("clear");
-      }
-   }
-
-   /*******************************************************************************
-    ** event handler for mouse-out on the filter icon - always resets it.
-    *******************************************************************************/
-   const startIconMouseOut = () =>
-   {
-      setStartIconName("filter_alt");
    }
 
    /*******************************************************************************
@@ -359,7 +372,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const maybeNewOperatorSelectedValue = getOperatorSelectedValue(operatorOptions, criteria, defaultOperator);
    if(JSON.stringify(maybeNewOperatorSelectedValue) !== JSON.stringify(operatorSelectedValue))
    {
-      console.log(`A: setOperatorSelectedValue [${JSON.stringify(maybeNewOperatorSelectedValue)}]`);
       setOperatorSelectedValue(maybeNewOperatorSelectedValue)
       setOperatorInputValue(maybeNewOperatorSelectedValue?.label)
    }
@@ -377,11 +389,6 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    /////////////////////////
    const tooComplex = criteriaParam == "tooComplex";
    const tooltipEnterDelay = 500;
-   let startIcon = <Badge badgeContent={criteriaIsValid && !tooComplex ? 1 : 0} color="warning" variant="dot" onMouseOver={startIconMouseOver} onMouseOut={startIconMouseOut} onClick={resetCriteria}><Icon>{startIconName}</Icon></Badge>
-   if(criteriaIsValid)
-   {
-      startIcon = <Tooltip title={"Remove this condition from your filter"} enterDelay={tooltipEnterDelay}>{startIcon}</Tooltip>
-   }
 
    let buttonAdditionalStyles: any = {};
    let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>
@@ -402,16 +409,19 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          valuesString = "";
       }
 
-      buttonContent = (
-         <Tooltip title={`${operatorSelectedValue.label} ${valuesString}`} enterDelay={tooltipEnterDelay}>
-            {buttonContent}
-         </Tooltip>
-      );
+      buttonContent = (<><span style={{fontWeight: 700}}>{buttonContent}:</span>&nbsp;<span style={{fontWeight: 400}}>{operatorSelectedValue.label}&nbsp;{valuesString}</span></>);
    }
+
+   const mouseEvents =
+      {
+         onMouseOver: () => handleMouseOverElement(),
+         onMouseOut: () => handleMouseOutElement()
+      };
 
    let button = fieldMetaData && <Button
       id={`quickFilter.${fullFieldName}`}
       className={buttonClassName}
+      {...mouseEvents}
       sx={{...quickFilterButtonStyles, ...buttonAdditionalStyles, mr: "0.5rem"}}
       onClick={tooComplex ? noop : handleOpenMenu}
       disabled={tooComplex}
@@ -461,7 +471,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
             // only show the 'x' if it's to clear out a valid criteria on the field,           //
             // or if we were given a callback to remove the quick-filter field from the screen //
             /////////////////////////////////////////////////////////////////////////////////////
-            (criteriaIsValid || handleRemoveQuickFilterField) && <XIcon shade={criteriaIsValid ? "accent" : "default"} position="forQuickFilter" onClick={xClicked} />
+            (criteriaIsValid || handleRemoveQuickFilterField) && isMouseOver && <span {...mouseEvents}><XIcon shade={criteriaIsValid ? "accent" : "default"} position="forQuickFilter" onClick={xClicked} /></span>
          }
          {
             isOpen && <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={closeMenu} sx={{overflow: "visible"}}>

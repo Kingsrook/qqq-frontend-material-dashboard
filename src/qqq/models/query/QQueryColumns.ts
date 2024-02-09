@@ -23,7 +23,9 @@
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {GridPinnedColumns} from "@mui/x-data-grid-pro";
+import quickSightChart from "qqq/components/widgets/misc/QuickSightChart";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 
 /*******************************************************************************
  ** member object
@@ -99,6 +101,45 @@ export default class QQueryColumns
 
       return (queryColumns);
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public addColumnForNewField = (table: QTableMetaData, fieldName: string, defaultVisibilityIfInMainTable: boolean): void =>
+   {
+      const [field, tableForField] = TableUtils.getFieldAndTable(table, fieldName)
+
+      let column: Column;
+      if(tableForField.name == table.name)
+      {
+         column = {name: field.name, isVisible: defaultVisibilityIfInMainTable, width: DataGridUtils.getColumnWidthForField(field, table)};
+      }
+      else
+      {
+         column = {name: `${tableForField.name}.${field.name}`, isVisible: false, width: DataGridUtils.getColumnWidthForField(field, null)};
+      }
+
+      this.columns.push(column);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public deleteColumnForOldField = (table: QTableMetaData, fieldName: string): void =>
+   {
+      for (let i = 0; i < this.columns.length; i++)
+      {
+         if(this.columns[i].name == fieldName)
+         {
+            this.columns.splice(i, 1);
+            return;
+         }
+      }
+
+      console.log(`Couldn't find column to be deleted, for name [${fieldName}]`);
+   }
 
 
    /*******************************************************************************

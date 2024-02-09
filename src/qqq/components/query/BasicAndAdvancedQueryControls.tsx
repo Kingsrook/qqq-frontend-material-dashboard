@@ -99,6 +99,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    const [addQuickFilterMenu, setAddQuickFilterMenu] = useState(null)
    const [addQuickFilterOpenCounter, setAddQuickFilterOpenCounter] = useState(0);
    const [showClearFiltersWarning, setShowClearFiltersWarning] = useState(false);
+   const [mouseOverElement, setMouseOverElement] = useState(null as string);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const {accentColor} = useContext(QContext);
@@ -123,6 +124,24 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          }
       }
    });
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function handleMouseOverElement(name: string)
+   {
+      setMouseOverElement(name);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function handleMouseOutElement()
+   {
+      setMouseOverElement(null);
+   }
 
 
    /*******************************************************************************
@@ -391,11 +410,11 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                   counter++;
 
                   return (
-                     <React.Fragment key={i}>
+                     <span key={i} style={{marginBottom: "0.125rem"}} onMouseOver={() => handleMouseOverElement(`queryPreview-${i}`)} onMouseOut={() => handleMouseOutElement()}>
                         {counter > 1 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{queryFilter.booleanOperator}&nbsp;</span> : <span/>}
                         {FilterUtils.criteriaToHumanString(tableMetaData, criteria, true)}
-                        <XIcon position="forAdvancedQueryPreview" onClick={() => removeCriteriaByIndex(i)} />
-                     </React.Fragment>
+                        {mouseOverElement == `queryPreview-${i}` && <span className={`advancedQueryPreviewX-${counter - 1}`}><XIcon position="forAdvancedQueryPreview" onClick={() => removeCriteriaByIndex(i)} /></span>}
+                     </span>
                   );
                }
                else
@@ -433,7 +452,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
             ////////////////////////////////////////////////////////////////////////////////////////////////
             if (queryFilter && queryFilter.criteria)
             {
-               ensureAllFilterCriteriaAreActiveQuickFilters(tableMetaData, queryFilter, "modeToggleClicked");
+               ensureAllFilterCriteriaAreActiveQuickFilters(tableMetaData, queryFilter, "modeToggleClicked", "basic");
             }
          }
 
@@ -449,7 +468,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
     ** make sure that all fields in the current query are on-screen as quick-filters
     ** (that is, if the query can be basic)
     *******************************************************************************/
-   const ensureAllFilterCriteriaAreActiveQuickFilters = (tableMetaData: QTableMetaData, queryFilter: QQueryFilter, reason: "modeToggleClicked" | "defaultFilterLoaded" | "savedFilterSelected" | string) =>
+   const ensureAllFilterCriteriaAreActiveQuickFilters = (tableMetaData: QTableMetaData, queryFilter: QQueryFilter, reason: "modeToggleClicked" | "defaultFilterLoaded" | "savedFilterSelected" | string, newMode?: string) =>
    {
       if(!tableMetaData || !queryFilter)
       {
@@ -465,7 +484,8 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          return;
       }
 
-      if(mode == "basic")
+      const modeToUse = newMode ?? mode;
+      if(modeToUse == "basic")
       {
          for (let i = 0; i < queryFilter?.criteria?.length; i++)
          {
@@ -601,6 +621,12 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          handleAdornmentClick={handleSetSortArrowClick}
       />);
 
+   const filterBuilderMouseEvents =
+      {
+         onMouseOver: () => handleMouseOverElement("filterBuilderButton"),
+         onMouseOut: () => handleMouseOutElement()
+      };
+
    return (
       <Box pb={mode == "advanced" ? "0.25rem" : "0"}>
 
@@ -703,20 +729,22 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                         <Tooltip enterDelay={500} title="Build an advanced Filter" placement="top">
                            <>
                               <Button
+                                 className="filterBuilderButton"
                                  onClick={(e) => openFilterBuilder(e)}
+                                 {... filterBuilderMouseEvents}
                                  startIcon={<Icon>build</Icon>}
                                  sx={{borderRadius: "0.75rem", padding: "0.5rem", pl: "1rem", fontSize: "0.875rem", fontWeight: 500, border: `1px solid ${accentColor}`, textTransform: "none"}}
                               >
                                  Filter Builder
                                  {
                                     countValidCriteria(queryFilter) > 0 &&
-                                    <Box sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px" className="filterBuilderCountBadge">
+                                    <Box {... filterBuilderMouseEvents} sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px" className="filterBuilderCountBadge">
                                        {countValidCriteria(queryFilter) }
                                     </Box>
                                  }
                               </Button>
                               {
-                                 hasValidFilters && <span className="filterBuilderXIcon"><XIcon shade="accent" position="default" onClick={() => setShowClearFiltersWarning(true)} /></span>
+                                 hasValidFilters && mouseOverElement == "filterBuilderButton" && <span {... filterBuilderMouseEvents} className="filterBuilderXIcon"><XIcon shade="accent" position="default" onClick={() => setShowClearFiltersWarning(true)} /></span>
                               }
                            </>
                         </Tooltip>
@@ -738,14 +766,15 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                   <Box whiteSpace="nowrap" display="flex" flexShrink={1} flexGrow={1} alignItems="center">
                      {
                         <Box
+                           className="advancedQueryString"
                            display="inline-block"
                            borderTop={`1px solid ${borderGray}`}
                            borderRadius="0 0 0.75rem 0.75rem"
                            width="100%"
                            sx={{fontSize: "1rem", background: "#FFFFFF"}}
-                           minHeight={"2.5rem"}
+                           minHeight={"2.375rem"}
                            p={"0.5rem"}
-                           pb={0} // comes from the elements inside
+                           pb={"0.125rem"}
                            boxShadow={"inset 0px 0px 4px 2px #EFEFED"}
                         >
                            {queryToAdvancedString()}

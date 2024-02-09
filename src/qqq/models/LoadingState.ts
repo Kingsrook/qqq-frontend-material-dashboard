@@ -69,6 +69,7 @@ export class LoadingState
 
    public setLoading()
    {
+      clearTimeout(this.slowTimeout);
       this.state = "loading";
       this.slowTimeout = setTimeout(() =>
       {

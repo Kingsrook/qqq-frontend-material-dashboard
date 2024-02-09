@@ -59,7 +59,7 @@ export default function XIcon({onClick, position, shade}: XIconProps): JSX.Eleme
    else if(position == "forAdvancedQueryPreview")
    {
       rest = {
-         top: "-0.375rem",
+         top: "-0.5rem",
          left: "-0.75rem",
       }
    }

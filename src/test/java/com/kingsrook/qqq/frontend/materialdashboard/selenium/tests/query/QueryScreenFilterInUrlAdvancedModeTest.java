@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
 import java.net.URLEncoder;
@@ -98,6 +98,16 @@ public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelector("input[value=\"1701\"]");
       qSeleniumLib.waitForSelector("input[value=\"74656\"]");
 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // click the x to remove a condition from the filter (in the on-screen preview)                                           //
+      // reload the page first, so filter-panel won't be up (clicking backdrop doesn't seem to be closing it like it should...) //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person?filter=" + URLEncoder.encode(filterJSON, StandardCharsets.UTF_8), "Person");
+      qSeleniumLib.highlightElement(qSeleniumLib.waitForSelectorContaining(".advancedQueryString DIV DIV", "1701"));
+      qSeleniumLib.moveMouseCursorToElement(qSeleniumLib.waitForSelectorContaining(".advancedQueryString DIV DIV", "1701"));
+      qSeleniumLib.waitForSelector(".advancedQueryPreviewX-0 button").click();
+      queryScreenLib.assertNoFilterButtonBadge(1);
+
       //////////////////////////////////////
       // an IN for a possible-value field //
       //////////////////////////////////////
@@ -162,8 +172,7 @@ public class QueryScreenFilterInUrlAdvancedModeTest extends QBaseSeleniumTest
       ////////////////
       // remove one //
       ////////////////
-      qSeleniumLib.tryMultiple(3, () -> qSeleniumLib.waitForSelector(".filterBuilderXIcon BUTTON").click());
-      qSeleniumLib.waitForSelectorContaining("BUTTON", "Yes").click();
+      queryScreenLib.clickAdvancedFilterClearIcon();
       queryScreenLib.assertNoFilterButtonBadge(1);
 
       // qSeleniumLib.waitForever();

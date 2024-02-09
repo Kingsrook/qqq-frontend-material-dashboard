@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
+package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
 import java.net.URLEncoder;
@@ -147,11 +147,15 @@ public class QueryScreenFilterInUrlBasicModeTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelector("input[value=\"starts with\"]");
       qSeleniumLib.waitForSelector("input[value=\"Dar\"]");
 
-      ////////////////
-      // remove one //
-      ////////////////
-      // todo! qSeleniumLib.waitForSelectorContaining(".MuiIcon-root", "close").click();
-      // todo! assertQuickFilterButtonBadge(1);
+      ////////////////////////////////
+      // remove one, then the other //
+      ////////////////////////////////
+      qSeleniumLib.clickBackdrop();
+      queryScreenLib.clickQuickFilterClearIcon("createDate");
+      queryScreenLib.assertQuickFilterButtonIndicatesActiveFilter("firstName");
+      queryScreenLib.assertQuickFilterButtonDoesNotIndicateActiveFilter("createDate");
+      queryScreenLib.clickQuickFilterClearIcon("firstName");
+      queryScreenLib.assertQuickFilterButtonDoesNotIndicateActiveFilter("firstName");
 
       // qSeleniumLib.waitForever();
    }
