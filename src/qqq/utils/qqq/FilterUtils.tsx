@@ -319,7 +319,7 @@ class FilterUtils
     ** get the values associated with a criteria as a string, e.g., for showing
     ** in a tooltip.
     *******************************************************************************/
-   public static getValuesString(fieldMetaData: QFieldMetaData, criteria: QFilterCriteria, maxValuesToShow: number = 3): string
+   public static getValuesString(fieldMetaData: QFieldMetaData, criteria: QFilterCriteria, maxValuesToShow: number = 3, andMoreFormat: "andNOther" | "+N" = "andNOther"): string
    {
       let valuesString = "";
 
@@ -339,6 +339,10 @@ class FilterUtils
          if (maxLoops > (maxValuesToShow + 2))
          {
             maxLoops = maxValuesToShow;
+         }
+         else if(maxValuesToShow == 1 && criteria.values.length > 1)
+         {
+            maxLoops = 1;
          }
 
          for (let i = 0; i < maxLoops; i++)
@@ -383,7 +387,16 @@ class FilterUtils
 
          if (maxLoops < criteria.values.length)
          {
-            labels.push(" and " + (criteria.values.length - maxLoops) + " other values.");
+            const n = criteria.values.length - maxLoops;
+            switch (andMoreFormat)
+            {
+               case "andNOther":
+                  labels.push(` and ${n} other value${n == 1 ? "" : "s"}.`);
+                  break;
+               case "+N":
+                  labels[labels.length-1] += ` +${n}`;
+                  break;
+            }
          }
 
          valuesString = (labels.join(", "));
