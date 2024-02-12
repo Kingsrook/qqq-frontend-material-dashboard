@@ -41,25 +41,45 @@
  **      {myLoadingState.isNotLoading() && myData && <Box>...
  ** - In your template, before your "slow loading" view, check for `myLoadingState.isLoadingSlow()`, e.g.
  **      {myLoadingState.isLoadingSlow() && <Spinner />}
+ **
+ ** In addition, you can also supply a callback to run "upon slow" (e.g., when
+ ** moving into the slow state).
  *******************************************************************************/
 export class LoadingState
 {
    private state: "notLoading" | "loading" | "slow"
    private slowTimeout: any;
-   private forceUpdate: () => void
+   private forceUpdate: () => void;
+   private uponSlowCallback: () => void;
 
    constructor(forceUpdate: () => void, initialState: "notLoading" | "loading" | "slow" = "notLoading")
    {
       this.forceUpdate = forceUpdate;
       this.state = initialState;
+
+      if(initialState == "loading")
+      {
+         this.setLoading();
+      }
+      else if(initialState == "notLoading")
+      {
+         this.setNotLoading();
+      }
    }
 
    public setLoading()
    {
+      clearTimeout(this.slowTimeout);
       this.state = "loading";
       this.slowTimeout = setTimeout(() =>
       {
          this.state = "slow";
+
+         if(this.uponSlowCallback)
+         {
+            this.uponSlowCallback();
+         }
+
          this.forceUpdate();
       }, 1000);
    }
@@ -83,6 +103,16 @@ export class LoadingState
    public isNotLoading(): boolean
    {
       return (this.state == "notLoading");
+   }
+
+   public getState(): string
+   {
+      return (this.state);
+   }
+
+   public setUponSlowCallback(value: any)
+   {
+      this.uponSlowCallback = value;
    }
 
 }

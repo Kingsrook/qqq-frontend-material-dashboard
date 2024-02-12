@@ -223,21 +223,21 @@
          "label": "Sleep Interactive",
          "isHidden": false
       },
-      "querySavedFilter": {
-         "name": "querySavedFilter",
-         "label": "Query Saved Filter",
+      "querySavedView": {
+         "name": "querySavedView",
+         "label": "Query Saved View",
          "isHidden": false,
          "hasPermission": true
       },
-      "storeSavedFilter": {
-         "name": "storeSavedFilter",
-         "label": "Store Saved Filter",
+      "storeSavedView": {
+         "name": "storeSavedView",
+         "label": "Store Saved View",
          "isHidden": false,
          "hasPermission": true
       },
-      "deleteSavedFilter": {
-         "name": "deleteSavedFilter",
-         "label": "Delete Saved Filter",
+      "deleteSavedView": {
+         "name": "deleteSavedView",
+         "label": "Delete Saved View",
          "isHidden": false,
          "hasPermission": true
       },

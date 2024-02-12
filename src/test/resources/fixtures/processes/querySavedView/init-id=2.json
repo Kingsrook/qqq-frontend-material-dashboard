@@ -1,0 +1,21 @@
+{
+   "values": {
+      "_qStepTimeoutMillis": "60000",
+      "savedViewList": [
+         {
+            "tableName": "savedView",
+            "values": {
+               "label": "Some People",
+               "id": 2,
+               "createDate": "2023-02-20T18:40:58Z",
+               "modifyDate": "2023-02-20T18:40:58Z",
+               "tableName": "person",
+               "viewJson": "{\"queryFilter\":{\"criteria\":[{\"fieldName\":\"firstName\",\"operator\":\"STARTS_WITH\",\"values\":[\"D\"]}],\"orderBys\":[{\"fieldName\":\"id\",\"isAscending\":false}],\"booleanOperator\":\"AND\"}}",
+               "userId": "darin.kelkhoff@kingsrook.com"
+            }
+         }
+      ],
+      "tableName": "person"
+   },
+   "processUUID": "4eaaea82-2d09-4254-90f8-e5b6948ef0b3"
+}

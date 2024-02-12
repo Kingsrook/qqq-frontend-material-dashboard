@@ -66,12 +66,12 @@ function navbar(theme: Theme | any, ownerState: any)
          return color;
       },
       top: absolute ? 0 : pxToRem(12),
-      minHeight: pxToRem(75),
+      minHeight: "auto",
       display: "grid",
       alignItems: "center",
       borderRadius: borderRadius.xl,
-      paddingTop: pxToRem(8),
-      paddingBottom: pxToRem(8),
+      paddingTop: pxToRem(0),
+      paddingBottom: pxToRem(0),
       paddingRight: absolute ? pxToRem(8) : 0,
       paddingLeft: absolute ? pxToRem(16) : 0,
 
@@ -85,7 +85,7 @@ function navbar(theme: Theme | any, ownerState: any)
       "& .MuiToolbar-root": {
          display: "flex",
          justifyContent: "space-between",
-         alignItems: "center",
+         alignItems: "flex-start",
 
          [breakpoints.up("sm")]: {
             minHeight: "auto",
@@ -99,10 +99,10 @@ const navbarContainer = ({breakpoints}: Theme): any => ({
    flexDirection: "column",
    alignItems: "flex-start",
    justifyContent: "space-between",
+   padding: "0 !important",
 
    [breakpoints.up("md")]: {
       flexDirection: "row",
-      alignItems: "center",
       paddingTop: "0",
       paddingBottom: "0",
    },
@@ -152,6 +152,7 @@ const navbarDesktopMenu = ({breakpoints}: Theme) => ({
 });
 
 const recentlyViewedMenu = ({breakpoints}: Theme) => ({
+   marginTop: "-0.5rem",
    "& .MuiInputLabel-root": {
       color: colors.gray.main,
       fontWeight: "500",

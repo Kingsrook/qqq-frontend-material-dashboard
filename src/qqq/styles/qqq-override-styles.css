@@ -29,6 +29,13 @@
    min-height: calc(100vh - 450px) !important;
 }
 
+/* we want to leave columns w/ the sortable attribute (so they have it in the column menu),
+but we've turned off the click-to-sort function, so remove hand cursor */
+.recordQuery .MuiDataGrid-columnHeader--sortable
+{
+   cursor: default !important;
+}
+
 /* Disable red outlines on clicked cells */
 .MuiDataGrid-cell:focus,
 .MuiDataGrid-columnHeader:focus,
@@ -402,7 +409,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    margin-right: 8px;
 }
 
-.custom-columns-panel .MuiSwitch-thumb
+.custom-columns-panel .MuiSwitch-thumb,
+.fieldListMenuBody .MuiSwitch-thumb
 {
    width: 15px !important;
    height: 15px !important;
@@ -422,6 +430,20 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 .MuiDataGrid-panel
 {
    top: -60px !important;
+}
+
+.MuiDataGrid-panel:has(.customFilterPanel)
+{
+   /* overwrite what the grid tries to do here, where it changes based on density... we always want the same. */
+   /* transform: translate(274px, 305px) !important; */
+   transform: translate(274px, 264px) !important;
+}
+
+/* within the data-grid, the filter-panel's container has a max-height.  mirror that, and set an overflow-y */
+.MuiDataGrid-panel .customFilterPanel
+{
+   max-height: 450px;
+   overflow-y: auto;
 }
 
 /* tighten the text in the field select dropdown in custom filters */
@@ -487,7 +509,8 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 }
 
 /* change tags in any-of value fields to not be black bg with white text */
-.customFilterPanel .filterValuesColumn .MuiChip-root
+.customFilterPanel .filterValuesColumn .MuiChip-root,
+.quickFilter.filterValuesColumn .MuiChip-root
 {
    background: none;
    color: black;
@@ -495,20 +518,23 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 }
 
 /* change 'x' icon in tags in any-of value */
-.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
+.customFilterPanel .filterValuesColumn .MuiChip-root .MuiChip-deleteIcon,
+.quickFilter.filterValuesColumn .MuiChip-root .MuiChip-deleteIcon
 {
    color: gray;
 }
 
 /* change tags in any-of value fields to not be black bg with white text */
-.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag,
+.quickFilter.filterValuesColumn .MuiAutocomplete-tag
 {
    color: #191919;
    background: none;
 }
 
 /* default hover color for the 'x' to remove a tag from an 'any-of' value was white, which made it disappear */
-.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
+.customFilterPanel .filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover,
+.quickFilter.filterValuesColumn .MuiAutocomplete-tag .MuiSvgIcon-root:hover
 {
    color: lightgray;
 }
@@ -597,4 +623,38 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 .dataGridHeaderTooltip
 {
    top: -1.25rem;
+}
+
+/* when grid contents weren't filling the height of the screen, the gray panel for pinned columns
+ was stretching to most of the grid height, but it wasn't the full height and so looked a little
+ broken.  just turing off this min height changes to not try to stretch at all, and is not broken. */
+.MuiDataGrid-pinnedColumns
+{
+   min-height: unset !important;
+}
+
+/* new style for toggle buttons */
+.MuiToggleButtonGroup-root
+{
+   padding: 0.25rem;
+   border: 1px solid #BDBDBD;
+   border-radius: 0.5rem !important;
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root
+{
+   text-transform: none;
+   font-size: 0.75rem;
+   color: black;
+   font-weight: 600;
+   border-radius: 0.375rem !important; /* overriding left/right edge overrides for first/last */
+   border: none;
+   flex: 1 1 0px;
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-selected
+{
+   background: rgba(117, 117, 117, 0.20);
+}
+.MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-disabled
+{
+   border: none;
 }

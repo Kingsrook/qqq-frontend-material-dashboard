@@ -51,6 +51,7 @@ interface Props
    bulkEditSwitchChangeHandler?: any;
    otherValues?: Map<string, any>;
    variant: "standard" | "outlined";
+   initiallyOpen: boolean;
 }
 
 DynamicSelect.defaultProps = {
@@ -66,6 +67,7 @@ DynamicSelect.defaultProps = {
    bulkEditMode: false,
    otherValues: new Map<string, any>(),
    variant: "outlined",
+   initiallyOpen: false,
    bulkEditSwitchChangeHandler: () =>
    {
    },
@@ -73,12 +75,13 @@ DynamicSelect.defaultProps = {
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant}: Props)
+function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen}: Props)
 {
-   const [open, setOpen] = useState(false);
+   const [open, setOpen] = useState(initiallyOpen);
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
    const [firstRender, setFirstRender] = useState(true);
+   const [otherValuesWhenResultsWereLoaded, setOtherValuesWhenResultsWereLoaded] = useState(JSON.stringify(Object.fromEntries((otherValues))))
    const {inputBorderColor} = colors;
 
    ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +116,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       {
          // console.log("First render, so not searching...");
          setFirstRender(false);
-         return;
+
+         /*
+         if(!initiallyOpen)
+         {
+            console.log("returning because not initially open?");
+            return;
+         }
+         */
       }
       // console.log("Use effect for searchTerm - searching!");
 
@@ -145,6 +155,24 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
          active = false;
       };
    }, [ searchTerm ]);
+
+   // todo - finish... call it in onOpen?
+   const reloadIfOtherValuesAreChanged = () =>
+   {
+      if(JSON.stringify(Object.fromEntries(otherValues)) != otherValuesWhenResultsWereLoaded)
+      {
+         (async () =>
+         {
+            setLoading(true);
+            setOptions([]);
+            console.log("Refreshing possible values...");
+            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "", null, otherValues);
+            setLoading(false);
+            setOptions([ ...results ]);
+            setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));
+         })();
+      }
+   }
 
    const inputChanged = (event: React.SyntheticEvent, value: string, reason: string) =>
    {
@@ -293,9 +321,14 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
             {
                setOpen(false);
             }}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            isOptionEqualToValue={(option, value) => value !== null && value !== undefined && option.id === value.id}
             getOptionLabel={(option) =>
             {
+               if(option === null || option === undefined)
+               {
+                  return ("");
+               }
+
                // @ts-ignore
                if(option && option.length)
                {

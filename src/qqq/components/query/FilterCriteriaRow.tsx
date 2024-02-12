@@ -24,7 +24,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import Autocomplete, {AutocompleteRenderOptionState} from "@mui/material/Autocomplete";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl/FormControl";
 import Icon from "@mui/material/Icon/Icon";
@@ -34,6 +34,7 @@ import Select, {SelectChangeEvent} from "@mui/material/Select/Select";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import React, {ReactNode, SyntheticEvent, useState} from "react";
+import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 
@@ -50,6 +51,27 @@ export enum ValueMode
    DOUBLE_DATE_TIME = "DOUBLE_DATE_TIME",
    PVS_SINGLE = "PVS_SINGLE",
    PVS_MULTI = "PVS_MULTI",
+}
+
+export const getValueModeRequiredCount = (valueMode: ValueMode): number =>
+{
+   switch (valueMode)
+   {
+      case ValueMode.NONE:
+         return (0);
+      case ValueMode.SINGLE:
+      case ValueMode.SINGLE_DATE:
+      case ValueMode.SINGLE_DATE_TIME:
+      case ValueMode.PVS_SINGLE:
+         return (1);
+      case ValueMode.DOUBLE:
+      case ValueMode.DOUBLE_DATE:
+      case ValueMode.DOUBLE_DATE_TIME:
+         return (2);
+      case ValueMode.MULTI:
+      case ValueMode.PVS_MULTI:
+         return (null);
+   }
 }
 
 export interface OperatorOption
@@ -177,16 +199,71 @@ interface FilterCriteriaRowProps
    updateBooleanOperator: (newValue: string) => void;
 }
 
-FilterCriteriaRow.defaultProps = {};
-
-function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean)
-{
-   const sortedFields = [...tableMetaData.fields.values()].sort((a, b) => a.label.localeCompare(b.label));
-   for (let i = 0; i < sortedFields.length; i++)
+FilterCriteriaRow.defaultProps =
    {
-      const fieldName = isJoinTable ? `${tableMetaData.name}.${sortedFields[i].name}` : sortedFields[i].name;
-      fieldOptions.push({field: sortedFields[i], table: tableMetaData, fieldName: fieldName});
+   };
+
+export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue?: OperatorOption): {criteriaIsValid: boolean, criteriaStatusTooltip: string}
+{
+   let criteriaIsValid = true;
+   let criteriaStatusTooltip = "This condition is fully defined and is part of your filter.";
+
+   function isNotSet(value: any)
+   {
+      return (value === null || value == undefined || String(value).trim() === "");
    }
+
+   if(!criteria)
+   {
+      criteriaIsValid = false;
+      criteriaStatusTooltip = "This condition is not defined.";
+      return {criteriaIsValid, criteriaStatusTooltip};
+   }
+
+   if (!criteria.fieldName)
+   {
+      criteriaIsValid = false;
+      criteriaStatusTooltip = "You must select a field to begin to define this condition.";
+   }
+   else if (!criteria.operator)
+   {
+      criteriaIsValid = false;
+      criteriaStatusTooltip = "You must select an operator to continue to define this condition.";
+   }
+   else
+   {
+      if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+      {
+         //////////////////////////////////
+         // don't need to look at values //
+         //////////////////////////////////
+      }
+      else if (criteria.operator == QCriteriaOperator.BETWEEN || criteria.operator == QCriteriaOperator.NOT_BETWEEN)
+      {
+         if (criteria.values.length < 2 || isNotSet(criteria.values[0]) || isNotSet(criteria.values[1]))
+         {
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter two values to complete the definition of this condition.";
+         }
+      }
+      else if (criteria.operator == QCriteriaOperator.IN || criteria.operator == QCriteriaOperator.NOT_IN)
+      {
+         if (criteria.values.length < 1 || isNotSet(criteria.values[0]))
+         {
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter one or more values complete the definition of this condition.";
+         }
+      }
+      else
+      {
+         if (!criteria.values || isNotSet(criteria.values[0]))
+         {
+            criteriaIsValid = false;
+            criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";
+         }
+      }
+   }
+   return {criteriaIsValid, criteriaStatusTooltip};
 }
 
 export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator}: FilterCriteriaRowProps): JSX.Element
@@ -194,27 +271,6 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
    const [operatorInputValue, setOperatorInputValue] = useState("");
-
-   ///////////////////////////////////////////////////////////////
-   // set up the array of options for the fields Autocomplete   //
-   // also, a groupBy function, in case there are exposed joins //
-   ///////////////////////////////////////////////////////////////
-   const fieldOptions: any[] = [];
-   makeFieldOptionsForTable(tableMetaData, fieldOptions, false);
-   let fieldsGroupBy = null;
-
-   if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length > 0)
-   {
-      for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
-      {
-         const exposedJoin = tableMetaData.exposedJoins[i];
-         if (metaData.tables.has(exposedJoin.joinTable.name))
-         {
-            fieldsGroupBy = (option: any) => `${option.table.label} fields`;
-            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true);
-         }
-      }
-   }
 
    ////////////////////////////////////////////////////////////
    // set up array of options for operator dropdown          //
@@ -332,6 +388,24 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          {
             criteria.values = newValue.implicitValues;
          }
+
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // we've seen cases where switching operators can sometimes put a null in as the first value... //
+         // that just causes a bad time (e.g., null pointers in Autocomplete), so, get rid of that.      //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         if(criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
+         {
+            criteria.values = [];
+         }
+
+         if(newValue.valueMode)
+         {
+            const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
+            if(requiredValueCount != null && criteria.values.length > requiredValueCount)
+            {
+               criteria.values.splice(requiredValueCount);
+            }
+         }
       }
       else
       {
@@ -383,111 +457,19 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
       return (false);
    };
 
-   function isFieldOptionEqual(option: any, value: any)
-   {
-      return option.fieldName === value.fieldName;
-   }
-
-   function getFieldOptionLabel(option: any)
-   {
-      /////////////////////////////////////////////////////////////////////////////////////////
-      // note - we're using renderFieldOption below for the actual select-box options, which //
-      // are always jut field label (as they are under groupings that show their table name) //
-      /////////////////////////////////////////////////////////////////////////////////////////
-      if(option && option.field && option.table)
-      {
-         if(option.table.name == tableMetaData.name)
-         {
-            return (option.field.label);
-         }
-         else
-         {
-            return (option.table.label + ": " + option.field.label);
-         }
-      }
-
-      return ("");
-   }
-
-   //////////////////////////////////////////////////////////////////////////////////////////////
-   // for options, we only want the field label (contrast with what we show in the input box,  //
-   // which comes out of getFieldOptionLabel, which is the table-label prefix for join fields) //
-   //////////////////////////////////////////////////////////////////////////////////////////////
-   function renderFieldOption(props: React.HTMLAttributes<HTMLLIElement>, option: any, state: AutocompleteRenderOptionState): ReactNode
-   {
-      let label = ""
-      if(option && option.field)
-      {
-         label = (option.field.label);
-      }
-
-      return (<li {...props}>{label}</li>);
-   }
-
    function isOperatorOptionEqual(option: OperatorOption, value: OperatorOption)
    {
       return (option?.value == value?.value && JSON.stringify(option?.implicitValues) == JSON.stringify(value?.implicitValues));
    }
 
-   let criteriaIsValid = true;
-   let criteriaStatusTooltip = "This condition is fully defined and is part of your filter.";
+   const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
 
-   function isNotSet(value: any)
-   {
-      return (value === null || value == undefined || String(value).trim() === "");
-   }
-
-   if(!criteria.fieldName)
-   {
-      criteriaIsValid = false;
-      criteriaStatusTooltip = "You must select a field to begin to define this condition.";
-   }
-   else if(!criteria.operator)
-   {
-      criteriaIsValid = false;
-      criteriaStatusTooltip = "You must select an operator to continue to define this condition.";
-   }
-   else
-   {
-      if(operatorSelectedValue)
-      {
-         if (operatorSelectedValue.valueMode == ValueMode.NONE || operatorSelectedValue.implicitValues)
-         {
-            //////////////////////////////////
-            // don't need to look at values //
-            //////////////////////////////////
-         }
-         else if(operatorSelectedValue.valueMode == ValueMode.DOUBLE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE || operatorSelectedValue.valueMode == ValueMode.DOUBLE_DATE_TIME)
-         {
-            if(criteria.values.length < 2 || isNotSet(criteria.values[0]) || isNotSet(criteria.values[1]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter two values to complete the definition of this condition.";
-            }
-         }
-         else if(operatorSelectedValue.valueMode == ValueMode.MULTI || operatorSelectedValue.valueMode == ValueMode.PVS_MULTI)
-         {
-            if(criteria.values.length < 1 || isNotSet(criteria.values[0]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter one or more values complete the definition of this condition.";
-            }
-         }
-         else
-         {
-            if(!criteria.values || isNotSet(criteria.values[0]))
-            {
-               criteriaIsValid = false;
-               criteriaStatusTooltip = "You must enter a value to complete the definition of this condition.";
-            }
-         }
-      }
-   }
+   const tooltipEnterDelay = 750;
 
    return (
-      <Box className="filterCriteriaRow" pt={0.5} display="flex" alignItems="flex-end">
+      <Box className="filterCriteriaRow" pt={0.5} display="flex" alignItems="flex-end" pr={0.5}>
          <Box display="inline-block">
-            <Tooltip title="Remove this condition from your filter" enterDelay={750} placement="left">
+            <Tooltip title="Remove this condition from your filter" enterDelay={tooltipEnterDelay} placement="left">
                <IconButton onClick={removeCriteria}><Icon fontSize="small">close</Icon></IconButton>
             </Tooltip>
          </Box>
@@ -502,24 +484,10 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                : <span />}
          </Box>
          <Box display="inline-block" width={250} className="fieldColumn">
-            <Autocomplete
-               id={`field-${id}`}
-               renderInput={(params) => (<TextField {...params} label={"Field"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
-               // @ts-ignore
-               defaultValue={defaultFieldValue}
-               options={fieldOptions}
-               onChange={handleFieldChange}
-               isOptionEqualToValue={(option, value) => isFieldOptionEqual(option, value)}
-               groupBy={fieldsGroupBy}
-               getOptionLabel={(option) => getFieldOptionLabel(option)}
-               renderOption={(props, option, state) => renderFieldOption(props, option, state)}
-               autoSelect={true}
-               autoHighlight={true}
-               slotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
-            />
+            <FieldAutoComplete id={`field-${id}`} metaData={metaData} tableMetaData={tableMetaData} defaultValue={defaultFieldValue} handleFieldChange={handleFieldChange} />
          </Box>
          <Box display="inline-block" width={200} className="operatorColumn">
-            <Tooltip title={criteria.fieldName == null ? "You must select a field before you can select an operator" : null} enterDelay={750}>
+            <Tooltip title={criteria.fieldName == null ? "You must select a field before you can select an operator" : null} enterDelay={tooltipEnterDelay}>
                <Autocomplete
                   id={"criteriaOperator"}
                   renderInput={(params) => (<TextField {...params} label={"Operator"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
@@ -546,8 +514,8 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
             />
          </Box>
-         <Box display="inline-block" pl={0.5} pr={1}>
-            <Tooltip title={criteriaStatusTooltip} enterDelay={750} placement="right">
+         <Box display="inline-block">
+            <Tooltip title={criteriaStatusTooltip} enterDelay={tooltipEnterDelay} placement="bottom">
                {
                   criteriaIsValid
                      ? <Icon color="success">check</Icon>

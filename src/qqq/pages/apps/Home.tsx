@@ -34,6 +34,7 @@ import Grid from "@mui/material/Grid";
 import React, {useContext, useEffect, useState} from "react";
 import {Link, useLocation} from "react-router-dom";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import ProcessLinkCard from "qqq/components/processes/ProcessLinkCard";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
@@ -180,9 +181,6 @@ function AppHome({app}: Props): JSX.Element
       }
    }, [qInstance, location]);
 
-   const widgetCount = widgets ? widgets.length : 0;
-
-   // eslint-disable-next-line no-nested-ternary
    const tileSizeLg = 3;
 
    const hasTablePermission = (tableName: string) =>
@@ -200,10 +198,63 @@ function AppHome({app}: Props): JSX.Element
       return reports.find(r => r.name === reportName && r.hasPermission);
    };
 
+   const widgetCount = widgets ? widgets.length : 0;
+   const sectionCount = app.sections ? app.sections.length : 0;
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if our app has no widgets or sections, but it does have child apps, then return those child apps //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   if(widgetCount == 0 && sectionCount == 0 && childApps && childApps.length > 0)
+   {
+      return (
+         <BaseLayout>
+            <Grid container spacing={3}>
+               <Grid item xs={12} lg={12}>
+                  <Card sx={{overflow: "visible"}}>
+                     <Box p={3} display="flex" alignItems="center" gap=".5rem">
+                        <Typography variant="h5">Apps</Typography>
+                     </Box>
+                     <Grid container spacing={3} padding={3} pt={0}>
+                        {childApps.map((childApp) => (
+                           <Grid key={childApp.name} item xs={12} lg={3}>
+                              <Link to={childApp.name}>
+                                 <Card>
+                                    <Box display="flex" alignItems="center" p={2}>
+                                       <Box
+                                          color={"#FFFFFF"}
+                                          display="flex"
+                                          justifyContent="center"
+                                          alignItems="center"
+                                          width="4rem"
+                                          height="4rem"
+                                          sx={{borderRadius: "10px", backgroundColor: colors.info.main}}
+                                       >
+                                          <Icon fontSize="medium" color="inherit">
+                                             {childApp.iconName || app.iconName}
+                                          </Icon>
+                                       </Box>
+                                       <Box textAlign="left" ml={2}>
+                                          <MDTypography variant="button" fontWeight="bold" color="text">
+                                             {childApp.label}
+                                          </MDTypography>
+                                       </Box>
+                                    </Box>
+                                 </Card>
+                              </Link>
+                           </Grid>
+                        ))}
+                     </Grid>
+                  </Card>
+               </Grid>
+            </Grid>
+         </BaseLayout>
+      )
+   }
+
    return (
       <BaseLayout>
          <Box>
-            {app.widgets && (
+            {app.widgets && app.widgets.length > 0 && (
                <Box pb={app.sections ? 2.375 : 0}>
                   <DashboardWidgets widgetMetaDataList={widgets} />
                </Box>

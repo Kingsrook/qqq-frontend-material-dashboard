@@ -37,7 +37,7 @@ interface QCreateNewButtonProps
 export function QCreateNewButton({tablePath}: QCreateNewButtonProps): JSX.Element
 {
    return (
-      <Box ml={3} mr={2} width={standardWidth}>
+      <Box display="inline-block" ml={3} mr={0} width={standardWidth}>
          <Link to={`${tablePath}/create`}>
             <MDButton variant="gradient" color="info" fullWidth startIcon={<Icon>add</Icon>}>
                Create New
@@ -73,13 +73,17 @@ export function QSaveButton({label, iconName, onClickHandler, disabled}: QSaveBu
 interface QDeleteButtonProps
 {
    onClickHandler: any
+   disabled?: boolean
 }
 
-export function QDeleteButton({onClickHandler}: QDeleteButtonProps): JSX.Element
+QDeleteButton.defaultProps = {
+   disabled: false
+};
+export function QDeleteButton({onClickHandler, disabled}: QDeleteButtonProps): JSX.Element
 {
    return (
       <Box ml={3} width={standardWidth}>
-         <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>}>
+         <MDButton variant="gradient" color="primary" size="small" onClick={onClickHandler} fullWidth startIcon={<Icon>delete</Icon>} disabled={disabled}>
             Delete
          </MDButton>
       </Box>
@@ -117,24 +121,6 @@ export function QActionsMenuButton({isOpen, onClickHandler}: QActionsMenuButtonP
             fullWidth
          >
             actions&nbsp;
-            <Icon>keyboard_arrow_down</Icon>
-         </MDButton>
-      </Box>
-   );
-}
-
-export function QSavedFiltersMenuButton({isOpen, onClickHandler}: QActionsMenuButtonProps): JSX.Element
-{
-   return (
-      <Box width={standardWidth} ml={1}>
-         <MDButton
-            variant={isOpen ? "contained" : "outlined"}
-            color="dark"
-            onClick={onClickHandler}
-            fullWidth
-            startIcon={<Icon>filter_alt</Icon>}
-         >
-            saved&nbsp;filters&nbsp;
             <Icon>keyboard_arrow_down</Icon>
          </MDButton>
       </Box>

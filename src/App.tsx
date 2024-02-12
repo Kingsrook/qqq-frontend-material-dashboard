@@ -355,7 +355,7 @@ export default function App()
                routeList.push({
                   name: `${app.label}`,
                   key: app.name,
-                  route: `${path}/savedFilter/:id`,
+                  route: `${path}/savedView/:id`,
                   component: <RecordQuery table={table} key={table.name} />,
                });
 
@@ -656,6 +656,7 @@ export default function App()
 
    const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
+   const [accentColorLight, setAccentColorLight] = useState("#C0D6F7")
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableProcesses, setTableProcesses] = useState(null);
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
@@ -668,6 +669,7 @@ export default function App()
          <QContext.Provider value={{
             pageHeader: pageHeader,
             accentColor: accentColor,
+            accentColorLight: accentColorLight,
             tableMetaData: tableMetaData,
             tableProcesses: tableProcesses,
             dotMenuOpen: dotMenuOpen,
@@ -675,6 +677,7 @@ export default function App()
             helpHelpActive: helpHelpActive,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor),
+            setAccentColorLight: (accentColorLight: string) => setAccentColorLight(accentColorLight),
             setTableMetaData: (tableMetaData: QTableMetaData) => setTableMetaData(tableMetaData),
             setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
             setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent),
