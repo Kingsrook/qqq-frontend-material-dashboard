@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import com.kingsrook.qqq.backend.core.utils.SleepUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -504,7 +505,33 @@ public class QSeleniumLib
     *******************************************************************************/
    public WebElement waitForSelectorContaining(String cssSelector, String textContains)
    {
-      LOG.debug("Waiting for element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
+      return (waitForSelectorMatchingPredicate(cssSelector, "containing text [" + textContains + "]", (WebElement element) ->
+      {
+         return (element.getText() != null && element.getText().toLowerCase().contains(textContains.toLowerCase()));
+      }));
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public WebElement waitForSelectorContainingTextMatchingRegex(String cssSelector, String regExp)
+   {
+      return (waitForSelectorMatchingPredicate(cssSelector, "matching regexp [" + regExp + "]", (WebElement element) ->
+      {
+         return (element.getText() != null && element.getText().matches(regExp));
+      }));
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private WebElement waitForSelectorMatchingPredicate(String cssSelector, String description, Function<WebElement, Boolean> predicate)
+   {
+      LOG.debug("Waiting for element matching selector [" + cssSelector + "] " + description);
       long start = System.currentTimeMillis();
 
       do
@@ -514,9 +541,9 @@ public class QSeleniumLib
          {
             try
             {
-               if(element.getText() != null && element.getText().toLowerCase().contains(textContains.toLowerCase()))
+               if(predicate.apply(element))
                {
-                  LOG.debug("Found element matching selector [" + cssSelector + "] containing text [" + textContains + "].");
+                  LOG.debug("Found element matching selector [" + cssSelector + "] " + description);
                   Actions actions = new Actions(driver);
                   actions.moveToElement(element);
                   conditionallyAutoHighlight(element);
@@ -537,7 +564,7 @@ public class QSeleniumLib
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
 
-      fail("Failed to find element matching selector [" + cssSelector + "] containing text [" + textContains + "] after [" + WAIT_SECONDS + "] seconds.");
+      fail("Failed to find element matching selector [" + cssSelector + "] " + description + " after [" + WAIT_SECONDS + "] seconds.");
       return (null);
    }
 

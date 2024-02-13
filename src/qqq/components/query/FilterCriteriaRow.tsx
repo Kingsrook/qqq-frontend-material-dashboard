@@ -398,7 +398,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
             criteria.values = [];
          }
 
-         if(newValue.valueMode)
+         if(newValue.valueMode && !newValue.implicitValues)
          {
             const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
             if(requiredValueCount != null && criteria.values.length > requiredValueCount)

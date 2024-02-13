@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QSeleniumLib;
 import io.javalin.Javalin;
 import org.apache.logging.log4j.LogManager;
@@ -284,7 +285,6 @@ public class QSeleniumJavalin
 
       do
       {
-         // LOG.debug("  captured paths: " + captured.stream().map(CapturedContext::getPath).collect(Collectors.joining(",")));
          for(CapturedContext context : captured)
          {
             if(context.getPath().equals(path))
@@ -301,6 +301,7 @@ public class QSeleniumJavalin
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
 
+      LOG.debug("  captured paths: \n   " + captured.stream().map(cc -> cc.getPath() + "[" + cc.getBody() + "]").collect(Collectors.joining("\n   ")));
       fail("Failed to capture a request for path [" + path + "] with body containing [" + bodyContaining + "] after [" + WAIT_SECONDS + "] seconds.");
       return (null);
    }

@@ -22,6 +22,7 @@
 package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
+import java.util.List;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QQQMaterialDashboardSelectors;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QueryScreenLib;
@@ -48,6 +49,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
          .withRouteToFile("/data/person/count", "data/person/count.json")
          .withRouteToFile("/data/person/query", "data/person/index.json")
          .withRouteToFile("/data/person/variants", "data/person/variants.json")
+         .withRouteToFile("/data/person/possibleValues/homeCityId", "data/person/possibleValues/homeCityId.json")
          .withRouteToFile("/processes/querySavedView/init", "processes/querySavedView/init.json");
    }
 
@@ -64,13 +66,13 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.gotoAdvancedMode();
-      queryScreenLib.clickFilterButton();
+      queryScreenLib.clickFilterBuilderButton();
 
       /////////////////////////////////////////////////////////////////////
       // open the filter window, enter a value, wait for query to re-run //
       /////////////////////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
-      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 0, "Id", "equals", "1", null);
+      queryScreenLib.addAdvancedQueryFilterInput(0, "Id", "equals", "1", null);
 
       ///////////////////////////////////////////////////////////////////
       // assert that query & count both have the expected filter value //
@@ -117,11 +119,11 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
       queryScreenLib.waitForQueryToHaveRan();
       queryScreenLib.gotoAdvancedMode();
-      queryScreenLib.clickFilterButton();
+      queryScreenLib.clickFilterBuilderButton();
 
       qSeleniumJavalin.beginCapture();
-      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 0, "First Name", "contains", "Dar", "Or");
-      queryScreenLib.addAdvancedQueryFilterInput(qSeleniumLib, 1, "First Name", "contains", "Jam", "Or");
+      queryScreenLib.addAdvancedQueryFilterInput(0, "First Name", "contains", "Dar", "Or");
+      queryScreenLib.addAdvancedQueryFilterInput(1, "First Name", "contains", "Jam", "Or");
 
       String expectedFilterContents0 = """
          {"fieldName":"firstName","operator":"CONTAINS","values":["Dar"]}""";
@@ -137,6 +139,138 @@ public class QueryScreenTest extends QBaseSeleniumTest
    }
 
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testBasicBooleanOperators()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      queryScreenLib.addBasicFilter("Is Employed");
+
+      testBasicCriteria(queryScreenLib, "Is Employed", "equals yes", null, "(?s).*Is Employed:.*yes.*", """
+         {"fieldName":"isEmployed","operator":"EQUALS","values":[true]}""");
+
+      testBasicCriteria(queryScreenLib, "Is Employed", "equals no", null, "(?s).*Is Employed:.*no.*", """
+         {"fieldName":"isEmployed","operator":"EQUALS","values":[false]}""");
+
+      testBasicCriteria(queryScreenLib, "Is Employed", "is empty", null, "(?s).*Is Employed:.*is empty.*", """
+         {"fieldName":"isEmployed","operator":"IS_BLANK","values":[]}""");
+
+      testBasicCriteria(queryScreenLib, "Is Employed", "is not empty", null, "(?s).*Is Employed:.*is not empty.*", """
+         {"fieldName":"isEmployed","operator":"IS_NOT_BLANK","values":[]}""");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testBasicPossibleValues()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      String field = "Home City";
+      queryScreenLib.addBasicFilter(field);
+
+      testBasicCriteriaPossibleValues(queryScreenLib, field, "is any of", List.of("St. Louis", "Chesterfield"), "(?s).*" + field + ":.*St. Louis.*\\+1.*", """
+         {"fieldName":"homeCityId","operator":"IN","values":[1,2]}""");
+
+      testBasicCriteriaPossibleValues(queryScreenLib, field, "equals", List.of("Chesterfield"), "(?s).*" + field + ":.*Chesterfield.*", """
+         {"fieldName":"homeCityId","operator":"EQUALS","values":[2]}""");
+
+      testBasicCriteriaPossibleValues(queryScreenLib, field, "is empty", null, "(?s).*" + field + ":.*is empty.*", """
+         {"fieldName":"homeCityId","operator":"IS_BLANK","values":[]}""");
+
+      testBasicCriteriaPossibleValues(queryScreenLib, field, "does not equal", List.of("St. Louis"), "(?s).*" + field + ":.*does not equal.*St. Louis.*", """
+         {"fieldName":"homeCityId","operator":"NOT_EQUALS_OR_IS_NULL","values":[1]}""");
+
+      testBasicCriteriaPossibleValues(queryScreenLib, field, "is none of", List.of("Chesterfield"), "(?s).*" + field + ":.*is none of.*St. Louis.*\\+1", """
+         {"fieldName":"homeCityId","operator":"NOT_IN","values":[1,2]}""");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void testBasicCriteria(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, String value, String expectButtonStringRegex, String expectFilterJsonContains)
+   {
+      qSeleniumJavalin.beginCapture();
+      queryScreenLib.setBasicFilter(fieldLabel, operatorLabel, value);
+      queryScreenLib.waitForBasicFilterButtonMatchingRegex(expectButtonStringRegex);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.endCapture();
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void testBasicCriteriaPossibleValues(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, List<String> values, String expectButtonStringRegex, String expectFilterJsonContains)
+   {
+      qSeleniumJavalin.beginCapture();
+      queryScreenLib.setBasicFilterPossibleValues(fieldLabel, operatorLabel, values);
+      queryScreenLib.waitForBasicFilterButtonMatchingRegex(expectButtonStringRegex);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.endCapture();
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testAdvancedBooleanOperators()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      queryScreenLib.gotoAdvancedMode();
+
+      testAdvancedCriteria(queryScreenLib, "Is Employed", "equals yes", null, "(?s).*Is Employed.*equals yes.*", """
+         {"fieldName":"isEmployed","operator":"EQUALS","values":[true]}""");
+
+      testAdvancedCriteria(queryScreenLib, "Is Employed", "equals no", null, "(?s).*Is Employed.*equals no.*", """
+         {"fieldName":"isEmployed","operator":"EQUALS","values":[false]}""");
+
+      testAdvancedCriteria(queryScreenLib, "Is Employed", "is empty", null, "(?s).*Is Employed.*is empty.*", """
+         {"fieldName":"isEmployed","operator":"IS_BLANK","values":[]}""");
+
+      testAdvancedCriteria(queryScreenLib, "Is Employed", "is not empty", null, "(?s).*Is Employed.*is not empty.*", """
+         {"fieldName":"isEmployed","operator":"IS_NOT_BLANK","values":[]}""");
+   }
+
    // todo - table requires variant - prompt for it, choose it, see query; change variant, change on-screen, re-query
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void testAdvancedCriteria(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, String value, String expectQueryStringRegex, String expectFilterJsonContains)
+   {
+      qSeleniumJavalin.beginCapture();
+      queryScreenLib.clickFilterBuilderButton();
+      queryScreenLib.addAdvancedQueryFilterInput(0, fieldLabel, operatorLabel, value, null);
+      qSeleniumLib.clickBackdrop();
+      queryScreenLib.waitForAdvancedQueryStringMatchingRegex(expectQueryStringRegex);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.endCapture();
+      queryScreenLib.clickAdvancedFilterClearIcon();
+   }
 
 }

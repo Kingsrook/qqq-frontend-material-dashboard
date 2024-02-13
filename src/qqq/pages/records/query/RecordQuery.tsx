@@ -1380,12 +1380,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(queryFilter))}`;
+         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(prepQueryFilterForBackend(queryFilter)))}`;
       }
 
       if (selectFullFilterState === "filterSubset")
       {
-         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(queryFilter))}`;
+         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         filterForBackend.skip = 0;
+         filterForBackend.limit = selectionSubsetSize;
+         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(filterForBackend))}`;
       }
 
       if (selectedIds.length > 0)
@@ -1405,11 +1408,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         setRecordIdsForProcess(queryFilter);
+         setRecordIdsForProcess(prepQueryFilterForBackend(queryFilter));
       }
       else if (selectFullFilterState === "filterSubset")
       {
-         setRecordIdsForProcess(new QQueryFilter(queryFilter.criteria, queryFilter.orderBys, queryFilter.booleanOperator, 0, selectionSubsetSize));
+         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         filterForBackend.skip = 0;
+         filterForBackend.limit = selectionSubsetSize;
+         setRecordIdsForProcess(filterForBackend);
       }
       else if (selectedIds.length > 0)
       {
