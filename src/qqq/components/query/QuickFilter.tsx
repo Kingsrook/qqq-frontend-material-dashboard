@@ -480,7 +480,12 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                <Box display="inline-block" width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="operatorColumn">
                   <Autocomplete
                      id={"criteriaOperator"}
-                     renderInput={(params) => (<TextField {...params} label={"Operator"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////
+                     // ok, so, by default, if you type an 'o' as the first letter in the FilterCriteriaRowValues box, //
+                     // something is causing THIS element to become selected, if the first letter in its label is 'O'. //
+                     // ... work around is to put invisible &zwnj; entity as first character in label instead...       //
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////
+                     renderInput={(params) => (<TextField {...params} label={<>&zwnj;Operator</>} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
                      options={operatorOptions}
                      value={operatorSelectedValue as any}
                      inputValue={operatorInputValue}
