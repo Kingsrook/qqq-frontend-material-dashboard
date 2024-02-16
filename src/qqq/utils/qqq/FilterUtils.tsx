@@ -64,7 +64,6 @@ class FilterUtils
       let rs = [];
       for (let i = 0; i < param.length; i++)
       {
-         console.log(param[i]);
          if (param[i] && param[i].id && param[i].label)
          {
             /////////////////////////////////////////////////////////////
@@ -361,7 +360,12 @@ class FilterUtils
             else if (value.type == "ThisOrLastPeriod")
             {
                const expression = new ThisOrLastPeriodExpression(value);
-               labels.push(expression.toString());
+               let startOfPrefix = "";
+               if(fieldMetaData.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
+               {
+                  startOfPrefix = "start of ";
+               }
+               labels.push(`${startOfPrefix}${expression.toString()}`);
             }
             else if(fieldMetaData.type == QFieldType.BOOLEAN)
             {

@@ -30,7 +30,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
-import React, {SyntheticEvent, useContext, useState} from "react";
+import React, {SyntheticEvent, useContext, useReducer, useState} from "react";
 import QContext from "QContext";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {getDefaultCriteriaValue, getOperatorOptions, getValueModeRequiredCount, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
@@ -148,7 +148,10 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const [anchorEl, setAnchorEl] = useState(null);
    const [isMouseOver, setIsMouseOver] = useState(false);
 
-   const [criteria, setCriteria] = useState(criteriaParamIsCriteria(criteriaParam) ? criteriaParam as QFilterCriteriaWithId : null);
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // copy the criteriaParam to a new object in here - so changes won't apply until user closes the menu //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const [criteria, setCriteria] = useState(criteriaParamIsCriteria(criteriaParam) ? Object.assign({}, criteriaParam) as QFilterCriteriaWithId : null);
    const [id, setId] = useState(criteriaParamIsCriteria(criteriaParam) ? (criteriaParam as QFilterCriteriaWithId).id : ++seedId);
 
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(getOperatorSelectedValue(operatorOptions, criteria, defaultOperator));
@@ -157,6 +160,11 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
 
    const {accentColor} = useContext(QContext);
+
+   //////////////////////
+   // ole' faithful... //
+   //////////////////////
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
 
    /*******************************************************************************
@@ -182,15 +190,30 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    if (criteriaParamIsCriteria(criteriaParam) && JSON.stringify(criteriaParam) !== JSON.stringify(criteria))
    {
-      const newCriteria = criteriaParam as QFilterCriteriaWithId;
-      setCriteria(newCriteria);
-      const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
-      setOperatorSelectedValue(operatorOption);
-      setOperatorInputValue(operatorOption.label);
+      if(isOpen)
+      {
+         ////////////////////////////////////////////////////////////////////////////////
+         // this was firing too-often for case where:  there was a criteria originally //
+         ////////////////////////////////////////////////////////////////////////////////
+         console.log("Not handling outside change (A), because dropdown is-open");
+      }
+      else
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // copy the criteriaParam to a new object in here - so changes won't apply until user closes the menu //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const newCriteria = Object.assign({}, criteriaParam) as QFilterCriteriaWithId;
+         setCriteria(newCriteria);
+         const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
+         setOperatorSelectedValue(operatorOption);
+         setOperatorInputValue(operatorOption.label);
+      }
    }
 
    /*******************************************************************************
     ** Test if we need to construct a new criteria object
+    ** This is (at least for some cases) for when the criteria gets changed
+    ** from outside of this component - e.g., a reset on the query screen
     *******************************************************************************/
    const criteriaNeedsReset = (): boolean =>
    {
@@ -199,6 +222,16 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          const defaultOperatorOption = operatorOptions.filter(o => o.value == defaultOperator)[0];
          if(criteria.operator !== defaultOperatorOption?.value || JSON.stringify(criteria.values) !== JSON.stringify(getDefaultCriteriaValue()))
          {
+            if(isOpen)
+            {
+               //////////////////////////////////////////////////////////////////////////////////
+               // this was firing too-often for case where:  there was no criteria originally, //
+               // so, by adding this is-open check, we eliminated those.                       //
+               //////////////////////////////////////////////////////////////////////////////////
+               console.log("Not handling outside change (B), because dropdown is-open");
+               return (false);
+            }
+
             return (true);
          }
       }
@@ -207,7 +240,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    }
 
    /*******************************************************************************
-    ** Construct a new criteria object - resetting the values tied to the oprator
+    ** Construct a new criteria object - resetting the values tied to the operator
     ** autocomplete at the same time.
     *******************************************************************************/
    const makeNewCriteria = (): QFilterCriteria =>
@@ -241,6 +274,11 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
     *******************************************************************************/
    const closeMenu = () =>
    {
+      //////////////////////////////////////////////////////////////////////////////////
+      // when closing the menu, that's when we'll update the criteria from the caller //
+      //////////////////////////////////////////////////////////////////////////////////
+      updateCriteria(criteria, false, false);
+
       setIsOpen(false);
       setAnchorEl(null);
    };
@@ -286,7 +324,8 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          setOperatorInputValue("");
       }
 
-      updateCriteria(criteria, false, false);
+      setCriteria(criteria);
+      forceUpdate();
    };
 
    /*******************************************************************************
@@ -320,7 +359,8 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          criteria.values[valueIndex] = value;
       }
 
-      updateCriteria(criteria, true, false);
+      setCriteria(criteria);
+      forceUpdate();
    };
 
    /*******************************************************************************
@@ -480,7 +520,12 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                <Box display="inline-block" width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="operatorColumn">
                   <Autocomplete
                      id={"criteriaOperator"}
-                     renderInput={(params) => (<TextField {...params} label={"Operator"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////
+                     // ok, so, by default, if you type an 'o' as the first letter in the FilterCriteriaRowValues box, //
+                     // something is causing THIS element to become selected, if the first letter in its label is 'O'. //
+                     // ... work around is to put invisible &zwnj; entity as first character in label instead...       //
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////
+                     renderInput={(params) => (<TextField {...params} label={<>&zwnj;Operator</>} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
                      options={operatorOptions}
                      value={operatorSelectedValue as any}
                      inputValue={operatorInputValue}
