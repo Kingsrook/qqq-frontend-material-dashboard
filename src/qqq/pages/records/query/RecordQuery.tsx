@@ -168,7 +168,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // define some default values (e.g., to be used if nothing in local storage or no active view) //
    /////////////////////////////////////////////////////////////////////////////////////////////////
    let defaultSort = [] as GridSortItem[];
-   let defaultRowsPerPage = 10;
+   let defaultRowsPerPage = 50;
    let defaultDensity = "standard" as GridDensity;
    let defaultTableVariant: QTableVariant = null;
    let defaultMode = "basic";
