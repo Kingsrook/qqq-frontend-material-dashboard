@@ -190,14 +190,24 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    if (criteriaParamIsCriteria(criteriaParam) && JSON.stringify(criteriaParam) !== JSON.stringify(criteria))
    {
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // copy the criteriaParam to a new object in here - so changes won't apply until user closes the menu //
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      const newCriteria = Object.assign({}, criteriaParam) as QFilterCriteriaWithId;
-      setCriteria(newCriteria);
-      const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
-      setOperatorSelectedValue(operatorOption);
-      setOperatorInputValue(operatorOption.label);
+      if(isOpen)
+      {
+         ////////////////////////////////////////////////////////////////////////////////
+         // this was firing too-often for case where:  there was a criteria originally //
+         ////////////////////////////////////////////////////////////////////////////////
+         console.log("Not handling outside change (A), because dropdown is-open");
+      }
+      else
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // copy the criteriaParam to a new object in here - so changes won't apply until user closes the menu //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const newCriteria = Object.assign({}, criteriaParam) as QFilterCriteriaWithId;
+         setCriteria(newCriteria);
+         const operatorOption = operatorOptions.filter(o => o.value == newCriteria.operator)[0];
+         setOperatorSelectedValue(operatorOption);
+         setOperatorInputValue(operatorOption.label);
+      }
    }
 
    /*******************************************************************************
@@ -218,6 +228,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                // this was firing too-often for case where:  there was no criteria originally, //
                // so, by adding this is-open check, we eliminated those.                       //
                //////////////////////////////////////////////////////////////////////////////////
+               console.log("Not handling outside change (B), because dropdown is-open");
                return (false);
             }
 
@@ -312,6 +323,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          setOperatorSelectedValue(null);
          setOperatorInputValue("");
       }
+
+      setCriteria(criteria);
+      forceUpdate();
    };
 
    /*******************************************************************************
