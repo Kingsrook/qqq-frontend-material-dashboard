@@ -1380,7 +1380,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(prepQueryFilterForBackend(queryFilter)))}`;
+         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         filterForBackend.skip = 0;
+         filterForBackend.limit = null;
+         return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(filterForBackend))}`;
       }
 
       if (selectFullFilterState === "filterSubset")
@@ -1408,7 +1411,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       if (selectFullFilterState === "filter")
       {
-         setRecordIdsForProcess(prepQueryFilterForBackend(queryFilter));
+         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         filterForBackend.skip = 0;
+         filterForBackend.limit = null;
+         setRecordIdsForProcess(filterForBackend);
       }
       else if (selectFullFilterState === "filterSubset")
       {
@@ -2103,20 +2109,32 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          if(selectedIndex == 0)
          {
+            ///////////////
+            // this page //
+            ///////////////
             programmaticallySelectSomeOrAllRows();
             setSelectFullFilterState("checked")
          }
          else if(selectedIndex == 1)
          {
+            ///////////////////////
+            // full query result //
+            ///////////////////////
             programmaticallySelectSomeOrAllRows();
             setSelectFullFilterState("filter")
          }
          else if(selectedIndex == 2)
          {
+            ////////////////////////////
+            // subset of query result //
+            ////////////////////////////
             setSelectionSubsetSizePromptOpen(true);
          }
          else if(selectedIndex == 3)
          {
+            /////////////////////
+            // clear selection //
+            /////////////////////
             setSelectFullFilterState("n/a")
             setRowSelectionModel([]);
             setSelectedIds([]);
