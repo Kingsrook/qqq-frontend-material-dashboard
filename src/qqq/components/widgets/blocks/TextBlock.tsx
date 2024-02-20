@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,14 +19,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
-
+import BlockElementWrapper from "qqq/components/widgets/blocks/BlockElementWrapper";
+import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
 
 /*******************************************************************************
+ ** Block that renders ... just some text.
  **
+ ** ${text}
  *******************************************************************************/
-public interface MaterialDashboardIconRoleNames
+export default function TextBlock({data}: StandardBlockComponentProps): JSX.Element
 {
-   String TOP_RIGHT_INSIDE_CARD = "topRightInsideCard";
-   String TOP_LEFT_INSIDE_CARD = "topLeftInsideCard";
+   return (
+      <BlockElementWrapper data={data} slot="">
+         <span>{data.values.text}</span>
+      </BlockElementWrapper>
+   );
 }

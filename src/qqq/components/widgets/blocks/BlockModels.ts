@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,14 +19,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 
 
-/*******************************************************************************
- **
- *******************************************************************************/
-public interface MaterialDashboardIconRoleNames
+export interface BlockData
 {
-   String TOP_RIGHT_INSIDE_CARD = "topRightInsideCard";
-   String TOP_LEFT_INSIDE_CARD = "topLeftInsideCard";
+   blockTypeName: string;
+
+   tooltip?: BlockTooltip;
+   link?: BlockLink;
+   tooltipMap?: {[slot: string]: BlockTooltip};
+   linkMap?: {[slot: string]: BlockLink};
+
+   values: any;
+   styles?: any;
 }
+
+
+export interface BlockTooltip
+{
+   title: string;
+   placement: string;
+}
+
+
+export interface BlockLink
+{
+   href: string;
+   target: string;
+}
+
+
+export interface StandardBlockComponentProps
+{
+   widgetMetaData: QWidgetMetaData;
+   data: BlockData;
+}
+

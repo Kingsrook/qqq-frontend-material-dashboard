@@ -18,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {tooltipClasses, TooltipProps} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -35,11 +36,13 @@ import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDPagination from "qqq/components/legacy/MDPagination";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import CompositeWidget from "qqq/components/widgets/CompositeWidget";
 import DataTableBodyCell from "qqq/components/widgets/tables/cells/DataTableBodyCell";
 import DataTableHeadCell from "qqq/components/widgets/tables/cells/DataTableHeadCell";
 import DefaultCell from "qqq/components/widgets/tables/cells/DefaultCell";
 import ImageCell from "qqq/components/widgets/tables/cells/ImageCell";
 import {TableDataInput} from "qqq/components/widgets/tables/TableCard";
+import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 
 interface Props
 {
@@ -57,6 +60,7 @@ interface Props
    };
    isSorted?: boolean;
    noEndBorder?: boolean;
+   widgetMetaData: QWidgetMetaData;
 }
 
 DataTable.defaultProps = {
@@ -92,6 +96,7 @@ function DataTable({
    pagination,
    isSorted,
    noEndBorder,
+   widgetMetaData
 }: Props): JSX.Element
 {
    let defaultValue: any;
@@ -280,21 +285,36 @@ function DataTable({
       entriesEnd = pageSize * (pageIndex + 1);
    }
 
+   let visibleFooterRows = 1;
+   if(expanded && expanded[`${table.rows.length-1}`])
+   {
+      //////////////////////////////////////////////////
+      // todo - should count how many are expanded... //
+      //////////////////////////////////////////////////
+      visibleFooterRows = 2;
+   }
+
    function getTable(includeHead: boolean, rows: any, isFooter: boolean)
    {
       let boxStyle = {};
       if(fixedStickyLastRow)
       {
          boxStyle = isFooter
-            ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, overflow: "auto", scrollbarGutter: "stable"}
-            : {height: fixedHeight ? `${fixedHeight}px` : "360px", overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
+            ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, backgroundColor: "#EEEEEE"}
+            : {flexGrow: 1, overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
       }
 
-      return <Box sx={boxStyle}>
+      let innerBoxStyle = {};
+      if(fixedStickyLastRow && isFooter)
+      {
+         innerBoxStyle = {overflowY: "auto", scrollbarGutter: "stable"};
+      }
+
+      return <Box sx={boxStyle}><Box sx={innerBoxStyle}>
          <Table {...getTableProps()}>
             {
                includeHead && (
-                  <Box component="thead" sx={{position: "sticky", top: 0, background: "white"}}>
+                  <Box component="thead" sx={{position: "sticky", top: 0, background: "white", zIndex: 10}}>
                      {headerGroups.map((headerGroup: any, i: number) => (
                         <TableRow key={i} {...headerGroup.getHeaderGroupProps()} sx={{display: "grid", gridTemplateColumns: gridTemplateColumns}}>
                            {headerGroup.headers.map((column: any) => (
@@ -341,13 +361,23 @@ function DataTable({
                      overrideNoEndBorder = true;
                   }
 
+                  let background = "initial";
+                  if(isFooter)
+                  {
+                     background = "#EEEEEE";
+                  }
+                  else if(row.depth > 0 || row.isExpanded)
+                  {
+                     background = "#FAFAFA";
+                  }
+
                   return (
-                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: (row.depth > 0 ? "#FAFAFA" : "initial")}} key={key} {...row.getRowProps()}>
+                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: background}} key={key} {...row.getRowProps()}>
                         {row.cells.map((cell: any) => (
                            cell.column.type !== "hidden" && (
                               <DataTableBodyCell
                                  key={key}
-                                 noBorder={noEndBorder || overrideNoEndBorder}
+                                 noBorder={noEndBorder || overrideNoEndBorder || row.isExpanded}
                                  depth={row.depth}
                                  align={cell.column.align ? cell.column.align : "left"}
                                  {...cell.getCellProps()}
@@ -372,7 +402,21 @@ function DataTable({
                                  }
                                  {
                                     cell.column.type === "html" && (
-                                       <DefaultCell isFooter={isFooter}>{parse(cell.value)}</DefaultCell>
+                                       <DefaultCell isFooter={isFooter}>{parse(cell.value ?? "")}</DefaultCell>
+                                    )
+                                 }
+                                 {
+                                    cell.column.type === "composite" && (
+                                       <DefaultCell isFooter={isFooter}>
+                                          <CompositeWidget widgetMetaData={widgetMetaData} data={cell.value} />
+                                       </DefaultCell>
+                                    )
+                                 }
+                                 {
+                                    cell.column.type === "block" && (
+                                       <DefaultCell isFooter={isFooter}>
+                                          <WidgetBlock widgetMetaData={widgetMetaData} block={cell.value} />
+                                       </DefaultCell>
                                     )
                                  }
                                  {
@@ -397,11 +441,11 @@ function DataTable({
 
             </TableBody>
          </Table>
-      </Box>
+      </Box></Box>
    }
 
    return (
-      <TableContainer sx={{boxShadow: "none"}}>
+      <TableContainer sx={{boxShadow: "none", height: fixedHeight ? `${fixedHeight}px` : "auto"}}>
          {entriesPerPage && ((hidePaginationDropdown !== undefined && !hidePaginationDropdown) || canSearch) ? (
             <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
                {entriesPerPage && (hidePaginationDropdown === undefined || !hidePaginationDropdown) && (
@@ -448,14 +492,16 @@ function DataTable({
             </Box>
          ) : null}
 
-         {
-            fixedStickyLastRow ? (
-               <>
-                  {getTable(true, page.slice(0, page.length -1), false)}
-                  {getTable(false, page.slice(page.length-1), true)}
-               </>
-            ) : getTable(true, page, false)
-         }
+         <Box display="flex" justifyContent="space-between" flexDirection="column" height="100%">
+            {
+               fixedStickyLastRow ? (
+                  <>
+                     {getTable(true, page.slice(0, page.length - visibleFooterRows), false)}
+                     {getTable(false, page.slice(page.length - visibleFooterRows), true)}
+                  </>
+               ) : getTable(true, page, false)
+            }
+         </Box>
 
          <Box
             display="flex"

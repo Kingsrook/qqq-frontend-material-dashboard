@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2023.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,14 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
+import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
 
 
 /*******************************************************************************
- **
+ ** Block that renders a simple dividing line
+ ** margins & width are set such that it covers the padding of a card.
+ ** if we need to use it differently, a style attribute should be added to its backend data.
  *******************************************************************************/
-public interface MaterialDashboardIconRoleNames
+export default function DividerBlock({}: StandardBlockComponentProps): JSX.Element
 {
-   String TOP_RIGHT_INSIDE_CARD = "topRightInsideCard";
-   String TOP_LEFT_INSIDE_CARD = "topLeftInsideCard";
+   return (<div style={{margin: "1rem -1rem", width: "calc(100% + 2rem)", borderBottom: "1px solid #E0E0E0"}} />);
 }

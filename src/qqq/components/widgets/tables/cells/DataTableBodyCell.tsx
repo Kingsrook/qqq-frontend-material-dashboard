@@ -39,7 +39,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
          component="td"
          textAlign={align}
          py={1.5}
-         px={3}
+         px={1.5}
          sx={({palette: {light}, typography: {size}, borders: {borderWidth}}: Theme) => ({
             borderBottom: noBorder ? "none" : `${borderWidth[1]} solid ${colors.grayLines.main}`,
             fontSize: "0.875rem",
