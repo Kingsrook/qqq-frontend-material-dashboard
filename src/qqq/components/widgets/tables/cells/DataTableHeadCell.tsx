@@ -45,7 +45,7 @@ function DataTableHeadCell({width, children, sorted, align, ...rest}: Props): JS
          component="th"
          width={width}
          py={1.5}
-         px={3}
+         px={1.5}
          sx={({palette: {light}, borders: {borderWidth}}: Theme) => ({
             borderBottom: `${borderWidth[1]} solid ${colors.grayLines.main}`,
             "&:nth-child(1)": {

@@ -32,6 +32,8 @@ import React, {useEffect, useState} from "react";
 import {NavigateFunction, useNavigate} from "react-router-dom";
 import colors from "qqq/assets/theme/base/colors";
 import WidgetDropdownMenu, {DropdownOption} from "qqq/components/widgets/components/WidgetDropdownMenu";
+import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
+import HtmlUtils from "qqq/utils/HtmlUtils";
 
 export interface WidgetData
 {
@@ -109,16 +111,18 @@ export class HeaderIcon extends LabelComponent
    iconPath: string;
    color: string;
    coloredBG: boolean;
+   role: string;
 
    iconColor: string;
    bgColor: string;
 
-   constructor(iconName: string, iconPath: string, color: string, coloredBG: boolean = true)
+   constructor(iconName: string, iconPath: string, color: string, role?: string, coloredBG: boolean = true)
    {
       super();
       this.iconName = iconName;
       this.iconPath = iconPath;
       this.color = color;
+      this.role = role;
       this.coloredBG = coloredBG;
 
       this.iconColor = this.coloredBG ? "#FFFFFF" : this.color;
@@ -128,13 +132,19 @@ export class HeaderIcon extends LabelComponent
 
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
-      const styles = {
+      const styles: any = {
          width: "1.75rem",
          height: "1.75rem",
          color: this.iconColor,
          backgroundColor: this.bgColor,
          borderRadius: "0.25rem"
       };
+
+      if(this.role == "topLeftInsideCard")
+      {
+         styles["order"] = -1;
+         styles["marginRight"] = "0.5rem";
+      }
 
       if (this.iconPath)
       {
@@ -317,11 +327,13 @@ export class ReloadControl extends LabelComponent
 
    render = (args: LabelComponentRenderArgs): JSX.Element =>
    {
-      return (
-         <Typography variant="body2" py={2} px={0} display="inline" position="relative" top="-0.175rem">
-            <Tooltip title="Refresh"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}><Icon sx={{color: colors.gray.main, fontSize: 1.125}}>refresh</Icon></Button></Tooltip>
-         </Typography>
-      );
+      return (<Typography key={1} variant="body2" py={0} px={0} display="inline" position="relative" top="-0.25rem">
+         <Tooltip title="Refresh">
+            <Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={() => this.callback()}>
+               <Icon sx={{color: colors.gray.main, fontSize: 1.125}}>refresh</Icon>
+            </Button>
+         </Tooltip>
+      </Typography>);
    };
 }
 
@@ -336,15 +348,29 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 {
    const navigate = useNavigate();
    const [dropdownData, setDropdownData] = useState([]);
-   const [fullScreenWidgetClassName, setFullScreenWidgetClassName] = useState("");
    const [reloading, setReloading] = useState(false);
    const [dropdownDataJSON, setDropdownDataJSON] = useState("");
    const [labelComponentsLeft, setLabelComponentsLeft] = useState([] as LabelComponent[]);
    const [labelComponentsRight, setLabelComponentsRight] = useState([] as LabelComponent[]);
 
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // support for using widget (data) label as page header, w/o it disappearing if dropdowns are changed //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const [lastSeenLabel, setLastSeenLabel] = useState("");
+   const [usingLabelAsTitle, setUsingLabelAsTitle] = useState(false);
+
    function renderComponent(component: LabelComponent, componentIndex: number)
    {
-      return component.render({navigate: navigate, widgetProps: props, dropdownData: dropdownData, componentIndex: componentIndex, reloadFunction: doReload});
+      if(component && component.render)
+      {
+         return component.render({navigate: navigate, widgetProps: props, dropdownData: dropdownData, componentIndex: componentIndex, reloadFunction: doReload});
+      }
+      else
+      {
+         console.log("Request to render a null component or component without a render function...");
+         console.log(JSON.stringify(component));
+         return (<></>);
+      }
    }
 
    useEffect(() =>
@@ -409,7 +435,10 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
             {
                defaultValue = props.widgetData.dropdownDefaultValueList[index];
             }
-            updatedStateLabelComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], props.widgetMetaData.dropdowns[index], dropdownData, defaultValue, props.widgetData.dropdownNameList[index], handleDataChange));
+            if(props.widgetData?.dropdownLabelList && props.widgetData?.dropdownLabelList[index] && props.widgetMetaData?.dropdowns && props.widgetMetaData?.dropdowns[index] && props.widgetData?.dropdownNameList && props.widgetData?.dropdownNameList[index])
+            {
+               updatedStateLabelComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], props.widgetMetaData.dropdowns[index], dropdownData, defaultValue, props.widgetData.dropdownNameList[index], handleDataChange));
+            }
          });
          setLabelComponentsRight(updatedStateLabelComponentsRight);
       }
@@ -500,17 +529,34 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       }
    };
 
-   const toggleFullScreenWidget = () =>
+   const onExportClick = () =>
    {
-      if (fullScreenWidgetClassName)
+      if (props.widgetData?.csvData)
       {
-         setFullScreenWidgetClassName("");
+         const csv = WidgetUtils.widgetCsvDataToString(props.widgetData);
+         const fileName = WidgetUtils.makeExportFileName(props.widgetData, props.widgetMetaData);
+         HtmlUtils.download(fileName, csv);
       }
       else
       {
-         setFullScreenWidgetClassName("fullScreenWidget");
+         alert("There is no data available to export.");
       }
    };
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////
+   // add the export button to the label's left elements, if the meta-data says to show it              //
+   // don't do this for 2 types which themselves add the button (and have custom code to do the export) //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////
+   let localLabelAdditionalElementsLeft = [...props.labelAdditionalElementsLeft];
+   if (props.widgetMetaData?.showExportButton && props.widgetMetaData?.type !== "table" && props.widgetMetaData?.type !== "childRecordList")
+   {
+      if(!localLabelAdditionalElementsLeft)
+      {
+         localLabelAdditionalElementsLeft = [];
+      }
+
+      localLabelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
+   }
 
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
 
@@ -526,28 +572,48 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    if (hasPermission)
    {
       needLabelBox ||= (labelComponentsLeft && labelComponentsLeft.length > 0);
-      needLabelBox ||= (props.labelAdditionalElementsLeft && props.labelAdditionalElementsLeft.length > 0);
+      needLabelBox ||= (localLabelAdditionalElementsLeft && localLabelAdditionalElementsLeft.length > 0);
       needLabelBox ||= (labelComponentsRight && labelComponentsRight.length > 0);
-      needLabelBox ||= isSet(props.widgetMetaData?.icon);
+      needLabelBox ||= isSet(props.widgetData?.icon);
       needLabelBox ||= isSet(props.widgetData?.label);
       needLabelBox ||= isSet(props.widgetMetaData?.label);
    }
 
    //////////////////////////////////////////////////////////////////////////////////////////
    // first look for a label in the widget data, which would override that in the metadata //
-   // note - previously this had a ?: and one was pl={2}, the other was pl={3}...          //
    //////////////////////////////////////////////////////////////////////////////////////////
-   const labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label;
+   const isParentWidget = props.widgetMetaData.type == "parentWidget"; // todo - do we need to know top-level parent, vs. a nested parent?
+   let labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label;
+
+   if(!labelToUse)
+   {
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      // prevent the label from disappearing, especially when it's being used as the page header //
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      if(lastSeenLabel && isParentWidget && usingLabelAsTitle)
+      {
+         labelToUse = lastSeenLabel;
+      }
+   }
+
    let labelElement = (
-      <Typography sx={{cursor: "default", pl: "auto", pt: props.widgetMetaData.type == "parentWidget" ? "1rem" : "auto", fontWeight: 600}} variant="h6" display="inline">
+      <Typography sx={{cursor: "default", pl: "auto", fontWeight: 600}} variant={isParentWidget && (props.widgetData.isLabelPageTitle || usingLabelAsTitle) ? "h3" : "h6"} display="inline">
          {labelToUse}
       </Typography>
    );
+
+   if(labelToUse && labelToUse != lastSeenLabel)
+   {
+      setLastSeenLabel(labelToUse)
+      setUsingLabelAsTitle(props.widgetData.isLabelPageTitle);
+   }
 
    if (props.widgetMetaData.tooltip)
    {
       labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={false} followCursor={true} placement="bottom-start">{labelElement}</Tooltip>;
    }
+
+   const isTable = props.widgetMetaData.type == "table";
 
    const errorLoading = props.widgetData?.errorLoading !== undefined && props.widgetData?.errorLoading === true;
    const widgetContent =
@@ -555,7 +621,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          {
             needLabelBox &&
             <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%", ...props.labelBoxAdditionalSx}} minHeight={"2.5rem"}>
-               <Box>
+               <Box display="flex" alignItems="baseline">
                   {
                      hasPermission ?
                         props.widgetMetaData?.icon && (
@@ -600,11 +666,11 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                      hasPermission && (
                         labelComponentsLeft.map((component, i) =>
                         {
-                           return (<span key={i}>{renderComponent(component, i)}</span>);
+                           return (<React.Fragment key={i}>{renderComponent(component, i)}</React.Fragment>);
                         })
                      )
                   }
-                  {props.labelAdditionalElementsLeft}
+                  {localLabelAdditionalElementsLeft}
                </Box>
                <Box>
                   {
@@ -650,17 +716,27 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          }
          {
             !errorLoading && props?.footerHTML && (
-               <Box mt={1} ml={3} mr={3} mb={2} sx={{fontWeight: 300, color: "#7b809a", display: "flex", alignContent: "flex-end", fontSize: "14px"}}>{parse(props.footerHTML)}</Box>
+               <Box mt={isTable ? "36px" : 1} ml={isTable ? 0 : 3} mr={isTable ? 0 : 3} mb={isTable ? "-12px" : 2} sx={{fontWeight: 300, color: "#7b809a", display: "flex", alignContent: "flex-end", fontSize: "14px"}}>{parse(props.footerHTML)}</Box>
             )
          }
       </Box>;
 
    const padding = props.omitPadding ? "auto" : "24px 16px";
+
+   ///////////////////////////////////////////////////
+   // try to make tables fill their entire "parent" //
+   ///////////////////////////////////////////////////
+   let noCardMarginBottom = "unset";
+   if(isTable)
+   {
+      noCardMarginBottom = "-8px";
+   }
+
    return props.widgetMetaData?.isCard
-      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", p: padding}} className={fullScreenWidgetClassName}>
+      ? <Card sx={{marginTop: props.widgetMetaData?.icon ? 2 : 0, width: "100%", p: padding}} className="widget inCard">
          {widgetContent}
       </Card>
-      : <span style={{width: "100%", padding: padding}}>{widgetContent}</span>;
+      : <span style={{width: "100%", padding: padding, marginBottom: noCardMarginBottom}} className="widget noCard">{widgetContent}</span>;
 }
 
 export default Widget;

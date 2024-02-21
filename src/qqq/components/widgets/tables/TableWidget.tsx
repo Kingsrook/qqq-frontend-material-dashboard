@@ -21,16 +21,12 @@
 
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import Button from "@mui/material/Button";
-import Icon from "@mui/material/Icon";
-import Tooltip from "@mui/material/Tooltip/Tooltip";
-import Typography from "@mui/material/Typography";
 // @ts-ignore
 import {htmlToText} from "html-to-text";
 import React, {useEffect, useState} from "react";
-import colors from "qqq/assets/theme/base/colors";
 import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {WidgetData} from "qqq/components/widgets/Widget";
+import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -105,7 +101,7 @@ function TableWidget(props: Props): JSX.Element
 
          setCsv(csv);
 
-         const fileName = (props.widgetData.label ?? props.widgetMetaData.label) + " " + ValueUtils.formatDateTimeForFileName(new Date()) + ".csv";
+         const fileName = WidgetUtils.makeExportFileName(props.widgetData, props.widgetMetaData);
          setFileName(fileName)
 
          console.log(`useEffect, setting fileName ${fileName}`);
@@ -115,7 +111,13 @@ function TableWidget(props: Props): JSX.Element
 
    const onExportClick = () =>
    {
-      if(csv)
+      if(props.widgetData?.csvData)
+      {
+         const csv = WidgetUtils.widgetCsvDataToString(props.widgetData);
+         const fileName = WidgetUtils.makeExportFileName(props.widgetData, props.widgetMetaData);
+         HtmlUtils.download(fileName, csv);
+      }
+      else if(csv)
       {
          HtmlUtils.download(fileName, csv);
       }
@@ -128,11 +130,7 @@ function TableWidget(props: Props): JSX.Element
    const labelAdditionalElementsLeft: JSX.Element[] = [];
    if(props.widgetMetaData?.showExportButton)
    {
-      labelAdditionalElementsLeft.push(
-         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative" top="-0.25rem">
-            <Tooltip title="Export"><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={false}><Icon sx={{color: colors.gray.main, fontSize: 1.125}}>save_alt</Icon></Button></Tooltip>
-         </Typography>
-      );
+      labelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
    }
 
    return (
@@ -151,6 +149,7 @@ function TableWidget(props: Props): JSX.Element
             fixedStickyLastRow={props.widgetData?.fixedStickyLastRow}
             fixedHeight={props.widgetData?.fixedHeight}
             data={{columns: props.widgetData?.columns, rows: props.widgetData?.rows}}
+            widgetMetaData={props.widgetMetaData}
          />
       </Widget>
    );
