@@ -55,7 +55,7 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
    ////////////////////////////////////////////////////////////////////////////////////
    // note - these layouts are defined in qqq in the CompositeWidgetData.Layout enum //
    ////////////////////////////////////////////////////////////////////////////////////
-   let layout = data?.layout ?? widgetMetaData?.layout
+   let layout = data?.layout;
    let boxStyle: any = {};
    if (layout == "FLEX_ROW_WRAPPED")
    {
