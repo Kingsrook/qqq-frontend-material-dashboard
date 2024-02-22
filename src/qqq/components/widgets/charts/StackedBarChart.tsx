@@ -163,7 +163,7 @@ function StackedBarChart({data, chartSubheaderData}: Props): JSX.Element
 
    return data ? (
       <Box>
-         {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} layout="inline" />)}
+         {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
          <Box width="100%" height="300px">
             <Bar data={data} options={makeOptions(data)} getElementsAtEvent={handleClick} />
          </Box>
