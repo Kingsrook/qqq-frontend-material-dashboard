@@ -354,8 +354,7 @@ const CommandMenu = ({metaData}: Props) =>
                   <Grid container columnSpacing={5} rowSpacing={1}>
                      <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>n</span>Create a New Record</Grid>
                      <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>r</span>Refresh the Query</Grid>
-                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>c</span>Open the Columns Panel</Grid>
-                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>f</span>Open the Filter Panel</Grid>
+                     <Grid item xs={6} className={classes.item}><span className={classes.keyboardKey}>f</span>Open the Filter Builder (Advanced mode only)</Grid>
                   </Grid>
 
                   <Typography variant="h6" pt={3}>Record View</Typography>

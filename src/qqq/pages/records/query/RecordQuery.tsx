@@ -610,11 +610,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                e.preventDefault()
                updateTable("'r' keyboard event");
             }
+            /*
+            // disable until we add a ... ref down to let us programmatically open Columns button
             else if (! e.metaKey && e.key === "c")
             {
                e.preventDefault()
                gridApiRef.current.showPreferences(GridPreferencePanelsValue.columns)
             }
+            */
             else if (! e.metaKey && e.key === "f")
             {
                e.preventDefault()
