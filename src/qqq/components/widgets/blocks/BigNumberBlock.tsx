@@ -39,7 +39,7 @@ export default function BigNumberBlock({widgetMetaData, data}: StandardBlockComp
    return (
       <div style={{width: data.styles.width ?? "auto"}}>
 
-         <div style={{fontWeight: "700", fontSize: "0.875rem", color: "#3D3D3D"}}>
+         <div style={{fontWeight: "700", fontSize: "0.875rem", color: "#3D3D3D", marginBottom: "-0.5rem"}}>
             <BlockElementWrapper data={data} slot="heading">
                <span>{data.values.heading}</span>
             </BlockElementWrapper>
