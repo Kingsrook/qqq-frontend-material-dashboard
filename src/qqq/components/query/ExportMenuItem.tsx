@@ -45,7 +45,7 @@ export default function ExportMenuItem(props: QExportMenuItemProps)
 
    return (
       <MenuItem
-         disabled={!totalRecords}
+         disabled={totalRecords === 0}
          onClick={() =>
          {
             ///////////////////////////////////////////////////////////////////////////////
