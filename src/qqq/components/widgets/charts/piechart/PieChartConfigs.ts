@@ -23,7 +23,7 @@ import colors from "qqq/assets/theme/base/colors";
 
 const {gradients, dark} = colors;
 
-function configs(labels: any, datasets: any)
+function configs(labels: any, datasets: any, urls: string[] | undefined)
 {
    const backgroundColors = [];
 
@@ -66,6 +66,17 @@ function configs(labels: any, datasets: any)
       options: {
          maintainAspectRatio: false,
          responsive: true,
+         onHover: function (event: any, elements: any[], chart: any)
+         {
+            if(event.type == "mousemove" && elements.length > 0 && urls && urls.length > elements[0].index && urls[elements[0].index])
+            {
+               chart.canvas.style.cursor = "pointer";
+            }
+            else
+            {
+               chart.canvas.style.cursor = "default";
+            }
+         },
          plugins: {
             tooltip: {
                callbacks: {
