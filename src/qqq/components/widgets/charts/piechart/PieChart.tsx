@@ -70,7 +70,7 @@ function PieChart({description, chartData, chartSubheaderData}: Props): JSX.Elem
          chartData.dataset.backgroundColors = chartColors;
       }
    }
-   const {data, options} = configs(chartData?.labels || [], chartData?.dataset || {});
+   const {data, options} = configs(chartData?.labels || [], chartData?.dataset || {}, chartData?.dataset?.urls);
 
    useEffect(() =>
    {

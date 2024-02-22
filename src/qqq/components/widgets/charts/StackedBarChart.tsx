@@ -39,65 +39,79 @@ ChartJS.register(
    Legend
 );
 
-export const options = {
-   maintainAspectRatio: false,
-   responsive: true,
-   animation: {
-      duration: 0
-   },
-   elements: {
-      bar: {
-         borderRadius: 4
-      }
-   },
-   plugins: {
-      tooltip: {
-         // todo - some configs around this
-         callbacks: {
-            title: function(context: any)
-            {
-               return ("");
-            },
-            label: function(context: any)
-            {
-               if(context.dataset.label.startsWith(context.label))
-               {
-                  return `${context.label}: ${context.formattedValue}`;
-               }
-               else
+export const makeOptions = (data: DefaultChartData) =>
+{
+   return({
+      maintainAspectRatio: false,
+      responsive: true,
+      animation: {
+         duration: 0
+      },
+      elements: {
+         bar: {
+            borderRadius: 4
+         }
+      },
+      onHover: function (event: any, elements: any[], chart: any)
+      {
+         if(event.type == "mousemove" && elements.length > 0 && data.urls && data.urls.length > elements[0].index && data.urls[elements[0].index])
+         {
+            chart.canvas.style.cursor = "pointer";
+         }
+         else
+         {
+            chart.canvas.style.cursor = "default";
+         }
+      },
+      plugins: {
+         tooltip: {
+            // todo - some configs around this
+            callbacks: {
+               title: function(context: any)
                {
                   return ("");
+               },
+               label: function(context: any)
+               {
+                  if(context.dataset.label.startsWith(context.label))
+                  {
+                     return `${context.label}: ${context.formattedValue}`;
+                  }
+                  else
+                  {
+                     return ("");
+                  }
+               }
+            }
+         },
+         legend: {
+            position: "bottom",
+            labels: {
+               usePointStyle: true,
+               pointStyle: "circle",
+               boxHeight: 6,
+               boxWidth: 6,
+               padding: 12,
+               font: {
+                  size: 14
                }
             }
          }
       },
-      legend: {
-         position: "bottom",
-         labels: {
-            usePointStyle: true,
-            pointStyle: "circle",
-            boxHeight: 6,
-            boxWidth: 6,
-            padding: 12,
-            font: {
-               size: 14
-            }
-         }
-      }
-   },
-   scales: {
-      x: {
-         stacked: true,
-         grid: {display: false},
-         ticks: {autoSkip: false, maxRotation: 90}
+      scales: {
+         x: {
+            stacked: true,
+            grid: {display: false},
+            ticks: {autoSkip: false, maxRotation: 90}
+         },
+         y: {
+            stacked: true,
+            position: "right",
+            ticks: {precision: 0}
+         },
       },
-      y: {
-         stacked: true,
-         position: "right",
-         ticks: {precision: 0}
-      },
-   },
-};
+   });
+}
 
 interface Props
 {
@@ -151,7 +165,7 @@ function StackedBarChart({data, chartSubheaderData}: Props): JSX.Element
       <Box>
          {chartSubheaderData && (<ChartSubheaderWithData chartSubheaderData={chartSubheaderData} />)}
          <Box width="100%" height="300px">
-            <Bar data={data} options={options} getElementsAtEvent={handleClick} />
+            <Bar data={data} options={makeOptions(data)} getElementsAtEvent={handleClick} />
          </Box>
       </Box>
    ) : <Skeleton sx={{marginLeft: "20px", marginRight: "20px", height: "200px"}} />;
