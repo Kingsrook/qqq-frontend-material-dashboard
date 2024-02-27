@@ -504,7 +504,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    //////////////////////////////
    // return the button & menu //
    //////////////////////////////
-   const widthAndMaxWidth = 250
+   const widthAndMaxWidth = fieldMetaData?.type == QFieldType.DATE_TIME ? 275 : 250
    return (
       <>
          {button}
