@@ -94,6 +94,24 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       document.getElementById(`${idPrefix}${criteria.id}`).focus();
    };
 
+
+
+   /*******************************************************************************
+    ** Event handler for key-down events - specifically added here, to stop pressing
+    ** 'tab' in a date or date-time from closing the quick-filter...
+    *******************************************************************************/
+   const handleKeyDown = (e: any) =>
+   {
+      if (field.type == QFieldType.DATE || field.type == QFieldType.DATE_TIME)
+      {
+         if(e.code == "Tab")
+         {
+            console.log("Tab on date or date-time - don't close me, just move to the next sub-field!...");
+            e.stopPropagation();
+         }
+      }
+   };
+
    const inputProps: any = {};
    inputProps.endAdornment = (
       <InputAdornment position="end">
@@ -110,6 +128,7 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       autoComplete="off"
       type={type}
       onChange={(event) => valueChangeHandler(event, valueIndex)}
+      onKeyDown={handleKeyDown}
       value={value}
       InputLabelProps={inputLabelProps}
       InputProps={inputProps}
