@@ -114,8 +114,11 @@ class FilterUtils
             // e.g., ...values=[1]...                                                       //
             // but we need them to be possibleValue objects (w/ id & label) so the label    //
             // can be shown in the filter dropdown.  So, make backend call to look them up. //
+            // also, there are cases where we can get a null or "" as the only value in the //
+            // values array - avoid sending that to the backend, as it comes back w/ all    //
+            // possible values, and a general "bad time"                                    //
             //////////////////////////////////////////////////////////////////////////////////
-            if (values && values.length > 0)
+            if (values && values.length > 0 && values[0] !== null && values[0] !== undefined && values[0] !== "")
             {
                values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
             }
