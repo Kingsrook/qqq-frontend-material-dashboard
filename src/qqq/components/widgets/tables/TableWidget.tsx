@@ -23,7 +23,9 @@
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 // @ts-ignore
 import {htmlToText} from "html-to-text";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
+import QContext from "QContext";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import TableCard from "qqq/components/widgets/tables/TableCard";
 import Widget, {WidgetData} from "qqq/components/widgets/Widget";
 import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
@@ -46,6 +48,7 @@ function TableWidget(props: Props): JSX.Element
    const [isExportDisabled, setIsExportDisabled] = useState(false); // hmm, would like true here, but it broke...
    const [csv, setCsv] = useState(null as string);
    const [fileName, setFileName] = useState(null as string);
+   const {helpHelpActive} = useContext(QContext);
 
    const rows = props.widgetData?.rows;
    const columns = props.widgetData?.columns;
@@ -133,6 +136,23 @@ function TableWidget(props: Props): JSX.Element
       labelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
    }
 
+   //////////////////////////////////////////////////////
+   // look for column-header tooltips from helpContent //
+   //////////////////////////////////////////////////////
+   const columnHeaderTooltips: {[columnName: string]: JSX.Element} = {}
+   for (let column of props.widgetData?.columns ?? [])
+   {
+      const helpRoles = ["ALL_SCREENS"]
+      const slotName = `columnHeader=${column.accessor}`;
+      const showHelp = helpHelpActive || hasHelpContent(props.widgetMetaData?.helpContent?.get(slotName), helpRoles);
+
+      if(showHelp)
+      {
+         const formattedHelpContent = <HelpContent helpContents={props.widgetMetaData?.helpContent?.get(slotName)} roles={helpRoles} helpContentKey={`widget:${props.widgetMetaData?.name};slot:${slotName}`} />;
+         columnHeaderTooltips[column.accessor] = formattedHelpContent;
+      }
+   }
+
    return (
       <Widget
          widgetMetaData={props.widgetMetaData}
@@ -148,7 +168,7 @@ function TableWidget(props: Props): JSX.Element
             hidePaginationDropdown={props.widgetData?.hidePaginationDropdown}
             fixedStickyLastRow={props.widgetData?.fixedStickyLastRow}
             fixedHeight={props.widgetData?.fixedHeight}
-            data={{columns: props.widgetData?.columns, rows: props.widgetData?.rows}}
+            data={{columns: props.widgetData?.columns, rows: props.widgetData?.rows, columnHeaderTooltips: columnHeaderTooltips}}
             widgetMetaData={props.widgetMetaData}
          />
       </Widget>

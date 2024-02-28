@@ -43,6 +43,7 @@ import Client from "qqq/utils/qqq/Client";
 export interface TableDataInput
 {
    columns: { [key: string]: any }[];
+   columnHeaderTooltips?: { [columnName: string]: string | JSX.Element }
    rows: { [key: string]: any }[];
 }
 

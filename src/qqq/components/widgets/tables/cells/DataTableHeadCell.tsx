@@ -22,6 +22,7 @@
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
+import Tooltip from "@mui/material/Tooltip";
 import {ReactNode} from "react";
 import colors from "qqq/assets/theme/base/colors";
 import {useMaterialUIController} from "qqq/context";
@@ -33,9 +34,10 @@ interface Props
    children: ReactNode;
    sorted?: false | "none" | "asce" | "desc";
    align?: "left" | "right" | "center";
+   tooltip?: string | JSX.Element;
 }
 
-function DataTableHeadCell({width, children, sorted, align, ...rest}: Props): JSX.Element
+function DataTableHeadCell({width, children, sorted, align, tooltip, ...rest}: Props): JSX.Element
 {
    const [controller] = useMaterialUIController();
    const {darkMode} = controller;
@@ -73,39 +75,43 @@ function DataTableHeadCell({width, children, sorted, align, ...rest}: Props): JS
                userSelect: sorted && "none",
             })}
          >
-            {children}
-            {sorted && (
-               <Box
-                  position="absolute"
-                  top={0}
-                  right={align !== "right" ? "16px" : 0}
-                  left={align === "right" ? "-5px" : "unset"}
-                  sx={({typography: {size}}: any) => ({
-                     fontSize: size.lg,
-                  })}
-               >
+            <>
+               {
+                  tooltip ? <Tooltip title={tooltip}><span style={{cursor: "default"}}>{children}</span></Tooltip> : children
+               }
+               {sorted && (
                   <Box
-                     sx={{
-                        position: "absolute",
-                        top: -6,
-                        color: sorted === "asce" ? "text" : "secondary",
-                        opacity: sorted === "asce" ? 1 : 0.5
-                     }}
+                     position="absolute"
+                     top={0}
+                     right={align !== "right" ? "16px" : 0}
+                     left={align === "right" ? "-5px" : "unset"}
+                     sx={({typography: {size}}: any) => ({
+                        fontSize: size.lg,
+                     })}
                   >
-                     <Icon>arrow_drop_up</Icon>
+                     <Box
+                        sx={{
+                           position: "absolute",
+                           top: -6,
+                           color: sorted === "asce" ? "text" : "secondary",
+                           opacity: sorted === "asce" ? 1 : 0.5
+                        }}
+                     >
+                        <Icon>arrow_drop_up</Icon>
+                     </Box>
+                     <Box
+                        sx={{
+                           position: "absolute",
+                           top: 0,
+                           color: sorted === "desc" ? "text" : "secondary",
+                           opacity: sorted === "desc" ? 1 : 0.5
+                        }}
+                     >
+                        <Icon>arrow_drop_down</Icon>
+                     </Box>
                   </Box>
-                  <Box
-                     sx={{
-                        position: "absolute",
-                        top: 0,
-                        color: sorted === "desc" ? "text" : "secondary",
-                        opacity: sorted === "desc" ? 1 : 0.5
-                     }}
-                  >
-                     <Icon>arrow_drop_down</Icon>
-                  </Box>
-               </Box>
-            )}
+               )}
+            </>
          </Box>
       </Box>
    );

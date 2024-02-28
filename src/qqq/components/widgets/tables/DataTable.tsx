@@ -30,8 +30,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
-import {useEffect, useMemo, useState} from "react";
-import {useAsyncDebounce, useGlobalFilter, usePagination, useSortBy, useTable, useExpanded} from "react-table";
+import React, {useEffect, useMemo, useState} from "react";
+import {useAsyncDebounce, useExpanded, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
 import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDPagination from "qqq/components/legacy/MDPagination";
@@ -171,6 +171,17 @@ function DataTable({
                ) : null,
          },
       );
+   }
+
+   if(table.columnHeaderTooltips)
+   {
+      for (let column of columnsToMemo)
+      {
+         if(table.columnHeaderTooltips[column.accessor])
+         {
+            column.tooltip = table.columnHeaderTooltips[column.accessor];
+         }
+      }
    }
 
    const columns = useMemo<any>(() => columnsToMemo, [table]);
@@ -324,6 +335,7 @@ function DataTable({
                                     {...column.getHeaderProps(isSorted && column.getSortByToggleProps())}
                                     align={column.align ? column.align : "left"}
                                     sorted={setSortedValue(column)}
+                                    tooltip={column.tooltip}
                                  >
                                     {column.render("header")}
                                  </DataTableHeadCell>

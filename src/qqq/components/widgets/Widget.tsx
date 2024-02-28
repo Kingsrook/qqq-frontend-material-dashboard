@@ -28,9 +28,11 @@ import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {NavigateFunction, useNavigate} from "react-router-dom";
+import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import WidgetDropdownMenu, {DropdownOption} from "qqq/components/widgets/components/WidgetDropdownMenu";
 import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
@@ -359,6 +361,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    const [lastSeenLabel, setLastSeenLabel] = useState("");
    const [usingLabelAsTitle, setUsingLabelAsTitle] = useState(false);
 
+   const {helpHelpActive} = useContext(QContext);
+
    function renderComponent(component: LabelComponent, componentIndex: number)
    {
       if(component && component.render)
@@ -608,9 +612,18 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       setUsingLabelAsTitle(props.widgetData.isLabelPageTitle);
    }
 
-   if (props.widgetMetaData.tooltip)
+   const helpRoles = ["ALL_SCREENS"]
+   const slotName = "label";
+   const showHelp = helpHelpActive || hasHelpContent(props.widgetMetaData?.helpContent?.get(slotName), helpRoles);
+
+   if(showHelp)
    {
-      labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={false} followCursor={true} placement="bottom-start">{labelElement}</Tooltip>;
+      const formattedHelpContent = <HelpContent helpContents={props.widgetMetaData?.helpContent?.get(slotName)} roles={helpRoles} helpContentKey={`widget:${props.widgetMetaData?.name};slot:${slotName}`} />;
+      labelElement = <Tooltip title={formattedHelpContent} arrow={true} placement="bottom-start">{labelElement}</Tooltip>;
+   }
+   else if (props.widgetMetaData?.tooltip)
+   {
+      labelElement = <Tooltip title={props.widgetMetaData.tooltip} arrow={true} placement="bottom-start">{labelElement}</Tooltip>;
    }
 
    const isTable = props.widgetMetaData.type == "table";
