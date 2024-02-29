@@ -28,7 +28,7 @@ import QContext from "QContext";
 
 interface Props
 {
-   helpContents: QHelpContent[];
+   helpContents: null | QHelpContent | QHelpContent[];
    roles: string[];
    heading?: string;
    helpContentKey?: string;
@@ -93,9 +93,27 @@ const getMatchingHelpContent = (helpContents: QHelpContent[], roles: string[]): 
 /*******************************************************************************
  ** test if a list of help contents would find any matches from a list of roles.
  *******************************************************************************/
-export const hasHelpContent = (helpContents: QHelpContent[], roles: string[]) =>
+export const hasHelpContent = (helpContents: null | QHelpContent | QHelpContent[], roles: string[]) =>
 {
-   return getMatchingHelpContent(helpContents, roles) != null;
+   return getMatchingHelpContent(nullOrSingletonOrArrayToArray(helpContents), roles) != null;
+}
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
+const nullOrSingletonOrArrayToArray = (helpContents: null | QHelpContent | QHelpContent[]): QHelpContent[] =>
+{
+   let array: QHelpContent[] = [];
+   if(Array.isArray(helpContents))
+   {
+      array = helpContents;
+   }
+   else if(helpContents != null)
+   {
+      array.push(helpContents);
+   }
+   return (array);
 }
 
 
@@ -106,7 +124,8 @@ export const hasHelpContent = (helpContents: QHelpContent[], roles: string[]) =>
 function HelpContent({helpContents, roles, heading, helpContentKey}: Props): JSX.Element
 {
    const {helpHelpActive} = useContext(QContext);
-   let selectedHelpContent = getMatchingHelpContent(helpContents, roles);
+   const helpContentsArray = nullOrSingletonOrArrayToArray(helpContents);
+   let selectedHelpContent = getMatchingHelpContent(helpContentsArray, roles);
 
    let content = null;
    if (helpHelpActive)

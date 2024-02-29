@@ -33,6 +33,7 @@ import Client from "qqq/utils/qqq/Client";
 //////////////////////////////////////////////
 export interface ParentWidgetData
 {
+   label?: string;
    dropdownLabelList: string[];
    dropdownNameList: string[];
    dropdownDataList: {
@@ -42,6 +43,7 @@ export interface ParentWidgetData
    childWidgetNameList: string[];
    dropdownNeedsSelectedText?: string;
    storeDropdownSelections?: boolean;
+   csvData?: any[][];
    icon?: string;
    layoutType: string;
 }
@@ -64,7 +66,8 @@ interface Props
 
 
 const qController = Client.getInstance();
-function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidgetCallback, entityPrimaryKey, tableName, storeDropdownSelections}: Props, ): JSX.Element
+
+function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidgetCallback, entityPrimaryKey, tableName, storeDropdownSelections}: Props,): JSX.Element
 {
    const [childUrlParams, setChildUrlParams] = useState((urlParams) ? urlParams : "");
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -81,27 +84,27 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
 
    useEffect(() =>
    {
-      if(qInstance && data && data.childWidgetNameList)
+      if (qInstance && data && data.childWidgetNameList)
       {
          let widgetMetaDataList = [] as QWidgetMetaData[];
          data?.childWidgetNameList.forEach((widgetName: string) =>
          {
             widgetMetaDataList.push(qInstance.widgets.get(widgetName));
-         })
+         });
          setWidgets(widgetMetaDataList);
       }
    }, [qInstance, data, childUrlParams]);
 
    useEffect(() =>
    {
-      setChildUrlParams(urlParams)
+      setChildUrlParams(urlParams);
    }, [urlParams]);
 
    const parentReloadWidgetCallback = (data: string) =>
    {
       setChildUrlParams(data);
       reloadWidgetCallback(data);
-   }
+   };
 
    ///////////////////////////////////////////////////////////////////////////////////////////
    // if this parent widget is in card form, and its children are too, then we need some px //
@@ -125,7 +128,7 @@ function ParentWidget({urlParams, widgetMetaData, widgetIndex, data, reloadWidge
             omitPadding={omitPadding}
          >
             <Box sx={{height: "100%", width: "100%"}} px={px}>
-               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData} wrapWidgetsInTabPanels={data.layoutType == "TABS"}/>
+               <DashboardWidgets widgetMetaDataList={widgets} entityPrimaryKey={entityPrimaryKey} tableName={tableName} childUrlParams={childUrlParams} areChildren={true} parentWidgetMetaData={widgetMetaData} wrapWidgetsInTabPanels={data.layoutType?.toLowerCase() == "tabs"} />
             </Box>
          </Widget>
       ) : null

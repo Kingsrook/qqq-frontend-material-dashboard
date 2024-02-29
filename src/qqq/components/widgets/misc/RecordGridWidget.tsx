@@ -178,7 +178,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    if(widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(
-         <Typography key={1} variant="body2" py={2} px={0} display="inline" position="relative">
+         <Typography key={1} variant="body2" px={0} display="inline" position="relative">
             <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.25}}>save_alt</Icon></Button></Tooltip>
          </Typography>
       );

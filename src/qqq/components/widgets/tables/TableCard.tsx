@@ -20,6 +20,7 @@
  */
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
@@ -42,6 +43,7 @@ import Client from "qqq/utils/qqq/Client";
 export interface TableDataInput
 {
    columns: { [key: string]: any }[];
+   columnHeaderTooltips?: { [columnName: string]: string | JSX.Element }
    rows: { [key: string]: any }[];
 }
 
@@ -57,10 +59,11 @@ interface Props
    fixedStickyLastRow?: boolean;
    fixedHeight?: number;
    data: TableDataInput;
+   widgetMetaData: QWidgetMetaData;
 }
 
 const qController = Client.getInstance();
-function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, fixedStickyLastRow, fixedHeight}: Props): JSX.Element
+function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, fixedStickyLastRow, fixedHeight, widgetMetaData}: Props): JSX.Element
 {
    const [qInstance, setQInstance] = useState(null as QInstance);
 
@@ -74,7 +77,7 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
    }, []);
 
    return (
-      <Box py={1} mx={-2}>
+      <Box className="tableCard" mx={-2} mb="-28px" pt="11px" pb="0.25rem">
          {
             data && data.columns && !noRowsFoundHTML ?
                <DataTable
@@ -85,9 +88,10 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
                   fixedHeight={fixedHeight}
                   showTotalEntries={false}
                   isSorted={false}
+                  widgetMetaData={widgetMetaData}
                />
                : noRowsFoundHTML ?
-                  <Box p={3} pt={1} pb={1} sx={{textAlign: "center"}}>
+                  <Box p={3} pt={0} pb={3} sx={{textAlign: "center"}}>
                      <MDTypography
                         variant="subtitle2"
                         color="secondary"

@@ -35,6 +35,7 @@ import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLin
 import SmallLineChart from "qqq/components/widgets/charts/linechart/SmallLineChart";
 import PieChart from "qqq/components/widgets/charts/piechart/PieChart";
 import StackedBarChart from "qqq/components/widgets/charts/StackedBarChart";
+import CompositeWidget from "qqq/components/widgets/CompositeWidget";
 import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
@@ -47,6 +48,7 @@ import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
 import Widget, {HeaderIcon, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT, LabelComponent} from "qqq/components/widgets/Widget";
+import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
 import TableWidget from "./tables/TableWidget";
@@ -254,7 +256,17 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          const topRightInsideCardIcon = widgetMetaData.icons.get("topRightInsideCard");
          if (topRightInsideCardIcon)
          {
-            labelAdditionalComponentsRight.push(new HeaderIcon(topRightInsideCardIcon.name, topRightInsideCardIcon.path, topRightInsideCardIcon.color));
+            labelAdditionalComponentsRight.push(new HeaderIcon(topRightInsideCardIcon.name, topRightInsideCardIcon.path, topRightInsideCardIcon.color, "topRightInsideCard"));
+         }
+      }
+
+      const labelAdditionalComponentsLeft: LabelComponent[] = [];
+      if (widgetMetaData && widgetMetaData.icons)
+      {
+         const topLeftInsideCardIcon = widgetMetaData.icons.get("topLeftInsideCard");
+         if (topLeftInsideCardIcon)
+         {
+            labelAdditionalComponentsLeft.push(new HeaderIcon(topLeftInsideCardIcon.name, topLeftInsideCardIcon.path, topLeftInsideCardIcon.color, "topLeftInsideCard"));
          }
       }
 
@@ -302,6 +314,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
                      labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <StackedBarChart data={widgetData[i]?.chartData} chartSubheaderData={widgetData[i]?.chartSubheaderData} />
                   </Widget>
@@ -314,6 +327,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      showReloadControl={false}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <div className="widgetProcessMidDiv" style={{height: "100%"}}>
                         <ProcessRun process={widgetData[i]?.processMetaData} defaultProcessValues={widgetData[i]?.defaultValues} isWidget={true} forceReInit={widgetCounter} />
@@ -327,6 +342,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <Box sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px"}}>
                         <Box padding="1rem" sx={{width: "100%"}}>
@@ -342,6 +359,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetMetaData={widgetMetaData}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      widgetData={widgetData[i]}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <Box>
                         <MDTypography component="div" variant="button" color="text" fontWeight="light">
@@ -373,8 +392,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetData={widgetData[i]}
                      isChild={areChildren}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <StatisticsCard
+                        widgetMetaData={widgetMetaData}
                         data={widgetData[i]}
                         increaseIsGood={true}
                      />
@@ -414,6 +436,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
                      labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <div>
                         <PieChart
@@ -449,6 +472,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      widgetData={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
                      <DefaultLineChart sx={{alignItems: "center"}}
                         data={widgetData[i]?.chartData}
@@ -475,6 +500,34 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      data={widgetData[i]}
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "composite" && (
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+                  >
+                     <CompositeWidget widgetMetaData={widgetMetaData} data={widgetData[i]} />
+                  </Widget>
+               )
+            }
+            {
+               widgetMetaData.type === "block" && (
+                  <Widget
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+                  >
+                     <WidgetBlock widgetMetaData={widgetMetaData} block={widgetData[i]} />
+                  </Widget>
                )
             }
             {
@@ -523,7 +576,6 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      renderedWidget = (<TabPanel index={i} value={selectedTab} style={{
                         padding: 0,
                         margin: "-1rem",
-                        marginBottom: "-3.5rem",
                         width: "calc(100% + 2rem)"
                      }}>
                         {renderedWidget}

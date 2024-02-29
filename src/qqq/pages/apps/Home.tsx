@@ -75,9 +75,17 @@ function AppHome({app}: Props): JSX.Element
       })();
    }, []);
 
+   const mdbMetaData = app?.supplementalAppMetaData?.get("materialDashboard");
+   let showAppLabelOnHomeScreen = true;
+   if(mdbMetaData)
+   {
+      showAppLabelOnHomeScreen = mdbMetaData.showAppLabelOnHomeScreen;
+   }
+
    useEffect(() =>
    {
-      setPageHeader(app.label);
+      // setPageHeader(app.label);
+      setPageHeader(null);
 
       if (!qInstance)
       {
@@ -208,6 +216,12 @@ function AppHome({app}: Props): JSX.Element
    {
       return (
          <BaseLayout>
+            {
+               showAppLabelOnHomeScreen &&
+               <Typography textTransform="capitalize" variant="h3">
+                  {app.label}
+               </Typography>
+            }
             <Grid container spacing={3}>
                <Grid item xs={12} lg={12}>
                   <Card sx={{overflow: "visible"}}>
@@ -253,13 +267,19 @@ function AppHome({app}: Props): JSX.Element
 
    return (
       <BaseLayout>
+         {
+            showAppLabelOnHomeScreen &&
+            <Typography textTransform="capitalize" variant="h3">
+               {app.label}
+            </Typography>
+         }
          <Box>
             {app.widgets && app.widgets.length > 0 && (
-               <Box pb={app.sections ? 2.375 : 0}>
+               <Box pb={app.sections ? 2.375 : 4} pt={"0.5rem"}>
                   <DashboardWidgets widgetMetaDataList={widgets} />
                </Box>
             )}
-            <Grid container spacing={3}>
+            <Grid container spacing={3} mt={"-1rem"}>
                {
                   app.sections ? (
                      <Grid item xs={12} lg={12}>
