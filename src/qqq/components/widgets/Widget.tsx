@@ -142,7 +142,7 @@ export class HeaderIcon extends LabelComponent
          borderRadius: "0.25rem"
       };
 
-      if(this.role == "topLeftInsideCard")
+      if (this.role == "topLeftInsideCard")
       {
          styles["order"] = -1;
          styles["marginRight"] = "0.5rem";
@@ -235,22 +235,22 @@ export class Dropdown extends LabelComponent
          try
          {
             const localStorageOption = JSON.parse(localStorage.getItem(localStorageKey));
-            if(localStorageOption)
+            if (localStorageOption)
             {
                const id = localStorageOption.id;
                for (let i = 0; i < this.options.length; i++)
                {
                   if (this.options[i].id == id)
                   {
-                     defaultValue = this.options[i]
+                     defaultValue = this.options[i];
                      args.dropdownData[args.componentIndex] = defaultValue?.id;
                   }
                }
             }
          }
-         catch(e)
+         catch (e)
          {
-            console.log(`Error getting default value for dropdown [${this.dropdownName}] from local storage`, e)
+            console.log(`Error getting default value for dropdown [${this.dropdownName}] from local storage`, e);
          }
       }
 
@@ -261,7 +261,7 @@ export class Dropdown extends LabelComponent
       {
          for (let i = 0; i < this.options.length; i++)
          {
-            if(this.options[i].id == this.dropdownDefaultValue)
+            if (this.options[i].id == this.dropdownDefaultValue)
             {
                defaultValue = this.options[i];
                args.dropdownData[args.componentIndex] = defaultValue?.id;
@@ -365,7 +365,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
 
    function renderComponent(component: LabelComponent, componentIndex: number)
    {
-      if(component && component.render)
+      if (component && component.render)
       {
          return component.render({navigate: navigate, widgetProps: props, dropdownData: dropdownData, componentIndex: componentIndex, reloadFunction: doReload});
       }
@@ -401,7 +401,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       // for initial render, put right-components from props into the state variable //
       /////////////////////////////////////////////////////////////////////////////////
       const stateLabelComponentsRight = [] as LabelComponent[];
-      // console.log(`${props.widgetMetaData.name} init'ing right-components`);
+      // console.log(`${props.widgetMetaData.name} initiating right-components`);
       if (props.labelAdditionalComponentsRight)
       {
          props.labelAdditionalComponentsRight.map((component) => stateLabelComponentsRight.push(component));
@@ -435,11 +435,11 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          {
             // console.log(`${props.widgetMetaData.name} building a Dropdown, data is: ${dropdownData}`);
             let defaultValue = null;
-            if(props.widgetData.dropdownDefaultValueList && props.widgetData.dropdownDefaultValueList.length >= index)
+            if (props.widgetData.dropdownDefaultValueList && props.widgetData.dropdownDefaultValueList.length >= index)
             {
                defaultValue = props.widgetData.dropdownDefaultValueList[index];
             }
-            if(props.widgetData?.dropdownLabelList && props.widgetData?.dropdownLabelList[index] && props.widgetMetaData?.dropdowns && props.widgetMetaData?.dropdowns[index] && props.widgetData?.dropdownNameList && props.widgetData?.dropdownNameList[index])
+            if (props.widgetData?.dropdownLabelList && props.widgetData?.dropdownLabelList[index] && props.widgetMetaData?.dropdowns && props.widgetMetaData?.dropdowns[index] && props.widgetData?.dropdownNameList && props.widgetData?.dropdownNameList[index])
             {
                updatedStateLabelComponentsRight.push(new Dropdown(props.widgetData.dropdownLabelList[index], props.widgetMetaData.dropdowns[index], dropdownData, defaultValue, props.widgetData.dropdownNameList[index], handleDataChange));
             }
@@ -554,7 +554,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    let localLabelAdditionalElementsLeft = [...props.labelAdditionalElementsLeft];
    if (props.widgetMetaData?.showExportButton && props.widgetMetaData?.type !== "table" && props.widgetMetaData?.type !== "childRecordList")
    {
-      if(!localLabelAdditionalElementsLeft)
+      if (!localLabelAdditionalElementsLeft)
       {
          localLabelAdditionalElementsLeft = [];
       }
@@ -589,12 +589,12 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    const isParentWidget = props.widgetMetaData.type == "parentWidget"; // todo - do we need to know top-level parent, vs. a nested parent?
    let labelToUse = props.widgetData?.label ?? props.widgetMetaData?.label;
 
-   if(!labelToUse)
+   if (!labelToUse)
    {
       /////////////////////////////////////////////////////////////////////////////////////////////
       // prevent the label from disappearing, especially when it's being used as the page header //
       /////////////////////////////////////////////////////////////////////////////////////////////
-      if(lastSeenLabel && isParentWidget && usingLabelAsTitle)
+      if (lastSeenLabel && isParentWidget && usingLabelAsTitle)
       {
          labelToUse = lastSeenLabel;
       }
@@ -606,9 +606,17 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       </Typography>
    );
 
-   if(labelToUse && labelToUse != lastSeenLabel)
+   let sublabelElement = (
+      <Box height="20px">
+         <Typography sx={{position: "relative", top: "-18px"}} variant="caption">
+            {props.widgetData?.sublabel}
+         </Typography>
+      </Box>
+   );
+
+   if (labelToUse && labelToUse != lastSeenLabel)
    {
-      setLastSeenLabel(labelToUse)
+      setLastSeenLabel(labelToUse);
       setUsingLabelAsTitle(props.widgetData.isLabelPageTitle);
    }
 
@@ -634,56 +642,63 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
          {
             needLabelBox &&
             <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%", ...props.labelBoxAdditionalSx}} minHeight={"2.5rem"}>
-               <Box display="flex" alignItems="baseline">
-                  {
-                     hasPermission ?
-                        props.widgetMetaData?.icon && (
-                           <Box ml={1} mr={2} mt={-4} sx={{
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              width: "64px",
-                              height: "64px",
-                              borderRadius: "8px",
-                              background: colors.info.main,
-                              color: "#ffffff",
-                              float: "left"
-                           }}
-                           >
-                              <Icon fontSize="medium" color="inherit">
-                                 {props.widgetMetaData.icon}
-                              </Icon>
-                           </Box>
-                        ) :
-                        (
-                           <Box ml={3} mt={-4} sx={{
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              width: "64px",
-                              height: "64px",
-                              borderRadius: "8px",
-                              background: colors.info.main,
-                              color: "#ffffff",
-                              float: "left"
-                           }}
-                           >
-                              <Icon fontSize="medium" color="inherit">lock</Icon>
-                           </Box>
+               <Box display="flex" flexDirection="column">
+                  <Box display="flex" alignItems="baseline">
+                     {
+                        hasPermission ?
+                           props.widgetMetaData?.icon && (
+                              <Box ml={1} mr={2} mt={-4} sx={{
+                                 display: "flex",
+                                 justifyContent: "center",
+                                 alignItems: "center",
+                                 width: "64px",
+                                 height: "64px",
+                                 borderRadius: "8px",
+                                 background: colors.info.main,
+                                 color: "#ffffff",
+                                 float: "left"
+                              }}
+                              >
+                                 <Icon fontSize="medium" color="inherit">
+                                    {props.widgetMetaData.icon}
+                                 </Icon>
+                              </Box>
+                           ) :
+                           (
+                              <Box ml={3} mt={-4} sx={{
+                                 display: "flex",
+                                 justifyContent: "center",
+                                 alignItems: "center",
+                                 width: "64px",
+                                 height: "64px",
+                                 borderRadius: "8px",
+                                 background: colors.info.main,
+                                 color: "#ffffff",
+                                 float: "left"
+                              }}
+                              >
+                                 <Icon fontSize="medium" color="inherit">lock</Icon>
+                              </Box>
+                           )
+                     }
+                     {
+                        hasPermission && labelToUse && (labelElement)
+                     }
+                     {
+                        hasPermission && (
+                           labelComponentsLeft.map((component, i) =>
+                           {
+                              return (<React.Fragment key={i}>{renderComponent(component, i)}</React.Fragment>);
+                           })
                         )
-                  }
-                  {
-                     hasPermission && labelToUse && (labelElement)
-                  }
-                  {
-                     hasPermission && (
-                        labelComponentsLeft.map((component, i) =>
-                        {
-                           return (<React.Fragment key={i}>{renderComponent(component, i)}</React.Fragment>);
-                        })
-                     )
-                  }
-                  {localLabelAdditionalElementsLeft}
+                     }
+                     {localLabelAdditionalElementsLeft}
+                  </Box>
+                  <Box display="flex">
+                     {
+                        hasPermission && props.widgetData?.sublabel && (sublabelElement)
+                     }
+                  </Box>
                </Box>
                <Box>
                   {
@@ -740,7 +755,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    // try to make tables fill their entire "parent" //
    ///////////////////////////////////////////////////
    let noCardMarginBottom = "unset";
-   if(isTable)
+   if (isTable)
    {
       noCardMarginBottom = "-8px";
    }
