@@ -36,7 +36,7 @@ import Icon from "@mui/material/Icon";
 import Typography from "@mui/material/Typography";
 import {makeStyles} from "@mui/styles";
 import {Command} from "cmdk";
-import React, {useContext, useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useRef} from "react";
 import {useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import HistoryUtils, {QHistoryEntry} from "qqq/utils/HistoryUtils";
@@ -174,7 +174,9 @@ const CommandMenu = ({metaData}: Props) =>
       })
       tableNames = tableNames.sort((a: string, b:string) =>
       {
-         return (metaData.tables.get(a).label.localeCompare(metaData.tables.get(b).label));
+         const labelA = metaData.tables.get(a).label ?? "";
+         const labelB = metaData.tables.get(b).label ?? "";
+         return (labelA.localeCompare(labelB));
       })
 
       const path = location.pathname;
@@ -222,7 +224,9 @@ const CommandMenu = ({metaData}: Props) =>
       })
       tableNames = tableNames.sort((a: string, b:string) =>
       {
-         return (metaData.tables.get(a).label.localeCompare(metaData.tables.get(b).label));
+         const labelA = metaData.tables.get(a).label ?? "";
+         const labelB = metaData.tables.get(b).label ?? "";
+         return (labelA.localeCompare(labelB));
       })
       return(
          <Command.Group heading="Tables">
@@ -252,7 +256,9 @@ const CommandMenu = ({metaData}: Props) =>
 
       appNames = appNames.sort((a: string, b:string) =>
       {
-         return (getFullAppLabel(metaData.appTree, a, 1, "").localeCompare(getFullAppLabel(metaData.appTree, b, 1, "")));
+         const labelA = getFullAppLabel(metaData.appTree, a, 1, "") ?? "";
+         const labelB = getFullAppLabel(metaData.appTree, b, 1, "") ?? "";
+         return (labelA.localeCompare(labelB));
       })
 
       return(
@@ -286,7 +292,9 @@ const CommandMenu = ({metaData}: Props) =>
 
       appNames = appNames.sort((a: string, b:string) =>
       {
-         return (metaData.apps.get(a).label.localeCompare(metaData.apps.get(b).label));
+         const labelA = metaData.apps.get(a).label ?? "";
+         const labelB = metaData.apps.get(b).label ?? "";
+         return (labelA.localeCompare(labelB));
       })
 
       const entryMap = new Map<string, boolean>();
