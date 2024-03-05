@@ -20,14 +20,18 @@
  */
 
 
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Tooltip} from "@mui/material";
-import React, {ReactElement} from "react";
+import React, {ReactElement, useContext} from "react";
 import {Link} from "react-router-dom";
+import QContext from "QContext";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {BlockData, BlockLink, BlockTooltip} from "qqq/components/widgets/blocks/BlockModels";
 
 interface BlockElementWrapperProps
 {
    data: BlockData;
+   metaData: QWidgetMetaData;
    slot: string
    linkProps?: any;
    children: ReactElement;
@@ -36,8 +40,10 @@ interface BlockElementWrapperProps
 /*******************************************************************************
  ** For Blocks - wrap their "slot" elements with an optional tooltip and/or link
  *******************************************************************************/
-export default function BlockElementWrapper({data, slot, linkProps, children}: BlockElementWrapperProps): JSX.Element
+export default function BlockElementWrapper({data, metaData, slot, linkProps, children}: BlockElementWrapperProps): JSX.Element
 {
+   const {helpHelpActive} = useContext(QContext);
+
    let link: BlockLink;
    let tooltip: BlockTooltip;
 
@@ -59,6 +65,26 @@ export default function BlockElementWrapper({data, slot, linkProps, children}: B
    {
       link = data.link;
       tooltip = data.tooltip;
+   }
+
+   if(!tooltip)
+   {
+      const helpRoles = ["ALL_SCREENS"]
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////
+      // the full keys in the helpContent table will look like:                                    //
+      // widget:MyCoolWidget;slot=myBlockId,label (if the block has a blockId in data)             //
+      // widget:MyCoolWidget;slot=label (no blockId; note, label is slot name here)                //
+      // in the widget metaData, the map of helpContent will just have the "slot" portion as a key //
+      ///////////////////////////////////////////////////////////////////////////////////////////////
+      const key = data.blockId ? `${data.blockId},${slot}` : slot;
+      const showHelp = helpHelpActive || hasHelpContent(metaData?.helpContent?.get(key), helpRoles);
+
+      if(showHelp)
+      {
+         const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent?.get(key)} roles={helpRoles} helpContentKey={`widget:${metaData?.name};slot:${key}`} />;
+         tooltip = {title: formattedHelpContent, placement: "bottom"}
+      }
    }
 
    let rs = children;

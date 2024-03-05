@@ -29,7 +29,7 @@ import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockMo
  **
  ** ${label} ${value}
  *******************************************************************************/
-export default function TableSubRowDetailRowBlock({data}: StandardBlockComponentProps): JSX.Element
+export default function TableSubRowDetailRowBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
    return (
       <div style={{display: "flex", maxWidth: "calc(100% - 24px)", justifyContent: "space-between"}}>
@@ -37,7 +37,7 @@ export default function TableSubRowDetailRowBlock({data}: StandardBlockComponent
          {
             data.values.label &&
             <div style={{overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis"}}>
-               <BlockElementWrapper data={data} slot="label">
+               <BlockElementWrapper metaData={widgetMetaData} data={data} slot="label">
                   <span style={{color: data.styles.labelColor}}>{data.values.label}</span>
                </BlockElementWrapper>
             </div>
@@ -45,7 +45,7 @@ export default function TableSubRowDetailRowBlock({data}: StandardBlockComponent
 
          {
             data.values.value &&
-            <BlockElementWrapper data={data} slot="value">
+            <BlockElementWrapper metaData={widgetMetaData} data={data} slot="value">
                <span style={{color: data.styles.valueColor}}>{data.values.value}</span>
             </BlockElementWrapper>
          }

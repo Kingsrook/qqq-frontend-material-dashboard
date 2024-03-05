@@ -27,10 +27,10 @@ import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockMo
  **
  ** ${text}
  *******************************************************************************/
-export default function TextBlock({data}: StandardBlockComponentProps): JSX.Element
+export default function TextBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
    return (
-      <BlockElementWrapper data={data} slot="">
+      <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
          <span>{data.values.text}</span>
       </BlockElementWrapper>
    );

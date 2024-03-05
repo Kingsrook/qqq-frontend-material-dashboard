@@ -21,8 +21,6 @@
 
 import BlockElementWrapper from "qqq/components/widgets/blocks/BlockElementWrapper";
 import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
-import UpOrDownNumberBlock from "qqq/components/widgets/blocks/UpOrDownNumberBlock";
-
 
 
 /*******************************************************************************
@@ -40,7 +38,7 @@ export default function BigNumberBlock({widgetMetaData, data}: StandardBlockComp
       <div style={{width: data.styles.width ?? "auto"}}>
 
          <div style={{fontWeight: "700", fontSize: "0.875rem", color: "#3D3D3D", marginBottom: "-0.5rem"}}>
-            <BlockElementWrapper data={data} slot="heading">
+            <BlockElementWrapper metaData={widgetMetaData} data={data} slot="heading">
                <span>{data.values.heading}</span>
             </BlockElementWrapper>
          </div>
@@ -49,14 +47,14 @@ export default function BigNumberBlock({widgetMetaData, data}: StandardBlockComp
 
             <div style={{display: "flex", alignItems: "baseline"}}>
                <div style={{fontWeight: "700", fontSize: "2rem", marginRight: "0.25rem"}}>
-                  <BlockElementWrapper data={data} slot="number">
+                  <BlockElementWrapper metaData={widgetMetaData} data={data} slot="number">
                      <span style={{color: data.styles.numberColor}}>{data.values.number}</span>
                   </BlockElementWrapper>
                </div>
                {
                   data.values.context &&
                   <div style={{fontWeight: "500", fontSize: "0.875rem", color: "#7b809a"}}>
-                     <BlockElementWrapper data={data} slot="context">
+                     <BlockElementWrapper metaData={widgetMetaData} data={data} slot="context">
                         <span>{data.values.context}</span>
                      </BlockElementWrapper>
                   </div>

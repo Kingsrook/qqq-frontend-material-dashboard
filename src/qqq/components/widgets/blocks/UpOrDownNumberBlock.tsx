@@ -35,7 +35,7 @@ import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockMo
  ** ${icon} ${number}
  ** ${context}
  *******************************************************************************/
-export default function UpOrDownNumberBlock({data}: StandardBlockComponentProps): JSX.Element
+export default function UpOrDownNumberBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
    if (!data.styles)
    {
@@ -61,7 +61,7 @@ export default function UpOrDownNumberBlock({data}: StandardBlockComponentProps)
          <div style={{display: "flex", flexDirection: data.styles.isStacked ? "column" : "row", alignItems: data.styles.isStacked ? "flex-end" : "baseline"}}>
 
             <div style={{display: "flex", alignItems: "baseline", fontWeight: 700, fontSize: ".875rem"}}>
-               <BlockElementWrapper data={data} slot="number">
+               <BlockElementWrapper metaData={widgetMetaData} data={data} slot="number">
                   <>
                      <Icon sx={{color: goodOrBadColor, alignSelf: "flex-end", fontSize: "2.25rem !important", lineHeight: "0.875rem", height: "1rem", width: "2rem",}}>{iconName}</Icon>
                      <span style={{color: goodOrBadColor}}>{data.values.number}</span>
@@ -70,7 +70,7 @@ export default function UpOrDownNumberBlock({data}: StandardBlockComponentProps)
             </div>
 
             <div style={{fontWeight: 500, fontSize: "0.875rem", color: "#7b809a", marginLeft: "0.25rem"}}>
-               <BlockElementWrapper data={data} slot="context">
+               <BlockElementWrapper metaData={widgetMetaData} data={data} slot="context">
                   <span>{data.values.context}</span>
                </BlockElementWrapper>
             </div>

@@ -28,19 +28,19 @@ import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockMo
  **
  ** ${number} ${icon}
  *******************************************************************************/
-export default function NumberIconBadgeBlock({data}: StandardBlockComponentProps): JSX.Element
+export default function NumberIconBadgeBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
    return (
       <div style={{display: "inline-block", whiteSpace: "nowrap", color: data.styles.color}}>
          {
             data.values.number &&
-            <BlockElementWrapper data={data} slot="number">
+            <BlockElementWrapper metaData={widgetMetaData} data={data} slot="number">
                <span style={{color: data.styles.color, fontSize: "0.875rem"}}>{data.values.number}</span>
             </BlockElementWrapper>
          }
          {
             data.values.iconName &&
-            <BlockElementWrapper data={data} slot="icon">
+            <BlockElementWrapper metaData={widgetMetaData} data={data} slot="icon">
                <Icon style={{color: data.styles.color, fontSize: "1rem", position: "relative", top: "3px"}}>{data.values.iconName}</Icon>
             </BlockElementWrapper>
          }

@@ -24,6 +24,7 @@ import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Q
 
 export interface BlockData
 {
+   blockId?: string;
    blockTypeName: string;
 
    tooltip?: BlockTooltip;
@@ -38,7 +39,7 @@ export interface BlockData
 
 export interface BlockTooltip
 {
-   title: string;
+   title: string | JSX.Element;
    placement: string;
 }
 

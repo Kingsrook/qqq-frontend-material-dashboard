@@ -35,14 +35,14 @@ import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockMo
  **    ${heading}
  **    ${bar}             ${value}
  *******************************************************************************/
-export default function ProgressBarBlock({data}: StandardBlockComponentProps): JSX.Element
+export default function ProgressBarBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
    return (
       <Typography component="div" variant="button" color="text" fontWeight="light" sx={{textTransform: "none"}}>
          {
             data.values.heading &&
             <div style={{marginBottom: "0.25rem", fontWeight: 500, color: "#3D3D3D"}}>
-               <BlockElementWrapper data={data} slot="heading">
+               <BlockElementWrapper metaData={widgetMetaData} data={data} slot="heading">
                   <span>{data.values.heading}</span>
                </BlockElementWrapper>
             </div>
@@ -50,7 +50,7 @@ export default function ProgressBarBlock({data}: StandardBlockComponentProps): J
 
          <div style={{display: "flex", alignItems: "center", marginBottom: "0.75rem"}}>
 
-            <BlockElementWrapper data={data} slot="bar" linkProps={{style: {width: "100%"}}}>
+            <BlockElementWrapper metaData={widgetMetaData} data={data} slot="bar" linkProps={{style: {width: "100%"}}}>
                <div style={{background: "#E0E0E0", width: "100%", borderRadius: "0.5rem", height: "1rem"}}>
                   {
                      data.values.percent > 0 ? <div style={{background: data.styles.barColor ?? "#0062ff", minWidth: "1rem", width: `${data.values.percent}%`, borderRadius: "0.5rem", height: "1rem"}}></div> : <></>
@@ -59,7 +59,7 @@ export default function ProgressBarBlock({data}: StandardBlockComponentProps): J
             </BlockElementWrapper>
 
             <div style={{width: "60px", textAlign: "right", fontWeight: 600, color: "#3D3D3D"}}>
-               <BlockElementWrapper data={data} slot="value">
+               <BlockElementWrapper metaData={widgetMetaData} data={data} slot="value">
                   <span>{data.values.value ?? `${(data.values.percent as number).toFixed(1)}%`}</span>
                </BlockElementWrapper>
             </div>
