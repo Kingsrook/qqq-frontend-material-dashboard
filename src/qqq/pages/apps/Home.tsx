@@ -77,9 +77,11 @@ function AppHome({app}: Props): JSX.Element
 
    const mdbMetaData = app?.supplementalAppMetaData?.get("materialDashboard");
    let showAppLabelOnHomeScreen = true;
+   let includeTableCountsOnHomeScreen = true;
    if(mdbMetaData)
    {
       showAppLabelOnHomeScreen = mdbMetaData.showAppLabelOnHomeScreen;
+      includeTableCountsOnHomeScreen = mdbMetaData.includeTableCountsOnHomeScreen;
    }
 
    useEffect(() =>
@@ -129,48 +131,60 @@ function AppHome({app}: Props): JSX.Element
       const tableCountTexts = new Map<string, string>();
       newTables.forEach((table) =>
       {
-         tableCounts.set(table.name, {isLoading: true, value: null});
-
-         setTimeout(async () =>
+         if(includeTableCountsOnHomeScreen)
          {
-            const tableMetaData = await qController.loadTableMetaData(table.name);
-            let countResult = null;
-            if(tableMetaData.capabilities.has(Capability.TABLE_COUNT) && tableMetaData.readPermission)
+            tableCounts.set(table.name, {isLoading: true, value: null});
+            setTimeout(async () =>
             {
-               try
+               const tableMetaData = await qController.loadTableMetaData(table.name);
+               let countResult = null;
+               if (tableMetaData.capabilities.has(Capability.TABLE_COUNT) && tableMetaData.readPermission)
                {
-                  [countResult] = await qController.count(table.name);
+                  try
+                  {
+                     [countResult] = await qController.count(table.name);
 
-                  if (countResult !== null && countResult !== undefined)
-                  {
-                     tableCountNumbers.set(table.name, countResult.toLocaleString());
-                     tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+                     if (countResult !== null && countResult !== undefined)
+                     {
+                        tableCountNumbers.set(table.name, countResult.toLocaleString());
+                        tableCountTexts.set(table.name, countResult === 1 ? "total record" : "total records");
+                     }
+                     else
+                     {
+                        tableCountNumbers.set(table.name, "–");
+                        tableCountTexts.set(table.name, " ");
+                     }
                   }
-                  else
+                  catch (e)
                   {
+                     console.log("Caught: " + e);
                      tableCountNumbers.set(table.name, "–");
                      tableCountTexts.set(table.name, " ");
                   }
                }
-               catch(e)
+               else
                {
-                  console.log("Caught: " + e);
                   tableCountNumbers.set(table.name, "–");
                   tableCountTexts.set(table.name, " ");
                }
-            }
-            else
-            {
-               tableCountNumbers.set(table.name, "–");
-               tableCountTexts.set(table.name, " ");
-            }
 
-            tableCounts.set(table.name, {isLoading: false, value: countResult});
+               tableCounts.set(table.name, {isLoading: false, value: countResult});
+               setTableCounts(tableCounts);
+               setTableCountNumbers(tableCountNumbers);
+               setTableCountTexts(tableCountTexts);
+               setUpdatedTableCounts(new Date());
+            }, 1);
+         }
+         else
+         {
+            tableCounts.set(table.name, {isLoading: false, value: null});
+            tableCountNumbers.set(table.name, " ");
+            tableCountTexts.set(table.name, " ");
+
             setTableCounts(tableCounts);
             setTableCountNumbers(tableCountNumbers);
             setTableCountTexts(tableCountTexts);
-            setUpdatedTableCounts(new Date());
-         }, 1);
+         }
       });
       setTableCounts(tableCounts);
 
@@ -299,7 +313,7 @@ function AppHome({app}: Props): JSX.Element
                                  </Box>
                                  {
                                     section.processes ? (
-                                       <Box p={3} pl={5} pt={0} pb={1}>
+                                       <Box p={3} pl={3} pt={0} pb={1}>
                                           <MDTypography variant="h6">Actions</MDTypography>
                                        </Box>
                                     ) : null
@@ -340,7 +354,7 @@ function AppHome({app}: Props): JSX.Element
                                  }
                                  {
                                     section.reports ? (
-                                       <Box p={3} pl={5} pt={0} pb={1}>
+                                       <Box p={3} pl={3} pt={0} pb={1}>
                                           <MDTypography variant="h6">Reports</MDTypography>
                                        </Box>
                                     ) : null
@@ -383,7 +397,7 @@ function AppHome({app}: Props): JSX.Element
                                  }
                                  {
                                     section.tables ? (
-                                       <Box p={3} pl={5} pb={1} pt={0}>
+                                       <Box p={3} pl={3} pb={1} pt={0}>
                                           <MDTypography variant="h6">Data</MDTypography>
                                        </Box>
                                     ) : null
@@ -395,6 +409,13 @@ function AppHome({app}: Props): JSX.Element
                                              section.tables.map((tableName) =>
                                              {
                                                 let table = app.childMap.get(tableName);
+                                                let count = "";
+                                                let percentage = "";
+                                                if(includeTableCountsOnHomeScreen)
+                                                {
+                                                   count = !tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name));
+                                                   percentage = !tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name));
+                                                }
                                                 return (
                                                    <Grid key={table.name} item xs={12} md={12} lg={tileSizeLg}>
                                                       {hasTablePermission(tableName) ?
@@ -402,8 +423,8 @@ function AppHome({app}: Props): JSX.Element
                                                             <Box className="big-icon" mb={3}>
                                                                <MiniStatisticsCard
                                                                   title={{fontWeight: "bold", text: table.label}}
-                                                                  count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
-                                                                  percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
+                                                                  count={count}
+                                                                  percentage={{color: "info", text: percentage}}
                                                                   icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
                                                                />
                                                             </Box>
@@ -411,8 +432,8 @@ function AppHome({app}: Props): JSX.Element
                                                          <Box mb={3} title="You do not have permission to access this table">
                                                             <MiniStatisticsCard
                                                                title={{fontWeight: "bold", text: table.label}}
-                                                               count={!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "..." : (tableCountNumbers.get(table.name))}
-                                                               percentage={{color: "info", text: (!tableCounts.has(table.name) || tableCounts.get(table.name).isLoading ? "" : (tableCountTexts.get(table.name)))}}
+                                                               count={count}
+                                                               percentage={{color: "info", text: percentage}}
                                                                icon={{color: "info", component: <Icon>{table.iconName || app.iconName}</Icon>}}
                                                                isDisabled={true}
                                                             />
