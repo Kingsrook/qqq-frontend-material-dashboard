@@ -66,7 +66,7 @@
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
          <artifactId>qqq-backend-core</artifactId>
-         <version>feature-CE-876-develop-missing-widget-types-20240221.002945-1</version>
+         <version>0.20.0-20240308.165846-65</version>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
