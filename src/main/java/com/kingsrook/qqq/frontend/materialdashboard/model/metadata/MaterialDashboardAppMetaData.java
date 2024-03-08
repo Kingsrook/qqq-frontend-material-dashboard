@@ -22,7 +22,9 @@
 package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
 
 
+import com.kingsrook.qqq.backend.core.model.metadata.layout.QAppMetaData;
 import com.kingsrook.qqq.backend.core.model.metadata.layout.QSupplementalAppMetaData;
+import com.kingsrook.qqq.backend.core.utils.CollectionUtils;
 
 
 /*******************************************************************************
@@ -30,7 +32,39 @@ import com.kingsrook.qqq.backend.core.model.metadata.layout.QSupplementalAppMeta
  *******************************************************************************/
 public class MaterialDashboardAppMetaData extends QSupplementalAppMetaData
 {
+   public static final String TYPE_NAME = "materialDashboard";
+
    private Boolean showAppLabelOnHomeScreen = true;
+   private Boolean includeTableCountsOnHomeScreen = true;
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static MaterialDashboardAppMetaData of(QAppMetaData app)
+   {
+      return ((MaterialDashboardAppMetaData) CollectionUtils.nonNullMap(app.getSupplementalMetaData()).get(TYPE_NAME));
+   }
+
+
+
+   /*******************************************************************************
+    ** either get the supplemental meta dat attached to an app - or create a new one
+    ** and attach it to the app, and return that.
+    *******************************************************************************/
+   public static MaterialDashboardAppMetaData ofOrWithNew(QAppMetaData app)
+   {
+      MaterialDashboardAppMetaData materialDashboardAppMetaData = of(app);
+
+      if(materialDashboardAppMetaData == null)
+      {
+         materialDashboardAppMetaData = new MaterialDashboardAppMetaData();
+         app.withSupplementalMetaData(materialDashboardAppMetaData);
+      }
+
+      return (materialDashboardAppMetaData);
+   }
 
 
 
@@ -51,7 +85,7 @@ public class MaterialDashboardAppMetaData extends QSupplementalAppMetaData
    @Override
    public String getType()
    {
-      return ("materialDashboard");
+      return TYPE_NAME;
    }
 
 
@@ -82,6 +116,37 @@ public class MaterialDashboardAppMetaData extends QSupplementalAppMetaData
    public MaterialDashboardAppMetaData withShowAppLabelOnHomeScreen(Boolean showAppLabelOnHomeScreen)
    {
       this.showAppLabelOnHomeScreen = showAppLabelOnHomeScreen;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    ** Getter for includeTableCountsOnHomeScreen
+    *******************************************************************************/
+   public Boolean getIncludeTableCountsOnHomeScreen()
+   {
+      return (this.includeTableCountsOnHomeScreen);
+   }
+
+
+
+   /*******************************************************************************
+    ** Setter for includeTableCountsOnHomeScreen
+    *******************************************************************************/
+   public void setIncludeTableCountsOnHomeScreen(Boolean includeTableCountsOnHomeScreen)
+   {
+      this.includeTableCountsOnHomeScreen = includeTableCountsOnHomeScreen;
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for includeTableCountsOnHomeScreen
+    *******************************************************************************/
+   public MaterialDashboardAppMetaData withIncludeTableCountsOnHomeScreen(Boolean includeTableCountsOnHomeScreen)
+   {
+      this.includeTableCountsOnHomeScreen = includeTableCountsOnHomeScreen;
       return (this);
    }
 
