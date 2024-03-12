@@ -25,14 +25,13 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {Chip} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
-import Icon from "@mui/material/Icon";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
@@ -42,8 +41,6 @@ import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
-import React, {useReducer, useState} from "react";
-import AceEditor from "react-ace";
 import DataBagDataEditor, {DataBagDataEditorProps} from "qqq/components/databags/DataBagDataEditor";
 import DataBagPreview from "qqq/components/databags/DataBagPreview";
 import TabPanel from "qqq/components/misc/TabPanel";
@@ -57,6 +54,8 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
+import React, {useReducer, useState} from "react";
+import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 const qController = Client.getInstance();
@@ -64,12 +63,11 @@ const qController = Client.getInstance();
 // Declaring props types for ViewForm
 interface Props
 {
-   dataBagId: number
+   dataBagId: number;
 }
 
 DataBagViewer.defaultProps =
-   {
-   };
+   {};
 
 export default function DataBagViewer({dataBagId}: Props): JSX.Element
 {
@@ -77,12 +75,12 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [versionRecordList, setVersionRecordList] = useState(null as QRecord[]);
    const [selectedVersionRecord, setSelectedVersionRecord] = useState(null as QRecord);
-   const [currentVersionId , setCurrentVersionId] = useState(null as number);
+   const [currentVersionId, setCurrentVersionId] = useState(null as number);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [selectedTab, setSelectedTab] = useState(0);
    const [editorProps, setEditorProps] = useState(null as DataBagDataEditorProps);
    const [successText, setSuccessText] = useState(null as string);
-   const [failText, setFailText] = useState(null as string)
+   const [failText, setFailText] = useState(null as string);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [loadingSelectedVersion, _] = useState(new LoadingState(forceUpdate, "loading"));
@@ -100,13 +98,13 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
 
             const criteria = [new QFilterCriteria("dataBagId", QCriteriaOperator.EQUALS, [dataBagId])];
             const orderBys = [new QFilterOrderBy("sequenceNo", false)];
-            const filter = new QQueryFilter(criteria, orderBys, "AND", 0, 25);
+            const filter = new QQueryFilter(criteria, orderBys, null, "AND", 0, 25);
             const versions = await qController.query("dataBagVersion", filter);
             console.log("Fetched versions:");
             console.log(versions);
             setVersionRecordList(versions);
 
-            if(versions && versions.length > 0)
+            if (versions && versions.length > 0)
             {
                setCurrentVersionId(versions[0].values.get("id"));
                const latestVersion = await qController.get("dataBagVersion", versions[0].values.get("id"));
@@ -362,7 +360,7 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
                                              <Typography variant="h6" pl={3}>Data Preview (Version {selectedVersionRecord?.values?.get("sequenceNo")})</Typography>
                                           </Box>
                                           <Box height="400px" overflow="auto" ml={1} fontSize="14px">
-                                             {loadingSelectedVersion.isNotLoading() && selectedTab == 1 && selectedVersionRecord?.values?.get("data") && <DataBagPreview json={selectedVersionRecord?.values?.get("data")} /> }
+                                             {loadingSelectedVersion.isNotLoading() && selectedTab == 1 && selectedVersionRecord?.values?.get("data") && <DataBagPreview json={selectedVersionRecord?.values?.get("data")} />}
                                              {loadingSelectedVersion.isLoadingSlow() && <Box pl={3}>Loading...</Box>}
                                           </Box>
                                        </Grid>
@@ -377,7 +375,7 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
                            <Modal open={editorProps !== null} onClose={(event, reason) => closeEditingScript(event, reason)}>
                               <DataBagDataEditor
                                  closeCallback={closeEditingScript}
-                                 {... editorProps}
+                                 {...editorProps}
                               />
                            </Modal>
                         }

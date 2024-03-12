@@ -28,8 +28,7 @@
    },
    "plugins": [
       "react",
-      "@typescript-eslint",
-      "import"
+      "@typescript-eslint"
    ],
    "rules": {
       "brace-style": [
@@ -41,41 +40,6 @@
          3,
          {
             "SwitchCase": 1
-         }
-      ],
-      "import/extensions": [
-         "error",
-         "ignorePackages",
-         {
-            "ts": "never",
-            "tsx": "never",
-            "js": "never"
-         }
-      ],
-      "import/no-extraneous-dependencies": [
-         "error",
-         {
-            "devDependencies": true
-         }
-      ],
-      "import/order": [
-         "error",
-         {
-            "groups": [
-               "builtin", // Built-in imports (come from NodeJS native) go first
-               "external", // <- External imports
-               "internal", // <- Absolute imports
-               ["sibling", "parent"], // <- Relative imports, the sibling and parent types they can be mingled together
-               "index", // <- index imports
-               "unknown"
-            ],
-            "newlines-between": "never",
-            "alphabetize": {
-               /* sort in ascending order. Options: ["ignore", "asc", "desc"] */
-               "order": "asc",
-               /* ignore case. Options: [true, false] */
-               "caseInsensitive": true
-            }
          }
       ],
       "jsx-one-expression-per-line": "off",
@@ -114,15 +78,6 @@
       "quotes": [
          "error",
          "double"
-      ],
-      "sort-imports": [
-         "error",
-         {
-            "ignoreCase": false,
-            "ignoreDeclarationSort": true,
-            "ignoreMemberSort": true,
-            "allowSeparatedGroups": false
-         }
       ]
    },
    "settings": {

@@ -263,39 +263,45 @@ class FilterUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static canFilterWorkAsBasic(tableMetaData: QTableMetaData, filter: QQueryFilter): { canFilterWorkAsBasic: boolean; reasonsWhyItCannot?: string[] }
+   public static canFilterWorkAsBasic(tableMetaData: QTableMetaData, filter: QQueryFilter): { canFilterWorkAsBasic: boolean; canFilterWorkAsAdvanced: boolean, reasonsWhyItCannot?: string[] }
    {
       const reasonsWhyItCannot: string[] = [];
 
-      if(filter == null)
+      if (filter == null)
       {
-         return ({canFilterWorkAsBasic: true});
+         return ({canFilterWorkAsBasic: true, canFilterWorkAsAdvanced: true});
       }
 
-      if(filter.booleanOperator == "OR")
+      if (filter.booleanOperator == "OR")
       {
-         reasonsWhyItCannot.push("Filter uses the 'OR' operator.")
+         reasonsWhyItCannot.push("Filter uses the 'OR' operator.");
       }
 
-      if(filter.criteria)
+      if (filter.subFilters?.length > 0)
       {
-         const usedFields: {[name: string]: boolean} = {};
-         const warnedFields: {[name: string]: boolean} = {};
+         reasonsWhyItCannot.push("Filter contains sub-filters.");
+         return ({canFilterWorkAsBasic: false, canFilterWorkAsAdvanced: false, reasonsWhyItCannot: reasonsWhyItCannot});
+      }
+
+      if (filter.criteria)
+      {
+         const usedFields: { [name: string]: boolean } = {};
+         const warnedFields: { [name: string]: boolean } = {};
          for (let i = 0; i < filter.criteria.length; i++)
          {
             const criteriaName = filter.criteria[i].fieldName;
-            if(!criteriaName)
+            if (!criteriaName)
             {
                continue;
             }
 
-            if(usedFields[criteriaName])
+            if (usedFields[criteriaName])
             {
-               if(!warnedFields[criteriaName])
+               if (!warnedFields[criteriaName])
                {
                   const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, criteriaName);
                   let fieldLabel = field.label;
-                  if(tableForField.name != tableMetaData.name)
+                  if (tableForField.name != tableMetaData.name)
                   {
                      let fieldLabel = `${tableForField.label}: ${field.label}`;
                   }
@@ -307,13 +313,13 @@ class FilterUtils
          }
       }
 
-      if(reasonsWhyItCannot.length == 0)
+      if (reasonsWhyItCannot.length == 0)
       {
-         return ({canFilterWorkAsBasic: true});
+         return ({canFilterWorkAsBasic: true, canFilterWorkAsAdvanced: true});
       }
       else
       {
-         return ({canFilterWorkAsBasic: false, reasonsWhyItCannot: reasonsWhyItCannot});
+         return ({canFilterWorkAsBasic: false, canFilterWorkAsAdvanced: true, reasonsWhyItCannot: reasonsWhyItCannot});
       }
    }
 
@@ -325,7 +331,7 @@ class FilterUtils
    {
       let valuesString = "";
 
-      if(criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+      if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
       {
          ///////////////////////////////////////////////
          // we don't want values for these operators. //
@@ -342,7 +348,7 @@ class FilterUtils
          {
             maxLoops = maxValuesToShow;
          }
-         else if(maxValuesToShow == 1 && criteria.values.length > 1)
+         else if (maxValuesToShow == 1 && criteria.values.length > 1)
          {
             maxLoops = 1;
          }
@@ -364,21 +370,21 @@ class FilterUtils
             {
                const expression = new ThisOrLastPeriodExpression(value);
                let startOfPrefix = "";
-               if(fieldMetaData.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
+               if (fieldMetaData.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
                {
                   startOfPrefix = "start of ";
                }
                labels.push(`${startOfPrefix}${expression.toString()}`);
             }
-            else if(fieldMetaData.type == QFieldType.BOOLEAN)
+            else if (fieldMetaData.type == QFieldType.BOOLEAN)
             {
-               labels.push(value == true ? "yes" : "no")
+               labels.push(value == true ? "yes" : "no");
             }
-            else if(fieldMetaData.type == QFieldType.DATE_TIME)
+            else if (fieldMetaData.type == QFieldType.DATE_TIME)
             {
                labels.push(ValueUtils.formatDateTime(value));
             }
-            else if(fieldMetaData.type == QFieldType.DATE)
+            else if (fieldMetaData.type == QFieldType.DATE)
             {
                labels.push(ValueUtils.formatDate(value));
             }
@@ -401,7 +407,7 @@ class FilterUtils
                   labels.push(` and ${n} other value${n == 1 ? "" : "s"}.`);
                   break;
                case "+N":
-                  labels[labels.length-1] += ` +${n}`;
+                  labels[labels.length - 1] += ` +${n}`;
                   break;
             }
          }
@@ -450,7 +456,7 @@ class FilterUtils
       for (let i = 0; i < queryFilter?.orderBys?.length; i++)
       {
          const orderBy = queryFilter.orderBys[i];
-         gridSortModel.push({field: orderBy.fieldName, sort: orderBy.isAscending ? "asc" : "desc"})
+         gridSortModel.push({field: orderBy.fieldName, sort: orderBy.isAscending ? "asc" : "desc"});
       }
       return (gridSortModel);
    }
@@ -461,7 +467,7 @@ class FilterUtils
     *******************************************************************************/
    public static operatorToHumanString(criteria: QFilterCriteria, field: QFieldMetaData): string
    {
-      if(criteria == null || criteria.operator == null)
+      if (criteria == null || criteria.operator == null)
       {
          return (null);
       }
@@ -471,7 +477,7 @@ class FilterUtils
 
       try
       {
-         switch(criteria.operator)
+         switch (criteria.operator)
          {
             case QCriteriaOperator.EQUALS:
                return ("equals");
@@ -495,35 +501,35 @@ class FilterUtils
             case QCriteriaOperator.NOT_CONTAINS:
                return ("does not contain");
             case QCriteriaOperator.LESS_THAN:
-               if(isDate || isDateTime)
+               if (isDate || isDateTime)
                {
-                  return ("is before")
+                  return ("is before");
                }
                return ("less than");
             case QCriteriaOperator.LESS_THAN_OR_EQUALS:
-               if(isDate)
+               if (isDate)
                {
-                  return ("is on or before")
+                  return ("is on or before");
                }
-               if(isDateTime)
+               if (isDateTime)
                {
-                  return ("is at or before")
+                  return ("is at or before");
                }
                return ("less than or equals");
             case QCriteriaOperator.GREATER_THAN:
-               if(isDate || isDateTime)
+               if (isDate || isDateTime)
                {
-                  return ("is after")
+                  return ("is after");
                }
                return ("greater than or equals");
             case QCriteriaOperator.GREATER_THAN_OR_EQUALS:
-               if(isDate)
+               if (isDate)
                {
-                  return ("is on or after")
+                  return ("is on or after");
                }
-               if(isDateTime)
+               if (isDateTime)
                {
-                  return ("is at or after")
+                  return ("is at or after");
                }
                return ("greater than or equals");
             case QCriteriaOperator.IS_BLANK:
@@ -536,10 +542,10 @@ class FilterUtils
                return ("is not between");
          }
       }
-      catch(e)
+      catch (e)
       {
          console.log(`Error getting operator human string for ${JSON.stringify(criteria)}: ${e}`);
-         return criteria?.operator
+         return criteria?.operator;
       }
    }
 
@@ -549,7 +555,7 @@ class FilterUtils
     *******************************************************************************/
    public static criteriaToHumanString(table: QTableMetaData, criteria: QFilterCriteria, styled = false): string | JSX.Element
    {
-      if(criteria == null)
+      if (criteria == null)
       {
          return (null);
       }
@@ -558,7 +564,7 @@ class FilterUtils
       const fieldLabel = TableUtils.getFieldFullLabel(table, criteria.fieldName);
       const valuesString = FilterUtils.getValuesString(field, criteria);
 
-      if(styled)
+      if (styled)
       {
          return (
             <Box display="inline" whiteSpace="nowrap" color="#FFFFFF" mb={"0.5rem"}>
@@ -567,7 +573,7 @@ class FilterUtils
                {valuesString && <Box display="inline" p="0.125rem" pr="0.5rem" sx={{background: "#009971"}} borderRadius="0 0.5rem 0.5rem 0"> {valuesString}</Box>}
                &nbsp;
             </Box>
-         )
+         );
       }
       else
       {

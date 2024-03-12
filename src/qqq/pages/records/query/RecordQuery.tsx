@@ -44,11 +44,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip";
-import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnHeaderParams, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnsMenuItem, GridColumnVisibilityModel, GridDensity, GridEventListener, GridFilterMenuItem, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
+import {ColumnHeaderFilterIconButtonProps, DataGridPro, GridCallbackDetails, GridColDef, GridColumnHeaderParams, GridColumnMenuContainer, GridColumnMenuProps, GridColumnOrderChangeParams, GridColumnPinningMenuItems, GridColumnResizeParams, GridColumnVisibilityModel, GridDensity, GridEventListener, GridPinnedColumns, gridPreferencePanelStateSelector, GridPreferencePanelsValue, GridRowId, GridRowParams, GridRowsProp, GridSelectionModel, GridSortItem, GridSortModel, GridState, GridToolbarContainer, GridToolbarDensitySelector, HideGridColMenuItem, MuiEvent, SortGridMenuItems, useGridApiContext, useGridApiEventHandler, useGridApiRef, useGridSelector} from "@mui/x-data-grid-pro";
 import {GridRowModel} from "@mui/x-data-grid/models/gridRows";
 import FormData from "form-data";
-import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
-import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
@@ -78,6 +76,8 @@ import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
 const CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedViewId";
 const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
@@ -112,7 +112,7 @@ const getLoadingScreen = () =>
    return (<BaseLayout>
       &nbsp;
    </BaseLayout>);
-}
+};
 
 
 /*******************************************************************************
@@ -139,16 +139,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // manage "state" being passed from some screens (like delete) into query screen - by grabbing, and then deleting //
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   if(location.state)
+   if (location.state)
    {
       let state: any = location.state;
-      if(state["deleteSuccess"])
+      if (state["deleteSuccess"])
       {
          setShowSuccessfullyDeletedAlert(true);
          delete state["deleteSuccess"];
       }
 
-      if(state["warning"])
+      if (state["warning"])
       {
          setWarningAlert(state["warning"]);
          delete state["warning"];
@@ -181,7 +181,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const densityLocalStorageKey = `${DENSITY_LOCAL_STORAGE_KEY_ROOT}`;
 
    // only load things out of local storage on the first render
-   if(firstRender)
+   if (firstRender)
    {
       console.log("This is firstRender, so reading defaults from local storage...");
       if (localStorage.getItem(densityLocalStorageKey))
@@ -200,7 +200,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setFirstRender(false);
    }
 
-   if(defaultView == null)
+   if (defaultView == null)
    {
       defaultView = new RecordQueryView();
       defaultView.queryFilter = new QQueryFilter();
@@ -214,15 +214,15 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////////////////////
    // in case the view is missing any of these attributes, give them a reasonable default //
    /////////////////////////////////////////////////////////////////////////////////////////
-   if(!defaultView.rowsPerPage)
+   if (!defaultView.rowsPerPage)
    {
       defaultView.rowsPerPage = defaultRowsPerPage;
    }
-   if(!defaultView.mode)
+   if (!defaultView.mode)
    {
       defaultView.mode = defaultMode;
    }
-   if(!defaultView.quickFilterFieldNames)
+   if (!defaultView.quickFilterFieldNames)
    {
       defaultView.quickFilterFieldNames = [];
    }
@@ -246,7 +246,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // state of the page - e.g., have we loaded meta data?  what about the initial view?  or are we ready to render records. //
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   const [pageState, setPageState] = useState("initial" as PageState)
+   const [pageState, setPageState] = useState("initial" as PageState);
 
    /////////////////////////////////
    // meta-data and derived state //
@@ -260,8 +260,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////
    // state of the view of the query screen //
    ///////////////////////////////////////////
-   const [view, setView] = useState(defaultView)
-   const [viewAsJson, setViewAsJson] = useState(JSON.stringify(defaultView))
+   const [view, setView] = useState(defaultView);
+   const [viewAsJson, setViewAsJson] = useState(JSON.stringify(defaultView));
    const [queryFilter, setQueryFilter] = useState(defaultView.queryFilter);
    const [queryColumns, setQueryColumns] = useState(defaultView.queryColumns);
    const [lastFetchedQFilterJSON, setLastFetchedQFilterJSON] = useState("");
@@ -309,7 +309,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////////////////
    const [columnStatsFieldName, setColumnStatsFieldName] = useState(null as string);
    const [columnStatsField, setColumnStatsField] = useState(null as QFieldMetaData);
-   const [columnStatsFieldTableName, setColumnStatsFieldTableName] = useState(null as string)
+   const [columnStatsFieldTableName, setColumnStatsFieldTableName] = useState(null as string);
    const [filterForColumnStats, setFilterForColumnStats] = useState(null as QQueryFilter);
 
    ///////////////////////////////////////////////////
@@ -353,14 +353,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////
    // add a LoadingState object, in case the initial loads (of meta data and view) are slow //
    ///////////////////////////////////////////////////////////////////////////////////////////
-   const [pageLoadingState, _] = useState(new LoadingState(forceUpdate))
+   const [pageLoadingState, _] = useState(new LoadingState(forceUpdate));
 
-   if(isFirstRenderAfterChangingTables)
+   if (isFirstRenderAfterChangingTables)
    {
       setIsFirstRenderAfterChangingTables(false);
 
       console.log("This is the first render after changing tables - so - setting state based on 'defaults' from localStorage");
-      setView(defaultView)
+      setView(defaultView);
    }
 
    /*******************************************************************************
@@ -386,7 +386,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          const criteria = queryFilter.criteria[i];
          const {criteriaIsValid} = validateCriteria(criteria, null);
          const fieldName = criteria.fieldName;
-         if(criteriaIsValid && fieldName && fieldName.indexOf(".") > -1)
+         if (criteriaIsValid && fieldName && fieldName.indexOf(".") > -1)
          {
             visibleJoinTables.add(fieldName.split(".")[0]);
          }
@@ -407,7 +407,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             const join = tableMetaData.exposedJoins[i];
             if (visibleJoinTables.has(join.joinTable.name))
             {
-               if(join.isMany)
+               if (join.isMany)
                {
                   return (true);
                }
@@ -415,7 +415,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
       }
       return (false);
-   }
+   };
 
 
    /*******************************************************************************
@@ -423,7 +423,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const prepQueryFilterForBackend = (sourceFilter: QQueryFilter) =>
    {
-      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.booleanOperator);
+      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.subFilters, sourceFilter.booleanOperator);
       for (let i = 0; i < sourceFilter?.criteria?.length; i++)
       {
          const criteria = sourceFilter.criteria[i];
@@ -442,7 +442,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                // else push a clone of the criteria - since it may get manipulated below (convertFilterPossibleValuesToIds) //
                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName)
+               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName);
                filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, FilterUtils.cleanseCriteriaValueForQQQ(criteria.values, field)));
             }
          }
@@ -451,7 +451,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       filterForBackend.limit = rowsPerPage;
 
       return filterForBackend;
-   }
+   };
 
 
    /*******************************************************************************
@@ -475,7 +475,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////
    // build the export menu, for the header //
    ///////////////////////////////////////////
-   let exportMenu = <></>
+   let exportMenu = <></>;
    try
    {
       const exportMenuItemRestProps =
@@ -485,7 +485,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             columnsModel: columnsModel,
             columnVisibilityModel: columnVisibilityModel,
             queryFilter: prepQueryFilterForBackend(queryFilter)
-         }
+         };
 
       exportMenu = (<>
          <IconButton sx={{p: 0, fontSize: "0.75rem", mb: 1, color: colors.secondary.main, fontVariationSettings: "'wght' 100"}} onClick={openExportMenu}><Icon fontSize="small">save_alt</Icon></IconButton>
@@ -503,7 +503,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          </Menu>
       </>);
    }
-   catch(e)
+   catch (e)
    {
       console.log("Error preparing export menu for page header: " + e);
    }
@@ -515,7 +515,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       let label: string = tableMetaData?.label ?? "";
 
-      if(currentSavedView?.values?.get("label"))
+      if (currentSavedView?.values?.get("label"))
       {
          label += " / " + currentSavedView?.values?.get("label");
       }
@@ -536,12 +536,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          }
 
          let joinLabelsString = joinLabels.join(", ");
-         if(joinLabels.length == 2)
+         if (joinLabels.length == 2)
          {
             let lastCommaIndex = joinLabelsString.lastIndexOf(",");
             joinLabelsString = joinLabelsString.substring(0, lastCommaIndex) + " and " + joinLabelsString.substring(lastCommaIndex + 1);
          }
-         if(joinLabels.length > 2)
+         if (joinLabels.length > 2)
          {
             let lastCommaIndex = joinLabelsString.lastIndexOf(",");
             joinLabelsString = joinLabelsString.substring(0, lastCommaIndex) + ", and " + joinLabelsString.substring(lastCommaIndex + 1);
@@ -552,9 +552,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             <ul style={{marginLeft: "1rem"}}>
                {joinLabels.map((name) => <li key={name}>{name}</li>)}
             </ul>
-         </div>
+         </div>;
 
-         return(
+         return (
             <div>
                {label} {exportMenu}
                <CustomWidthTooltip title={tooltipHTML}>
@@ -586,7 +586,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             </Tooltip>
          </Typography>
       );
-   }
+   };
 
    ///////////////////////
    // Keyboard handling //
@@ -598,16 +598,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          const type = (e.target as any).type;
          const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
 
-         if(validType && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
+         if (validType && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
          {
-            if (! e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            if (!e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
-               e.preventDefault()
+               e.preventDefault();
                navigate(`${metaData?.getTablePathByName(tableName)}/create`);
             }
-            else if (! e.metaKey && e.key === "r")
+            else if (!e.metaKey && e.key === "r")
             {
-               e.preventDefault()
+               e.preventDefault();
                updateTable("'r' keyboard event");
             }
             /*
@@ -618,25 +618,25 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                gridApiRef.current.showPreferences(GridPreferencePanelsValue.columns)
             }
             */
-            else if (! e.metaKey && e.key === "f")
+            else if (!e.metaKey && e.key === "f")
             {
-               e.preventDefault()
+               e.preventDefault();
 
                // @ts-ignore
-               if(basicAndAdvancedQueryControlsRef?.current?.getCurrentMode() == "advanced")
+               if (basicAndAdvancedQueryControlsRef?.current?.getCurrentMode() == "advanced")
                {
-                  gridApiRef.current.showFilterPanel()
+                  gridApiRef.current.showFilterPanel();
                }
             }
          }
-      }
+      };
 
-      document.addEventListener("keydown", down)
+      document.addEventListener("keydown", down);
       return () =>
       {
-         document.removeEventListener("keydown", down)
-      }
-   }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess])
+         document.removeEventListener("keydown", down);
+      };
+   }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess]);
 
 
    /*******************************************************************************
@@ -645,7 +645,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const urlLooksLikeProcess = (): boolean =>
    {
       return (pathParts[pathParts.length - 2] === tableName);
-   }
+   };
 
    //////////////////////////////////////////////////////////////////////////////////////////////
    // monitor location changes - if our url looks like a savedView, then load that view, kinda //
@@ -703,7 +703,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setView(view);
       setViewAsJson(JSON.stringify(view));
       localStorage.setItem(viewLocalStorageKey, JSON.stringify(view));
-   }
+   };
 
 
    /*******************************************************************************
@@ -712,10 +712,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const handleColumnVisibilityChange = (columnVisibilityModel: GridColumnVisibilityModel) =>
    {
       setColumnVisibilityModel(columnVisibilityModel);
-      queryColumns.updateVisibility(columnVisibilityModel)
+      queryColumns.updateVisibility(columnVisibilityModel);
 
       view.queryColumns = queryColumns;
-      doSetView(view)
+      doSetView(view);
 
       forceUpdate();
    };
@@ -730,12 +730,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       // set the field's value in the view //
       ///////////////////////////////////////
       let fieldName = field.name;
-      if(table && table.name != tableMetaData.name)
+      if (table && table.name != tableMetaData.name)
       {
          fieldName = `${table.name}.${field.name}`;
       }
 
-      view.queryColumns.setIsVisible(fieldName, newValue)
+      view.queryColumns.setIsVisible(fieldName, newValue);
 
       /////////////////////
       // update the grid //
@@ -745,13 +745,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       /////////////////////////////////////////////////
       // update the view (e.g., write local storage) //
       /////////////////////////////////////////////////
-      doSetView(view)
+      doSetView(view);
 
       ///////////////////
       // ole' faithful //
       ///////////////////
       forceUpdate();
-   }
+   };
 
 
    /*******************************************************************************
@@ -790,7 +790,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setPinnedColumns(queryColumns.toGridPinnedColumns());
       setColumnVisibilityModel(queryColumns.toColumnVisibilityModel());
       setColumnsModel(columns);
-   }
+   };
 
 
    /*******************************************************************************
@@ -799,7 +799,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const promptForTableVariantSelection = () =>
    {
       setTableVariantPromptOpen(true);
-   }
+   };
 
 
    /*******************************************************************************
@@ -813,10 +813,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       for (let i = 0; i < queryFilter?.orderBys?.length; i++)
       {
          const fieldName = queryFilter.orderBys[i].fieldName;
-         if(fieldName.indexOf(".") > -1)
+         if (fieldName.indexOf(".") > -1)
          {
             const joinTableName = fieldName.replaceAll(/\..*/g, "");
-            if(!vjtToUse.has(joinTableName))
+            if (!vjtToUse.has(joinTableName))
             {
                const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
                handleChangeOneColumnVisibility(field, fieldTable, true);
@@ -826,7 +826,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
 
       return (rs);
-   }
+   };
 
 
    /*******************************************************************************
@@ -834,13 +834,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const updateTable = (reason?: string) =>
    {
-      if(pageState != "ready")
+      if (pageState != "ready")
       {
          console.log(`In updateTable, but pageSate[${pageState}] is not ready, so returning with noop`);
          return;
       }
 
-      if(tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
+      if (tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
       {
          console.log("In updateTable, but a variant is needed, so returning with noop");
          return;
@@ -894,7 +894,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             });
          }
 
-         if(!tableMetaData.capabilities.has(Capability.TABLE_QUERY))
+         if (!tableMetaData.capabilities.has(Capability.TABLE_QUERY))
          {
             console.log("Cannot update table - it does not have QUERY capability.");
             return;
@@ -969,7 +969,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          setDistinctRecords(countResults[latestQueryId][1]);
          delete countResults[latestQueryId];
       }
-      catch(e)
+      catch (e)
       {
          console.log(e);
       }
@@ -999,7 +999,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       // count how many distinct primary keys are on this page //
       ///////////////////////////////////////////////////////////
       let distinctPrimaryKeySet = new Set<string>();
-      for(let i = 0; i < results.length; i++)
+      for (let i = 0; i < results.length; i++)
       {
          distinctPrimaryKeySet.add(results[i].values.get(tableMetaData.primaryKeyField) as string);
       }
@@ -1055,7 +1055,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setRowsPerPage(size);
 
       view.rowsPerPage = size;
-      doSetView(view)
+      doSetView(view);
    };
 
    /*******************************************************************************
@@ -1064,11 +1064,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const handlePinnedColumnsChange = (pinnedColumns: GridPinnedColumns) =>
    {
       setPinnedColumns(pinnedColumns);
-      queryColumns.setPinnedLeftColumns(pinnedColumns.left)
-      queryColumns.setPinnedRightColumns(pinnedColumns.right)
+      queryColumns.setPinnedLeftColumns(pinnedColumns.left);
+      queryColumns.setPinnedRightColumns(pinnedColumns.right);
 
       view.queryColumns = queryColumns;
-      doSetView(view)
+      doSetView(view);
    };
 
    /*******************************************************************************
@@ -1121,7 +1121,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       let selectedPrimaryKeys = new Set<string>();
       selectionModel.forEach((value: GridRowId, index: number) =>
       {
-         checkboxesChecked++
+         checkboxesChecked++;
          const valueToPush = latestQueryResults[value as number].values.get(tableMetaData.primaryKeyField);
          selectedPrimaryKeys.add(valueToPush as string);
       });
@@ -1150,7 +1150,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       queryColumns.updateColumnOrder(columnOrdering);
 
       view.queryColumns = queryColumns;
-      doSetView(view)
+      doSetView(view);
    };
 
 
@@ -1162,7 +1162,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       queryColumns.updateColumnWidth(params.colDef.field, params.width);
 
       view.queryColumns = queryColumns;
-      doSetView(view)
+      doSetView(view);
    };
 
 
@@ -1185,13 +1185,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       {
          const fieldName = gridSort[i].field;
          const isAscending = gridSort[i].sort == "asc";
-         queryFilter.orderBys.push(new QFilterOrderBy(fieldName, isAscending))
+         queryFilter.orderBys.push(new QFilterOrderBy(fieldName, isAscending));
       }
 
       //////////////////////////////////////////////////////////
       // set a default order-by, if none is otherwise present //
       //////////////////////////////////////////////////////////
-      if(queryFilter.orderBys.length == 0)
+      if (queryFilter.orderBys.length == 0)
       {
          queryFilter.orderBys.push(new QFilterOrderBy(tableMetaData.primaryKeyField, false));
       }
@@ -1209,7 +1209,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const handleColumnHeaderClick = (params: GridColumnHeaderParams, event: MuiEvent, details: GridCallbackDetails): void =>
    {
       event.defaultMuiPrevented = true;
-   }
+   };
 
 
    /*******************************************************************************
@@ -1227,7 +1227,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       setRowsPerPage(view.rowsPerPage ?? defaultRowsPerPage);
       setMode(view.mode ?? defaultMode);
-      setQuickFilterFieldNames(view.quickFilterFieldNames ?? []) // todo not i think ?? getDefaultQuickFilterFieldNames(tableMetaData));
+      setQuickFilterFieldNames(view.quickFilterFieldNames ?? []); // todo not i think ?? getDefaultQuickFilterFieldNames(tableMetaData));
 
       //////////////////////////////////////////////////////////////////////////////////////////////////
       // do this last - in case anything in the view got modified in any of those other doSet methods //
@@ -1240,7 +1240,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////////////////////////////////////////////////////////////////////////////////
       // @ts-ignore
       setTimeout(() => basicAndAdvancedQueryControlsRef?.current?.ensureAllFilterCriteriaAreActiveQuickFilters(view.queryFilter, "activatedView"));
-   }
+   };
 
 
    /*******************************************************************************
@@ -1258,7 +1258,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////////////////////////////
       // in case there's no orderBys, set default here //
       ///////////////////////////////////////////////////
-      if(!queryFilter.orderBys || queryFilter.orderBys.length == 0)
+      if (!queryFilter.orderBys || queryFilter.orderBys.length == 0)
       {
          queryFilter.orderBys = [new QFilterOrderBy(tableMetaData?.primaryKeyField, false)];
          view.queryFilter = queryFilter;
@@ -1284,17 +1284,17 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////////////////////////
       // put this query filter in the current view //
       ///////////////////////////////////////////////
-      if(!isFromActivateView)
+      if (!isFromActivateView)
       {
          view.queryFilter = queryFilter;
-         doSetView(view)
+         doSetView(view);
       }
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // this force-update causes a re-render that'll see the changed filter hash/json string, and make an updateTable run (if appropriate) //
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       forceUpdate();
-   }
+   };
 
    /*******************************************************************************
     ** Wrapper around setQueryColumns that also sets column models for the grid, puts
@@ -1324,12 +1324,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////////////////////
       // put these columns in the current view //
       ///////////////////////////////////////////
-      if(!isFromActivateView)
+      if (!isFromActivateView)
       {
          view.queryColumns = queryColumns;
-         doSetView(view)
+         doSetView(view);
       }
-   }
+   };
 
 
    /*******************************************************************************
@@ -1341,7 +1341,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setQuickFilterFieldNames([...(names ?? [])]);
 
       view.quickFilterFieldNames = names;
-      doSetView(view)
+      doSetView(view);
    };
 
 
@@ -1354,7 +1354,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       view.mode = newValue;
       doSetView(view);
-   }
+   };
 
 
    /*******************************************************************************
@@ -1372,7 +1372,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
 
       return (selectedIds.length);
-   }
+   };
 
 
    /*******************************************************************************
@@ -1403,7 +1403,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
 
       return "";
-   }
+   };
 
 
    /*******************************************************************************
@@ -1559,7 +1559,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const doSetCurrentSavedView = (savedViewRecord: QRecord) =>
    {
-      if(savedViewRecord == null)
+      if (savedViewRecord == null)
       {
          console.log("doSetCurrentView called with a null view record - calling doClearCurrentSavedView instead.");
          doClearCurrentSavedView();
@@ -1568,7 +1568,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
       setCurrentSavedView(savedViewRecord);
 
-      const viewJson = savedViewRecord.values.get("viewJson")
+      const viewJson = savedViewRecord.values.get("viewJson");
       const newView = RecordQueryView.buildFromJSON(viewJson);
 
       activateView(newView);
@@ -1577,7 +1577,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       // todo can/should/does this move into the view's "identity"? //
       ////////////////////////////////////////////////////////////////
       localStorage.setItem(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
-   }
+   };
 
 
    /*******************************************************************************
@@ -1587,7 +1587,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       setCurrentSavedView(null);
       localStorage.removeItem(currentSavedViewLocalStorageKey);
-   }
+   };
 
 
    /*******************************************************************************
@@ -1603,7 +1603,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       newDefaultView.quickFilterFieldNames = [];
       newDefaultView.mode = defaultMode;
       return newDefaultView;
-   }
+   };
 
    /*******************************************************************************
     ** event handler for SavedViews component, to handle user selecting a view
@@ -1638,9 +1638,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          ///////////////////////////////////////////////
          // activate a new default view for the table //
          ///////////////////////////////////////////////
-         activateView(buildTableDefaultView(tableMetaData))
+         activateView(buildTableDefaultView(tableMetaData));
       }
-   }
+   };
 
    /*******************************************************************************
     ** utility function to fetch a saved view from the backend.
@@ -1668,7 +1668,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          // such as, making values be what they'd be in the UI (not necessarily      //
          // what they're like in the backend); similarly, set anything that's unset. //
          //////////////////////////////////////////////////////////////////////////////
-         const viewJson = qRecord.values.get("viewJson")
+         const viewJson = qRecord.values.get("viewJson");
          const newView = RecordQueryView.buildFromJSON(viewJson);
 
          setWarningAlert(null);
@@ -1684,16 +1684,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          ///////////////////////////
          // set columns if absent //
          ///////////////////////////
-         if(!newView.queryColumns || !newView.queryColumns.columns || newView.queryColumns.columns?.length == 0)
+         if (!newView.queryColumns || !newView.queryColumns.columns || newView.queryColumns.columns?.length == 0)
          {
             newView.queryColumns = QQueryColumns.buildDefaultForTable(tableMetaData);
          }
 
-         qRecord.values.set("viewJson", JSON.stringify(newView))
+         qRecord.values.set("viewJson", JSON.stringify(newView));
       }
 
       return (qRecord);
-   }
+   };
 
 
    /*******************************************************************************
@@ -1793,12 +1793,12 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       }
 
       const removedFieldCount = removedFieldNames.size;
-      if(removedFieldCount > 0)
+      if (removedFieldCount > 0)
       {
          const plural = removedFieldCount > 1;
          setWarningAlert(`${removedFieldCount} field${plural ? "s" : ""} that ${plural ? "were" : "was"} part of this view ${plural ? "are" : "is"} no longer in this table, and ${plural ? "were" : "was"} removed from this view (${[...removedFieldNames.values()].join(", ")}).`);
       }
-   }
+   };
 
 
    /*******************************************************************************
@@ -1808,7 +1808,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    {
       const newCriteria = new QFilterCriteria(fieldName, null, []);
 
-      if(!queryFilter.criteria)
+      if (!queryFilter.criteria)
       {
          queryFilter.criteria = [];
       }
@@ -1834,8 +1834,8 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ///////////////////////////
       // open the filter panel //
       ///////////////////////////
-      gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters)
-   }
+      gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters);
+   };
 
 
    /*******************************************************************************
@@ -1930,7 +1930,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <MenuItem onClick={(e) =>
                {
                   hideMenu(e);
-                  if(mode == "advanced")
+                  if (mode == "advanced")
                   {
                      handleColumnMenuAdvancedFilterSelection(currentColumn.field);
                   }
@@ -1989,24 +1989,24 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          for (let i = 0; i < queryFilter?.criteria?.length; i++)
          {
             const criteria = queryFilter.criteria[i];
-            if(criteria.fieldName == props.field && validateCriteria(criteria, null).criteriaIsValid)
+            if (criteria.fieldName == props.field && validateCriteria(criteria, null).criteriaIsValid)
             {
                showFilter = true;
             }
          }
 
-         if(showFilter)
+         if (showFilter)
          {
             return (<IconButton size="small" sx={{p: "2px"}} onClick={(event) =>
             {
-               if(mode == "basic")
+               if (mode == "basic")
                {
                   // @ts-ignore !?
                   basicAndAdvancedQueryControlsRef.current.addField(props.field);
                }
                else
                {
-                  gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters)
+                  gridApiRef.current.showPreferences(GridPreferencePanelsValue.filters);
                }
 
                event.stopPropagation();
@@ -2110,35 +2110,35 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
        *******************************************************************************/
       const selectionMenuCallback = (selectedIndex: number) =>
       {
-         if(selectedIndex == 0)
+         if (selectedIndex == 0)
          {
             ///////////////
             // this page //
             ///////////////
             programmaticallySelectSomeOrAllRows();
-            setSelectFullFilterState("checked")
+            setSelectFullFilterState("checked");
          }
-         else if(selectedIndex == 1)
+         else if (selectedIndex == 1)
          {
             ///////////////////////
             // full query result //
             ///////////////////////
             programmaticallySelectSomeOrAllRows();
-            setSelectFullFilterState("filter")
+            setSelectFullFilterState("filter");
          }
-         else if(selectedIndex == 2)
+         else if (selectedIndex == 2)
          {
             ////////////////////////////
             // subset of query result //
             ////////////////////////////
             setSelectionSubsetSizePromptOpen(true);
          }
-         else if(selectedIndex == 3)
+         else if (selectedIndex == 3)
          {
             /////////////////////
             // clear selection //
             /////////////////////
-            setSelectFullFilterState("n/a")
+            setSelectFullFilterState("n/a");
             setRowSelectionModel([]);
             setSelectedIds([]);
          }
@@ -2160,13 +2160,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                {
                   setSelectionSubsetSizePromptOpen(false);
 
-                  if(value !== undefined)
+                  if (value !== undefined)
                   {
-                     if(typeof value === "number" && value > 0)
+                     if (typeof value === "number" && value > 0)
                      {
                         programmaticallySelectSomeOrAllRows(value);
                         setSelectionSubsetSize(value);
-                        setSelectFullFilterState("filterSubset")
+                        setSelectFullFilterState("filterSubset");
                      }
                      else
                      {
@@ -2270,7 +2270,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////////////
    const [filterHash, setFilterHash] = useState("");
 
-   if(pageState == "ready")
+   if (pageState == "ready")
    {
       const newFilterHash = JSON.stringify(prepQueryFilterForBackend(queryFilter));
       if (filterHash != newFilterHash)
@@ -2383,7 +2383,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                for (let i = 0; i < queryFilter?.criteria?.length; i++)
                {
                   const criteria = queryFilter.criteria[i];
-                  if(criteria.operator == QCriteriaOperator.NOT_EQUALS)
+                  if (criteria.operator == QCriteriaOperator.NOT_EQUALS)
                   {
                      criteria.operator = QCriteriaOperator.NOT_EQUALS_OR_IS_NULL;
                   }
@@ -2401,14 +2401,14 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                /////////////////////////////////////////////////////////////////////////////////////////////
                doClearCurrentSavedView();
             }
-            catch(e)
+            catch (e)
             {
                setAlertContent("Error parsing filter from URL");
             }
          }
          else if (viewIdInLocation)
          {
-            if(view.viewIdentity == `savedView:${viewIdInLocation}`)
+            if (view.viewIdentity == `savedView:${viewIdInLocation}`)
             {
                /////////////////////////////////////////////////////////////////////////////////////////////////
                // if the view id in the location is the same as the view that was most-recently active here,  //
@@ -2453,7 +2453,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                // so the useEffect that monitors location will see the change, and will set viewIdInLocation      //
                // so upon a re-render we'll hit this block again.                                                 //
                /////////////////////////////////////////////////////////////////////////////////////////////////////
-               setPageState("loadedMetaData")
+               setPageState("loadedMetaData");
                return;
             }
 
@@ -2487,7 +2487,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setTimeout(() =>
       {
          // @ts-ignore
-         basicAndAdvancedQueryControlsRef?.current?.ensureAllFilterCriteriaAreActiveQuickFilters(view.queryFilter, "defaultFilterLoaded")
+         basicAndAdvancedQueryControlsRef?.current?.ensureAllFilterCriteriaAreActiveQuickFilters(view.queryFilter, "defaultFilterLoaded");
       });
 
       console.log("finished preparing grid, going to page state ready");
@@ -2509,13 +2509,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ////////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if(pageState == "ready")
+      if (pageState == "ready")
       {
-         pageLoadingState.setNotLoading()
+         pageLoadingState.setNotLoading();
 
-         if(!tableVariantPromptOpen)
+         if (!tableVariantPromptOpen)
          {
-            updateTable("pageState is now ready")
+            updateTable("pageState is now ready");
          }
       }
    }, [pageState, tableVariantPromptOpen]);
@@ -2544,7 +2544,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////////////////////////////////
    if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_QUERY) && tableMetaData.capabilities.has(Capability.TABLE_GET))
    {
-      if(tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
+      if (tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
       {
          return (
             <BaseLayout>
@@ -2561,9 +2561,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       // if the table uses variants, then put the variant-selector into the goto dialog //
       ////////////////////////////////////////////////////////////////////////////////////
       let gotoVariantSubHeader = <></>;
-      if(tableMetaData?.usesVariants)
+      if (tableMetaData?.usesVariants)
       {
-         gotoVariantSubHeader = <Box mb={2}>{getTableVariantHeader(tableVariant)}</Box>
+         gotoVariantSubHeader = <Box mb={2}>{getTableVariantHeader(tableVariant)}</Box>;
       }
 
       return (
@@ -2576,7 +2576,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////
    // render a loading screen if the page state isn't ready //
    ///////////////////////////////////////////////////////////
-   if(pageState != "ready")
+   if (pageState != "ready")
    {
       console.log(`page state is ${pageState}... no-op while those complete async's run...`);
       return (getLoadingScreen());
@@ -2586,13 +2586,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    // if the table isn't loaded yet, display loading screen.                                //
    // this shouldn't be possible, to be out-of-sync with pageState, but just as a fail-safe //
    ///////////////////////////////////////////////////////////////////////////////////////////
-   if(!tableMetaData)
+   if (!tableMetaData)
    {
       return (getLoadingScreen());
    }
 
    let savedViewsComponent = null;
-   if(metaData && metaData.processes.has("querySavedView"))
+   if (metaData && metaData.processes.has("querySavedView"))
    {
       savedViewsComponent = (<SavedViews qController={qController} metaData={metaData} tableMetaData={tableMetaData} view={view} viewAsJson={viewAsJson} currentSavedView={currentSavedView} tableDefaultView={tableDefaultView} viewOnChangeCallback={handleSavedViewChange} loadingSavedView={loadingSavedView} />);
    }
@@ -2615,9 +2615,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////
       const baseView = currentSavedView ? JSON.parse(currentSavedView.values.get("viewJson")) as RecordQueryView : tableDefaultView;
       const viewDiffs: string[] = [];
-      SavedViewUtils.diffColumns(tableMetaData, baseView, view, viewDiffs)
+      SavedViewUtils.diffColumns(tableMetaData, baseView, view, viewDiffs);
 
-      if(viewDiffs.length == 0 && currentSavedView)
+      if (viewDiffs.length == 0 && currentSavedView)
       {
          /////////////////////////////////////////////////////////////////
          // if 's a saved view, and it's "clean", show it in main style //
@@ -2626,7 +2626,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          buttonBorder = accentColor;
          buttonColor = "#FFFFFF";
       }
-      else if(viewDiffs.length > 0)
+      else if (viewDiffs.length > 0)
       {
          ///////////////////////////////////////////////////
          // else if there are diffs, show alt/light style //
@@ -2653,7 +2653,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             color: buttonColor,
             backgroundColor: buttonBackground,
          }
-      }
+      };
 
       return (<Box order="2">
          <FieldListMenu
@@ -2668,19 +2668,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             handleToggleField={handleChangeOneColumnVisibility}
          />
       </Box>);
-   }
+   };
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    // these numbers help set the height of the grid (so page won't scroll) based on spcae above & below it //
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    let spaceBelowGrid = 40;
    let spaceAboveGrid = 205;
-   if(tableMetaData?.usesVariants)
+   if (tableMetaData?.usesVariants)
    {
       spaceAboveGrid += 30;
    }
 
-   if(mode == "advanced")
+   if (mode == "advanced")
    {
       spaceAboveGrid += 60;
    }

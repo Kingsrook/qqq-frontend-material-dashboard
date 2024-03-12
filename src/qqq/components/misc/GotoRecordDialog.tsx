@@ -61,7 +61,7 @@ const qController = Client.getInstance();
 function hasGotoFieldNames(tableMetaData: QTableMetaData): boolean
 {
    const mdbMetaData = tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
-   if(mdbMetaData && mdbMetaData.gotoFieldNames)
+   if (mdbMetaData && mdbMetaData.gotoFieldNames)
    {
       return (true);
    }
@@ -71,25 +71,25 @@ function hasGotoFieldNames(tableMetaData: QTableMetaData): boolean
 
 function GotoRecordDialog(props: Props): JSX.Element
 {
-   const fields: QFieldMetaData[] = []
+   const fields: QFieldMetaData[] = [];
 
    let pkey = props?.tableMetaData?.fields.get(props?.tableMetaData?.primaryKeyField);
    let addedPkey = false;
    const mdbMetaData = props?.tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
-   if(mdbMetaData)
+   if (mdbMetaData)
    {
-      if(mdbMetaData.gotoFieldNames)
+      if (mdbMetaData.gotoFieldNames)
       {
-         for(let i = 0; i<mdbMetaData.gotoFieldNames.length; i++)
+         for (let i = 0; i < mdbMetaData.gotoFieldNames.length; i++)
          {
             // todo - multi-field keys!!
             let fieldName = mdbMetaData.gotoFieldNames[i][0];
             let field = props.tableMetaData.fields.get(fieldName);
-            if(field)
+            if (field)
             {
                fields.push(field);
 
-               if(field.name == pkey.name)
+               if (field.name == pkey.name)
                {
                   addedPkey = true;
                }
@@ -98,17 +98,17 @@ function GotoRecordDialog(props: Props): JSX.Element
       }
    }
 
-   if(pkey && !addedPkey)
+   if (pkey && !addedPkey)
    {
       fields.unshift(pkey);
    }
 
    const makeInitialValues = () =>
    {
-      const rs = {} as {[field: string]: string};
+      const rs = {} as { [field: string]: string };
       fields.forEach((field) => rs[field.name] = "");
       return (rs);
-   }
+   };
 
    const [error, setError] = useState("");
    const [values, setValues] = useState(makeInitialValues());
@@ -118,49 +118,49 @@ function GotoRecordDialog(props: Props): JSX.Element
    {
       values[fieldName] = newValue;
       setValues(JSON.parse(JSON.stringify(values)));
-   }
+   };
 
    const close = () =>
    {
       setError("");
       setValues(makeInitialValues());
       props.closeHandler();
-   }
+   };
 
    const keyPressed = (e: React.KeyboardEvent<HTMLDivElement>) =>
    {
       // @ts-ignore
       const targetId: string = e.target?.id;
 
-      if(e.key == "Esc")
+      if (e.key == "Esc")
       {
-         if(props.mayClose)
+         if (props.mayClose)
          {
             close();
          }
       }
-      else if(e.key == "Enter" && targetId?.startsWith("gotoInput-"))
+      else if (e.key == "Enter" && targetId?.startsWith("gotoInput-"))
       {
          const index = targetId?.replaceAll("gotoInput-", "");
          document.getElementById("gotoButton-" + index).click();
       }
-   }
+   };
 
    const closeRequested = () =>
    {
-      if(props.mayClose)
+      if (props.mayClose)
       {
          close();
       }
-   }
+   };
 
    const goClicked = async (fieldName: string) =>
    {
       setError("");
-      const filter = new QQueryFilter([new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [values[fieldName]])], null, "AND", null, 10);
+      const filter = new QQueryFilter([new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [values[fieldName]])], null, null, "AND", null, 10);
       try
       {
-         const queryResult = await qController.query(props.tableMetaData.name, filter, null, props.tableVariant)
+         const queryResult = await qController.query(props.tableMetaData.name, filter, null, props.tableVariant);
          if (queryResult.length == 0)
          {
             setError("Record not found.");
@@ -177,19 +177,19 @@ function GotoRecordDialog(props: Props): JSX.Element
             setTimeout(() => setError(""), 3000);
          }
       }
-      catch(e)
+      catch (e)
       {
          // @ts-ignore
          setError(`Error: ${(e && e.message) ? e.message : e}`);
          setTimeout(() => setError(""), 6000);
       }
-   }
+   };
 
-   if(props.tableMetaData)
+   if (props.tableMetaData)
    {
       if (fields.length == 0 && !error)
       {
-         setError("This table is not configured for this feature.")
+         setError("This table is not configured for this feature.");
       }
    }
 
@@ -244,7 +244,7 @@ function GotoRecordDialog(props: Props): JSX.Element
                : <Box>&nbsp;</Box>
          }
       </Dialog>
-   )
+   );
 }
 
 interface GotoRecordButtonProps
@@ -266,7 +266,7 @@ GotoRecordButton.defaultProps = {
 
 export function GotoRecordButton(props: GotoRecordButtonProps): JSX.Element
 {
-   const [gotoIsOpen, setGotoIsOpen] = useState(props.autoOpen)
+   const [gotoIsOpen, setGotoIsOpen] = useState(props.autoOpen);
 
    function openGoto()
    {
@@ -282,7 +282,7 @@ export function GotoRecordButton(props: GotoRecordButtonProps): JSX.Element
    return (
       <React.Fragment>
          {
-            props.buttonVisible && hasGotoFieldNames(props.tableMetaData) && <Button onClick={openGoto} >Go To...</Button>
+            props.buttonVisible && hasGotoFieldNames(props.tableMetaData) && <Button onClick={openGoto}>Go To...</Button>
          }
          <GotoRecordDialog metaData={props.metaData} tableMetaData={props.tableMetaData} tableVariant={props.tableVariant} isOpen={gotoIsOpen} closeHandler={closeGoto} mayClose={props.mayClose} subHeader={props.subHeader} />
       </React.Fragment>

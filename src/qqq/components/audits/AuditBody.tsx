@@ -34,7 +34,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, {JSXElementConstructor, useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import QContext from "QContext";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -58,19 +58,19 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const [limit, setLimit] = useState(1000);
    const [statusString, setStatusString] = useState("Loading audits...");
    const [auditsByDate, setAuditsByDate] = useState([] as QRecord[][]);
-   const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, JSX.Element[]>)
-   const [fieldChangeMap, setFieldChangeMap] = useState(null as Map<number, JSX.Element>)
+   const [auditDetailMap, setAuditDetailMap] = useState(null as Map<number, JSX.Element[]>);
+   const [fieldChangeMap, setFieldChangeMap] = useState(null as Map<number, JSX.Element>);
    const [sortDirection, setSortDirection] = useState(localStorage.getItem("audit.sortDirection") === "true");
    const {accentColor} = useContext(QContext);
 
    function wrapValue(value: any): JSX.Element
    {
-      return <span style={{fontWeight: "500", color: " rgb(123, 128, 154)"}}>{value}</span>
+      return <span style={{fontWeight: "500", color: " rgb(123, 128, 154)"}}>{value}</span>;
    }
 
    function wasValue(value: any): JSX.Element
    {
-      return <span style={{fontWeight: "100", color: " rgb(123, 128, 154)"}}>{value}</span>
+      return <span style={{fontWeight: "100", color: " rgb(123, 128, 154)"}}>{value}</span>;
    }
 
    function getAuditDetailFieldChangeRow(qRecord: QRecord): JSX.Element | null
@@ -79,10 +79,14 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
       const fieldName = qRecord.values.get("auditDetail.fieldName");
       const oldValue = qRecord.values.get("auditDetail.oldValue");
       const newValue = qRecord.values.get("auditDetail.newValue");
-      if(fieldName && (oldValue !== null || newValue !== null))
+      if (fieldName && (oldValue !== null || newValue !== null))
       {
-         const fieldLabel = tableMetaData?.fields?.get(fieldName)?.label ?? fieldName
-         return (<tr><td>{fieldLabel}</td><td>{oldValue}</td><td>{newValue}</td></tr>)
+         const fieldLabel = tableMetaData?.fields?.get(fieldName)?.label ?? fieldName;
+         return (<tr>
+            <td>{fieldLabel}</td>
+            <td>{oldValue}</td>
+            <td>{newValue}</td>
+         </tr>);
       }
       return (null);
    }
@@ -93,22 +97,22 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
       const fieldName = qRecord.values.get("auditDetail.fieldName");
       const oldValue = qRecord.values.get("auditDetail.oldValue");
       const newValue = qRecord.values.get("auditDetail.newValue");
-      if(fieldName && (oldValue !== null || newValue !== null))
+      if (fieldName && (oldValue !== null || newValue !== null))
       {
          const fieldLabel = tableMetaData?.fields?.get(fieldName)?.label ?? fieldName;
-         if(oldValue !== undefined && newValue !== undefined)
+         if (oldValue !== undefined && newValue !== undefined)
          {
             return (<>{fieldLabel}: Changed from {(oldValue)} to <b>{(newValue)}</b></>);
          }
-         else if(newValue !== undefined)
+         else if (newValue !== undefined)
          {
             return (<>{fieldLabel}: Set to <b>{(newValue)}</b></>);
          }
-         else if(oldValue !== undefined)
+         else if (oldValue !== undefined)
          {
             return (<>{fieldLabel}: Removed value {(oldValue)}</>);
          }
-         else if(message)
+         else if (message)
          {
             return (<>{message}</>);
          }
@@ -177,7 +181,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          }
          */
       }
-      else if(message)
+      else if (message)
       {
          return (<>{message}</>);
       }
@@ -198,18 +202,18 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
             new QFilterOrderBy("timestamp", sortDirection),
             new QFilterOrderBy("id", sortDirection),
             new QFilterOrderBy("auditDetail.id", true)
-         ], "AND", 0, limit);
+         ], null, "AND", 0, limit);
 
          ///////////////////////////////
          // fetch audits in try-catch //
          ///////////////////////////////
-         let audits = [] as QRecord[]
+         let audits = [] as QRecord[];
          try
          {
             audits = await qController.query("audit", filter, [new QueryJoin("auditDetail", true, "LEFT")]);
             setAudits(audits);
          }
-         catch(e)
+         catch (e)
          {
             if (e instanceof QException)
             {
@@ -233,33 +237,33 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          //////////////////////////////////////////////////////////////////////////////////////////////////////////
          // group the audits by auditId (e.g., this is a list that joined audit & auditDetail, so un-flatten it) //
          //////////////////////////////////////////////////////////////////////////////////////////////////////////
-         const unflattenedAudits: QRecord[] = []
+         const unflattenedAudits: QRecord[] = [];
          const detailMap: Map<number, JSX.Element[]> = new Map();
          const fieldChangeRowsMap: Map<number, JSX.Element[]> = new Map();
          for (let i = 0; i < audits.length; i++)
          {
             let id = audits[i].values.get("id");
-            if(i == 0 || unflattenedAudits[unflattenedAudits.length-1].values.get("id") != id)
+            if (i == 0 || unflattenedAudits[unflattenedAudits.length - 1].values.get("id") != id)
             {
                unflattenedAudits.push(audits[i]);
             }
 
             let auditDetail = getAuditDetailElement(audits[i]);
-            if(auditDetail)
+            if (auditDetail)
             {
-               if(!detailMap.has(id))
+               if (!detailMap.has(id))
                {
                   detailMap.set(id, []);
                }
 
-               detailMap.get(id).push(auditDetail)
+               detailMap.get(id).push(auditDetail);
             }
 
             // table version, probably not to commit
             let fieldChangeRow = getAuditDetailFieldChangeRow(audits[i]);
-            if(auditDetail)
+            if (auditDetail)
             {
-               if(!fieldChangeRowsMap.has(id))
+               if (!fieldChangeRowsMap.has(id))
                {
                   fieldChangeRowsMap.set(id, []);
                }
@@ -273,7 +277,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          for (let i = 0; i < unflattenedAudits.length; i++)
          {
             let id = unflattenedAudits[i].values.get("id");
-            if(fieldChangeRowsMap.has(id) && fieldChangeRowsMap.get(id).length > 0)
+            if (fieldChangeRowsMap.has(id) && fieldChangeRowsMap.get(id).length > 0)
             {
                const fieldChangeTable = (
                   <table style={{fontSize: "0.875rem"}} className="auditDetailTable" cellSpacing="0">
@@ -288,11 +292,11 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
                         {fieldChangeRowsMap.get(id).map((row, key) => <React.Fragment key={key}>{row}</React.Fragment>)}
                      </tbody>
                   </table>
-               )
+               );
                fieldChangeMap.set(id, fieldChangeTable);
             }
          }
-         setFieldChangeMap(fieldChangeMap)
+         setFieldChangeMap(fieldChangeMap);
 
          //////////////////////////////
          // group the audits by date //
@@ -350,7 +354,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
    const changeSortDirection = () =>
    {
       setAudits([]);
-      const newSortDirection = !sortDirection
+      const newSortDirection = !sortDirection;
       setSortDirection(newSortDirection);
       localStorage.setItem("audit.sortDirection", String(newSortDirection));
    };

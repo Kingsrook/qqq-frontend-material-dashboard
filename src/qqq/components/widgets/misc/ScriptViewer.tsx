@@ -46,9 +46,6 @@ import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
-import React, {useReducer, useState} from "react";
-import AceEditor from "react-ace";
-import {Link} from "react-router-dom";
 import TabPanel from "qqq/components/misc/TabPanel";
 import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptEditor, {ScriptEditorProps} from "qqq/components/scripts/ScriptEditor";
@@ -65,6 +62,9 @@ import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-velocity";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
+import React, {useReducer, useState} from "react";
+import AceEditor from "react-ace";
+import {Link} from "react-router-dom";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 const qController = Client.getInstance();
@@ -97,16 +97,16 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    const [versionRecordList, setVersionRecordList] = useState(null as QRecord[]);
    const [selectedVersionRecord, setSelectedVersionRecord] = useState(null as QRecord);
    const [scriptLogs, setScriptLogs] = useState({} as any);
-   const [scriptTypeRecord, setScriptTypeRecord] = useState(null as QRecord)
-   const [scriptTypeFileSchemaList, setScriptTypeFileSchemaList] = useState(null as QRecord[])
+   const [scriptTypeRecord, setScriptTypeRecord] = useState(null as QRecord);
+   const [scriptTypeFileSchemaList, setScriptTypeFileSchemaList] = useState(null as QRecord[]);
    const [availableFileNames, setAvailableFileNames] = useState([] as string[]);
    const [selectedFileName, setSelectedFileName] = useState("");
-   const [currentVersionId , setCurrentVersionId] = useState(null as number);
+   const [currentVersionId, setCurrentVersionId] = useState(null as number);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
    const [selectedTab, setSelectedTab] = useState(0);
    const [editorProps, setEditorProps] = useState(null as ScriptEditorProps);
    const [successText, setSuccessText] = useState(null as string);
-   const [failText, setFailText] = useState(null as string)
+   const [failText, setFailText] = useState(null as string);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [loadingSelectedVersion, _] = useState(new LoadingState(forceUpdate, "loading"));
@@ -129,13 +129,13 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
             let fileMode = scriptTypeRecord.values.get("fileMode");
             let scriptTypeFileSchemaList: QRecord[] = null;
-            if(fileMode == 1) // SINGLE
+            if (fileMode == 1) // SINGLE
             {
                scriptTypeFileSchemaList = [new QRecord({values: {name: "Script.js", fileType: "javascript"}})];
             }
-            else if(fileMode == 2) // MULTI_PRE_DEFINED
+            else if (fileMode == 2) // MULTI_PRE_DEFINED
             {
-               const filter = new QQueryFilter([new QFilterCriteria("scriptTypeId", QCriteriaOperator.EQUALS, [scriptRecord.values.get("scriptTypeId")])], [new QFilterOrderBy("id")])
+               const filter = new QQueryFilter([new QFilterCriteria("scriptTypeId", QCriteriaOperator.EQUALS, [scriptRecord.values.get("scriptTypeId")])], [new QFilterOrderBy("id")]);
                scriptTypeFileSchemaList = await qController.query("scriptTypeFileSchema", filter);
             }
             else // MULTI AD_HOC
@@ -145,22 +145,22 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
             }
 
             setScriptTypeFileSchemaList(scriptTypeFileSchemaList);
-            if(scriptTypeFileSchemaList)
+            if (scriptTypeFileSchemaList)
             {
-               const availableFileNames = scriptTypeFileSchemaList.map((fileSchemaRecord) => fileSchemaRecord.values.get("name"))
+               const availableFileNames = scriptTypeFileSchemaList.map((fileSchemaRecord) => fileSchemaRecord.values.get("name"));
                setAvailableFileNames(availableFileNames);
-               setSelectedFileName(availableFileNames[0])
+               setSelectedFileName(availableFileNames[0]);
             }
 
             const criteria = [new QFilterCriteria("scriptId", QCriteriaOperator.EQUALS, [scriptId])];
             const orderBys = [new QFilterOrderBy("sequenceNo", false)];
-            const filter = new QQueryFilter(criteria, orderBys, "AND", 0, 25);
+            const filter = new QQueryFilter(criteria, orderBys, null, "AND", 0, 25);
             const versions = await qController.query("scriptRevision", filter);
             console.log("Fetched versions:");
             console.log(versions);
             setVersionRecordList(versions);
 
-            if(versions && versions.length > 0)
+            if (versions && versions.length > 0)
             {
                selectVersion(versions[0]);
             }
@@ -253,31 +253,31 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    const handleSelectFile = (event: SelectChangeEvent) =>
    {
       setSelectedFileName(event.target.value);
-   }
+   };
 
    const getSelectedFileCode = (): string =>
    {
       return (getSelectedVersionCode()[selectedFileName] ?? "");
-   }
+   };
 
    const getSelectedFileType = (): string =>
    {
       for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
       {
          let name = scriptTypeFileSchemaList[i].values.get("name");
-         if(name == selectedFileName)
+         if (name == selectedFileName)
          {
             return (scriptTypeFileSchemaList[i].values.get("fileType"));
          }
       }
 
       return ("javascript"); // have some default...
-   }
+   };
 
-   const getSelectedVersionCode = (): {[name: string]: string} =>
+   const getSelectedVersionCode = (): { [name: string]: string } =>
    {
-      let rs: {[name: string]: string} = {}
-      let files = selectedVersionRecord?.associatedRecords?.get("files")
+      let rs: { [name: string]: string } = {};
+      let files = selectedVersionRecord?.associatedRecords?.get("files");
 
       for (let j = 0; j < files?.length; j++)
       {
@@ -286,7 +286,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       }
 
       return (rs);
-   }
+   };
 
    function getVersionsList(versionRecordList: QRecord[], selectedVersionRecord: QRecord)
    {
@@ -344,11 +344,11 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
 
    const getScriptLogs = (scriptRevisionId: number) =>
    {
-      if(!scriptLogs[scriptRevisionId])
+      if (!scriptLogs[scriptRevisionId])
       {
          (async () =>
          {
-            let filter = new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])], [new QFilterOrderBy("id", false)], "AND", 0, 100);
+            let filter = new QQueryFilter([new QFilterCriteria("scriptRevisionId", QCriteriaOperator.EQUALS, [scriptRevisionId])], [new QFilterOrderBy("id", false)], null, "AND", 0, 100);
             scriptLogs[scriptRevisionId] = await qController.query("scriptLog", filter);
             setScriptLogs(scriptLogs);
             forceUpdate();
@@ -368,7 +368,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
       }
 
       return (<ScriptLogsView logs={logs} />);
-   }
+   };
 
    let editButtonTooltip = "";
    let editButtonText = "Create New Version";
@@ -556,7 +556,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                            <Modal open={editorProps !== null} onClose={(event, reason) => closeEditingScript(event, reason)}>
                               <ScriptEditor
                                  closeCallback={closeEditingScript}
-                                 {... editorProps}
+                                 {...editorProps}
                               />
                            </Modal>
                         }
