@@ -402,7 +402,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
     *******************************************************************************/
    const queryToAdvancedString = (thisQueryFilter: QQueryFilter) =>
    {
-      if (queryFilter == null || (!queryFilter.criteria || !queryFilter.subFilters))
+      if (queryFilter == null || !queryFilter.criteria)
       {
          return (<span></span>);
       }
