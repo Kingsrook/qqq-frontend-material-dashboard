@@ -29,7 +29,6 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {ToggleButton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -38,6 +37,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Icon from "@mui/material/Icon";
+import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import {GridApiPro} from "@mui/x-data-grid-pro/models/gridApiPro";
@@ -104,6 +104,11 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const {accentColor} = useContext(QContext);
+
+   /////////////////////////////////////////////////
+   // temporary, until we implement sub-filtering //
+   /////////////////////////////////////////////////
+   const [isQueryTooComplex, setIsQueryTooComplex] = useState(false);
 
    //////////////////////////////////////////////////////////////////////////////////
    // make some functions available to our parent - so it can tell us to do things //
@@ -362,7 +367,10 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
     *******************************************************************************/
    const openFilterBuilder = (e: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>) =>
    {
-      gridApiRef.current.showFilterPanel();
+      if (!isQueryTooComplex)
+      {
+         gridApiRef.current.showFilterPanel();
+      }
    };
 
 
@@ -392,10 +400,9 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    /*******************************************************************************
     ** format the current query as a string for showing on-screen as a preview.
     *******************************************************************************/
-   const queryToAdvancedString = (thisQueryFilter: QQueryFilter, isSubFilter: boolean, subFilterOperator: string) =>
+   const queryToAdvancedString = (thisQueryFilter: QQueryFilter) =>
    {
-      const {canFilterWorkAsBasic, canFilterWorkAsAdvanced} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
-      if (thisQueryFilter == null || !thisQueryFilter.criteria)
+      if (queryFilter == null || (!queryFilter.criteria || !queryFilter.subFilters))
       {
          return (<span></span>);
       }
@@ -404,22 +411,21 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
 
       return (
          <Box display="flex" flexWrap="wrap" fontSize="0.875rem">
-            {isSubFilter && (`${subFilterOperator} ( `)}
-            {thisQueryFilter.criteria.map((criteria, i) =>
+            {thisQueryFilter.criteria?.map((criteria, i) =>
             {
                const {criteriaIsValid} = validateCriteria(criteria, null);
                if (criteriaIsValid)
                {
                   counter++;
-
                   return (
                      <span key={i} style={{marginBottom: "0.125rem"}} onMouseOver={() => handleMouseOverElement(`queryPreview-${i}`)} onMouseOut={() => handleMouseOutElement()}>
                         {counter > 1 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span />}
                         {FilterUtils.criteriaToHumanString(tableMetaData, criteria, true)}
-                        {canFilterWorkAsAdvanced && (
+                        {!isQueryTooComplex && (
                            mouseOverElement == `queryPreview-${i}` && <span className={`advancedQueryPreviewX-${counter - 1}`}>
                               <XIcon position="forAdvancedQueryPreview" onClick={() => removeCriteriaByIndex(i)} /></span>
                         )}
+                        {counter > 1 && i == thisQueryFilter.criteria?.length - 1 && thisQueryFilter.subFilters?.length > 0 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span />}
                      </span>
                   );
                }
@@ -429,11 +435,17 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                }
             })}
 
-            {thisQueryFilter.subFilters?.length > 0 && (thisQueryFilter.subFilters.map((filter: QQueryFilter, i) =>
+            {thisQueryFilter.subFilters?.length > 0 && (thisQueryFilter.subFilters.map((filter: QQueryFilter, j) =>
             {
-               return (queryToAdvancedString(filter, true, thisQueryFilter.booleanOperator));
+               return (
+                  <React.Fragment key={j}>
+                     {j > 0 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span></span>}
+                     <span style={{display: "flex", marginRight: "0.20rem"}}>(</span>
+                     {queryToAdvancedString(filter)}
+                     <span style={{display: "flex", marginRight: "0.20rem"}}>)</span>
+                  </React.Fragment>
+               );
             }))}
-            {isSubFilter && (")")}
          </Box>
       );
    };
@@ -452,15 +464,10 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
             // we're always allowed to go to advanced -                                   //
             // but if we're trying to go to basic, make sure the filter isn't too complex //
             ////////////////////////////////////////////////////////////////////////////////
-            const {canFilterWorkAsBasic, canFilterWorkAsAdvanced} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
+            const {canFilterWorkAsBasic} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
             if (!canFilterWorkAsBasic)
             {
                console.log("Query cannot work as basic - so - not allowing toggle to basic.");
-               return;
-            }
-            if (!canFilterWorkAsAdvanced)
-            {
-               console.log("Query cannot work as advanced - so - not allowing toggle to advanced.");
                return;
             }
 
@@ -492,18 +499,16 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          return;
       }
 
-      const {canFilterWorkAsBasic, canFilterWorkAsAdvanced} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
-      if (!canFilterWorkAsBasic && canFilterWorkAsAdvanced)
+      //////////////////////////////////////////////
+      // set a flag if the query is 'too complex' //
+      //////////////////////////////////////////////
+      setIsQueryTooComplex(queryFilter.subFilters?.length > 0);
+
+      const {canFilterWorkAsBasic} = FilterUtils.canFilterWorkAsBasic(tableMetaData, queryFilter);
+      if (!canFilterWorkAsBasic)
       {
          console.log("query is too complex for basic - so - switching to advanced");
          modeToggleClicked("advanced");
-         forceUpdate();
-         return;
-      }
-      if (!canFilterWorkAsAdvanced)
-      {
-         console.log("query is too complex for advanced - so disabling buttons");
-         modeToggleClicked("tooComplex");
          forceUpdate();
          return;
       }
@@ -537,6 +542,15 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
             count++;
          }
       }
+
+      /////////////////////////////////////////////////////////////
+      // recursively add any children filters to the total count //
+      /////////////////////////////////////////////////////////////
+      for (let i = 0; i < queryFilter.subFilters?.length; i++)
+      {
+         count += countValidCriteria(queryFilter.subFilters[i]);
+      }
+
       return count;
    };
 
@@ -629,13 +643,10 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          </ul>
       </>;
    }
-   if (!canFilterWorkAsAdvanced && reasonsWhyItCannot && reasonsWhyItCannot.length > 0)
+   if (isQueryTooComplex)
    {
       reasonWhyBasicIsDisabled = <>
-         Your current Filter is too complex to modify because:
-         <ul style={{marginLeft: "1rem"}}>
-            {reasonsWhyItCannot.map((reason, i) => <li key={i}>{reason}</li>)}
-         </ul>
+         Your current Filter is too complex to modify because it contains Sub-filters.
       </>;
    }
 
@@ -679,7 +690,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                      sx={{pl: 0.5, width: "10rem"}}
                   >
                      <ToggleButton value="basic" disabled={!canFilterWorkAsBasic}>Basic</ToggleButton>
-                     <ToggleButton value="advanced" disabled={!canFilterWorkAsAdvanced}>Advanced</ToggleButton>
+                     <ToggleButton value="advanced">Advanced</ToggleButton>
                   </ToggleButtonGroup>
                </Tooltip>
             </Box>
@@ -755,9 +766,9 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                //////////////////////////////////////////////////////////////////////////////////////////////////////////////
                // advanced mode - 2 rows - one for Filter Builder button & sort control, 2nd row for the filter-detail box //
                //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               metaData && tableMetaData && (mode == "advanced" || mode == "tooComplex") &&
+               metaData && tableMetaData && mode == "advanced" &&
                <Box borderRadius="0.75rem" border={`1px solid ${borderGray}`}>
-                  {mode == "advanced" && (<Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
                      <Box p="0.5rem">
                         <Tooltip enterDelay={500} title="Build an advanced Filter" placement="top">
                            <>
@@ -768,12 +779,12 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                  startIcon={<Icon>build</Icon>}
                                  sx={{borderRadius: "0.75rem", padding: "0.5rem", pl: "1rem", fontSize: "0.875rem", fontWeight: 500, border: `1px solid ${accentColor}`, textTransform: "none"}}
                               >
-                                    Filter Builder
+                                 Filter Builder
                                  {
                                     countValidCriteria(queryFilter) > 0 &&
-                                       <Box {...filterBuilderMouseEvents} sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px" className="filterBuilderCountBadge">
-                                          {countValidCriteria(queryFilter)}
-                                       </Box>
+                                    <Box {...filterBuilderMouseEvents} sx={{backgroundColor: accentColor, marginLeft: "0.25rem", minWidth: "1rem", fontSize: "0.75rem"}} borderRadius="50%" color="#FFFFFF" position="relative" top="-2px" className="filterBuilderCountBadge">
+                                       {countValidCriteria(queryFilter)}
+                                    </Box>
                                  }
                               </Button>
                               {
@@ -796,7 +807,6 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                         {sortMenuComponent}
                      </Box>
                   </Box>
-                  )}
                   <Box whiteSpace="nowrap" display="flex" flexShrink={1} flexGrow={1} alignItems="center">
                      {
                         <Box
@@ -811,7 +821,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                            pb={"0.125rem"}
                            boxShadow={"inset 0px 0px 4px 2px #EFEFED"}
                         >
-                           {queryToAdvancedString(queryFilter, false, null)}
+                           {queryToAdvancedString(queryFilter)}
                         </Box>
                      }
                   </Box>
