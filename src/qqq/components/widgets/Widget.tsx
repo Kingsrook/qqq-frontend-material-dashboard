@@ -169,15 +169,17 @@ export class AddNewRecordButton extends LabelComponent
    label: string;
    defaultValues: any;
    disabledFields: any;
+   addNewRecordCallback?: () => void;
 
 
-   constructor(table: QTableMetaData, defaultValues: any, label: string = "Add new", disabledFields: any = defaultValues)
+   constructor(table: QTableMetaData, defaultValues: any, label: string = "Add new", disabledFields: any = defaultValues, addNewRecordCallback?: () => void)
    {
       super();
       this.table = table;
       this.label = label;
       this.defaultValues = defaultValues;
       this.disabledFields = disabledFields;
+      this.addNewRecordCallback = addNewRecordCallback;
    }
 
    openEditForm = (navigate: any, table: QTableMetaData, id: any = null, defaultValues: any, disabledFields: any) =>
@@ -189,7 +191,7 @@ export class AddNewRecordButton extends LabelComponent
    {
       return (
          <Typography variant="body2" p={2} pr={0} display="inline" position="relative" top="-0.5rem">
-            <Button sx={{mt: 0.75}} onClick={() => this.openEditForm(args.navigate, this.table, null, this.defaultValues, this.disabledFields)}>{this.label}</Button>
+            <Button sx={{mt: 0.75}} onClick={() => this.addNewRecordCallback ? this.addNewRecordCallback() : this.openEditForm(args.navigate, this.table, null, this.defaultValues, this.disabledFields)}>{this.label}</Button>
          </Typography>
       );
    };
