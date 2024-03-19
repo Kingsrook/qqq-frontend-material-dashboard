@@ -759,7 +759,9 @@ function EntityForm(props: Props): JSX.Element
 
          if (props.id !== null && !props.isCopy)
          {
-            // todo - audit that it's a dupe
+            ///////////////////////
+            // perform an update //
+            ///////////////////////
             await qController
                .update(tableName, props.id, valuesToPost)
                .then((record) =>
@@ -770,8 +772,14 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
+                     let warningMessage = null;
+                     if(record.warnings && record.warnings.length && record.warnings.length > 0)
+                     {
+                        warningMessage = record.warnings[0];
+                     }
+
                      const path = location.pathname.replace(/\/edit$/, "");
-                     navigate(path, {state: {updateSuccess: true}});
+                     navigate(path, {state: {updateSuccess: true, warning: warningMessage}});
                   }
                })
                .catch((error) =>
@@ -793,6 +801,10 @@ function EntityForm(props: Props): JSX.Element
          }
          else
          {
+            /////////////////////////////////
+            // perform an insert           //
+            // todo - audit if it's a dupe //
+            /////////////////////////////////
             await qController
                .create(tableName, valuesToPost)
                .then((record) =>
@@ -803,10 +815,16 @@ function EntityForm(props: Props): JSX.Element
                   }
                   else
                   {
+                     let warningMessage = null;
+                     if(record.warnings && record.warnings.length && record.warnings.length > 0)
+                     {
+                        warningMessage = record.warnings[0];
+                     }
+
                      const path = props.isCopy ?
                         location.pathname.replace(new RegExp(`/${props.id}/copy$`), "/" + record.values.get(tableMetaData.primaryKeyField))
                         : location.pathname.replace(/create$/, record.values.get(tableMetaData.primaryKeyField));
-                     navigate(path, {state: {createSuccess: true}});
+                     navigate(path, {state: {createSuccess: true, warning: warningMessage}});
                   }
                })
                .catch((error) =>
