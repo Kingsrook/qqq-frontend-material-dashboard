@@ -46,8 +46,6 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
-import React, {useContext, useEffect, useState} from "react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
@@ -65,6 +63,8 @@ import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 
 const qController = Client.getInstance();
 
@@ -864,7 +864,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                               }
                               {
                                  warningMessage ?
-                                    <Alert color="warning" sx={{mb: 3}} onClose={() =>
+                                    <Alert color="warning" sx={{mb: 3}} icon={<Icon>warning</Icon>} onClose={() =>
                                     {
                                        setWarningMessage(null);
                                     }}>

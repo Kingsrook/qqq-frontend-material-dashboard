@@ -243,10 +243,10 @@ function EntityForm(props: Props): JSX.Element
       switch(action)
       {
          case "insert":
-            newChildListWidgetData[widgetName].queryOutput.records.push(new QRecord({values: values}))
+            newChildListWidgetData[widgetName].queryOutput.records.push({values: values})
             break;
          case "edit":
-            newChildListWidgetData[widgetName].queryOutput.records[rowIndex] = new QRecord({values: values});
+            newChildListWidgetData[widgetName].queryOutput.records[rowIndex] = {values: values};
             break;
          case "delete":
             newChildListWidgetData[widgetName].queryOutput.records.splice(rowIndex, 1);
@@ -747,7 +747,7 @@ function EntityForm(props: Props): JSX.Element
             }
             associationsToPost[manageAssociationName] = [];
             haveAssociationsToPost = true;
-            for(let i=0; i<childListWidgetData[name].queryOutput.records.length; i++)
+            for(let i=0; i<childListWidgetData[name].queryOutput?.records?.length; i++)
             {
                associationsToPost[manageAssociationName].push(childListWidgetData[name].queryOutput.records[i].values);
             }

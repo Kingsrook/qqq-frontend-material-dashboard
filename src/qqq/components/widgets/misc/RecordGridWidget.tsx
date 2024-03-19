@@ -40,7 +40,7 @@ import {Link, useNavigate} from "react-router-dom";
 export interface ChildRecordListData extends WidgetData
 {
    title: string;
-   queryOutput: {records: QRecord[]}
+   queryOutput: {records: {values: any}[]}
    childTableMetaData: QTableMetaData;
    tablePath: string;
    viewAllLink: string;
