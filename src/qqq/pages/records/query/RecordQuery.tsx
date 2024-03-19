@@ -447,9 +447,19 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             }
          }
       }
+
+      /////////////////////////////////////////
+      // recursively prep subfilters as well //
+      /////////////////////////////////////////
+      let subFilters = [] as QQueryFilter[];
+      for (let j = 0; j < sourceFilter?.subFilters?.length; j++)
+      {
+         subFilters.push(prepQueryFilterForBackend(sourceFilter.subFilters[j]));
+      }
+
+      filterForBackend.subFilters = subFilters;
       filterForBackend.skip = pageNumber * rowsPerPage;
       filterForBackend.limit = rowsPerPage;
-
       return filterForBackend;
    };
 

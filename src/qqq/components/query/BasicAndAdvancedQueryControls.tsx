@@ -410,7 +410,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       let counter = 0;
 
       return (
-         <Box display="flex" flexWrap="wrap" fontSize="0.875rem">
+         <React.Fragment>
             {thisQueryFilter.criteria?.map((criteria, i) =>
             {
                const {criteriaIsValid} = validateCriteria(criteria, null);
@@ -446,7 +446,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                   </React.Fragment>
                );
             }))}
-         </Box>
+         </React.Fragment>
       );
    };
 
@@ -821,7 +821,9 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                            pb={"0.125rem"}
                            boxShadow={"inset 0px 0px 4px 2px #EFEFED"}
                         >
-                           {queryToAdvancedString(queryFilter)}
+                           <Box display="flex" flexWrap="wrap" fontSize="0.875rem">
+                              {queryToAdvancedString(queryFilter)}
+                           </Box>
                         </Box>
                      }
                   </Box>

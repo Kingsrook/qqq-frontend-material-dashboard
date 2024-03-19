@@ -159,6 +159,14 @@ class FilterUtils
 
          criteria.values = values;
       }
+
+      ////////////////////////////////////////////////
+      // recursively clean values in any subfilters //
+      ////////////////////////////////////////////////
+      for (let j = 0; j < queryFilter?.subFilters?.length; j++)
+      {
+         await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilter.subFilters[j]);
+      }
    }
 
 
