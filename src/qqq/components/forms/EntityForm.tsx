@@ -734,8 +734,6 @@ function EntityForm(props: Props): JSX.Element
             }
          }
 
-         // todo - associations + copy might be a "bad time"
-
          const associationsToPost: any = {}
          let haveAssociationsToPost = false;
          for (let name of Object.keys(childListWidgetData))
