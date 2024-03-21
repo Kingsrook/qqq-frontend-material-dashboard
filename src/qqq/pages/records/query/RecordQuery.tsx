@@ -711,8 +711,27 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    const doSetView = (view: RecordQueryView): void =>
    {
       setView(view);
-      setViewAsJson(JSON.stringify(view));
-      localStorage.setItem(viewLocalStorageKey, JSON.stringify(view));
+      const viewAsJSON = JSON.stringify(view);
+      setViewAsJson(viewAsJSON);
+
+      try
+      {
+         ////////////////////////////////////////////////////////////////////////////////////
+         // in case there's an incomplete criteria in the view (e.g., w/o a fieldName),    //
+         // don't store that in local storage - we don't want that, it's messy, and it     //
+         // has caused fails in the past.  So, clone the view, and strip away such things. //
+         ////////////////////////////////////////////////////////////////////////////////////
+         const viewForLocalStorage: RecordQueryView = JSON.parse(viewAsJSON);
+         if (viewForLocalStorage?.queryFilter?.criteria?.length > 0)
+         {
+            FilterUtils.stripAwayIncompleteCriteria(viewForLocalStorage.queryFilter)
+         }
+         localStorage.setItem(viewLocalStorageKey, JSON.stringify(viewForLocalStorage));
+      }
+      catch(e)
+      {
+         console.log("Error storing view in local storage: " + e)
+      }
    };
 
 

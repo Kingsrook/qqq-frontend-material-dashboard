@@ -25,7 +25,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Button, Link} from "@mui/material";
+import {Alert, Button} from "@mui/material";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -40,14 +40,14 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import {TooltipProps} from "@mui/material/Tooltip/Tooltip";
 import FormData from "form-data";
-import React, {useContext, useEffect, useRef, useState} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QDeleteButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import RecordQueryView from "qqq/models/query/RecordQueryView";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
+import React, {useContext, useEffect, useRef, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
 
 interface Props
 {
@@ -227,6 +227,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             /////////////////////////////////////////////////////////////////////////////////////////////////
             const viewObject = JSON.parse(JSON.stringify(view));
             viewObject.queryFilter = JSON.parse(JSON.stringify(FilterUtils.convertFilterPossibleValuesToIds(viewObject.queryFilter)));
+
+            ////////////////////////////////////////////////////////////////////////////
+            // strip away incomplete filters too, just for cleaner saved view filters //
+            ////////////////////////////////////////////////////////////////////////////
+            FilterUtils.stripAwayIncompleteCriteria(viewObject.queryFilter)
+
             formData.append("viewJson", JSON.stringify(viewObject));
 
             if (isSaveFilterAs || isRenameFilter || currentSavedView == null)
