@@ -46,8 +46,6 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
-import React, {useContext, useEffect, useState} from "react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
@@ -65,6 +63,8 @@ import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 
 const qController = Client.getInstance();
 
@@ -148,9 +148,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    ///////////////////////
    useEffect(() =>
    {
-      if(tableMetaData == null)
+      if (tableMetaData == null)
       {
-         (async() =>
+         (async () =>
          {
             const tableMetaData = await qController.loadTableMetaData(tableName);
             setTableMetaData(tableMetaData);
@@ -162,54 +162,54 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          const type = (e.target as any).type;
          const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
 
-         if(validType && !dotMenuOpen && !keyboardHelpOpen && !showAudit && !showEditChildForm)
+         if (validType && !dotMenuOpen && !keyboardHelpOpen && !showAudit && !showEditChildForm)
          {
-            if (! e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            if (!e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
-               e.preventDefault()
+               e.preventDefault();
                gotoCreate();
             }
-            else if (! e.metaKey && e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            else if (!e.metaKey && e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
             {
-               e.preventDefault()
+               e.preventDefault();
                navigate("edit");
             }
-            else if (! e.metaKey && e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            else if (!e.metaKey && e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
-               e.preventDefault()
+               e.preventDefault();
                navigate("copy");
             }
-            else if (! e.metaKey && e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+            else if (!e.metaKey && e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
             {
-               e.preventDefault()
+               e.preventDefault();
                handleClickDeleteButton();
             }
-            else if (! e.metaKey && e.key === "a" && metaData && metaData.tables.has("audit"))
+            else if (!e.metaKey && e.key === "a" && metaData && metaData.tables.has("audit"))
             {
-               e.preventDefault()
+               e.preventDefault();
                navigate("#audit");
             }
          }
-      }
+      };
 
-      document.addEventListener("keydown", down)
+      document.addEventListener("keydown", down);
       return () =>
       {
-         document.removeEventListener("keydown", down)
-      }
-   }, [dotMenuOpen, keyboardHelpOpen, showEditChildForm, showAudit, metaData, location])
+         document.removeEventListener("keydown", down);
+      };
+   }, [dotMenuOpen, keyboardHelpOpen, showEditChildForm, showAudit, metaData, location]);
 
    const gotoCreate = () =>
    {
       const path = `${pathParts.slice(0, -1).join("/")}/create`;
       navigate(path);
-   }
+   };
 
    const gotoEdit = () =>
    {
       const path = `${pathParts.slice(0, -1).join("/")}/${record.values.get(table.primaryKeyField)}/edit`;
       navigate(path);
-   }
+   };
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    // monitor location changes - if we've clicked a link from viewing one record to viewing another, //
@@ -267,7 +267,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          // if our table is in the -4 index, and there's `createChild` in the -2 index, try to open a createChild form //
          // e.g., person/42/createChild/address (to create an address under person 42)                                 //
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         if(pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == "createChild")
+         if (pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == "createChild")
          {
             (async () =>
             {
@@ -298,7 +298,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
             }
          }
 
-         if(hashParts[0] == "#audit")
+         if (hashParts[0] == "#audit")
          {
             setShowAudit(true);
             return;
@@ -307,11 +307,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          ///////////////////////////////////////////////////////////////////////////////////
          // look for anchor links - e.g., table section names.  return w/ no-op if found. //
          ///////////////////////////////////////////////////////////////////////////////////
-         if(tableSections)
+         if (tableSections)
          {
             for (let i = 0; i < tableSections.length; i++)
             {
-               if("#" + tableSections[i].name === location.hash)
+               if ("#" + tableSections[i].name === location.hash)
                {
                   return;
                }
@@ -345,11 +345,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          section.fieldNames.forEach((fieldName) =>
          {
             const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-            if(tableForField && tableForField.name != tableMetaData.name)
+            if (tableForField && tableForField.name != tableMetaData.name)
             {
                visibleJoinTables.add(tableForField.name);
             }
-         })
+         });
       }
 
       return (visibleJoinTables);
@@ -361,15 +361,15 @@ function RecordView({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const getSectionHelp = (section: QTableSection) =>
    {
-      const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
+      const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
       const formattedHelpContent = <HelpContent helpContents={section.helpContents} roles={helpRoles} helpContentKey={`table:${tableName};section:${section.name}`} />;
 
       return formattedHelpContent && (
          <Box px={"1.5rem"} fontSize={"0.875rem"} color={colors.blueGray.main}>
             {formattedHelpContent}
          </Box>
-      )
-   }
+      );
+   };
 
 
    if (!asyncLoadInited)
@@ -401,11 +401,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          //////////////////////////////////////////////////////
          // load processes that the routing needs to respect //
          //////////////////////////////////////////////////////
-         const allTableProcesses = ProcessUtils.getProcessesForTable(metaData, tableName, true) // these include hidden ones (e.g., to find the bulks)
+         const allTableProcesses = ProcessUtils.getProcessesForTable(metaData, tableName, true); // these include hidden ones (e.g., to find the bulks)
          const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
          if (runRecordScriptProcess)
          {
-            allTableProcesses.unshift(runRecordScriptProcess)
+            allTableProcesses.unshift(runRecordScriptProcess);
          }
          setAllTableProcesses(allTableProcesses);
 
@@ -417,7 +417,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          let queryJoins: QueryJoin[] = null;
          const visibleJoinTables = getVisibleJoinTables(tableMetaData);
-         if(visibleJoinTables.size > 0)
+         if (visibleJoinTables.size > 0)
          {
             queryJoins = TableUtils.getQueryJoins(tableMetaData, visibleJoinTables);
          }
@@ -439,7 +439,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                {
                   HistoryUtils.ensurePathNotInHistory(location.pathname);
                }
-               catch(e)
+               catch (e)
                {
                   console.error("Error pushing history: " + e);
                }
@@ -464,13 +464,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          setPageHeader(record.recordLabel);
 
-         if(!launchingProcess)
+         if (!launchingProcess)
          {
             try
             {
                HistoryUtils.push({label: `${tableMetaData?.label}: ${record.recordLabel}`, path: location.pathname, iconName: table.iconName});
             }
-            catch(e)
+            catch (e)
             {
                console.error("Error pushing history: " + e);
             }
@@ -522,27 +522,30 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                         section.fieldNames.map((fieldName: string) =>
                         {
                            let [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-                           let label = field.label;
+                           if (field != null)
+                           {
+                              let label = field.label;
 
-                           const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
-                           const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
-                           const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableName};field:${fieldName}`} />;
+                              const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
+                              const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
+                              const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableName};field:${fieldName}`} />;
 
-                           const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>
+                              const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>;
 
-                           return (
-                              <Box key={fieldName} flexDirection="row" pr={2}>
-                                 <>
-                                    {
-                                       showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
-                                    }
-                                    <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
-                                    <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
-                                       {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
-                                    </Typography>
-                                 </>
-                              </Box>
-                           )
+                              return (
+                                 <Box key={fieldName} flexDirection="row" pr={2}>
+                                    <>
+                                       {
+                                          showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
+                                       }
+                                       <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
+                                       <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
+                                          {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                                       </Typography>
+                                    </>
+                                 </Box>
+                              );
+                           }
                         })
                      }
                   </Box>
@@ -590,7 +593,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          setSectionFieldElements(sectionFieldElements);
          setNonT1TableSections(nonT1TableSections);
 
-         if(location.state)
+         if (location.state)
          {
             let state: any = location.state;
             if (state["createSuccess"] || state["updateSuccess"])
@@ -603,9 +606,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                setWarningMessage(state["warning"]);
             }
 
-            delete state["createSuccess"]
-            delete state["updateSuccess"]
-            delete state["warning"]
+            delete state["createSuccess"];
+            delete state["updateSuccess"];
+            delete state["warning"];
 
             window.history.replaceState(state, "");
          }
@@ -640,7 +643,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                console.log("Caught:");
                console.log(error);
 
-               if(error.message.toLowerCase().startsWith("warning"))
+               if (error.message.toLowerCase().startsWith("warning"))
                {
                   const path = pathParts.slice(0, -1).join("/");
                   navigate(path, {state: {deleteSuccess: true, warning: error.message}});
@@ -767,7 +770,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       //////////////////////////////////////////////////////////////////////////
       // when closing a modal process, navigate up to the record being viewed //
       //////////////////////////////////////////////////////////////////////////
-      if(location.hash)
+      if (location.hash)
       {
          navigate(location.pathname);
       }
@@ -801,7 +804,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       /////////////////////////////////////////////////
       // navigate back up to the record being viewed //
       /////////////////////////////////////////////////
-      if(location.hash)
+      if (location.hash)
       {
          navigate(location.pathname);
       }
@@ -828,7 +831,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       /////////////////////////////////////////////////
       // navigate back up to the record being viewed //
       /////////////////////////////////////////////////
-      if(location.hash)
+      if (location.hash)
       {
          navigate(location.pathname);
       }
