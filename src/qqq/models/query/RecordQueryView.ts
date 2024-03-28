@@ -63,6 +63,8 @@ export default class RecordQueryView
 
       view.queryFilter = json.queryFilter as QQueryFilter;
 
+      FilterUtils.stripAwayIncompleteCriteria(view.queryFilter)
+
       //////////////////////////////////////////////////////////////////////////////////////////
       // it's important that some criteria values exist as expression objects - so - do that. //
       //////////////////////////////////////////////////////////////////////////////////////////

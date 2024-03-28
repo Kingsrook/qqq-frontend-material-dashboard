@@ -589,6 +589,29 @@ class FilterUtils
       }
    }
 
+
+   /*******************************************************************************
+    ** after go-live of redesigin in march 2024, we had bugs where we could get a
+    ** filter with a criteria w/ a null field name (e.g., by having an incomplete
+    ** criteria in the Advanced filter builder - and that would sometimes break
+    ** the screen!  So, strip those away when storing or loading filters, via
+    ** this function.
+    *******************************************************************************/
+   public static stripAwayIncompleteCriteria(filter: QQueryFilter)
+   {
+      if (filter?.criteria?.length > 0)
+      {
+         for (let i = 0; i < filter.criteria.length; i++)
+         {
+            if (!filter.criteria[i].fieldName)
+            {
+               filter.criteria.splice(i, 1);
+               i--;
+            }
+         }
+      }
+   }
+
 }
 
 export default FilterUtils;
