@@ -87,7 +87,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    const RENAME_OPTION = "Rename...";
    const DELETE_OPTION = "Delete...";
    const CLEAR_OPTION = "New View";
-   const dropdownOptions = [DUPLICATE_OPTION, RENAME_OPTION, DELETE_OPTION, CLEAR_OPTION];
+   const NEW_REPORT_OPTION = "Create Report from Current View";
 
    const {accentColor, accentColorLight} = useContext(QContext);
 
@@ -187,7 +187,23 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          case DELETE_OPTION:
             setIsDeleteFilter(true)
             break;
+         case NEW_REPORT_OPTION:
+            createNewReport();
+            break;
       }
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function createNewReport()
+   {
+      const defaultValues: {[key: string]: any} = {};
+      defaultValues.tableName = tableMetaData.name;
+      defaultValues.queryFilterJson = JSON.stringify(view.queryFilter, null, 3);
+      defaultValues.columnsJson = JSON.stringify(view.queryColumns, null, 3);
+      navigate(`${metaData.getTablePathByName("savedReport")}/create#defaultValues=${encodeURIComponent(JSON.stringify(defaultValues))}`);
    }
 
 
@@ -376,6 +392,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    const hasStorePermission = metaData?.processes.has("storeSavedView");
    const hasDeletePermission = metaData?.processes.has("deleteSavedView");
    const hasQueryPermission = metaData?.processes.has("querySavedView");
+   const hasSavedReportsPermission = metaData?.tables.has("savedReport");
 
    const tooltipMaxWidth = (maxWidth: string) =>
    {
@@ -429,7 +446,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasStorePermission && currentSavedView != null &&
+            hasDeletePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Delete this saved view.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
                   <ListItemIcon><Icon>delete</Icon></ListItemIcon>
@@ -442,6 +459,15 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
                   <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
                   New View
+               </MenuItem>
+            </Tooltip>
+         }
+         {
+            hasSavedReportsPermission &&
+            <Tooltip {...menuTooltipAttribs} title="Create a new Saved Report using your current view of this table as a starting point.">
+               <MenuItem onClick={() => handleDropdownOptionClick(NEW_REPORT_OPTION)}>
+                  <ListItemIcon><Icon>article</Icon></ListItemIcon>
+                  Create Report from Current View
                </MenuItem>
             </Tooltip>
          }
