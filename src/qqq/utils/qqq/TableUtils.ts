@@ -110,7 +110,7 @@ class TableUtils
          return ([tableMetaData.fields.get(fieldName), tableMetaData]);
       }
 
-      return (null);
+      return [null, null];
    }
 
 
@@ -133,7 +133,7 @@ class TableUtils
       catch (e)
       {
          console.log(`Error getting full field label for ${fieldName} in table ${tableMetaData?.name}: ${e}`);
-         return fieldName
+         return fieldName;
       }
    }
 
