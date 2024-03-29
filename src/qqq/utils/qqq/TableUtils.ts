@@ -30,61 +30,101 @@ import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin"
  *******************************************************************************/
 class TableUtils
 {
+
    /*******************************************************************************
+    ** For a table, return a sub-set of sections (originally meant for display in
+    ** the record-screen sidebars)
     **
+    ** If the table has no sections, one big "all fields" section is created.
+    **
+    ** a list of "allowed field names" may be given, in which case, a section is only
+    ** included if it has a field in that list.  e.g., an edit-screen, where disabled
+    ** fields aren't to be shown - if a section only has disabled fields, don't include it.
+    **
+    ** By default sections w/ widget names are excluded -- but -- to include them,
+    ** provide the metaData plus list of allowedWidgetTypes.
     *******************************************************************************/
-   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData, allowedKeys: any = null): QTableSection[]
+   public static getSectionsForRecordSidebar(tableMetaData: QTableMetaData, allowedFieldNames: any = null, additionalInclusionPredicate?: (section: QTableSection) => boolean): QTableSection[]
    {
+      /////////////////////////////////////////////////////////////////
+      // if the table has sections, then filter them and return some //
+      /////////////////////////////////////////////////////////////////
       if (tableMetaData.sections)
       {
-         if (allowedKeys)
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         // if there are filters (a list of allowed field names, or an additionalInclusionPredicate, //
+         // then only return a subset of sections matching the filters                               //
+         //////////////////////////////////////////////////////////////////////////////////////////////
+         if (allowedFieldNames || additionalInclusionPredicate)
          {
-            const allowedKeySet = new Set<string>();
-            allowedKeys.forEach((k: string) => allowedKeySet.add(k));
+            ////////////////////////////////////////////////////////////////
+            // put the field names in a set, for better inclusion testing //
+            ////////////////////////////////////////////////////////////////
+            const allowedFieldNameSet = new Set<string>();
+            if(allowedFieldNames)
+            {
+               allowedFieldNames.forEach((k: string) => allowedFieldNameSet.add(k));
+            }
 
+            ///////////////////////////////////////////////////////////////////////////////
+            // loop over the sections, deciding which ones to include in the return list //
+            ///////////////////////////////////////////////////////////////////////////////
             const allowedSections: QTableSection[] = [];
-
             for (let i = 0; i < tableMetaData.sections.length; i++)
             {
                const section = tableMetaData.sections[i];
-               if (section.fieldNames)
+               let includeSection = false;
+
+               for (let j = 0; j < section.fieldNames?.length; j++)
                {
-                  for (let j = 0; j < section.fieldNames.length; j++)
+                  if (allowedFieldNameSet.has(section.fieldNames[j]))
                   {
-                     if (allowedKeySet.has(section.fieldNames[j]))
-                     {
-                        allowedSections.push(section);
-                        break;
-                     }
+                     includeSection = true;
+                     break;
                   }
+               }
+
+               if (additionalInclusionPredicate && additionalInclusionPredicate(section))
+               {
+                  includeSection = true;
+               }
+
+               if(includeSection)
+               {
+                  allowedSections.push(section);
                }
             }
 
+            console.log("allowedSections length: " + allowedSections.length);
             return (allowedSections);
          }
-         else
-         {
-            return (tableMetaData.sections);
-         }
+
+         ////////////////////////////////////////////////////////////////
+         // if there are no filters to apply, then return all sections //
+         ////////////////////////////////////////////////////////////////
+         return (tableMetaData.sections);
       }
-      else
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////
+      // else, if the table had no sections, then make a pseudo-one with either all of the fields, //
+      // or a subset based on the allowedFieldNames                                                //
+      ///////////////////////////////////////////////////////////////////////////////////////////////
+      let fieldNames = [...tableMetaData.fields.keys()];
+      if (allowedFieldNames)
       {
-         let fieldNames = [...tableMetaData.fields.keys()];
-         if (allowedKeys)
+         fieldNames = [];
+         for (const fieldName in tableMetaData.fields.keys())
          {
-            fieldNames = [];
-            for (const fieldName in tableMetaData.fields.keys())
+            if (allowedFieldNames[fieldName])
             {
-               if (allowedKeys[fieldName])
-               {
-                  fieldNames.push(fieldName);
-               }
+               fieldNames.push(fieldName);
             }
          }
-         return ([new QTableSection({
-            iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...fieldNames],
-         })]);
       }
+
+      return ([new QTableSection({
+         iconName: "description", label: "All Fields", name: "allFields", fieldNames: [...fieldNames],
+      })]);
    }
 
 

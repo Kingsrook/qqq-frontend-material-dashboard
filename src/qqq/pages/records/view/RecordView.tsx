@@ -867,7 +867,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                               }
                               {
                                  warningMessage ?
-                                    <Alert color="warning" sx={{mb: 3}} onClose={() =>
+                                    <Alert color="warning" sx={{mb: 3}} icon={<Icon>warning</Icon>} onClose={() =>
                                     {
                                        setWarningMessage(null);
                                     }}>

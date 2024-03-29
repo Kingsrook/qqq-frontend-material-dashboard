@@ -25,28 +25,53 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
+import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridEventListener, GridFilterModel, gridPreferencePanelStateSelector, GridRowParams, GridSelectionModel, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExportContainer, GridToolbarFilterButton, MuiEvent, useGridApiContext, useGridApiEventHandler, useGridSelector} from "@mui/x-data-grid-pro";
-import React, {useEffect, useRef, useState} from "react";
-import {useNavigate, Link} from "react-router-dom";
-import Widget, {AddNewRecordButton, LabelComponent} from "qqq/components/widgets/Widget";
+import {DataGridPro, GridCallbackDetails, GridEventListener, GridRenderCellParams, GridRowParams, GridToolbarContainer, MuiEvent, useGridApiContext, useGridApiEventHandler} from "@mui/x-data-grid-pro";
+import Widget, {AddNewRecordButton, LabelComponent, WidgetData} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useEffect, useRef, useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
+
+export interface ChildRecordListData extends WidgetData
+{
+   title: string;
+   queryOutput: {records: {values: any}[]}
+   childTableMetaData: QTableMetaData;
+   tablePath: string;
+   viewAllLink: string;
+   totalRows: number;
+   canAddChildRecord: boolean;
+   defaultValuesForNewChildRecords: {[fieldName: string]: any};
+   disabledFieldsForNewChildRecords: {[fieldName: string]: any};
+}
 
 interface Props
 {
    widgetMetaData: QWidgetMetaData;
-   data: any;
+   data: ChildRecordListData;
+   addNewRecordCallback?: () => void;
+   disableRowClick: boolean;
+   allowRecordEdit: boolean;
+   editRecordCallback?: (rowIndex: number) => void;
+   allowRecordDelete: boolean;
+   deleteRecordCallback?: (rowIndex: number) => void;
 }
 
-RecordGridWidget.defaultProps = {};
+RecordGridWidget.defaultProps =
+   {
+      disableRowClick: false,
+      allowRecordEdit: false,
+      allowRecordDelete: false
+   };
 
 const qController = Client.getInstance();
 
-function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
+function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback}: Props): JSX.Element
 {
    const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
@@ -74,7 +99,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
          }
 
          const tableMetaData = new QTableMetaData(data.childTableMetaData);
-         const rows = DataGridUtils.makeRows(records, tableMetaData);
+         const rows = DataGridUtils.makeRows(records, tableMetaData, true);
 
          /////////////////////////////////////////////////////////////////////////////////
          // note - tablePath may be null, if the user doesn't have access to the table. //
@@ -101,6 +126,28 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
                   i--
                }
             }
+         }
+
+         ////////////////////////////////////
+         // add actions cell, if available //
+         ////////////////////////////////////
+         if(allowRecordEdit || allowRecordDelete)
+         {
+            columns.unshift({
+               field: "_actions",
+               type: "string",
+               headerName: "Actions",
+               sortable: false,
+               filterable: false,
+               width: allowRecordEdit && allowRecordDelete ? 80 : 50,
+               renderCell: ((params: GridRenderCellParams) =>
+               {
+                  return <Box>
+                     {allowRecordEdit && <IconButton onClick={() => editRecordCallback(params.row.__rowIndex)}><Icon>edit</Icon></IconButton>}
+                     {allowRecordDelete && <IconButton onClick={() => deleteRecordCallback(params.row.__rowIndex)}><Icon>delete</Icon></IconButton>}
+                  </Box>
+               })
+            })
          }
 
          setRows(rows);
@@ -195,7 +242,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
       {
          disabledFields = data.defaultValuesForNewChildRecords;
       }
-      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields))
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback))
    }
 
 
@@ -204,13 +251,18 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
    /////////////////////////////////////////////////////////////////
    const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
+      if(disableRowClick)
+      {
+         return;
+      }
+
       (async () =>
       {
          const qInstance = await qController.loadMetaData()
          let tablePath = qInstance.getTablePathByName(data.childTableMetaData.name)
          if(tablePath)
          {
-            tablePath = `${tablePath}/${params.id}`;
+            tablePath = `${tablePath}/${params.row[data.childTableMetaData.primaryKeyField]}`;
             DataGridUtils.handleRowClick(tablePath, event, gridMouseDownX, gridMouseDownY, navigate, instance);
          }
       })();
@@ -266,6 +318,7 @@ function RecordGridWidget({widgetMetaData, data}: Props): JSX.Element
                rowBuffer={10}
                getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
                onRowClick={handleRowClick}
+               getRowId={(row) => row.__rowIndex}
                // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
                components={{
                   Toolbar: CustomToolbar
