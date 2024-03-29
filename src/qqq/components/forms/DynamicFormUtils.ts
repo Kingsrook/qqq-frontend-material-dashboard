@@ -24,27 +24,38 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import * as Yup from "yup";
 
+
+type DisabledFields = { [fieldName: string]: boolean } | string[];
+
 /*******************************************************************************
  ** Meta-data to represent a single field in a table.
  **
  *******************************************************************************/
 class DynamicFormUtils
 {
-   public static getFormData(qqqFormFields: QFieldMetaData[])
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getFormData(qqqFormFields: QFieldMetaData[], disabledFields?: DisabledFields)
    {
       const dynamicFormFields: any = {};
       const formValidations: any = {};
 
       qqqFormFields.forEach((field) =>
       {
-         dynamicFormFields[field.name] = this.getDynamicField(field);
-         formValidations[field.name] = this.getValidationForField(field);
+         dynamicFormFields[field.name] = this.getDynamicField(field, disabledFields);
+         formValidations[field.name] = this.getValidationForField(field, disabledFields);
       });
 
       return {dynamicFormFields, formValidations};
    }
 
-   public static getDynamicField(field: QFieldMetaData)
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getDynamicField(field: QFieldMetaData, disabledFields?: DisabledFields)
    {
       let fieldType: string;
       switch (field.type.toString())
@@ -85,15 +96,21 @@ class DynamicFormUtils
          }
       }
 
+      ////////////////////////////////////////////////////////////
+      // this feels right, but... might be cases where it isn't //
+      ////////////////////////////////////////////////////////////
+      const effectiveIsEditable = field.isEditable && !this.isFieldDynamicallyDisabled(field.name, disabledFields);
+      const effectivelyIsRequired = field.isRequired && effectiveIsEditable;
+
       let label = field.label ? field.label : field.name;
-      label += field.isRequired ? " *" : "";
+      label += effectivelyIsRequired ? " *" : "";
 
       return ({
          fieldMetaData: field,
          name: field.name,
          label: label,
-         isRequired: field.isRequired,
-         isEditable: field.isEditable,
+         isRequired: effectivelyIsRequired,
+         isEditable: effectiveIsEditable,
          type: fieldType,
          displayFormat: field.displayFormat,
          // todo invalidMsg: "Zipcode is not valid (e.g. 70000).",
@@ -101,11 +118,18 @@ class DynamicFormUtils
       });
    }
 
-   public static getValidationForField(field: QFieldMetaData)
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static getValidationForField(field: QFieldMetaData, disabledFields?: DisabledFields)
    {
-      if (field.isRequired)
+      const effectiveIsEditable = field.isEditable && !this.isFieldDynamicallyDisabled(field.name, disabledFields);
+      const effectivelyIsRequired = field.isRequired && effectiveIsEditable;
+
+      if (effectivelyIsRequired)
       {
-         if(field.possibleValueSourceName)
+         if (field.possibleValueSourceName)
          {
             ////////////////////////////////////////////////////////////////////////////////////////////
             // the "nullable(true)" here doesn't mean that you're allowed to set the field to null... //
@@ -121,6 +145,10 @@ class DynamicFormUtils
       return (null);
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public static addPossibleValueProps(dynamicFormFields: any, qFields: QFieldMetaData[], tableName: string, processName: string, displayValues: Map<string, string>)
    {
       for (let i = 0; i < qFields.length; i++)
@@ -159,6 +187,29 @@ class DynamicFormUtils
          }
       }
    }
+
+
+   /*******************************************************************************
+    ** private helper - check the disabled fields object (array or map), and return
+    ** true iff fieldName is in it.
+    *******************************************************************************/
+   private static isFieldDynamicallyDisabled(fieldName: string, disabledFields?: DisabledFields): boolean
+   {
+      if (!disabledFields)
+      {
+         return (false);
+      }
+
+      if (Array.isArray(disabledFields))
+      {
+         return (disabledFields.indexOf(fieldName) > -1)
+      }
+      else
+      {
+         return (disabledFields[fieldName]);
+      }
+   }
+
 }
 
 export default DynamicFormUtils;

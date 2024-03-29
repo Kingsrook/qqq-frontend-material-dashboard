@@ -29,11 +29,11 @@ import Tooltip from "@mui/material/Tooltip/Tooltip";
 import {GridColDef, GridFilterItem, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
 import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
 import {GridColumnHeaderParams} from "@mui/x-data-grid/models/params/gridColumnHeaderParams";
-import React from "react";
-import {Link, NavigateFunction} from "react-router-dom";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React from "react";
+import {Link, NavigateFunction} from "react-router-dom";
 
 
 const emptyApplyFilterFn = (filterItem: GridFilterItem, column: GridColDef): null => null;
@@ -118,7 +118,7 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData): GridRowsProp[] =>
+   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, allowEmptyId = false): GridRowsProp[] =>
    {
       const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
@@ -159,7 +159,10 @@ export default class DataGridUtils
                /////////////////////////////////////////////////////////////////////////////////////////
                // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
                /////////////////////////////////////////////////////////////////////////////////////////
-               row["id"] = "--";
+               if(!allowEmptyId)
+               {
+                  row["id"] = "--";
+               }
             }
          }
 
@@ -279,7 +282,7 @@ export default class DataGridUtils
          if (key === tableMetaData.primaryKeyField && linkBase)
          {
             column.renderCell = (cellValues: any) => (
-               <Link to={`${linkBase}${encodeURIComponent(cellValues.value)}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link>
+               cellValues.value ? <Link to={`${linkBase}${encodeURIComponent(cellValues.value)}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link> : ""
             );
          }
       });
