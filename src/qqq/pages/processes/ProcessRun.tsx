@@ -47,9 +47,6 @@ import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
 import parse from "html-react-parser";
-import React, {useContext, useEffect, useState} from "react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
-import * as Yup from "yup";
 import QContext from "QContext";
 import {QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
@@ -66,6 +63,9 @@ import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/Reco
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
+import * as Yup from "yup";
 
 
 interface Props
@@ -226,8 +226,19 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       setShowFullHelpText(!showFullHelpText);
    };
 
-   const download = (url: string, fileName: string) =>
+   const download = (processValues: {[key: string]: string}) =>
    {
+      let url;
+      let fileName = processValues.downloadFileName;
+      if(processValues.serverFilePath)
+      {
+         url = `/download/${encodeURIComponent(processValues.downloadFileName)}?filePath=${encodeURIComponent(processValues.serverFilePath)}`;
+      }
+      else if(processValues.storageTableName && processValues.storageReference)
+      {
+         url = `/download/${encodeURIComponent(processValues.downloadFileName)}?storageTableName=${encodeURIComponent(processValues.storageTableName)}&storageReference=${encodeURIComponent(processValues.storageReference)}`;
+      }
+
       /////////////////////////////////////////////////////////////////////////////////////////////
       // todo - this could be simplified, i think?                                               //
       // it was originally built like this when we had to submit full access token to backend... //
@@ -556,7 +567,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                        Download
                                     </Box>
                                     <Box display="flex" py={1} pr={2}>
-                                       <MDTypography variant="button" fontWeight="bold" onClick={() => download(`/download/${processValues.downloadFileName}?filePath=${processValues.serverFilePath}`, processValues.downloadFileName)} sx={{cursor: "pointer"}}>
+                                       <MDTypography variant="button" fontWeight="bold" onClick={() => download(processValues)} sx={{cursor: "pointer"}}>
                                           <Box display="flex" alignItems="center" gap={1} py={1} pr={2}>
                                              <Icon fontSize="large">download_for_offline</Icon>
                                              {processValues.downloadFileName}
