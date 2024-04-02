@@ -63,7 +63,7 @@ interface Props
    disabledFields: { [key: string]: boolean } | string[];
    isCopy?: boolean;
    onSubmitCallback?: (values: any) => void;
-   overrideHeading?: string
+   overrideHeading?: string;
 }
 
 EntityForm.defaultProps = {
@@ -100,8 +100,8 @@ function EntityForm(props: Props): JSX.Element
    const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
-   const [renderedWidgetSections, setRenderedWidgetSections] = useState({} as {[name: string]: JSX.Element});
-   const [childListWidgetData, setChildListWidgetData] = useState({} as {[name: string]: ChildRecordListData});
+   const [renderedWidgetSections, setRenderedWidgetSections] = useState({} as { [name: string]: JSX.Element });
+   const [childListWidgetData, setChildListWidgetData] = useState({} as { [name: string]: ChildRecordListData });
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
@@ -128,21 +128,26 @@ function EntityForm(props: Props): JSX.Element
    {
       try
       {
-         const parts = hashParts[i].split("=")
-         if (parts.length > 1 && parts[0] == "defaultValues")
+         const parts = hashParts[i].split("=");
+         if (parts.length > 1)
          {
-            defaultValues = JSON.parse(decodeURIComponent(parts[1])) as { [key: string]: any };
-         }
+            const name = parts[0].replace(/^#/, "");
+            const value = parts[1];
+            if (name == "defaultValues")
+            {
+               defaultValues = JSON.parse(decodeURIComponent(value)) as { [key: string]: any };
+            }
 
-         if (parts.length > 1 && parts[0] == "disabledFields")
-         {
-            disabledFields = JSON.parse(decodeURIComponent(parts[1])) as { [key: string]: any };
+            if (name == "disabledFields")
+            {
+               disabledFields = JSON.parse(decodeURIComponent(value)) as { [key: string]: any };
+            }
          }
       }
       catch (e)
-      {}
+      {
+      }
    }
-
 
 
    /*******************************************************************************
@@ -153,7 +158,7 @@ function EntityForm(props: Props): JSX.Element
       let defaultValues = widgetData.defaultValuesForNewChildRecords;
 
       let disabledFields = widgetData.disabledFieldsForNewChildRecords;
-      if(!disabledFields)
+      if (!disabledFields)
       {
          disabledFields = widgetData.defaultValuesForNewChildRecords;
       }
@@ -170,7 +175,7 @@ function EntityForm(props: Props): JSX.Element
       let defaultValues = widgetData.queryOutput.records[rowIndex].values;
 
       let disabledFields = widgetData.disabledFieldsForNewChildRecords;
-      if(!disabledFields)
+      if (!disabledFields)
       {
          disabledFields = widgetData.defaultValuesForNewChildRecords;
       }
@@ -234,16 +239,16 @@ function EntityForm(props: Props): JSX.Element
       const metaData = await qController.loadMetaData();
       const widgetMetaData = metaData.widgets.get(widgetName);
 
-      const newChildListWidgetData: {[name: string]: ChildRecordListData} = Object.assign({}, childListWidgetData)
-      if(!newChildListWidgetData[widgetName].queryOutput.records)
+      const newChildListWidgetData: { [name: string]: ChildRecordListData } = Object.assign({}, childListWidgetData);
+      if (!newChildListWidgetData[widgetName].queryOutput.records)
       {
          newChildListWidgetData[widgetName].queryOutput.records = [];
       }
 
-      switch(action)
+      switch (action)
       {
          case "insert":
-            newChildListWidgetData[widgetName].queryOutput.records.push({values: values})
+            newChildListWidgetData[widgetName].queryOutput.records.push({values: values});
             break;
          case "edit":
             newChildListWidgetData[widgetName].queryOutput.records[rowIndex] = {values: values};
@@ -255,7 +260,7 @@ function EntityForm(props: Props): JSX.Element
       newChildListWidgetData[widgetName].totalRows = newChildListWidgetData[widgetName].queryOutput.records.length;
       setChildListWidgetData(newChildListWidgetData);
 
-      const newRenderedWidgetSections = Object.assign({}, renderedWidgetSections)
+      const newRenderedWidgetSections = Object.assign({}, renderedWidgetSections);
       newRenderedWidgetSections[widgetName] = getWidgetSection(widgetMetaData, newChildListWidgetData[widgetName]);
       setRenderedWidgetSections(newRenderedWidgetSections);
       forceUpdate();
@@ -290,14 +295,14 @@ function EntityForm(props: Props): JSX.Element
 
       if (!Object.keys(formFields).length)
       {
-         return <div>Error:  No form fields in section {section.name}</div>;
+         return <div>Error: No form fields in section {section.name}</div>;
       }
 
-      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
 
-      if(omitWrapper)
+      if (omitWrapper)
       {
-         return <QDynamicForm formData={formData} record={record} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableName};`} />
+         return <QDynamicForm formData={formData} record={record} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableName};`} />;
       }
 
       return <Card id={section.name} sx={{overflow: "visible", scrollMarginTop: "100px"}} elevation={cardElevation}>
@@ -310,7 +315,7 @@ function EntityForm(props: Props): JSX.Element
                <QDynamicForm formData={formData} record={record} helpRoles={helpRoles} helpContentKeyPrefix={`table:${tableName};`} />
             </Box>
          </Box>
-      </Card>
+      </Card>;
    }
 
 
@@ -332,7 +337,7 @@ function EntityForm(props: Props): JSX.Element
          addNewRecordCallback={() => openAddChildRecord(widgetMetaData.name, widgetData)}
          editRecordCallback={(rowIndex) => openEditChildRecord(widgetMetaData.name, widgetData, rowIndex)}
          deleteRecordCallback={(rowIndex) => deleteChildRecord(widgetMetaData.name, widgetData, rowIndex)}
-      />
+      />;
    }
 
 
@@ -341,13 +346,13 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    function renderSection(section: QTableSection, values: FormikValues | Value, touched: FormikTouched<FormikValues> | Value, formFields: Map<string, any>, errors: FormikErrors<FormikValues> | Value)
    {
-      if(section.fieldNames && section.fieldNames.length > 0)
+      if (section.fieldNames && section.fieldNames.length > 0)
       {
          return getFormSection(section, values, touched, formFields.get(section.name), errors);
       }
       else
       {
-         return renderedWidgetSections[section.widgetName] ?? <Box>Loading {section.label}...</Box>
+         return renderedWidgetSections[section.widgetName] ?? <Box>Loading {section.label}...</Box>;
       }
    }
 
@@ -368,7 +373,7 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////////////////
          const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
          {
-            return section.widgetName && metaData.widgets.get(section.widgetName)?.type == "childRecordList" && metaData.widgets.get(section.widgetName)?.defaultValues?.has("manageAssociationName")
+            return section.widgetName && metaData.widgets.get(section.widgetName)?.type == "childRecordList" && metaData.widgets.get(section.widgetName)?.defaultValues?.has("manageAssociationName");
          });
          setTableSections(tableSections);
 
@@ -410,7 +415,7 @@ function EntityForm(props: Props): JSX.Element
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // these checks are only for updating records, if copying, it is actually an insert, which is checked after this block //
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if(! props.isCopy)
+            if (!props.isCopy)
             {
                if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
                {
@@ -465,7 +470,7 @@ function EntityForm(props: Props): JSX.Element
          ///////////////////////////////////////////////////
          // if an override heading was passed in, use it. //
          ///////////////////////////////////////////////////
-         if(props.overrideHeading)
+         if (props.overrideHeading)
          {
             setFormTitle(props.overrideHeading);
             if (!props.isModal)
@@ -530,8 +535,8 @@ function EntityForm(props: Props): JSX.Element
          let t1sectionName;
          let t1section;
          const nonT1Sections: QTableSection[] = [];
-         const newRenderedWidgetSections: {[name: string]: JSX.Element} = {};
-         const newChildListWidgetData: {[name: string]: ChildRecordListData} = {};
+         const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
+         const newChildListWidgetData: { [name: string]: ChildRecordListData } = {};
 
          for (let i = 0; i < tableSections.length; i++)
          {
@@ -544,13 +549,13 @@ function EntityForm(props: Props): JSX.Element
             }
 
             const hasFields = section.fieldNames && section.fieldNames.length > 0;
-            const hasChildRecordListWidget = section.widgetName && metaData.widgets.get(section.widgetName)?.type == "childRecordList"
-            if(!hasFields && !hasChildRecordListWidget)
+            const hasChildRecordListWidget = section.widgetName && metaData.widgets.get(section.widgetName)?.type == "childRecordList";
+            if (!hasFields && !hasChildRecordListWidget)
             {
                continue;
             }
 
-            if(hasFields)
+            if (hasFields)
             {
                for (let j = 0; j < section.fieldNames.length; j++)
                {
@@ -626,10 +631,10 @@ function EntityForm(props: Props): JSX.Element
    //////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if(childListWidgetData)
+      if (childListWidgetData)
       {
-         const newRenderedWidgetSections: {[name: string]: JSX.Element} = {};
-         for(let name in childListWidgetData)
+         const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
+         for (let name in childListWidgetData)
          {
             const widgetMetaData = metaData.widgets.get(name);
             newRenderedWidgetSections[name] = getWidgetSection(widgetMetaData, childListWidgetData[name]);
@@ -674,7 +679,7 @@ function EntityForm(props: Props): JSX.Element
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // if there's a callback (e.g., for a modal nested on another create/edit screen), then just pass our data back there anre return. //
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      if(props.onSubmitCallback)
+      if (props.onSubmitCallback)
       {
          props.onSubmitCallback(values);
          return;
@@ -687,7 +692,7 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          const valuesToPost = JSON.parse(JSON.stringify(values));
 
-         for(let fieldName of tableMetaData.fields.keys())
+         for (let fieldName of tableMetaData.fields.keys())
          {
             const fieldMetaData = tableMetaData.fields.get(fieldName);
 
@@ -699,9 +704,9 @@ function EntityForm(props: Props): JSX.Element
             // changing from, say, 12:15:30 to just 12:15:00... this seems to get around that, for cases when the       //
             // user didn't change the value in the field (but if the user did change the value, then we will submit it) //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if(fieldMetaData.type === QFieldType.DATE_TIME && valuesToPost[fieldName])
+            if (fieldMetaData.type === QFieldType.DATE_TIME && valuesToPost[fieldName])
             {
-               console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${valuesToPost[fieldName]}]`)
+               console.log(`DateTime ${fieldName}: Initial value: [${initialValues[fieldName]}] -> [${valuesToPost[fieldName]}]`);
                if (initialValues[fieldName] == valuesToPost[fieldName])
                {
                   console.log(" - Is the same, so, deleting from the post");
@@ -720,12 +725,12 @@ function EntityForm(props: Props): JSX.Element
             // 3) they are a String, which is their URL path to download them... in that case, don't submit them to       //
             // the backend at all, so they'll stay what they were.  do that by deleting them from the values object here. //
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if(fieldMetaData.type === QFieldType.BLOB)
+            if (fieldMetaData.type === QFieldType.BLOB)
             {
-               if(typeof valuesToPost[fieldName] === "string")
+               if (typeof valuesToPost[fieldName] === "string")
                {
                   console.log(`${fieldName} value was a string, so, we're deleting it from the values array, to not submit it to the backend, to not change it.`);
-                  delete(valuesToPost[fieldName]);
+                  delete (valuesToPost[fieldName]);
                }
                else
                {
@@ -734,23 +739,23 @@ function EntityForm(props: Props): JSX.Element
             }
          }
 
-         const associationsToPost: any = {}
+         const associationsToPost: any = {};
          let haveAssociationsToPost = false;
          for (let name of Object.keys(childListWidgetData))
          {
-            const manageAssociationName = metaData.widgets.get(name)?.defaultValues?.get("manageAssociationName")
-            if(!manageAssociationName)
+            const manageAssociationName = metaData.widgets.get(name)?.defaultValues?.get("manageAssociationName");
+            if (!manageAssociationName)
             {
                console.log(`Cannot send association data to backend - missing a manageAssociationName defaultValue in widget meta data for widget name ${name}`);
             }
             associationsToPost[manageAssociationName] = [];
             haveAssociationsToPost = true;
-            for(let i=0; i<childListWidgetData[name].queryOutput?.records?.length; i++)
+            for (let i = 0; i < childListWidgetData[name].queryOutput?.records?.length; i++)
             {
                associationsToPost[manageAssociationName].push(childListWidgetData[name].queryOutput.records[i].values);
             }
          }
-         if(haveAssociationsToPost)
+         if (haveAssociationsToPost)
          {
             valuesToPost["associations"] = JSON.stringify(associationsToPost);
          }
@@ -771,7 +776,7 @@ function EntityForm(props: Props): JSX.Element
                   else
                   {
                      let warningMessage = null;
-                     if(record.warnings && record.warnings.length && record.warnings.length > 0)
+                     if (record.warnings && record.warnings.length && record.warnings.length > 0)
                      {
                         warningMessage = record.warnings[0];
                      }
@@ -785,7 +790,7 @@ function EntityForm(props: Props): JSX.Element
                   console.log("Caught:");
                   console.log(error);
 
-                  if(error.message.toLowerCase().startsWith("warning"))
+                  if (error.message.toLowerCase().startsWith("warning"))
                   {
                      const path = location.pathname.replace(/\/edit$/, "");
                      navigate(path, {state: {updateSuccess: true, warning: error.message}});
@@ -814,7 +819,7 @@ function EntityForm(props: Props): JSX.Element
                   else
                   {
                      let warningMessage = null;
-                     if(record.warnings && record.warnings.length && record.warnings.length > 0)
+                     if (record.warnings && record.warnings.length && record.warnings.length > 0)
                      {
                         warningMessage = record.warnings[0];
                      }
@@ -827,7 +832,7 @@ function EntityForm(props: Props): JSX.Element
                })
                .catch((error) =>
                {
-                  if(error.message.toLowerCase().startsWith("warning"))
+                  if (error.message.toLowerCase().startsWith("warning"))
                   {
                      const path = props.isCopy ?
                         location.pathname.replace(new RegExp(`/${props.id}/copy$`), "/" + record.values.get(tableMetaData.primaryKeyField))
@@ -850,15 +855,15 @@ function EntityForm(props: Props): JSX.Element
 
    const getSectionHelp = (section: QTableSection) =>
    {
-      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+      const helpRoles = [props.id ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
       const formattedHelpContent = <HelpContent helpContents={section.helpContents} roles={helpRoles} helpContentKey={`table:${tableMetaData.name};section:${section.name}`} />;
 
       return formattedHelpContent && (
          <Box px={"1.5rem"} fontSize={"0.875rem"}>
             {formattedHelpContent}
          </Box>
-      )
-   }
+      );
+   };
 
    if (notAllowedError)
    {
@@ -1007,7 +1012,7 @@ function EntityForm(props: Props): JSX.Element
 
 function ScrollToFirstError(): JSX.Element
 {
-   const {submitCount, isValid} = useFormikContext()
+   const {submitCount, isValid} = useFormikContext();
 
    useEffect(() =>
    {
@@ -1037,8 +1042,8 @@ function ScrollToFirstError(): JSX.Element
          }
          firstErrorMessage.scrollIntoView({block: "center"});
 
-      }, 100)
-   }, [submitCount, isValid])
+      }, 100);
+   }, [submitCount, isValid]);
 
    return null;
 }
