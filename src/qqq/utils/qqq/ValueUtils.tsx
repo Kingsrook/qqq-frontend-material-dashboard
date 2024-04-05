@@ -219,6 +219,16 @@ class ValueUtils
 
       if (field.type === QFieldType.DATE_TIME)
       {
+         if(displayValue && displayValue != rawValue)
+         {
+            //////////////////////////////////////////////////////////////////////////////
+            // if the date-time actually has a displayValue set, and it isn't just the  //
+            // raw-value being copied into the display value by whoever called us, then //
+            // return the display value.                                                //
+            //////////////////////////////////////////////////////////////////////////////
+            return displayValue;
+         }
+
          if (!rawValue)
          {
             return ("");
@@ -270,6 +280,7 @@ class ValueUtils
       {
          date = new Date(date);
       }
+
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd hh:mm:ss")} ${date.getHours() < 12 ? "AM" : "PM"} ${date.getTimezone()}`);
    }
