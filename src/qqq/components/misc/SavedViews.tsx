@@ -44,6 +44,7 @@ import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QDeleteButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import RecordQueryView from "qqq/models/query/RecordQueryView";
+import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import React, {useContext, useEffect, useRef, useState} from "react";
@@ -60,9 +61,10 @@ interface Props
    viewAsJson?: string;
    viewOnChangeCallback?: (selectedSavedViewId: number) => void;
    loadingSavedView: boolean
+   queryScreenUsage: QueryScreenUsage;
 }
 
-function SavedViews({qController, metaData, tableMetaData, currentSavedView, tableDefaultView, view, viewAsJson, viewOnChangeCallback, loadingSavedView}: Props): JSX.Element
+function SavedViews({qController, metaData, tableMetaData, currentSavedView, tableDefaultView, view, viewAsJson, viewOnChangeCallback, loadingSavedView, queryScreenUsage}: Props): JSX.Element
 {
    const navigate = useNavigate();
 
@@ -90,6 +92,14 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    const NEW_REPORT_OPTION = "Create Report from Current View";
 
    const {accentColor, accentColorLight} = useContext(QContext);
+
+   /////////////////////////////////////////////////////////////////////////////////////////
+   // this component is used by <RecordQuery> - but that component has different usages - //
+   // e.g., the full-fledged query screen, but also, within other screens (e.g., a modal  //
+   // under the ReportSetupWidget).  So, there are some behaviors we only want when we're //
+   // on the full-fledged query screen, such as changing the URL with saved view ids.     //
+   /////////////////////////////////////////////////////////////////////////////////////////
+   const isQueryScreen = queryScreenUsage == "queryScreen";
 
    const openSavedViewsMenu = (event: any) => setSavedViewsMenu(event.currentTarget);
    const closeSavedViewsMenu = () => setSavedViewsMenu(null);
@@ -142,7 +152,10 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       setSaveFilterPopupOpen(false);
       closeSavedViewsMenu();
       viewOnChangeCallback(record.values.get("id"));
-      navigate(`${metaData.getTablePathByName(tableMetaData.name)}/savedView/${record.values.get("id")}`);
+      if(isQueryScreen)
+      {
+         navigate(`${metaData.getTablePathByName(tableMetaData.name)}/savedView/${record.values.get("id")}`);
+      }
    };
 
 
@@ -175,7 +188,10 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          case CLEAR_OPTION:
             setSaveFilterPopupOpen(false)
             viewOnChangeCallback(null);
-            navigate(metaData.getTablePathByName(tableMetaData.name));
+            if(isQueryScreen)
+            {
+               navigate(metaData.getTablePathByName(tableMetaData.name));
+            }
             break;
          case RENAME_OPTION:
             if(currentSavedView != null)
@@ -419,7 +435,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       >
          <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>View Actions</b></MenuItem>
          {
-            hasStorePermission &&
+            isQueryScreen && hasStorePermission &&
             <Tooltip {...menuTooltipAttribs} title={<>Save your current filters, columns and settings, for quick re-use at a later time.<br /><br />You will be prompted to enter a name if you choose this option.</>}>
                <MenuItem onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
                   <ListItemIcon><Icon>save</Icon></ListItemIcon>
@@ -428,7 +444,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasStorePermission && currentSavedView != null &&
+            isQueryScreen && hasStorePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Change the name for this saved view.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
                   <ListItemIcon><Icon>edit</Icon></ListItemIcon>
@@ -437,7 +453,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasStorePermission && currentSavedView != null &&
+            isQueryScreen && hasStorePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Save a new copy this view, with a different name, separate from the original.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
                   <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
@@ -446,7 +462,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasDeletePermission && currentSavedView != null &&
+            isQueryScreen && hasDeletePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Delete this saved view.">
                <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
                   <ListItemIcon><Icon>delete</Icon></ListItemIcon>
@@ -580,19 +596,23 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                <Box pl={2} pr={2} sx={{display: "flex", alignItems: "center"}}>
                   {
                      !currentSavedView && viewIsModified && <>
-                        <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
-                           <b>Unsaved Changes</b>
-                           <ul style={{padding: "0.5rem 1rem"}}>
-                              {
-                                 viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
-                              }
-                           </ul>
-                        </>}>
-                           <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save View As&hellip;</Button>
-                        </Tooltip>
+                        {
+                           isQueryScreen && <>
+                              <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
+                                 <b>Unsaved Changes</b>
+                                 <ul style={{padding: "0.5rem 1rem"}}>
+                                    {
+                                       viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
+                                    }
+                                 </ul>
+                              </>}>
+                                 <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>{queryScreenUsage} Save View As&hellip;</Button>
+                              </Tooltip>
 
-                        {/* vertical rule */}
-                        <Box display="inline-block" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
+                              {/* vertical rule */}
+                              <Box display="inline-block" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
+                           </>
+                        }
 
                         <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset All Changes</Button>
                      </>
