@@ -2315,7 +2315,6 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
 
    if (pageState == "ready")
    {
-      const newFilterHash = JSON.stringify(prepQueryFilterForBackend(queryFilter));
       const filterForBackend = prepQueryFilterForBackend(queryFilter);
 
       const newFilterHash = JSON.stringify(filterForBackend);
