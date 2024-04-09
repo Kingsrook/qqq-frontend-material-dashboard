@@ -25,7 +25,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Autocomplete, {AutocompleteRenderOptionState} from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import React, {ReactNode} from "react";
+import React, {ReactNode, useState} from "react";
 
 interface FieldAutoCompleteProps
 {
@@ -37,6 +37,9 @@ interface FieldAutoCompleteProps
    autoFocus?: boolean;
    forceOpen?: boolean;
    hiddenFieldNames?: string[];
+   variant?: "standard" | "filled" | "outlined"
+   label?: string
+   textFieldSX?: any
 }
 
 FieldAutoComplete.defaultProps =
@@ -44,17 +47,20 @@ FieldAutoComplete.defaultProps =
       defaultValue: null,
       autoFocus: false,
       forceOpen: null,
-      hiddenFieldNames: []
+      hiddenFieldNames: [],
+      variant: "standard",
+      label: "Field",
+      textFieldSX: null,
    };
 
-function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean, hiddenFieldNames: string[])
+function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean, hiddenFieldNames: string[], selectedFieldName: string)
 {
    const sortedFields = [...tableMetaData.fields.values()].sort((a, b) => a.label.localeCompare(b.label));
    for (let i = 0; i < sortedFields.length; i++)
    {
       const fieldName = isJoinTable ? `${tableMetaData.name}.${sortedFields[i].name}` : sortedFields[i].name;
 
-      if(hiddenFieldNames && hiddenFieldNames.indexOf(fieldName) > -1)
+      if(hiddenFieldNames && hiddenFieldNames.indexOf(fieldName) > -1 && fieldName != selectedFieldName)
       {
          continue;
       }
@@ -63,10 +69,16 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
    }
 }
 
-export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames}: FieldAutoCompleteProps): JSX.Element
+
+/*******************************************************************************
+ ** Component for rendering a list of field names from a table as an auto-complete.
+ *******************************************************************************/
+export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, variant, label, textFieldSX}: FieldAutoCompleteProps): JSX.Element
 {
+   const [selectedFieldName, setSelectedFieldName] = useState(defaultValue ? defaultValue.fieldName : null)
+
    const fieldOptions: any[] = [];
-   makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames);
+   makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames, selectedFieldName);
    let fieldsGroupBy = null;
 
    if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length > 0)
@@ -77,7 +89,7 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
          if (metaData.tables.has(exposedJoin.joinTable.name))
          {
             fieldsGroupBy = (option: any) => `${option.table.label} fields`;
-            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true, hiddenFieldNames);
+            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true, hiddenFieldNames, selectedFieldName);
          }
       }
    }
@@ -136,14 +148,24 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
       alsoOpen["open"] = forceOpen;
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function onChange(event: any, newValue: any, reason: string)
+   {
+      setSelectedFieldName(newValue ? newValue.fieldName : null)
+      handleFieldChange(event, newValue, reason);
+   }
+
    return (
       <Autocomplete
          id={id}
-         renderInput={(params) => (<TextField {...params} autoFocus={autoFocus} label={"Field"} variant="standard" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
+         renderInput={(params) => (<TextField {...params} autoFocus={autoFocus} label={label} variant={variant} sx={textFieldSX} autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
          // @ts-ignore
          defaultValue={defaultValue}
          options={fieldOptions}
-         onChange={handleFieldChange}
+         onChange={onChange}
          isOptionEqualToValue={(option, value) => isFieldOptionEqual(option, value)}
          groupBy={fieldsGroupBy}
          getOptionLabel={(option) => getFieldOptionLabel(option)}
