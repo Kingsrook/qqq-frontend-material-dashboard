@@ -21,21 +21,23 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {InputLabel} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
+import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
-import React, {useContext, useEffect, useState} from "react";
-import {NavigateFunction, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import WidgetDropdownMenu, {DropdownOption} from "qqq/components/widgets/components/WidgetDropdownMenu";
 import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {NavigateFunction, useNavigate} from "react-router-dom";
 
 export interface WidgetData
 {
@@ -60,6 +62,7 @@ interface Props
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalElementsLeft: JSX.Element[];
    labelAdditionalComponentsRight: LabelComponent[];
+   labelAdditionalElementsRight: JSX.Element[];
    labelBoxAdditionalSx?: any;
    widgetMetaData?: QWidgetMetaData;
    widgetData?: WidgetData;
@@ -80,6 +83,7 @@ Widget.defaultProps = {
    labelAdditionalComponentsLeft: [],
    labelAdditionalElementsLeft: [],
    labelAdditionalComponentsRight: [],
+   labelAdditionalElementsRight: [],
    labelBoxAdditionalSx: {},
    omitPadding: false,
 };
@@ -158,6 +162,65 @@ export class HeaderIcon extends LabelComponent
       }
    };
 }
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
+export class HeaderLinkButton extends LabelComponent
+{
+   label: string;
+   onClickCallback: () => void;
+
+
+   constructor(label: string, onClickCallback: () => void)
+   {
+      super();
+      this.label = label;
+      this.onClickCallback = onClickCallback;
+   }
+
+   render = (args: LabelComponentRenderArgs): JSX.Element =>
+   {
+      return (
+         <Button onClick={() => this.onClickCallback()} sx={{p: 0}} disableRipple>
+            <Typography display="inline" textTransform="none" fontSize={"1.125rem"}>
+               {this.label}
+            </Typography>
+         </Button>
+      );
+   };
+}
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
+interface HeaderToggleComponentProps
+{
+   label: string;
+   getValue: () => boolean;
+   onClickCallback: () => void;
+}
+
+export function HeaderToggleComponent({label, getValue, onClickCallback}: HeaderToggleComponentProps): JSX.Element
+{
+   console.log(`@dk in HTComponent, getValue(): ${getValue()}`);
+
+   const onClick = () =>
+   {
+      onClickCallback();
+   }
+
+   return (
+      <Box alignItems="baseline" mr="-0.75rem">
+         <InputLabel sx={{fontSize: "1.125rem", px: "0 !important", cursor: "pointer"}} unselectable="on">
+            {label} <Switch checked={getValue()} onClick={onClick} />
+         </InputLabel>
+      </Box>
+   );
+}
+
 
 
 /*******************************************************************************
@@ -564,6 +627,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       localLabelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
    }
 
+   let localLabelAdditionalElementsRight = [...props.labelAdditionalElementsRight];
+
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
 
    const isSet = (v: any): boolean =>
@@ -580,6 +645,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       needLabelBox ||= (labelComponentsLeft && labelComponentsLeft.length > 0);
       needLabelBox ||= (localLabelAdditionalElementsLeft && localLabelAdditionalElementsLeft.length > 0);
       needLabelBox ||= (labelComponentsRight && labelComponentsRight.length > 0);
+      needLabelBox ||= (localLabelAdditionalElementsRight && localLabelAdditionalElementsRight.length > 0);
       needLabelBox ||= isSet(props.widgetData?.icon);
       needLabelBox ||= isSet(props.widgetData?.label);
       needLabelBox ||= isSet(props.widgetMetaData?.label);
@@ -711,6 +777,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                         })
                      )
                   }
+                  {localLabelAdditionalElementsRight}
                </Box>
             </Box>
          }
