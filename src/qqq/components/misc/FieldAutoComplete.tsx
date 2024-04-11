@@ -37,6 +37,7 @@ interface FieldAutoCompleteProps
    autoFocus?: boolean;
    forceOpen?: boolean;
    hiddenFieldNames?: string[];
+   availableFieldNames?: string[];
    variant?: "standard" | "filled" | "outlined"
    label?: string
    textFieldSX?: any
@@ -48,12 +49,13 @@ FieldAutoComplete.defaultProps =
       autoFocus: false,
       forceOpen: null,
       hiddenFieldNames: [],
+      availableFieldNames: [],
       variant: "standard",
       label: "Field",
       textFieldSX: null,
    };
 
-function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean, hiddenFieldNames: string[], selectedFieldName: string)
+function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean, hiddenFieldNames: string[], availableFieldNames: string[], selectedFieldName: string)
 {
    const sortedFields = [...tableMetaData.fields.values()].sort((a, b) => a.label.localeCompare(b.label));
    for (let i = 0; i < sortedFields.length; i++)
@@ -61,6 +63,11 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
       const fieldName = isJoinTable ? `${tableMetaData.name}.${sortedFields[i].name}` : sortedFields[i].name;
 
       if(hiddenFieldNames && hiddenFieldNames.indexOf(fieldName) > -1 && fieldName != selectedFieldName)
+      {
+         continue;
+      }
+
+      if(availableFieldNames && availableFieldNames.indexOf(fieldName) == -1)
       {
          continue;
       }
@@ -73,12 +80,12 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
 /*******************************************************************************
  ** Component for rendering a list of field names from a table as an auto-complete.
  *******************************************************************************/
-export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, variant, label, textFieldSX}: FieldAutoCompleteProps): JSX.Element
+export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, availableFieldNames, variant, label, textFieldSX}: FieldAutoCompleteProps): JSX.Element
 {
    const [selectedFieldName, setSelectedFieldName] = useState(defaultValue ? defaultValue.fieldName : null)
 
    const fieldOptions: any[] = [];
-   makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames, selectedFieldName);
+   makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames, availableFieldNames, selectedFieldName);
    let fieldsGroupBy = null;
 
    if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length > 0)
@@ -89,7 +96,7 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
          if (metaData.tables.has(exposedJoin.joinTable.name))
          {
             fieldsGroupBy = (option: any) => `${option.table.label} fields`;
-            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true, hiddenFieldNames, selectedFieldName);
+            makeFieldOptionsForTable(exposedJoin.joinTable, fieldOptions, true, hiddenFieldNames, availableFieldNames, selectedFieldName);
          }
       }
    }
