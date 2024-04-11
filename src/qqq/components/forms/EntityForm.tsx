@@ -119,7 +119,7 @@ function EntityForm(props: Props): JSX.Element
 
    const [notAllowedError, setNotAllowedError] = useState(null as string);
 
-   const [recordValuesJSON, setRecordValuesJSON] = useState("");
+   const [formValuesJSON, setFormValuesJSON] = useState("");
    const [formValues, setFormValues] = useState({} as {[name: string]: any});
 
    const {pageHeader, setPageHeader} = useContext(QContext);
@@ -295,7 +295,7 @@ function EntityForm(props: Props): JSX.Element
          newRenderedWidgetSections[widgetName] = getWidgetSection(widgetMetaData, childListWidgetData[widgetName]);
       }
       setRenderedWidgetSections(newRenderedWidgetSections);
-   }, [recordValuesJSON]);
+   }, [formValuesJSON]);
 
 
    /*******************************************************************************
@@ -928,6 +928,36 @@ function EntityForm(props: Props): JSX.Element
       })();
    };
 
+
+   // todo - get from meta data!
+   const fieldRules =
+   [
+      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "columnsJson"},
+      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "queryFilterJson"},
+      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "pivotTableJson"}
+   ]
+
+
+   /*******************************************************************************
+    ** process a form-field having a changed value (e.g., apply field rules).
+    *******************************************************************************/
+   function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: {[fieldName: string]: any})
+   {
+      for (let fieldRule of fieldRules)
+      {
+         if(fieldRule.trigger == "onChange" && fieldRule.sourceField == fieldName)
+         {
+            switch (fieldRule.action)
+            {
+               case "clearOtherField":
+                  console.log(`Clearing value from [${fieldRule.targetField}] due to change in [${fieldName}]`);
+                  valueChangesToMake[fieldRule.targetField] = null;
+                  break;
+            }
+         }
+      }
+   }
+
    const formId = props.id != null ? `edit-${tableMetaData?.name}-form` : `create-${tableMetaData?.name}-form`;
 
    let body;
@@ -966,7 +996,7 @@ function EntityForm(props: Props): JSX.Element
    else
    {
       body = (
-         <Box mb={3}>
+         <Box mb={3} className="entityForm">
             {
                (alertContent || warningContent) &&
                <Grid container spacing={3}>
@@ -1004,15 +1034,60 @@ function EntityForm(props: Props): JSX.Element
                         touched,
                         isSubmitting,
                         setFieldValue,
+                        dirty
                      }) =>
                      {
+                        /////////////////////////////////////////////////
+                        // if we have values from formik, look at them //
+                        /////////////////////////////////////////////////
                         if(values)
                         {
-                           const newRecordValuesJSON = JSON.stringify(values);
-                           if(recordValuesJSON != newRecordValuesJSON)
+                           ////////////////////////////////////////////////////////////////////////
+                           // use stringified values as cheap/easy way to see if any are changed //
+                           ////////////////////////////////////////////////////////////////////////
+                           const newFormValuesJSON = JSON.stringify(values);
+                           if(formValuesJSON != newFormValuesJSON)
                            {
-                              setRecordValuesJSON(newRecordValuesJSON);
-                              setFormValues(values)
+                              const valueChangesToMake: {[fieldName: string]: any} = {};
+
+                              ////////////////////////////////////////////////////////////////////
+                              // if the form is dirty (e.g., we're not doing the initial load), //
+                              // then process rules for any changed fields                      //
+                              ////////////////////////////////////////////////////////////////////
+                              if(dirty)
+                              {
+                                 for (let fieldName in values)
+                                 {
+                                    if (formValues[fieldName] != values[fieldName])
+                                    {
+                                       handleChangedFieldValue(fieldName, formValues[fieldName], values[fieldName], valueChangesToMake);
+                                    }
+                                    formValues[fieldName] = values[fieldName];
+                                 }
+                              }
+                              else
+                              {
+                                 /////////////////////////////////////////////////////////////////////////////////////
+                                 // if the form is clean, make sure the formValues object has all form values in it //
+                                 /////////////////////////////////////////////////////////////////////////////////////
+                                 for (let fieldName in values)
+                                 {
+                                    formValues[fieldName] = values[fieldName];
+                                 }
+                              }
+
+                              /////////////////////////////////////////////////////////////////////////////
+                              // if there were any changes to be made from the rule evaluation,          //
+                              // make those changes in the formValues map, and in formik (setFieldValue) //
+                              /////////////////////////////////////////////////////////////////////////////
+                              for (let fieldName in valueChangesToMake)
+                              {
+                                 formValues[fieldName] = valueChangesToMake[fieldName];
+                                 setFieldValue(fieldName, valueChangesToMake[fieldName], false);
+                              }
+
+                              setFormValues(formValues)
+                              setFormValuesJSON(JSON.stringify(values));
                            }
                         }
 
