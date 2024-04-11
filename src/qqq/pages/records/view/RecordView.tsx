@@ -447,13 +447,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
             if (e instanceof QException)
             {
-               if ((e as QException).status === "404")
+               if ((e as QException).status === 404)
                {
                   setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
                   historyPurge(location.pathname);
                   return;
                }
-               else if ((e as QException).status === "403")
+               else if ((e as QException).status === 403)
                {
                   setNotFoundMessage(`You do not have permission to view ${tableMetaData.label} records`);
                   historyPurge(location.pathname);
