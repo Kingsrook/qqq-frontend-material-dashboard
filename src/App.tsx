@@ -575,7 +575,7 @@ export default function App()
             console.error(e);
             if (e instanceof QException)
             {
-               if ((e as QException).status === "401")
+               if ((e as QException).status === 401)
                {
                   console.log("Exception is a QException with status = 401.  Clearing some of localStorage & cookies");
                   qController.clearAuthenticationMetaDataLocalStorage();

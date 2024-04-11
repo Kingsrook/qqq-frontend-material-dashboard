@@ -1079,7 +1079,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    const handlePermissionDenied = (e: any): boolean =>
    {
-      if ((e as QException).status === "403")
+      if ((e as QException).status === 403)
       {
          setProcessError(`You do not have permission to run this ${isReport ? "report" : "process"}.`, true);
          return (true);

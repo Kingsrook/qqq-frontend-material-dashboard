@@ -119,7 +119,7 @@ export default function DataBagViewer({dataBagId}: Props): JSX.Element
          {
             if (e instanceof QException)
             {
-               if ((e as QException).status === "404")
+               if ((e as QException).status === 404)
                {
                   setNotFoundMessage("Data bag data could not be found.");
                   return;
