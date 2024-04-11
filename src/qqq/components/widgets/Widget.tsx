@@ -165,32 +165,37 @@ export class HeaderIcon extends LabelComponent
 
 
 /*******************************************************************************
- **
+ ** a link (actually a button) for in a widget's header
  *******************************************************************************/
-export class HeaderLinkButton extends LabelComponent
+interface HeaderLinkButtonComponentProps
 {
    label: string;
    onClickCallback: () => void;
-
-
-   constructor(label: string, onClickCallback: () => void)
-   {
-      super();
-      this.label = label;
-      this.onClickCallback = onClickCallback;
-   }
-
-   render = (args: LabelComponentRenderArgs): JSX.Element =>
-   {
-      return (
-         <Button onClick={() => this.onClickCallback()} sx={{p: 0}} disableRipple>
-            <Typography display="inline" textTransform="none" fontSize={"1.125rem"}>
-               {this.label}
-            </Typography>
-         </Button>
-      );
-   };
+   disabled?: boolean;
+   disabledTooltip?: string;
 }
+
+HeaderLinkButtonComponent.defaultProps = {
+   disabled: false,
+   disabledTooltip: null
+};
+
+export function HeaderLinkButtonComponent({label, onClickCallback, disabled, disabledTooltip}: HeaderLinkButtonComponentProps): JSX.Element
+{
+   return (
+      <Tooltip title={disabledTooltip}>
+         <span>
+            <Button disabled={disabled} onClick={() => onClickCallback()} sx={{p: 0}} disableRipple>
+               <Typography display="inline" textTransform="none" fontSize={"1.125rem"}>
+                  {label}
+               </Typography>
+            </Button>
+         </span>
+      </Tooltip>
+   );
+}
+
+
 
 
 /*******************************************************************************
@@ -205,8 +210,6 @@ interface HeaderToggleComponentProps
 
 export function HeaderToggleComponent({label, getValue, onClickCallback}: HeaderToggleComponentProps): JSX.Element
 {
-   console.log(`@dk in HTComponent, getValue(): ${getValue()}`);
-
    const onClick = () =>
    {
       onClickCallback();

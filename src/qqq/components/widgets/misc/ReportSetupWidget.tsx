@@ -28,12 +28,13 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Link from "@mui/material/Link";
 import Modal from "@mui/material/Modal";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import AdvancedQueryPreview from "qqq/components/query/AdvancedQueryPreview";
-import Widget, {HeaderLinkButton, LabelComponent} from "qqq/components/widgets/Widget";
+import Widget, {HeaderLinkButtonComponent} from "qqq/components/widgets/Widget";
 import QQueryColumns, {Column} from "qqq/models/query/QQueryColumns";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
@@ -64,9 +65,14 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
 
    const [alertContent, setAlertContent] = useState(null as string);
 
+   const {helpHelpActive} = useContext(QContext);
+
    const recordQueryRef = useRef();
 
 
+   /////////////////////////////
+   // load values from record //
+   /////////////////////////////
    let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
    if(!queryFilter)
    {
@@ -79,6 +85,9 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       columns = new QQueryColumns();
    }
 
+   //////////////////////////////////////////////////////////////////////
+   // load tableMetaData initially, and if/when selected table changes //
+   //////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
       if (recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
@@ -100,10 +109,6 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       if(recordValues["tableName"])
       {
          setModalOpen(true);
-      }
-      else
-      {
-         setAlertContent("You must select a table before you can edit filters and columns")
       }
    }
 
@@ -138,12 +143,6 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       }
 
       setModalOpen(false);
-   }
-
-   const labelAdditionalComponentsRight: LabelComponent[] = []
-   if(isEditable)
-   {
-      labelAdditionalComponentsRight.push(new HeaderLinkButton("Edit Filters and Columns", openEditor))
    }
 
 
@@ -199,18 +198,45 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       return (false);
    }
 
-   ////////////////////
-   // load help text //
-   ////////////////////
-   const helpRoles = ["ALL_SCREENS"]
-   const key = "slot:reportSetupSubheader"; // todo - ??
-   const {helpHelpActive} = useContext(QContext);
-   const showHelp = helpHelpActive || hasHelpContent(widgetMetaData?.helpContent?.get(key), helpRoles);
-   const formattedHelpContent = <HelpContent helpContents={widgetMetaData?.helpContent?.get(key)} roles={helpRoles} helpContentKey={key} />;
-   // const formattedHelpContent = "Add and edit filter and columns for your report."
+   const helpRoles = isEditable ? [recordValues["id"] ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"] : ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
 
-   return (<Widget widgetMetaData={widgetMetaData} labelAdditionalComponentsRight={labelAdditionalComponentsRight}>
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function showHelp(slot: string)
+   {
+      return (helpHelpActive || hasHelpContent(widgetMetaData?.helpContent?.get(slot), helpRoles));
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function getHelpContent(slot: string)
+   {
+      const key = `widget:${widgetMetaData.name};slot:${slot}`;
+      return <HelpContent helpContents={widgetMetaData?.helpContent?.get(slot)} roles={helpRoles} helpContentKey={key} />;
+   }
+
+   /////////////////////////////////////////////////
+   // add link to widget header for opening modal //
+   /////////////////////////////////////////////////
+   const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up your report filters and columns";
+   const labelAdditionalElementsRight: JSX.Element[] = []
+   if(isEditable)
+   {
+      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />)
+   }
+
+
+   return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
       <React.Fragment>
+         {
+            showHelp("sectionSubhead") &&
+            <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"}>
+               {getHelpContent("sectionSubhead")}
+            </Box>
+         }
          <Collapse in={Boolean(alertContent)}>
             <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
          </Collapse>
@@ -224,7 +250,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                !mayShowQueryPreview() &&
                <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.5rem"} p={"0.5rem"} pb={"0.125rem"} borderRadius="0.75rem" border={`1px solid ${colors.grayLines.main}`}>
                   {
-                     isEditable && <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Filters</Link>
+                     isEditable &&
+                     <Tooltip title={selectTableFirstTooltipTitle}>
+                        <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Filters</Link>
+                     </Tooltip>
                   }
                   {
                      !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
@@ -243,7 +272,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                   !mayShowColumnsPreview() &&
                   <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
                      {
-                        isEditable && <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Columns</Link>
+                        isEditable &&
+                        <Tooltip title={selectTableFirstTooltipTitle}>
+                           <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Columns</Link>
+                        </Tooltip>
                      }
                      {
                         !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
@@ -260,9 +292,9 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                      <Card sx={{m: "2rem", p: "2rem"}}>
                         <h3>Edit Filters and Columns</h3>
                         {
-                           showHelp &&
+                           showHelp("modalSubheader") &&
                            <Box color={colors.gray.main} pb={"0.5rem"}>
-                              {formattedHelpContent}
+                              {getHelpContent("modalSubheader")}
                            </Box>
                         }
                         {

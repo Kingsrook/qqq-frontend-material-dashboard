@@ -658,3 +658,9 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
 {
    border: none;
 }
+
+.entityForm h5,
+.recordView h5
+{
+   font-weight: 500;
+}

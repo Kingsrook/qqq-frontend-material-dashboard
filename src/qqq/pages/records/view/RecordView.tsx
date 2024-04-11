@@ -845,7 +845,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    return (
       <BaseLayout>
-         <Box>
+         <Box className="recordView">
             <Grid container>
                <Grid item xs={12}>
                   <Box mb={3}>
