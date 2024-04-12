@@ -35,7 +35,7 @@ class Client
    {
       console.log(`Caught Exception: ${JSON.stringify(exception)}`);
 
-      if(exception && exception.status == "401" && Client.unauthorizedCallback)
+      if (exception && exception.status == 401 && Client.unauthorizedCallback)
       {
          console.log("This is a 401 - calling the unauthorized callback.");
          Client.unauthorizedCallback();
