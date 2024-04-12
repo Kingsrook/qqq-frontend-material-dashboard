@@ -21,8 +21,8 @@
 
 import Box from "@mui/material/Box";
 import {Theme} from "@mui/material/styles";
-import {ReactNode} from "react";
 import colors from "qqq/assets/theme/base/colors";
+import {ReactNode} from "react";
 
 // Declaring prop types for DataTableBodyCell
 interface Props
@@ -49,7 +49,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
             "@media (max-width: 1440px)": {
                fontSize: "0.875rem"
             },
-            "&:nth-child(1)": {
+            "&:nth-of-type(1)": {
                paddingLeft: "1rem"
             },
             "&:last-child": {

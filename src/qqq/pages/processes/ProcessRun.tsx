@@ -47,9 +47,6 @@ import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
 import {Form, Formik} from "formik";
 import parse from "html-react-parser";
-import React, {useContext, useEffect, useState} from "react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
-import * as Yup from "yup";
 import QContext from "QContext";
 import {QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
@@ -66,6 +63,9 @@ import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/Reco
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
+import * as Yup from "yup";
 
 
 interface Props
@@ -91,7 +91,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
    let tableVariantLocalStorageKey: string | null = null;
-   if(table)
+   if (table)
    {
       tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
    }
@@ -416,10 +416,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                //////////////////////////////////////////////////
                step.components && (step.components.map((component: QFrontendComponent, index: number) =>
                {
-                  let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"]
-                  if(component.type == QComponentType.BULK_EDIT_FORM)
+                  let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
+                  if (component.type == QComponentType.BULK_EDIT_FORM)
                   {
-                     helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+                     helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
                   }
 
                   return (
@@ -1068,7 +1068,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    const handlePermissionDenied = (e: any): boolean =>
    {
-      if ((e as QException).status === "403")
+      if ((e as QException).status === 403)
       {
          setProcessError(`You do not have permission to run this ${isReport ? "report" : "process"}.`, true);
          return (true);

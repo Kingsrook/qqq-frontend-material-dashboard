@@ -31,7 +31,7 @@ export default function TextBlock({widgetMetaData, data}: StandardBlockComponent
 {
    return (
       <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
-         <span>{data.values.text}</span>
+         <span style={{fontSize: "1.000rem"}}>{data.values.text}</span>
       </BlockElementWrapper>
    );
 }

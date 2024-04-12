@@ -34,10 +34,10 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, {useContext, useEffect, useState} from "react";
 import QContext from "QContext";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
 
 interface Props
 {
@@ -217,7 +217,7 @@ function AuditBody({tableMetaData, recordId, record}: Props): JSX.Element
          {
             if (e instanceof QException)
             {
-               if ((e as QException).status === "403")
+               if ((e as QException).status === 403)
                {
                   setStatusString("You do not have permission to view audits");
                   return;
