@@ -28,9 +28,6 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Snackbar from "@mui/material/Snackbar";
-import React, {useContext, useReducer, useState} from "react";
-import AceEditor from "react-ace";
-import {useParams} from "react-router-dom";
 import QContext from "QContext";
 import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -41,6 +38,9 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
+import React, {useContext, useReducer, useState} from "react";
+import AceEditor from "react-ace";
+import {useParams} from "react-router-dom";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 const qController = Client.getInstance();
@@ -121,7 +121,7 @@ function RecordDeveloperView({table}: Props): JSX.Element
          {
             if (e instanceof QException)
             {
-               if ((e as QException).status === "404")
+               if ((e as QException).status === 404)
                {
                   setNotFoundMessage(`${tableMetaData.label} ${id} could not be found.`);
                   return;

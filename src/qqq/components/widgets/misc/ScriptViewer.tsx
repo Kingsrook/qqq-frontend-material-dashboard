@@ -169,7 +169,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
          {
             if (e instanceof QException)
             {
-               if ((e as QException).status === "404")
+               if ((e as QException).status === 404)
                {
                   setNotFoundMessage("Script code could not be found.");
                   return;
