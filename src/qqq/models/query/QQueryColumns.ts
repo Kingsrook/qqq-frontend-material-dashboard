@@ -80,11 +80,19 @@ export default class QQueryColumns
       fields.forEach((field) =>
       {
          const column: Column = {name: field.name, isVisible: true, width: DataGridUtils.getColumnWidthForField(field, table)};
-         queryColumns.columns.push(column);
 
          if (field.name == table.primaryKeyField)
          {
             column.pinned = "left";
+
+            //////////////////////////////////////////////////
+            // insert the primary key field after __check__ //
+            //////////////////////////////////////////////////
+            queryColumns.columns.splice(1, 0, column);
+         }
+         else
+         {
+            queryColumns.columns.push(column);
          }
       });
 
@@ -391,6 +399,42 @@ export default class QQueryColumns
 
       return columnVisibilityModel;
    };
+
+
+   /*******************************************************************************
+    ** sort the columns list, so that pinned columns go to the front (left) or back
+    ** (right) of the list.
+    *******************************************************************************/
+   public sortColumnsFixingPinPositions = (): void =>
+   {
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      // do a sort to push pinned-left columns to the start, and pinned-right columns to the end //
+      // and otherwise, leave everything alone                                                   //
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      this.columns = this.columns.sort((a: Column, b: Column) =>
+      {
+         if(a.pinned == "left" && b.pinned != "left")
+         {
+            return -1;
+         }
+         else if(b.pinned == "left" && a.pinned != "left")
+         {
+            return 1;
+         }
+         else if(a.pinned == "right" && b.pinned != "right")
+         {
+            return 1;
+         }
+         else if(b.pinned == "right" && a.pinned != "right")
+         {
+            return -1;
+         }
+         else
+         {
+            return (0);
+         }
+      });
+   }
 
 }
 

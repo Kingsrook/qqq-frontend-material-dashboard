@@ -51,6 +51,7 @@ export interface PivotTableGroupByElementProps
    groupBy: PivotTableGroupBy;
    rowsOrColumns: "rows" | "columns";
    callback: () => void;
+   attemptedSubmit?: boolean;
 }
 
 
@@ -67,7 +68,7 @@ interface DragItem
 /*******************************************************************************
  **
  *******************************************************************************/
-export const PivotTableGroupByElement: FC<PivotTableGroupByElementProps> = ({id, index, dragCallback, rowsOrColumns, metaData, tableMetaData, pivotTableDefinition, groupBy, usedGroupByFieldNames, availableFieldNames, isEditable, callback}) =>
+export const PivotTableGroupByElement: FC<PivotTableGroupByElementProps> = ({id, index, dragCallback, rowsOrColumns, metaData, tableMetaData, pivotTableDefinition, groupBy, usedGroupByFieldNames, availableFieldNames, isEditable, callback, attemptedSubmit}) =>
 {
    ////////////////////////////////////////////////////////////////////////////
    // credit: https://react-dnd.github.io/react-dnd/examples/sortable/simple //
@@ -171,13 +172,15 @@ export const PivotTableGroupByElement: FC<PivotTableGroupByElementProps> = ({id,
       if (selectedField)
       {
          const label = selectedField.table.name == tableMetaData.name ? selectedField.field.label : selectedField.table.label + ": " + selectedField.field.label;
-         return (<Box mr="0.375rem" mb="0.5rem" border={`1px solid ${colors.grayLines.main}`} borderRadius="0.75rem" p="0.25rem 0.75rem">{label}</Box>);
+         return (<Box><Box display="inline-block" mr="0.375rem" mb="0.5rem" border={`1px solid ${colors.grayLines.main}`} borderRadius="0.75rem" p="0.25rem 0.75rem">{label}</Box></Box>);
       }
 
       return (<React.Fragment />);
    }
 
    preview(drop(ref));
+
+   const showError = attemptedSubmit && !groupBy.fieldName;
 
    return (<Box ref={ref} display="flex" p="0.5rem" pl="0" gap="0.5rem" alignItems="center" sx={{backgroundColor: "white", opacity: isDragging ? 0 : 1}} data-handler-id={handlerId}>
       <Box>
@@ -195,6 +198,7 @@ export const PivotTableGroupByElement: FC<PivotTableGroupByElementProps> = ({id,
             hiddenFieldNames={usedGroupByFieldNames}
             availableFieldNames={availableFieldNames}
             defaultValue={getSelectedFieldForAutoComplete(tableMetaData, groupBy.fieldName)}
+            hasError={showError}
          />
       </Box>
       <Box>

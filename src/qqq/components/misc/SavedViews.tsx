@@ -431,9 +431,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          open={Boolean(savedViewsMenu)}
          onClose={closeSavedViewsMenu}
          keepMounted
-         PaperProps={{style: {maxHeight: "calc(100vh - 200px)", minHeight: "200px"}}}
+         PaperProps={{style: {maxHeight: "calc(100vh - 200px)", minWidth: "300px"}}}
       >
-         <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>View Actions</b></MenuItem>
+         {
+            isQueryScreen &&
+            <MenuItem sx={{width: "300px"}} disabled style={{"opacity": "initial"}}><b>View Actions</b></MenuItem>
+         }
          {
             isQueryScreen && hasStorePermission &&
             <Tooltip {...menuTooltipAttribs} title={<>Save your current filters, columns and settings, for quick re-use at a later time.<br /><br />You will be prompted to enter a name if you choose this option.</>}>
@@ -471,6 +474,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
+            isQueryScreen &&
             <Tooltip {...menuTooltipAttribs} title="Create a new view of this table, resetting the filters and columns to their defaults.">
                <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
                   <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
@@ -479,7 +483,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             </Tooltip>
          }
          {
-            hasSavedReportsPermission &&
+            isQueryScreen && hasSavedReportsPermission &&
             <Tooltip {...menuTooltipAttribs} title="Create a new Saved Report using your current view of this table as a starting point.">
                <MenuItem onClick={() => handleDropdownOptionClick(NEW_REPORT_OPTION)}>
                   <ListItemIcon><Icon>article</Icon></ListItemIcon>
@@ -487,7 +491,9 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                </MenuItem>
             </Tooltip>
          }
-         <Divider/>
+         {
+            isQueryScreen && <Divider/>
+         }
          <MenuItem disabled style={{"opacity": "initial"}}><b>Your Saved Views</b></MenuItem>
          {
             savedViews && savedViews.length > 0 ? (
@@ -497,7 +503,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                   </MenuItem>
                )
             ): (
-               <MenuItem>
+               <MenuItem disabled sx={{opacity: "1 !important"}}>
                   <i>You do not have any saved views for this table.</i>
                </MenuItem>
             )
@@ -606,7 +612,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                                     }
                                  </ul>
                               </>}>
-                                 <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>{queryScreenUsage} Save View As&hellip;</Button>
+                                 <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save View As&hellip;</Button>
                               </Tooltip>
 
                               {/* vertical rule */}
@@ -618,7 +624,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                      </>
                   }
                   {
-                     currentSavedView && viewIsModified && <>
+                     isQueryScreen && currentSavedView && viewIsModified && <>
                         <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
                            <b>Unsaved Changes</b>
                            <ul style={{padding: "0.5rem 1rem"}}>
@@ -636,6 +642,34 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
 
                         <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset All Changes</Button>
                      </>
+                  }
+                  {
+                     !isQueryScreen && currentSavedView &&
+                     <Box>
+                        <Box display="inline-block" fontSize="0.875rem" fontWeight="500" sx={{position: "relative", top: "-1px"}}>
+                           {currentSavedView.values.get("label")}
+                        </Box>
+
+                        {
+                           viewIsModified &&
+                           <>
+                              <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
+                                 <b>Changes</b>
+                                 <ul style={{padding: "0.5rem 1rem"}}>
+                                    {
+                                       viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
+                                    }
+                                 </ul></>}>
+                                 <Box display="inline" ml="0.25rem" mr="0.25rem" sx={{...linkButtonStyle, p: 0, cursor: "default", position: "relative", top: "-1px"}}>with {viewDiffs.length} Change{viewDiffs.length == 1 ? "" : "s"}</Box>
+                              </Tooltip>
+                              <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset Changes</Button>
+                           </>
+                        }
+
+                        {/* vertical rule */}
+                        <Box display="inline-block" ml="0.25rem" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset to New View</Button>
+                     </Box>
                   }
                </Box>
             </Box>

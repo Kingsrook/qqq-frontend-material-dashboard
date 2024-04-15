@@ -33,10 +33,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, {SelectChangeEvent} from "@mui/material/Select/Select";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import React, {ReactNode, SyntheticEvent, useState} from "react";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
+import React, {ReactNode, SyntheticEvent, useState} from "react";
 
 
 export enum ValueMode
@@ -484,7 +484,9 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                : <span />}
          </Box>
          <Box display="inline-block" width={250} className="fieldColumn">
-            <FieldAutoComplete id={`field-${id}`} metaData={metaData} tableMetaData={tableMetaData} defaultValue={defaultFieldValue} handleFieldChange={handleFieldChange} />
+            <FieldAutoComplete id={`field-${id}`} metaData={metaData} tableMetaData={tableMetaData} defaultValue={defaultFieldValue} handleFieldChange={handleFieldChange}
+               autocompleteSlotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
+            />
          </Box>
          <Box display="inline-block" width={200} className="operatorColumn">
             <Tooltip title={criteria.fieldName == null ? "You must select a field before you can select an operator" : null} enterDelay={tooltipEnterDelay}>

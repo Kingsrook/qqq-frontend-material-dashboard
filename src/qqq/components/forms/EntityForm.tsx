@@ -46,6 +46,7 @@ import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
 import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
+import {FieldRule, FieldRuleAction, FieldRuleTrigger} from "qqq/models/fields/FieldRules";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
@@ -108,6 +109,7 @@ function EntityForm(props: Props): JSX.Element
 
    const [asyncLoadInited, setAsyncLoadInited] = useState(false);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+   const [fieldRules, setFieldRules] = useState([] as FieldRule[]);
    const [metaData, setMetaData] = useState(null as QInstance);
    const [record, setRecord] = useState(null as QRecord);
    const [tableSections, setTableSections] = useState(null as QTableSection[]);
@@ -427,6 +429,32 @@ function EntityForm(props: Props): JSX.Element
    }
 
 
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function setupFieldRules(tableMetaData: QTableMetaData)
+   {
+      const mdbMetaData = tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
+      if(!mdbMetaData)
+      {
+         return;
+      }
+
+      if(mdbMetaData.fieldRules)
+      {
+         const newFieldRules: FieldRule[] = [];
+         for (let i = 0; i < mdbMetaData.fieldRules.length; i++)
+         {
+            newFieldRules.push(mdbMetaData.fieldRules[i]);
+         }
+         setFieldRules(newFieldRules);
+      }
+   }
+
+
+   //////////////////
+   // initial load //
+   //////////////////
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -434,6 +462,8 @@ function EntityForm(props: Props): JSX.Element
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
+
+         setupFieldRules(tableMetaData);
 
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
@@ -929,15 +959,6 @@ function EntityForm(props: Props): JSX.Element
    };
 
 
-   // todo - get from meta data!
-   const fieldRules =
-   [
-      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "columnsJson"},
-      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "queryFilterJson"},
-      {trigger: "onChange", sourceField: "tableName", action: "clearOtherField", targetField: "pivotTableJson"}
-   ]
-
-
    /*******************************************************************************
     ** process a form-field having a changed value (e.g., apply field rules).
     *******************************************************************************/
@@ -945,11 +966,11 @@ function EntityForm(props: Props): JSX.Element
    {
       for (let fieldRule of fieldRules)
       {
-         if(fieldRule.trigger == "onChange" && fieldRule.sourceField == fieldName)
+         if(fieldRule.trigger == FieldRuleTrigger.ON_CHANGE && fieldRule.sourceField == fieldName)
          {
             switch (fieldRule.action)
             {
-               case "clearOtherField":
+               case FieldRuleAction.CLEAR_TARGET_FIELD:
                   console.log(`Clearing value from [${fieldRule.targetField}] due to change in [${fieldName}]`);
                   valueChangesToMake[fieldRule.targetField] = null;
                   break;

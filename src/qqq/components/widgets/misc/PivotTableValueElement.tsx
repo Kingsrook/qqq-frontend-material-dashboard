@@ -20,6 +20,8 @@
  */
 
 
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -31,8 +33,8 @@ import type {Identifier, XYCoord} from "dnd-core";
 import colors from "qqq/assets/theme/base/colors";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import {DragItemTypes, fieldAutoCompleteTextFieldSX, getSelectedFieldForAutoComplete, xIconButtonSX} from "qqq/components/widgets/misc/PivotTableSetupWidget";
-import {PivotTableDefinition, PivotTableFunction, pivotTableFunctionLabels, PivotTableValue} from "qqq/models/misc/PivotTableDefinitionModels";
-import React, {FC, useRef} from "react";
+import {functionsPerFieldType, PivotTableDefinition, pivotTableFunctionLabels, PivotTableValue} from "qqq/models/misc/PivotTableDefinitionModels";
+import React, {FC, useReducer, useRef, useState} from "react";
 import {useDrag, useDrop} from "react-dnd";
 
 
@@ -51,6 +53,7 @@ export interface PivotTableValueElementProps
    isEditable: boolean;
    value: PivotTableValue;
    callback: () => void;
+   attemptedSubmit?: boolean;
 }
 
 
@@ -68,8 +71,11 @@ interface DragItem
 /*******************************************************************************
  ** Element to render 1 pivot-table value.
  *******************************************************************************/
-export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, index, dragCallback, metaData, tableMetaData, pivotTableDefinition, availableFieldNames, value, isEditable, callback}) =>
+export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, index, dragCallback, metaData, tableMetaData, pivotTableDefinition, availableFieldNames, value, isEditable, callback, attemptedSubmit}) =>
 {
+   const [defaultFunctionValue, setDefaultFunctionValue] = useState(null);
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
    ////////////////////////////////////////////////////////////////////////////
    // credit: https://react-dnd.github.io/react-dnd/examples/sortable/simple //
    ////////////////////////////////////////////////////////////////////////////
@@ -148,23 +154,67 @@ export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, ind
 
 
    /*******************************************************************************
+    **
+    *******************************************************************************/
+   function getFunctionsForField(field: QFieldMetaData)
+   {
+      if(field)
+      {
+         let type = field.type;
+         if (field.possibleValueSourceName)
+         {
+            type = QFieldType.STRING;
+         }
+
+         if(functionsPerFieldType[type])
+         {
+            return (functionsPerFieldType[type]);
+         }
+      }
+
+      //////////////////////////////////////
+      // return broadest list if no field //
+      //////////////////////////////////////
+      return (functionsPerFieldType[QFieldType.INTEGER]);
+   }
+
+
+   /*******************************************************************************
     ** event handler for user selecting a field
     *******************************************************************************/
-   const handleFieldChange = (event: any, newValue: any, reason: string) =>
+   function handleFieldChange(event: any, newValue: any, reason: string)
    {
       value.fieldName = newValue ? newValue.fieldName : null;
+
+      if(newValue)
+      {
+         /////////////////////////////////////////////////////////////////////////////////////////
+         // if newly selected field doesn't have the currently selected function, then clear it //
+         /////////////////////////////////////////////////////////////////////////////////////////
+         const newSelectedField = getSelectedFieldForAutoComplete(tableMetaData, newValue.fieldName);
+         if (newSelectedField)
+         {
+            if(getFunctionsForField(newSelectedField.field).indexOf(value.function) == -1)
+            {
+               setDefaultFunctionValue(null);
+               handleFunctionChange(null, null, null);
+               forceUpdate();
+            }
+         }
+      }
+
       callback();
-   };
+   }
 
 
    /*******************************************************************************
     ** event handler for user selecting a function
     *******************************************************************************/
-   const handleFunctionChange = (event: any, newValue: any, reason: string) =>
+   function handleFunctionChange(event: any, newValue: any, reason: string)
    {
       value.function = newValue ? newValue.id : null;
       callback();
-   };
+   }
 
 
    /*******************************************************************************
@@ -176,65 +226,43 @@ export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, ind
       callback();
    }
 
+   const selectedField = getSelectedFieldForAutoComplete(tableMetaData, value.fieldName);
 
    /////////////////////////////////////////////////////////////////////
    // if we're not on an edit screen, return a simpler read-only view //
    /////////////////////////////////////////////////////////////////////
    if (!isEditable)
    {
-      const selectedField = getSelectedFieldForAutoComplete(tableMetaData, value.fieldName);
+      let label = "--";
       if (selectedField && value.function)
       {
-         const label = selectedField.table.name == tableMetaData.name ? selectedField.field.label : selectedField.table.label + ": " + selectedField.field.label;
-         return (<Box mr="0.375rem" mb="0.5rem" border={`1px solid ${colors.grayLines.main}`} borderRadius="0.75rem" p="0.25rem 0.75rem">{pivotTableFunctionLabels[value.function]} of {label}</Box>);
+         label = pivotTableFunctionLabels[value.function] + " of " + (selectedField.table.name == tableMetaData.name ? selectedField.field.label : selectedField.table.label + ": " + selectedField.field.label);
       }
 
-      return (<React.Fragment />);
+      return (<Box><Box display="inline-block" mr="0.375rem" mb="0.5rem" border={`1px solid ${colors.grayLines.main}`} borderRadius="0.75rem" p="0.25rem 0.75rem">{label}</Box></Box>);
    }
 
    ///////////////////////////////////////////////////////////////////////////////
    // figure out functions to display in drop down, plus selected/default value //
    ///////////////////////////////////////////////////////////////////////////////
    const functionOptions: any[] = [];
-   let defaultFunctionValue = null;
-   for (let pivotTableFunctionKey in PivotTableFunction)
+   const availableFunctions = getFunctionsForField(selectedField?.field);
+   for (let pivotTableFunction of availableFunctions)
    {
-      // @ts-ignore any?
-      const label = "" + pivotTableFunctionLabels[pivotTableFunctionKey];
-      const option = {id: pivotTableFunctionKey, label: label};
+      const label = pivotTableFunctionLabels[pivotTableFunction];
+      const option = {id: pivotTableFunction, label: label};
       functionOptions.push(option);
 
-      if (option.id == value.function)
+      if (option.id == value.function && JSON.stringify(option) != JSON.stringify(defaultFunctionValue))
       {
-         defaultFunctionValue = option;
+         setDefaultFunctionValue(option);
       }
    }
 
    drag(drop(ref));
 
-   /*
-   return (<Box ref={ref} display="flex" p="0.5rem" pl="0" gap="0.5rem" alignItems="center" sx={{backgroundColor: "white", opacity: isDragging ? 0 : 1}} data-handler-id={handlerId}>
-      <Box sx={{whiteSpace: "nowrap"}}>
-         <Icon sx={{cursor: "ns-resize"}}>drag_indicator</Icon>
-      </Box>
-      <Box width="100%">
-         <FieldAutoComplete
-            id={`${rowsOrColumns}-${index}`}
-            label={null}
-            variant="outlined"
-            textFieldSX={fieldAutoCompleteTextFieldSX}
-            metaData={metaData}
-            tableMetaData={tableMetaData}
-            handleFieldChange={handleFieldChange}
-            hiddenFieldNames={usedGroupByFieldNames}
-            defaultValue={getSelectedFieldForAutoComplete(tableMetaData, groupBy.fieldName)}
-         />
-      </Box>
-      <Box>
-         <Button sx={xIconButtonSX} onClick={() => removeGroupBy(index, rowsOrColumns)}><Icon>clear</Icon></Button>
-      </Box>
-   </Box>);
-    */
+   const showValueError = attemptedSubmit && !value.fieldName;
+   const showFunctionError = attemptedSubmit && !value.function;
 
    return (<Box ref={ref} display="flex" p="0.5rem" pl="0" gap="0.5rem" alignItems="center" sx={{backgroundColor: "white", opacity: isDragging ? 0 : 1}} data-handler-id={handlerId}>
       <Box>
@@ -250,25 +278,34 @@ export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, ind
             tableMetaData={tableMetaData}
             handleFieldChange={handleFieldChange}
             availableFieldNames={availableFieldNames}
-            defaultValue={getSelectedFieldForAutoComplete(tableMetaData, value.fieldName)}
+            defaultValue={selectedField}
+            hasError={showValueError}
          />
       </Box>
-      <Box width="330px">
+      <Box width="370px">
          <Autocomplete
-            id={`values-field-${index}`}
-            renderInput={(params) => (<TextField {...params} label={null} variant="outlined" sx={fieldAutoCompleteTextFieldSX} autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
+            id={`values-function-${index}`}
+            renderInput={(params) =>
+            {
+               const inputProps = params.InputProps;
+               const originalEndAdornment = inputProps.endAdornment;
+               inputProps.endAdornment = <Box>
+                  {showFunctionError && <Icon color="error">error_outline</Icon>}
+                  {originalEndAdornment}
+               </Box>;
+
+               return (<TextField {...params} label={null} variant="outlined" sx={fieldAutoCompleteTextFieldSX} autoComplete="off" type="search" InputProps={inputProps} />)
+            }}
             // @ts-ignore
-            defaultValue={defaultFunctionValue}
+            value={defaultFunctionValue}
+            inputValue={defaultFunctionValue?.label ?? ""}
             options={functionOptions}
             onChange={handleFunctionChange}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             getOptionLabel={(option) => option.label}
-            // todo? renderOption={(props, option, state) => renderFieldOption(props, option, state)}
             autoSelect={true}
             autoHighlight={true}
             disableClearable
-            // slotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
-            // {...alsoOpen}
          />
       </Box>
       <Box>

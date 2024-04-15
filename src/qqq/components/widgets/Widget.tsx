@@ -206,9 +206,16 @@ interface HeaderToggleComponentProps
    label: string;
    getValue: () => boolean;
    onClickCallback: () => void;
+   disabled?: boolean;
+   disabledTooltip?: string;
 }
 
-export function HeaderToggleComponent({label, getValue, onClickCallback}: HeaderToggleComponentProps): JSX.Element
+HeaderToggleComponent.defaultProps = {
+   disabled: false,
+   disabledTooltip: null
+};
+
+export function HeaderToggleComponent({label, getValue, onClickCallback, disabled, disabledTooltip}: HeaderToggleComponentProps): JSX.Element
 {
    const onClick = () =>
    {
@@ -217,9 +224,13 @@ export function HeaderToggleComponent({label, getValue, onClickCallback}: Header
 
    return (
       <Box alignItems="baseline" mr="-0.75rem">
-         <InputLabel sx={{fontSize: "1.125rem", px: "0 !important", cursor: "pointer"}} unselectable="on">
-            {label} <Switch checked={getValue()} onClick={onClick} />
-         </InputLabel>
+         <Tooltip title={disabledTooltip}>
+            <span>
+               <InputLabel sx={{fontSize: "1.125rem", px: "0 !important", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.65 : 1}} unselectable="on">
+                  {label} <Switch disabled={disabled} checked={getValue()} onClick={onClick} />
+               </InputLabel>
+            </span>
+         </Tooltip>
       </Box>
    );
 }

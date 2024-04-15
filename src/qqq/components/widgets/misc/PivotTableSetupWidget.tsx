@@ -23,19 +23,25 @@
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
+import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
+import Typography from "@mui/material/Typography";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
+import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {PivotTableGroupByElement} from "qqq/components/widgets/misc/PivotTableGroupByElement";
 import {PivotTableValueElement} from "qqq/components/widgets/misc/PivotTableValueElement";
+import {buttonSX, unborderedButtonSX} from "qqq/components/widgets/misc/ReportSetupWidget";
 import Widget, {HeaderToggleComponent} from "qqq/components/widgets/Widget";
 import {PivotObjectKey, PivotTableDefinition, PivotTableFunction, pivotTableFunctionLabels, PivotTableGroupBy, PivotTableValue} from "qqq/models/misc/PivotTableDefinitionModels";
 import QQueryColumns from "qqq/models/query/QQueryColumns";
@@ -50,22 +56,6 @@ export const DragItemTypes =
       ROW: "row",
       COLUMN: "column",
       VALUE: "value"
-   };
-
-export const buttonSX =
-   {
-      border: `1px solid ${colors.grayLines.main} !important`,
-      borderRadius: "0.75rem",
-      textTransform: "none",
-      fontSize: "1rem",
-      fontWeight: "400",
-      width: "160px",
-      paddingLeft: 0,
-      paddingRight: 0,
-      color: colors.dark.main,
-      "&:hover": {color: colors.dark.main},
-      "&:focus": {color: colors.dark.main},
-      "&:focus:not(:hover)": {color: colors.dark.main},
    };
 
 export const xIconButtonSX =
@@ -139,11 +129,20 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    const [metaData, setMetaData] = useState(null as QInstance);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
+   const [modalOpen, setModalOpen] = useState(false);
    const [enabled, setEnabled] = useState(!!recordValues["usePivotTable"]);
+   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+   const [errorAlert, setErrorAlert] = useState(null as string);
+
+   const [pivotTableDefinition, setPivotTableDefinition] = useState(null as PivotTableDefinition);
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-   const [pivotTableDefinition, setPivotTableDefinition] = useState(null as PivotTableDefinition);
+   ///////////////////////////////////////////////////////////////////////////////////
+   // this is a copy of pivotTableDefinition, that we'll render in the modal.       //
+   // then on-save, we'll move it to pivotTableDefinition, e.g., the actual record. //
+   ///////////////////////////////////////////////////////////////////////////////////
+   const [modalPivotTableDefinition, setModalPivotTableDefinition] = useState(null as PivotTableDefinition);
 
    const [usedGroupByFieldNames, setUsedGroupByFieldNames] = useState([] as string[]);
    const [availableFieldNames, setAvailableFieldNames] = useState([] as string[]);
@@ -195,9 +194,9 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
          updateUsedGroupByFieldNames(originalPivotTableDefinition);
       }
 
-      if(recordValues["columnsJson"])
+      if (recordValues["columnsJson"])
       {
-         updateAvailableFieldNames(JSON.parse(recordValues["columnsJson"]) as QQueryColumns)
+         updateAvailableFieldNames(JSON.parse(recordValues["columnsJson"]) as QQueryColumns);
       }
 
       (async () =>
@@ -251,6 +250,11 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       const newEnabled = !!!getEnabled();
       setEnabled(newEnabled);
       onSaveCallback({usePivotTable: newEnabled});
+
+      if (!newEnabled)
+      {
+         onSaveCallback({pivotTableJson: null});
+      }
    }
 
 
@@ -268,13 +272,13 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    function addGroupBy(rowsOrColumns: "rows" | "columns")
    {
-      if (!pivotTableDefinition[rowsOrColumns])
+      if (!modalPivotTableDefinition[rowsOrColumns])
       {
-         pivotTableDefinition[rowsOrColumns] = [];
+         modalPivotTableDefinition[rowsOrColumns] = [];
       }
 
-      pivotTableDefinition[rowsOrColumns].push(new PivotTableGroupBy());
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
+      modalPivotTableDefinition[rowsOrColumns].push(new PivotTableGroupBy());
+      validateForm()
       forceUpdate();
    }
 
@@ -284,8 +288,8 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    function groupByChangedCallback()
    {
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
-      updateUsedGroupByFieldNames();
+      updateUsedGroupByFieldNames(modalPivotTableDefinition);
+      validateForm()
       forceUpdate();
    }
 
@@ -295,13 +299,13 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    function addValue()
    {
-      if (!pivotTableDefinition.values)
+      if (!modalPivotTableDefinition.values)
       {
-         pivotTableDefinition.values = [];
+         modalPivotTableDefinition.values = [];
       }
 
-      pivotTableDefinition.values.push(new PivotTableValue());
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
+      modalPivotTableDefinition.values.push(new PivotTableValue());
+      validateForm()
       forceUpdate();
    }
 
@@ -311,8 +315,8 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    function removeValue(index: number)
    {
-      pivotTableDefinition.values.splice(index, 1);
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
+      modalPivotTableDefinition.values.splice(index, 1);
+      validateForm()
       forceUpdate();
    }
 
@@ -346,7 +350,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       const fieldNames: string[] = [];
       for (let i = 0; i < columns?.columns?.length; i++)
       {
-         if(columns.columns[i].isVisible)
+         if (columns.columns[i].isVisible)
          {
             fieldNames.push(columns.columns[i].name);
          }
@@ -375,13 +379,11 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       const handleFieldChange = (event: any, newValue: any, reason: string) =>
       {
          value.fieldName = newValue ? newValue.fieldName : null;
-         onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
       };
 
       const handleFunctionChange = (event: any, newValue: any, reason: string) =>
       {
          value.function = newValue ? newValue.id : null;
-         onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
       };
 
       const functionOptions: any[] = [];
@@ -446,14 +448,13 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    const moveGroupBy = useCallback((rowsOrColumns: "rows" | "columns", dragIndex: number, hoverIndex: number) =>
    {
-      const array = pivotTableDefinition[rowsOrColumns];
+      const array = modalPivotTableDefinition[rowsOrColumns];
       const dragItem = array[dragIndex];
       array.splice(dragIndex, 1);
       array.splice(hoverIndex, 0, dragItem);
 
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
       forceUpdate();
-   }, [pivotTableDefinition]);
+   }, [modalPivotTableDefinition]);
 
 
    /*******************************************************************************
@@ -461,15 +462,21 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
     *******************************************************************************/
    const moveValue = useCallback((dragIndex: number, hoverIndex: number) =>
    {
-      const array = pivotTableDefinition.values;
+      const array = modalPivotTableDefinition.values;
       const dragItem = array[dragIndex];
       array.splice(dragIndex, 1);
       array.splice(hoverIndex, 0, dragItem);
 
-      onSaveCallback({pivotTableJson: JSON.stringify(pivotTableDefinition)});
       forceUpdate();
-   }, [pivotTableDefinition]);
+   }, [modalPivotTableDefinition]);
 
+
+   const noTable = (tableMetaData == null);
+   const noColumns = (!availableFieldNames || availableFieldNames.length == 0);
+
+   const selectTableFirstTooltipTitle = noTable ? "You must select a table before you can set up your pivot table" : null;
+   const selectColumnsFirstTooltipTitle = noColumns ? "You must set up your report's Columns before you can set up your Pivot Table" : null;
+   const editPopupDisabled = noTable || noColumns;
 
    /////////////////////////////////////////////////////////////
    // add toggle component to widget header for editable mode //
@@ -477,167 +484,366 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
-      labelAdditionalElementsRight.push(<HeaderToggleComponent label="Use Pivot Table?" getValue={() => enabled} onClickCallback={toggleEnabled} />);
+      labelAdditionalElementsRight.push(<HeaderToggleComponent disabled={editPopupDisabled} disabledTooltip={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle} label="Use Pivot Table?" getValue={() => enabled} onClickCallback={toggleEnabled} />);
    }
-
-   const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up a pivot table";
 
 
    /*******************************************************************************
     ** render a group-by (row or column)
     *******************************************************************************/
-   const renderGroupBy = useCallback(
-      (groupBy: PivotTableGroupBy, rowsOrColumns: "rows" | "columns", index: number) =>
-      {
-         return (
-            <PivotTableGroupByElement
-               key={groupBy.fieldName}
-               index={index}
-               id={`${groupBy.key}`}
-               dragCallback={moveGroupBy}
-               metaData={metaData}
-               tableMetaData={tableMetaData}
-               pivotTableDefinition={pivotTableDefinition}
-               usedGroupByFieldNames={usedGroupByFieldNames}
-               availableFieldNames={availableFieldNames}
-               isEditable={isEditable}
-               groupBy={groupBy}
-               rowsOrColumns={rowsOrColumns}
-               callback={groupByChangedCallback}
-            />
-         );
-      },
-      [tableMetaData, usedGroupByFieldNames, availableFieldNames],
+   const renderGroupBy = useCallback((groupBy: PivotTableGroupBy, rowsOrColumns: "rows" | "columns", index: number, forModal: boolean) =>
+   {
+      return (
+         <PivotTableGroupByElement
+            key={groupBy.fieldName}
+            index={index}
+            id={`${groupBy.key}`}
+            dragCallback={moveGroupBy}
+            metaData={metaData}
+            tableMetaData={tableMetaData}
+            pivotTableDefinition={forModal ? modalPivotTableDefinition : pivotTableDefinition}
+            usedGroupByFieldNames={usedGroupByFieldNames}
+            availableFieldNames={availableFieldNames}
+            isEditable={isEditable && forModal}
+            groupBy={groupBy}
+            rowsOrColumns={rowsOrColumns}
+            callback={groupByChangedCallback}
+            attemptedSubmit={attemptedSubmit}
+         />
+      );
+   },
+   [tableMetaData, usedGroupByFieldNames, availableFieldNames],
    );
 
 
    /*******************************************************************************
     ** render a pivot-table value (row or column)
     *******************************************************************************/
-   const renderValue = useCallback(
-      (value: PivotTableValue, index: number) =>
-      {
-         return (
-            <PivotTableValueElement
-               key={value.key}
-               index={index}
-               id={`${value.key}`}
-               dragCallback={moveValue}
-               metaData={metaData}
-               tableMetaData={tableMetaData}
-               pivotTableDefinition={pivotTableDefinition}
-               availableFieldNames={availableFieldNames}
-               isEditable={isEditable}
-               value={value}
-               callback={groupByChangedCallback}
-            />
-         );
-      },
-      [tableMetaData, usedGroupByFieldNames, availableFieldNames],
+   const renderValue = useCallback((value: PivotTableValue, index: number, forModal: boolean) =>
+   {
+      return (
+         <PivotTableValueElement
+            key={value.key}
+            index={index}
+            id={`${value.key}`}
+            dragCallback={moveValue}
+            metaData={metaData}
+            tableMetaData={tableMetaData}
+            pivotTableDefinition={forModal ? modalPivotTableDefinition : pivotTableDefinition}
+            availableFieldNames={availableFieldNames}
+            isEditable={isEditable && forModal}
+            value={value}
+            callback={groupByChangedCallback}
+            attemptedSubmit={attemptedSubmit}
+         />
+      );
+   },
+   [tableMetaData, usedGroupByFieldNames, availableFieldNames],
    );
 
 
-   return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
-      {enabled && pivotTableDefinition &&
-         <DndProvider backend={HTML5Backend}>
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function openEditor()
+   {
+      if (recordValues["tableName"])
+      {
+         setModalPivotTableDefinition(Object.assign({}, pivotTableDefinition));
+         setModalOpen(true);
+         setAttemptedSubmit(false);
+      }
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function closeEditor(event?: {}, reason?: "backdropClick" | "escapeKeyDown")
+   {
+      if (reason == "backdropClick" || reason == "escapeKeyDown")
+      {
+         return;
+      }
+
+      setModalOpen(false);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function renderGroupBys(forModal: boolean, rowsOrColumns: "rows" | "columns")
+   {
+      const ptd = forModal ? modalPivotTableDefinition : pivotTableDefinition;
+
+      return <>
+         <h5>{rowsOrColumns == "rows" ? "Rows" : "Columns"}</h5>
+         <Box fontSize="1rem">
             {
-               showHelp("sectionSubhead") &&
-               <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"}>
-                  {getHelpContent("sectionSubhead")}
-               </Box>
+               tableMetaData && (<div>{ptd[rowsOrColumns]?.map((groupBy, i) => renderGroupBy(groupBy, rowsOrColumns, i, forModal))}</div>)
             }
-            <Grid container spacing="16">
-
-               <Grid item lg={4} md={6} xs={12}>
-                  <h5>Rows</h5>
-                  <Box fontSize="1rem">
-                     {
-                        tableMetaData && (<div>{pivotTableDefinition?.rows?.map((row, i) => renderGroupBy(row, "rows", i))}</div>)
-                     }
-                  </Box>
-                  {
-                     isEditable &&
-                     <Box mt="0.375rem">
-                        <Tooltip title={selectTableFirstTooltipTitle}>
-                           <span><Button disabled={tableMetaData == null} sx={buttonSX} onClick={() => addGroupBy("rows")}>+ Add new row</Button></span>
-                        </Tooltip>
-                     </Box>
-                  }
-               </Grid>
-
-               <Grid item lg={4} md={6} xs={12}>
-                  <h5>Columns</h5>
-                  <Box fontSize="1rem">
-                     {
-                        tableMetaData && (<div>{pivotTableDefinition?.columns?.map((column, i) => renderGroupBy(column, "columns", i))}</div>)
-                     }
-                  </Box>
-                  {
-                     isEditable &&
-                     <Box mt="0.375rem">
-                        <Tooltip title={selectTableFirstTooltipTitle}>
-                           <span><Button disabled={tableMetaData == null} sx={buttonSX} onClick={() => addGroupBy("columns")}>+ Add new column</Button></span>
-                        </Tooltip>
-                     </Box>
-                  }
-               </Grid>
-
-               <Grid item lg={4} md={6} xs={12}>
-                  <h5>Values</h5>
-                  <Box fontSize="1rem">
-                     {
-                        tableMetaData && (<div>{pivotTableDefinition?.values?.map((value, i) => renderValue(value, i))}</div>)
-                     }
-                  </Box>
-                  {
-                     isEditable &&
-                     <Box mt="0.375rem">
-                        <Tooltip title={selectTableFirstTooltipTitle}>
-                           <span><Button disabled={tableMetaData == null} sx={buttonSX} onClick={addValue}>+ Add new value</Button></span>
-                        </Tooltip>
-                     </Box>
-                  }
-               </Grid>
-
-            </Grid>
-            {/*
-            <Box mt={"1rem"}>
-               <h5>Preview</h5>
-               <table>
-                  <tr>
-                     <th style={{textAlign: "left", fontSize: "0.875rem"}}></th>
-                     <th style={{textAlign: "left", fontSize: "0.875rem"}}>Column Labels</th>
-                  </tr>
-                  {
-                     pivotTableDefinition?.columns?.map((column, i) =>
-                        (
-                           <tr key={column.key}>
-                              <th style={{textAlign: "left", fontSize: "0.875rem"}}></th>
-                              <th style={{textAlign: "left", fontSize: "0.875rem"}}>{column.fieldName}</th>
-                           </tr>
-                        ))
-                  }
-                  <tr>
-                     <th style={{textAlign: "left", fontSize: "0.875rem"}}>Row Labels</th>
-                     {
-                        pivotTableDefinition?.values?.map((value, i) =>
-                           (
-                              <th key={value.key} style={{textAlign: "left", fontSize: "0.875rem"}}>{value.function} of {value.fieldName}</th>
-                           ))
-                     }
-                  </tr>
-                  {
-                     pivotTableDefinition?.rows?.map((row, i) =>
-                        (
-                           <tr key={row.key}>
-                              <th style={{textAlign: "left", fontSize: "0.875rem", paddingLeft: (i * 1) + "rem"}}>{row.fieldName}</th>
-                           </tr>
-                        ))
-                  }
-               </table>
+         </Box>
+         {
+            (forModal || (isEditable && !ptd[rowsOrColumns]?.length)) &&
+            <Box mt={forModal ? "0.5rem" : "0"} mb="1rem">
+               <Tooltip title={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle}>
+                  <span><Button disabled={editPopupDisabled} sx={forModal ? buttonSX : unborderedButtonSX} onClick={() => forModal ? addGroupBy(rowsOrColumns) : openEditor()}>+ Add new {rowsOrColumns == "rows" ? "row" : "column"}</Button></span>
+               </Tooltip>
             </Box>
-            */}
-         </DndProvider>
+         }
+         {
+            !isEditable && !forModal && !ptd[rowsOrColumns]?.length &&
+            <Box color={colors.gray.main} fontSize="1rem">Your pivot table has no {rowsOrColumns}.</Box>
+         }
+      </>;
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function renderValues(forModal: boolean)
+   {
+      const ptd = forModal ? modalPivotTableDefinition : pivotTableDefinition;
+
+      return <>
+         <h5>Values</h5>
+         <Box fontSize="1rem">
+            {
+               tableMetaData && (<div>{ptd?.values?.map((value, i) => renderValue(value, i, forModal))}</div>)
+            }
+         </Box>
+         {
+            (forModal || (isEditable && !ptd?.values?.length)) &&
+            <Box mt={forModal ? "0.5rem" : "0"} mb="1rem">
+               <Tooltip title={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle}>
+                  <span><Button disabled={editPopupDisabled} sx={forModal ? buttonSX : unborderedButtonSX} onClick={() => forModal ? addValue() : openEditor()}>+ Add new value</Button></span>
+               </Tooltip>
+            </Box>
+         }
+         {
+            !isEditable && !forModal && !ptd?.values?.length &&
+            <Box color={colors.gray.main} fontSize="1rem">Your pivot table has no values.</Box>
+         }
+      </>;
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function validateForm(submitting: boolean = false)
+   {
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // if this isn't a call from the on-submit handler, and we haven't previously attempted a submit, then return w/o setting any alerts //
+      // this is like a version of considering "touched"...                                                                                //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      if(!submitting && !attemptedSubmit)
+      {
+         return;
+      }
+
+      let missingValues = 0;
+
+      for (let i = 0; i < modalPivotTableDefinition?.rows?.length; i++)
+      {
+         if (!modalPivotTableDefinition.rows[i].fieldName)
+         {
+            missingValues++;
+         }
+      }
+
+      for (let i = 0; i < modalPivotTableDefinition?.columns?.length; i++)
+      {
+         if (!modalPivotTableDefinition.columns[i].fieldName)
+         {
+            missingValues++;
+         }
+      }
+
+      for (let i = 0; i < modalPivotTableDefinition?.values?.length; i++)
+      {
+         if (!modalPivotTableDefinition.values[i].fieldName)
+         {
+            missingValues++;
+         }
+         if (!modalPivotTableDefinition.values[i].function)
+         {
+            missingValues++;
+         }
+      }
+
+      if (missingValues == 0)
+      {
+         setErrorAlert(null);
+
+         ////////////////////////////////////////////////////////////////////////////////////
+         // this is to catch the case of - user attempted to submit, and there were errors //
+         // now they've fixed 'em - so go back to a 'clean' state - so if they add more    //
+         // boxes, they won't immediately show errors, until a re-submit                   //
+         ////////////////////////////////////////////////////////////////////////////////////
+         if(attemptedSubmit)
+         {
+            setAttemptedSubmit(false);
+         }
+         return (false);
+      }
+
+      setErrorAlert(`Missing value in ${missingValues} field${missingValues == 1 ? "" : "s"}.`);
+      return (true);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function saveClicked()
+   {
+      setAttemptedSubmit(true);
+
+      if (validateForm(true))
+      {
+         return;
+      }
+
+      if (!onSaveCallback)
+      {
+         console.log("onSaveCallback was not defined");
+         return;
+      }
+
+      setPivotTableDefinition(Object.assign({}, modalPivotTableDefinition));
+      updateUsedGroupByFieldNames(modalPivotTableDefinition);
+
+      onSaveCallback({pivotTableJson: JSON.stringify(modalPivotTableDefinition)});
+
+      closeEditor();
+   }
+
+
+   ////////////
+   // render //
+   ////////////
+   return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
+      {
+         <React.Fragment>
+            <DndProvider backend={HTML5Backend}>
+               {
+                  enabled &&
+                  <Box display="flex" justifyContent="space-between">
+                     <Box>
+                        {
+                           showHelp("sectionSubhead") &&
+                           <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"}>
+                              {getHelpContent("sectionSubhead")}
+                           </Box>
+                        }
+                     </Box>
+                     {
+                        isEditable &&
+                        <Tooltip title={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle}>
+                           <span>
+                              <Button disabled={editPopupDisabled} onClick={() => openEditor()} sx={{p: 0}} disableRipple>
+                                 <Typography display="inline" textTransform="none" fontSize={"1.125rem"}>
+                                    Edit Pivot Table
+                                 </Typography>
+                              </Button>
+                           </span>
+                        </Tooltip>
+                     }
+                  </Box>
+               }
+               {
+                  (!enabled || !pivotTableDefinition) && !isEditable &&
+                  <Box fontSize="1rem">Your report does not use a Pivot Table.</Box>
+               }
+               {
+                  enabled && pivotTableDefinition &&
+                  <>
+                     <Grid container spacing="16">
+
+                        <Grid item lg={4} md={6} xs={12}>{renderGroupBys(false, "rows")}</Grid>
+                        <Grid item lg={4} md={6} xs={12}>{renderGroupBys(false, "columns")}</Grid>
+                        <Grid item lg={4} md={6} xs={12}>{renderValues(false)}</Grid>
+
+                     </Grid>
+                     {
+                        modalOpen &&
+                        <Modal open={modalOpen} onClose={(event, reason) => closeEditor(event, reason)}>
+                           <div>
+                              <Box sx={{position: "absolute", width: "100%"}}>
+                                 <Card sx={{m: "2rem", p: "2rem", overflowY: "auto", height: "calc(100vh - 4rem)"}}>
+                                    <h3>Edit Pivot Table</h3>
+                                    {
+                                       showHelp("modalSubheader") &&
+                                       <Box color={colors.gray.main}>
+                                          {getHelpContent("modalSubheader")}
+                                       </Box>
+                                    }
+                                    {
+                                       errorAlert && <Alert icon={<Icon>error_outline</Icon>} color="error" onClose={() => setErrorAlert(null)}>{errorAlert}</Alert>
+                                    }
+                                    <Grid container spacing="16" overflow="auto" mt="0.5rem" mb="1rem" height="100%">
+
+                                       <Grid item lg={4} md={6} xs={12}>{renderGroupBys(true, "rows")}</Grid>
+                                       <Grid item lg={4} md={6} xs={12}>{renderGroupBys(true, "columns")}</Grid>
+                                       <Grid item lg={4} md={6} xs={12}>{renderValues(true)}</Grid>
+
+                                    </Grid>
+                                    <Box>
+                                       <Box display="flex" justifyContent="flex-end">
+                                          <QCancelButton disabled={false} onClickHandler={closeEditor} />
+                                          <QSaveButton label="OK" iconName="check" disabled={false} onClickHandler={saveClicked} />
+                                       </Box>
+                                    </Box>
+                                 </Card>
+                              </Box>
+                           </div>
+                        </Modal>
+                     }
+                  </>
+               }
+            </DndProvider>
+         </React.Fragment>
       }
    </Widget>);
 }
+
+/* this was a rough-draft of what a preview of a pivot could look like...
+   <Box mt={"1rem"}>
+      <h5>Preview</h5>
+      <table>
+         <tr>
+            <th style={{textAlign: "left", fontSize: "0.875rem"}}></th>
+            <th style={{textAlign: "left", fontSize: "0.875rem"}}>Column Labels</th>
+         </tr>
+         {
+            pivotTableDefinition?.columns?.map((column, i) =>
+               (
+                  <tr key={column.key}>
+                     <th style={{textAlign: "left", fontSize: "0.875rem"}}></th>
+                     <th style={{textAlign: "left", fontSize: "0.875rem"}}>{column.fieldName}</th>
+                  </tr>
+               ))
+         }
+         <tr>
+            <th style={{textAlign: "left", fontSize: "0.875rem"}}>Row Labels</th>
+            {
+               pivotTableDefinition?.values?.map((value, i) =>
+                  (
+                     <th key={value.key} style={{textAlign: "left", fontSize: "0.875rem"}}>{value.function} of {value.fieldName}</th>
+                  ))
+            }
+         </tr>
+         {
+            pivotTableDefinition?.rows?.map((row, i) =>
+               (
+                  <tr key={row.key}>
+                     <th style={{textAlign: "left", fontSize: "0.875rem", paddingLeft: (i * 1) + "rem"}}>{row.fieldName}</th>
+                  </tr>
+               ))
+         }
+      </table>
+   </Box>
+*/

@@ -25,8 +25,8 @@ import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Q
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse} from "@mui/material";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import Link from "@mui/material/Link";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import QContext from "QContext";
@@ -52,6 +52,27 @@ interface ReportSetupWidgetProps
 ReportSetupWidget.defaultProps = {
    onSaveCallback: null
 };
+
+export const buttonSX =
+   {
+      border: `1px solid ${colors.grayLines.main} !important`,
+      borderRadius: "0.75rem",
+      textTransform: "none",
+      fontSize: "1rem",
+      fontWeight: "400",
+      paddingLeft: "1rem",
+      paddingRight: "1rem",
+      opacity: "1",
+      color: colors.dark.main,
+      "&:hover": {color: colors.dark.main},
+      "&:focus": {color: colors.dark.main},
+      "&:focus:not(:hover)": {color: colors.dark.main},
+   };
+
+export const unborderedButtonSX = Object.assign({}, buttonSX);
+unborderedButtonSX.border = "none !important";
+unborderedButtonSX.opacity = "0.7";
+
 
 const qController = Client.getInstance();
 
@@ -126,6 +147,9 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
 
       // @ts-ignore possibly 'undefined'.
       const view = recordQueryRef?.current?.getCurrentView();
+
+      view.queryColumns.sortColumnsFixingPinPositions();
+
       onSaveCallback({queryFilterJson: JSON.stringify(view.queryFilter), columnsJson: JSON.stringify(view.queryColumns)});
 
       closeEditor();
@@ -189,9 +213,12 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    {
       if(tableMetaData)
       {
-         if(columns?.columns?.length > 0)
+         for(let i = 0; i<columns?.columns?.length; i++)
          {
-            return (true);
+            if(columns.columns[i].isVisible && columns.columns[i].name != "__check__")
+            {
+               return (true);
+            }
          }
       }
 
@@ -252,7 +279,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                   {
                      isEditable &&
                      <Tooltip title={selectTableFirstTooltipTitle}>
-                        <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Filters</Link>
+                        <span><Button disabled={!recordValues["tableName"]} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
                      </Tooltip>
                   }
                   {
@@ -274,11 +301,11 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                      {
                         isEditable &&
                         <Tooltip title={selectTableFirstTooltipTitle}>
-                           <Link sx={{cursor: "pointer"}} onClick={openEditor} color={colors.gray.main}>+ Add Columns</Link>
+                           <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
                         </Tooltip>
                      }
                      {
-                        !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
+                        !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
                      }
                   </Box>
                }

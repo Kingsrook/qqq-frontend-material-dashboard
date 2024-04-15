@@ -138,7 +138,7 @@ export default function AdvancedQueryPreview({tableMetaData, queryFilter, isEdit
                display="inline-block"
                width="100%"
                sx={{fontSize: "1rem", background: "#FFFFFF"}}
-               minHeight={"2.375rem"}
+               minHeight={"2.5rem"}
                p={"0.5rem"}
                pb={"0.125rem"}
                {...moreSX}

@@ -19,6 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+
 
 /*******************************************************************************
  ** put a unique key value in all the pivot table group-by and value objects,
@@ -30,7 +32,7 @@ export class PivotObjectKey
 
    static next(): number
    {
-      return PivotObjectKey.value++
+      return PivotObjectKey.value++;
    }
 }
 
@@ -56,7 +58,7 @@ export class PivotTableGroupBy
 
    constructor()
    {
-      this.key = PivotObjectKey.next()
+      this.key = PivotObjectKey.next();
    }
 }
 
@@ -73,43 +75,85 @@ export class PivotTableValue
 
    constructor()
    {
-      this.key = PivotObjectKey.next()
+      this.key = PivotObjectKey.next();
    }
 }
 
 
 /*******************************************************************************
- ** Functions that can be appplied to pivot table values
+ ** Functions that can be applied to pivot table values
  *******************************************************************************/
 export enum PivotTableFunction
 {
-   AVERAGE = "AVERAGE",
+   SUM = "SUM",
    COUNT = "COUNT",
-   COUNT_NUMS = "COUNT_NUMS",
+   AVERAGE = "AVERAGE",
    MAX = "MAX",
    MIN = "MIN",
    PRODUCT = "PRODUCT",
+
+   ///////////////////////////////////////////////////////////////////////////////
+   // i don't think we have a useful version of count-nums --unless we allowed  //
+   // it on string fields, and counted if they looked like numbers? is that     //
+   // what we should do? ... leave here as zombie in case that request comes in //
+   ///////////////////////////////////////////////////////////////////////////////
+   // COUNT_NUMS = "COUNT_NUMS",
+
    STD_DEV = "STD_DEV",
    STD_DEVP = "STD_DEVP",
-   SUM = "SUM",
    VAR = "VAR",
    VARP = "VARP",
 }
+
+const allFunctions = [
+   PivotTableFunction.SUM,
+   PivotTableFunction.COUNT,
+   PivotTableFunction.AVERAGE,
+   PivotTableFunction.MAX,
+   PivotTableFunction.MIN,
+   PivotTableFunction.PRODUCT,
+   // PivotTableFunction.COUNT_NUMS,
+   PivotTableFunction.STD_DEV,
+   PivotTableFunction.STD_DEVP,
+   PivotTableFunction.VAR,
+   PivotTableFunction.VARP
+];
+
+const onlyCount = [PivotTableFunction.COUNT];
+
+const functionsForDates = [PivotTableFunction.COUNT, PivotTableFunction.AVERAGE, PivotTableFunction.MAX, PivotTableFunction.MIN];
+
+export const functionsPerFieldType: { [type: string]: PivotTableFunction[] } = {};
+functionsPerFieldType[QFieldType.STRING] = onlyCount;
+functionsPerFieldType[QFieldType.BOOLEAN] = onlyCount;
+functionsPerFieldType[QFieldType.BLOB] = onlyCount;
+functionsPerFieldType[QFieldType.HTML] = onlyCount;
+functionsPerFieldType[QFieldType.PASSWORD] = onlyCount;
+functionsPerFieldType[QFieldType.TEXT] = onlyCount;
+functionsPerFieldType[QFieldType.TIME] = onlyCount;
+
+functionsPerFieldType[QFieldType.INTEGER] = allFunctions;
+functionsPerFieldType[QFieldType.DECIMAL] = allFunctions;
+// functionsPerFieldType[QFieldType.LONG] = allFunctions;
+
+functionsPerFieldType[QFieldType.DATE] = functionsForDates;
+functionsPerFieldType[QFieldType.DATE_TIME] = functionsForDates;
+
 
 //////////////////////////////////////
 // labels for pivot table functions //
 //////////////////////////////////////
 export const pivotTableFunctionLabels =
    {
+      "SUM": "Sum",
+      "COUNT": "Count",
       "AVERAGE": "Average",
-      "COUNT": "Count Values (COUNTA)",
-      "COUNT_NUMS": "Count Numbers (COUNT)",
       "MAX": "Max",
       "MIN": "Min",
       "PRODUCT": "Product",
+      // "COUNT_NUMS": "Count Numbers",
       "STD_DEV": "StdDev",
       "STD_DEVP": "StdDevp",
-      "SUM": "Sum",
       "VAR": "Var",
       "VARP": "Varp"
    };

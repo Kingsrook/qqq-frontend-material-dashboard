@@ -105,8 +105,13 @@ const qController = Client.getInstance();
  ** function to produce standard version of the screen while we're "loading"
  ** like the main table meta data etc.
  *******************************************************************************/
-const getLoadingScreen = () =>
+const getLoadingScreen = (isModal: boolean) =>
 {
+   if(isModal)
+   {
+      return (<Box>&nbsp;</Box>);
+   }
+
    return (<BaseLayout>
       &nbsp;
    </BaseLayout>);
@@ -2549,7 +2554,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
          promptForTableVariantSelection();
       }
 
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    ////////////////////////////////////////////////////////////////////////
@@ -2583,7 +2588,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
       setRows([]);
       setIsFirstRenderAfterChangingTables(true);
 
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    /////////////////////////////////////////////////////////////////////////////////////////////
@@ -2627,7 +2632,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    if (pageState != "ready")
    {
       console.log(`page state is ${pageState}... no-op while those complete async's run...`);
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2636,7 +2641,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    ///////////////////////////////////////////////////////////////////////////////////////////
    if (!tableMetaData)
    {
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    let savedViewsComponent = null;
