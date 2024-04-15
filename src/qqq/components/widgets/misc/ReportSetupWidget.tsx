@@ -1,0 +1,348 @@
+/*
+ * QQQ - Low-code Application Framework for Engineers.
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
+ * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
+ * contact@kingsrook.com
+ * https://github.com/Kingsrook/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {Alert, Collapse} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Modal from "@mui/material/Modal";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
+import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
+import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
+import AdvancedQueryPreview from "qqq/components/query/AdvancedQueryPreview";
+import Widget, {HeaderLinkButtonComponent} from "qqq/components/widgets/Widget";
+import QQueryColumns, {Column} from "qqq/models/query/QQueryColumns";
+import RecordQuery from "qqq/pages/records/query/RecordQuery";
+import Client from "qqq/utils/qqq/Client";
+import FilterUtils from "qqq/utils/qqq/FilterUtils";
+import React, {useContext, useEffect, useRef, useState} from "react";
+
+interface ReportSetupWidgetProps
+{
+   isEditable: boolean;
+   widgetMetaData: QWidgetMetaData;
+   recordValues: {[name: string]: any};
+   onSaveCallback?: (values: {[name: string]: any}) => void;
+}
+
+ReportSetupWidget.defaultProps = {
+   onSaveCallback: null
+};
+
+export const buttonSX =
+   {
+      border: `1px solid ${colors.grayLines.main} !important`,
+      borderRadius: "0.75rem",
+      textTransform: "none",
+      fontSize: "1rem",
+      fontWeight: "400",
+      paddingLeft: "1rem",
+      paddingRight: "1rem",
+      opacity: "1",
+      color: colors.dark.main,
+      "&:hover": {color: colors.dark.main},
+      "&:focus": {color: colors.dark.main},
+      "&:focus:not(:hover)": {color: colors.dark.main},
+   };
+
+export const unborderedButtonSX = Object.assign({}, buttonSX);
+unborderedButtonSX.border = "none !important";
+unborderedButtonSX.opacity = "0.7";
+
+
+const qController = Client.getInstance();
+
+/*******************************************************************************
+ ** Component for editing the main setup of a report - that is: filter & columns
+ *******************************************************************************/
+export default function ReportSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: ReportSetupWidgetProps): JSX.Element
+{
+   const [modalOpen, setModalOpen] = useState(false);
+   const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+
+   const [alertContent, setAlertContent] = useState(null as string);
+
+   const {helpHelpActive} = useContext(QContext);
+
+   const recordQueryRef = useRef();
+
+
+   /////////////////////////////
+   // load values from record //
+   /////////////////////////////
+   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   if(!queryFilter)
+   {
+      queryFilter = new QQueryFilter();
+   }
+
+   let columns = recordValues["columnsJson"] && JSON.parse(recordValues["columnsJson"]) as QQueryColumns;
+   if(!columns)
+   {
+      columns = new QQueryColumns();
+   }
+
+   //////////////////////////////////////////////////////////////////////
+   // load tableMetaData initially, and if/when selected table changes //
+   //////////////////////////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      if (recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
+      {
+         (async () =>
+         {
+            const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"])
+            setTableMetaData(tableMetaData);
+         })();
+      }
+   }, [recordValues]);
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function openEditor()
+   {
+      if(recordValues["tableName"])
+      {
+         setModalOpen(true);
+      }
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function saveClicked()
+   {
+      if(!onSaveCallback)
+      {
+         console.log("onSaveCallback was not defined");
+         return;
+      }
+
+      // @ts-ignore possibly 'undefined'.
+      const view = recordQueryRef?.current?.getCurrentView();
+
+      view.queryColumns.sortColumnsFixingPinPositions();
+
+      onSaveCallback({queryFilterJson: JSON.stringify(view.queryFilter), columnsJson: JSON.stringify(view.queryColumns)});
+
+      closeEditor();
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function closeEditor(event?: {}, reason?: "backdropClick" | "escapeKeyDown")
+   {
+      if(reason == "backdropClick" || reason == "escapeKeyDown")
+      {
+         return;
+      }
+
+      setModalOpen(false);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function renderColumn(column: Column): JSX.Element
+   {
+      const [field, table] = FilterUtils.getField(tableMetaData, column.name)
+
+      if(!column || !column.isVisible || column.name == "__check__" || !field)
+      {
+         return (<React.Fragment />);
+      }
+
+      const tableLabelPart = table.name != tableMetaData.name ? table.label + ": " : "";
+
+      return (<Box mr="0.375rem" mb="0.5rem" border={`1px solid ${colors.grayLines.main}`} borderRadius="0.75rem" p="0.25rem 0.75rem">
+         {tableLabelPart}{field.label}
+      </Box>);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function mayShowQueryPreview(): boolean
+   {
+      if(tableMetaData)
+      {
+         if(queryFilter?.criteria?.length > 0 || queryFilter?.subFilters?.length > 0)
+         {
+            return (true);
+         }
+      }
+
+      return (false);
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function mayShowColumnsPreview(): boolean
+   {
+      if(tableMetaData)
+      {
+         for(let i = 0; i<columns?.columns?.length; i++)
+         {
+            if(columns.columns[i].isVisible && columns.columns[i].name != "__check__")
+            {
+               return (true);
+            }
+         }
+      }
+
+      return (false);
+   }
+
+   const helpRoles = isEditable ? [recordValues["id"] ? "EDIT_SCREEN" : "INSERT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"] : ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function showHelp(slot: string)
+   {
+      return (helpHelpActive || hasHelpContent(widgetMetaData?.helpContent?.get(slot), helpRoles));
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function getHelpContent(slot: string)
+   {
+      const key = `widget:${widgetMetaData.name};slot:${slot}`;
+      return <HelpContent helpContents={widgetMetaData?.helpContent?.get(slot)} roles={helpRoles} helpContentKey={key} />;
+   }
+
+   /////////////////////////////////////////////////
+   // add link to widget header for opening modal //
+   /////////////////////////////////////////////////
+   const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up your report filters and columns";
+   const labelAdditionalElementsRight: JSX.Element[] = []
+   if(isEditable)
+   {
+      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />)
+   }
+
+
+   return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
+      <React.Fragment>
+         {
+            showHelp("sectionSubhead") &&
+            <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"}>
+               {getHelpContent("sectionSubhead")}
+            </Box>
+         }
+         <Collapse in={Boolean(alertContent)}>
+            <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
+         </Collapse>
+         <Box pt="0.5rem">
+            <h5>Query Filter</h5>
+            {
+               mayShowQueryPreview() &&
+               <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={queryFilter} isEditable={false} isQueryTooComplex={queryFilter.subFilters?.length > 0} removeCriteriaByIndexCallback={null} />
+            }
+            {
+               !mayShowQueryPreview() &&
+               <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.5rem"} p={"0.5rem"} pb={"0.125rem"} borderRadius="0.75rem" border={`1px solid ${colors.grayLines.main}`}>
+                  {
+                     isEditable &&
+                     <Tooltip title={selectTableFirstTooltipTitle}>
+                        <span><Button disabled={!recordValues["tableName"]} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
+                     </Tooltip>
+                  }
+                  {
+                     !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
+                  }
+               </Box>
+            }
+         </Box>
+         <Box pt="1rem">
+            <h5>Columns</h5>
+            <Box display="flex" flexWrap="wrap" fontSize="1rem">
+               {
+                  mayShowColumnsPreview() &&
+                  columns.columns.map((column, i) => <React.Fragment key={i}>{renderColumn(column)}</React.Fragment>)
+               }
+               {
+                  !mayShowColumnsPreview() &&
+                  <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
+                     {
+                        isEditable &&
+                        <Tooltip title={selectTableFirstTooltipTitle}>
+                           <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
+                        </Tooltip>
+                     }
+                     {
+                        !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
+                     }
+                  </Box>
+               }
+            </Box>
+         </Box>
+         {
+            modalOpen &&
+            <Modal open={modalOpen} onClose={(event, reason) => closeEditor(event, reason)}>
+               <div>
+                  <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+                     <Card sx={{m: "2rem", p: "2rem"}}>
+                        <h3>Edit Filters and Columns</h3>
+                        {
+                           showHelp("modalSubheader") &&
+                           <Box color={colors.gray.main} pb={"0.5rem"}>
+                              {getHelpContent("modalSubheader")}
+                           </Box>
+                        }
+                        {
+                           tableMetaData && <RecordQuery
+                              ref={recordQueryRef}
+                              table={tableMetaData}
+                              usage="reportSetup"
+                              isModal={true} />
+                        }
+
+                        <Box>
+                           <Box display="flex" justifyContent="flex-end">
+                              <QCancelButton disabled={false} onClickHandler={closeEditor} />
+                              <QSaveButton label="OK" iconName="check" disabled={false} onClickHandler={saveClicked} />
+                           </Box>
+                        </Box>
+                     </Card>
+                  </Box>
+               </div>
+            </Modal>
+         }
+      </React.Fragment>
+   </Widget>);
+}

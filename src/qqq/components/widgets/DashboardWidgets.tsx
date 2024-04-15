@@ -19,6 +19,7 @@
  */
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
@@ -38,8 +39,10 @@ import CompositeWidget from "qqq/components/widgets/CompositeWidget";
 import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
+import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
 import RecordGridWidget from "qqq/components/widgets/misc/RecordGridWidget";
+import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
 import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import StepperCard from "qqq/components/widgets/misc/StepperCard";
 import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
@@ -61,6 +64,7 @@ interface Props
    widgetMetaDataList: QWidgetMetaData[];
    tableName?: string;
    entityPrimaryKey?: string;
+   record?: QRecord;
    omitWrappingGridContainer: boolean;
    areChildren?: boolean;
    childUrlParams?: string;
@@ -79,7 +83,7 @@ DashboardWidgets.defaultProps = {
    wrapWidgetsInTabPanels: false,
 };
 
-function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, record, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels}: Props): JSX.Element
 {
    const [widgetData, setWidgetData] = useState([] as any[]);
    const [widgetCounter, setWidgetCounter] = useState(0);
@@ -247,6 +251,23 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
    }
 
    const widgetCount = widgetMetaDataList ? widgetMetaDataList.length : 0;
+
+
+   /*******************************************************************************
+    ** helper function, to convert values from a QRecord values map to a regular old
+    ** js object
+    *******************************************************************************/
+   function convertQRecordValuesFromMapToObject(record: QRecord): {[name: string]: any}
+   {
+      const rs: {[name: string]: any} = {};
+
+      if(record.values)
+      {
+         record.values.forEach((value, key) => rs[key] = value);
+      }
+
+      return (rs);
+   }
 
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
@@ -559,6 +580,20 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                   <Widget widgetMetaData={widgetMetaData}>
                      <ScriptViewer scriptId={widgetData[i].queryParams.id} />
                   </Widget>
+               )
+            }
+            {
+               widgetMetaData.type === "reportSetup" && (
+                  widgetData && widgetData[i] && widgetData[i].queryParams &&
+                  <ReportSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
+                  {}} />
+               )
+            }
+            {
+               widgetMetaData.type === "pivotTableSetup" && (
+                  widgetData && widgetData[i] && widgetData[i].queryParams &&
+                  <PivotTableSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
+                  {}} />
                )
             }
          </Box>

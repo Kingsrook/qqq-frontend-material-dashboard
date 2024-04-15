@@ -76,7 +76,7 @@ import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
-import React, {forwardRef, useContext, useEffect, useReducer, useRef, useState} from "react";
+import React, {forwardRef, useContext, useEffect, useImperativeHandle, useReducer, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
 const CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT = "qqq.currentSavedViewId";
@@ -84,17 +84,15 @@ const DENSITY_LOCAL_STORAGE_KEY_ROOT = "qqq.density";
 const VIEW_LOCAL_STORAGE_KEY_ROOT = "qqq.recordQueryView";
 
 export const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
+export type QueryScreenUsage = "queryScreen" | "reportSetup"
 
 interface Props
 {
    table?: QTableMetaData;
    launchProcess?: QProcessMetaData;
+   usage?: QueryScreenUsage;
+   isModal?: boolean;
 }
-
-RecordQuery.defaultProps = {
-   table: null,
-   launchProcess: null
-};
 
 ///////////////////////////////////////////////////////
 // define possible values for our pageState variable //
@@ -107,8 +105,13 @@ const qController = Client.getInstance();
  ** function to produce standard version of the screen while we're "loading"
  ** like the main table meta data etc.
  *******************************************************************************/
-const getLoadingScreen = () =>
+const getLoadingScreen = (isModal: boolean) =>
 {
+   if(isModal)
+   {
+      return (<Box>&nbsp;</Box>);
+   }
+
    return (<BaseLayout>
       &nbsp;
    </BaseLayout>);
@@ -120,7 +123,7 @@ const getLoadingScreen = () =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-function RecordQuery({table, launchProcess}: Props): JSX.Element
+const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -135,6 +138,16 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    const [firstRender, setFirstRender] = useState(true);
    const [isFirstRenderAfterChangingTables, setIsFirstRenderAfterChangingTables] = useState(false);
+
+   useImperativeHandle(ref, () =>
+   {
+      return {
+         getCurrentView(): RecordQueryView
+         {
+            return view;
+         }
+      }
+   });
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // manage "state" being passed from some screens (like delete) into query screen - by grabbing, and then deleting //
@@ -688,8 +701,11 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          {
             if (localStorage.getItem(currentSavedViewLocalStorageKey))
             {
-               currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
-               navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
+               if(usage == "queryScreen")
+               {
+                  currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
+                  navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
+               }
             }
             else
             {
@@ -943,7 +959,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                console.log(`Received error for query ${thisQueryId}`);
                console.log(error);
 
-               var errorMessage;
+               let errorMessage;
                if (error && error.message)
                {
                   errorMessage = error.message;
@@ -2183,27 +2199,30 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                <GridToolbarDensitySelector nonce={undefined} />
             </div>
 
-            <div style={{zIndex: 10}}>
-               <MenuButton label="Selection" iconName={selectedIds.length == 0 ? "check_box_outline_blank" : "check_box"} disabled={totalRecords == 0} options={selectionMenuOptions} callback={selectionMenuCallback} />
-               <SelectionSubsetDialog isOpen={selectionSubsetSizePromptOpen} initialValue={selectionSubsetSize} closeHandler={(value) =>
-               {
-                  setSelectionSubsetSizePromptOpen(false);
-
-                  if (value !== undefined)
+            {
+               usage == "queryScreen" &&
+               <div style={{zIndex: 10}}>
+                  <MenuButton label="Selection" iconName={selectedIds.length == 0 ? "check_box_outline_blank" : "check_box"} disabled={totalRecords == 0} options={selectionMenuOptions} callback={selectionMenuCallback} />
+                  <SelectionSubsetDialog isOpen={selectionSubsetSizePromptOpen} initialValue={selectionSubsetSize} closeHandler={(value) =>
                   {
-                     if (typeof value === "number" && value > 0)
+                     setSelectionSubsetSizePromptOpen(false);
+
+                     if (value !== undefined)
                      {
-                        programmaticallySelectSomeOrAllRows(value);
-                        setSelectionSubsetSize(value);
-                        setSelectFullFilterState("filterSubset");
+                        if (typeof value === "number" && value > 0)
+                        {
+                           programmaticallySelectSomeOrAllRows(value);
+                           setSelectionSubsetSize(value);
+                           setSelectFullFilterState("filterSubset");
+                        }
+                        else
+                        {
+                           setAlertContent("Unexpected value: " + value);
+                        }
                      }
-                     else
-                     {
-                        setAlertContent("Unexpected value: " + value);
-                     }
-                  }
-               }} />
-            </div>
+                  }} />
+               </div>
+            }
 
             <div>
                {
@@ -2301,7 +2320,9 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
    if (pageState == "ready")
    {
-      const newFilterHash = JSON.stringify(prepQueryFilterForBackend(queryFilter));
+      const filterForBackend = prepQueryFilterForBackend(queryFilter);
+
+      const newFilterHash = JSON.stringify(filterForBackend);
       if (filterHash != newFilterHash)
       {
          setFilterHash(newFilterHash);
@@ -2474,7 +2495,10 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
             {
                const currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
                console.log(`returning to previously active saved view ${currentSavedViewId}`);
-               navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
+               if(usage == "queryScreen")
+               {
+                  navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
+               }
                setViewIdInLocation(currentSavedViewId);
 
                /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2530,7 +2554,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
          promptForTableVariantSelection();
       }
 
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    ////////////////////////////////////////////////////////////////////////
@@ -2564,7 +2588,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       setRows([]);
       setIsFirstRenderAfterChangingTables(true);
 
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    /////////////////////////////////////////////////////////////////////////////////////////////
@@ -2608,7 +2632,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    if (pageState != "ready")
    {
       console.log(`page state is ${pageState}... no-op while those complete async's run...`);
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2617,13 +2641,13 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////////////////////////
    if (!tableMetaData)
    {
-      return (getLoadingScreen());
+      return (getLoadingScreen(isModal));
    }
 
    let savedViewsComponent = null;
    if (metaData && metaData.processes.has("querySavedView"))
    {
-      savedViewsComponent = (<SavedViews qController={qController} metaData={metaData} tableMetaData={tableMetaData} view={view} viewAsJson={viewAsJson} currentSavedView={currentSavedView} tableDefaultView={tableDefaultView} viewOnChangeCallback={handleSavedViewChange} loadingSavedView={loadingSavedView} />);
+      savedViewsComponent = (<SavedViews qController={qController} metaData={metaData} tableMetaData={tableMetaData} view={view} viewAsJson={viewAsJson} currentSavedView={currentSavedView} tableDefaultView={tableDefaultView} viewOnChangeCallback={handleSavedViewChange} loadingSavedView={loadingSavedView} queryScreenUsage={usage} />);
    }
 
 
@@ -2700,7 +2724,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
    };
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // these numbers help set the height of the grid (so page won't scroll) based on spcae above & below it //
+   // these numbers help set the height of the grid (so page won't scroll) based on space above & below it //
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    let spaceBelowGrid = 40;
    let spaceAboveGrid = 205;
@@ -2714,40 +2738,48 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
       spaceAboveGrid += 60;
    }
 
+   if(isModal)
+   {
+      spaceAboveGrid += 130;
+   }
+
    ////////////////////////
    // main screen render //
    ////////////////////////
-   return (
-      <BaseLayout>
+   const body = (
+      <React.Fragment>
          <Box display="flex" justifyContent="space-between">
             <Box>
                <Typography textTransform="capitalize" variant="h3">
                   {pageLoadingState.isLoading() && ""}
                   {pageLoadingState.isLoadingSlow() && "Loading..."}
-                  {pageLoadingState.isNotLoading() && getPageHeader(tableMetaData, visibleJoinTables, tableVariant)}
+                  {pageLoadingState.isNotLoading() && !isModal && getPageHeader(tableMetaData, visibleJoinTables, tableVariant)}
                </Typography>
             </Box>
-            <Box whiteSpace="nowrap">
-               <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
-               <Box display="inline-block" width="150px">
+            {
+               !isModal &&
+               <Box whiteSpace="nowrap">
+                  <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
+                  <Box display="inline-block" width="150px">
+                     {
+                        tableMetaData &&
+                        <QueryScreenActionMenu
+                           metaData={metaData}
+                           tableMetaData={tableMetaData}
+                           tableProcesses={tableProcesses}
+                           bulkLoadClicked={bulkLoadClicked}
+                           bulkEditClicked={bulkEditClicked}
+                           bulkDeleteClicked={bulkDeleteClicked}
+                           processClicked={processClicked}
+                        />
+                     }
+                  </Box>
                   {
-                     tableMetaData &&
-                     <QueryScreenActionMenu
-                        metaData={metaData}
-                        tableMetaData={tableMetaData}
-                        tableProcesses={tableProcesses}
-                        bulkLoadClicked={bulkLoadClicked}
-                        bulkEditClicked={bulkEditClicked}
-                        bulkDeleteClicked={bulkDeleteClicked}
-                        processClicked={processClicked}
-                     />
+                     table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
+                     <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
                   }
                </Box>
-               {
-                  table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission &&
-                  <QCreateNewButton tablePath={metaData?.getTablePathByName(tableName)} />
-               }
-            </Box>
+            }
          </Box>
          <div className="recordQuery">
             {/*
@@ -2801,6 +2833,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                      setQuickFilterFieldNames={doSetQuickFilterFieldNames}
                      gridApiRef={gridApiRef}
                      mode={mode}
+                     queryScreenUsage={usage}
                      setMode={doSetMode}
                      savedViewsComponent={savedViewsComponent}
                      columnMenuComponent={buildColumnMenu()}
@@ -2841,7 +2874,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         sortingMode="server"
                         filterMode="server"
                         page={pageNumber}
-                        checkboxSelection
+                        checkboxSelection={usage == "queryScreen"}
                         disableSelectionOnClick
                         autoHeight={false}
                         rows={rows}
@@ -2850,7 +2883,7 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                         rowBuffer={10}
                         rowCount={totalRecords === null || totalRecords === undefined ? 0 : totalRecords}
                         onPageSizeChange={handleRowsPerPageChange}
-                        onRowClick={handleRowClick}
+                        onRowClick={usage == "queryScreen" ? handleRowClick : null}
                         onStateChange={handleStateChange}
                         density={density}
                         loading={loading}
@@ -2908,8 +2941,26 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
                </Modal>
             }
          </div>
-      </BaseLayout>
+      </React.Fragment>
    );
-}
+
+   if(isModal)
+   {
+      return body;
+   }
+
+   return (
+      <BaseLayout>{body}</BaseLayout>
+   )
+})
+
+
+RecordQuery.defaultProps = {
+   table: null,
+   usage: "queryScreen",
+   launchProcess: null,
+   isModal: false,
+};
+
 
 export default RecordQuery;

@@ -22,6 +22,7 @@
 package com.kingsrook.qqq.frontend.materialdashboard.model.metadata;
 
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +31,8 @@ import com.kingsrook.qqq.backend.core.model.metadata.QInstance;
 import com.kingsrook.qqq.backend.core.model.metadata.tables.QSupplementalTableMetaData;
 import com.kingsrook.qqq.backend.core.model.metadata.tables.QTableMetaData;
 import com.kingsrook.qqq.backend.core.utils.CollectionUtils;
+import com.kingsrook.qqq.backend.core.utils.StringUtils;
+import com.kingsrook.qqq.frontend.materialdashboard.model.metadata.fieldrules.FieldRule;
 
 
 /*******************************************************************************
@@ -37,8 +40,11 @@ import com.kingsrook.qqq.backend.core.utils.CollectionUtils;
  *******************************************************************************/
 public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
 {
+   public static final String TYPE = "materialDashboard";
+
    private List<List<String>> gotoFieldNames;
-   private List<String> defaultQuickFilterFieldNames;
+   private List<String>       defaultQuickFilterFieldNames;
+   private List<FieldRule>    fieldRules;
 
 
    /*******************************************************************************
@@ -58,9 +64,24 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
    @Override
    public String getType()
    {
-      return ("materialDashboard");
+      return (TYPE);
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static MaterialDashboardTableMetaData ofOrWithNew(QTableMetaData table)
+   {
+      MaterialDashboardTableMetaData supplementalMetaData = (MaterialDashboardTableMetaData) table.getSupplementalMetaData(TYPE);
+      if(supplementalMetaData == null)
+      {
+         supplementalMetaData = new MaterialDashboardTableMetaData();
+         table.withSupplementalMetaData(supplementalMetaData);
+      }
+
+      return (supplementalMetaData);
+   }
 
 
    /*******************************************************************************
@@ -110,6 +131,22 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
          validateListOfFieldNames(tableMetaData, gotoFieldNameSubList, qInstanceValidator, prefix + "gotoFieldNames: ");
       }
       validateListOfFieldNames(tableMetaData, defaultQuickFilterFieldNames, qInstanceValidator, prefix + "defaultQuickFilterFieldNames: ");
+
+      for(FieldRule fieldRule : CollectionUtils.nonNullList(fieldRules))
+      {
+         qInstanceValidator.assertCondition(fieldRule.getTrigger() != null, prefix + "has a fieldRule without a trigger");
+         qInstanceValidator.assertCondition(fieldRule.getAction() != null, prefix + "has a fieldRule without an action");
+
+         if(qInstanceValidator.assertCondition(StringUtils.hasContent(fieldRule.getSourceField()), prefix + "has a fieldRule without a sourceField"))
+         {
+            qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getSourceField()), prefix + "has a fieldRule with an unrecognized sourceField: " + fieldRule.getSourceField());
+         }
+
+         if(qInstanceValidator.assertCondition(StringUtils.hasContent(fieldRule.getTargetField()), prefix + "has a fieldRule without a targetField"))
+         {
+            qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getTargetField()), prefix + "has a fieldRule with an unrecognized targetField: " + fieldRule.getTargetField());
+         }
+      }
    }
 
 
@@ -124,7 +161,7 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
       {
          if(qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldName), prefix + " unrecognized field name: " + fieldName))
          {
-            qInstanceValidator.assertCondition(!usedNames.contains(fieldName), prefix + " has a duplicated field name: " + fieldName);
+            qInstanceValidator.assertCondition(!usedNames.contains(fieldName), prefix + "has a duplicated field name: " + fieldName);
             usedNames.add(fieldName);
          }
       }
@@ -158,6 +195,53 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
    public MaterialDashboardTableMetaData withDefaultQuickFilterFieldNames(List<String> defaultQuickFilterFieldNames)
    {
       this.defaultQuickFilterFieldNames = defaultQuickFilterFieldNames;
+      return (this);
+   }
+
+
+   /*******************************************************************************
+    ** Getter for fieldRules
+    *******************************************************************************/
+   public List<FieldRule> getFieldRules()
+   {
+      return (this.fieldRules);
+   }
+
+
+
+   /*******************************************************************************
+    ** Setter for fieldRules
+    *******************************************************************************/
+   public void setFieldRules(List<FieldRule> fieldRules)
+   {
+      this.fieldRules = fieldRules;
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for fieldRules
+    *******************************************************************************/
+   public MaterialDashboardTableMetaData withFieldRules(List<FieldRule> fieldRules)
+   {
+      this.fieldRules = fieldRules;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for fieldRules
+    *******************************************************************************/
+   public MaterialDashboardTableMetaData withFieldRule(FieldRule fieldRule)
+   {
+      if(this.fieldRules == null)
+      {
+         this.fieldRules = new ArrayList<>();
+      }
+
+      this.fieldRules.add(fieldRule);
+
       return (this);
    }
 
