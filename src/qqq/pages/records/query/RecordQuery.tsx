@@ -610,25 +610,25 @@ function RecordQuery({table, launchProcess}: Props): JSX.Element
 
          if (validType && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
          {
-            if (!e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            if (!e.metaKey && !e.ctrlKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault();
                navigate(`${metaData?.getTablePathByName(tableName)}/create`);
             }
-            else if (!e.metaKey && e.key === "r")
+            else if (!e.metaKey && !e.ctrlKey && e.key === "r")
             {
                e.preventDefault();
                updateTable("'r' keyboard event");
             }
             /*
             // disable until we add a ... ref down to let us programmatically open Columns button
-            else if (! e.metaKey && e.key === "c")
+            else if (! e.metaKey && !e.ctrlKey && e.key === "c")
             {
                e.preventDefault()
                gridApiRef.current.showPreferences(GridPreferencePanelsValue.columns)
             }
             */
-            else if (!e.metaKey && e.key === "f")
+            else if (!e.metaKey && !e.ctrlKey && e.key === "f")
             {
                e.preventDefault();
 

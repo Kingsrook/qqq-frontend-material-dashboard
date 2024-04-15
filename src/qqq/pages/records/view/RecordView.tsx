@@ -164,27 +164,27 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          if (validType && !dotMenuOpen && !keyboardHelpOpen && !showAudit && !showEditChildForm)
          {
-            if (!e.metaKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            if (!e.metaKey && !e.ctrlKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault();
                gotoCreate();
             }
-            else if (!e.metaKey && e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
+            else if (!e.metaKey && !e.ctrlKey && e.key === "e" && table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)
             {
                e.preventDefault();
                navigate("edit");
             }
-            else if (!e.metaKey && e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
+            else if (!e.metaKey && !e.ctrlKey && e.key === "c" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
                e.preventDefault();
                navigate("copy");
             }
-            else if (!e.metaKey && e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
+            else if (!e.metaKey && !e.ctrlKey && e.key === "d" && table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission)
             {
                e.preventDefault();
                handleClickDeleteButton();
             }
-            else if (!e.metaKey && e.key === "a" && metaData && metaData.tables.has("audit"))
+            else if (!e.metaKey && !e.ctrlKey && e.key === "a" && metaData && metaData.tables.has("audit"))
             {
                e.preventDefault();
                navigate("#audit");
