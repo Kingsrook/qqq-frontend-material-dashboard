@@ -158,6 +158,7 @@ but we've turned off the click-to-sort function, so remove hand cursor */
    white-space: normal;
    height: auto;
 }
+
 .MuiDataGrid-filterForm
 {
    align-items: flex-end;
@@ -173,10 +174,12 @@ but we've turned off the click-to-sort function, so remove hand cursor */
 {
    width: 200px;
 }
+
 .MuiDataGrid-filterForm .MuiDataGrid-filterFormValueInput
 {
    width: 300px;
 }
+
 .MuiDataGrid-filterForm .MuiDataGrid-filterFormOperatorInput
 {
    width: 150px;
@@ -187,13 +190,14 @@ but we've turned off the click-to-sort function, so remove hand cursor */
 {
    padding-top: 4px;
 }
+
 .MuiDataGrid-filterForm .MuiDataGrid-filterFormValueInput .MuiAutocomplete-root .MuiAutocomplete-endAdornment svg
 {
    height: 0.625em;
 }
 
 /* fix strange size bug on filter autocompletes */
-.MuiDataGrid-filterForm .MuiDataGrid-filterFormValueInput>.MuiBox-root>.MuiBox-root:has(>.MuiAutocomplete-root)
+.MuiDataGrid-filterForm .MuiDataGrid-filterFormValueInput > .MuiBox-root > .MuiBox-root:has(>.MuiAutocomplete-root)
 {
    margin-bottom: 0;
    width: 100%;
@@ -208,16 +212,31 @@ but we've turned off the click-to-sort function, so remove hand cursor */
 }
 
 /* clears the ‘X’ from Internet Explorer */
-input[type=search]::-ms-clear { display: none; width : 0; height: 0; }
-input[type=search]::-ms-reveal { display: none; width : 0; height: 0; }
+input[type=search]::-ms-clear
+{
+   display: none;
+   width: 0;
+   height: 0;
+}
+
+input[type=search]::-ms-reveal
+{
+   display: none;
+   width: 0;
+   height: 0;
+}
+
 /* clears the ‘X’ from Chrome */
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-results-button,
-input[type="search"]::-webkit-search-results-decoration { display: none; }
+input[type="search"]::-webkit-search-results-decoration
+{
+   display: none;
+}
 
 /* Shrink the big margin-bottom on modal processes */
-.modalProcess>.MuiBox-root>.MuiBox-root
+.modalProcess > .MuiBox-root > .MuiBox-root
 {
    margin-bottom: 24px;
 }
@@ -270,6 +289,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    color: initial !important;
    border: 1px solid rgb(206, 212, 218);
 }
+
 .MuiDataGrid-filterForm .MuiAutocomplete-tag .MuiSvgIcon-root
 {
    color: initial !important;
@@ -287,7 +307,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    right: 0.125rem;
 }
 
-.devDocumentation ul>li
+.devDocumentation ul > li
 {
    margin-left: 30px;
 }
@@ -640,6 +660,7 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    border: 1px solid #BDBDBD;
    border-radius: 0.5rem !important;
 }
+
 .MuiToggleButtonGroup-root .MuiButtonBase-root
 {
    text-transform: none;
@@ -650,11 +671,19 @@ input[type="search"]::-webkit-search-results-decoration { display: none; }
    border: none;
    flex: 1 1 0px;
 }
+
 .MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-selected
 {
    background: rgba(117, 117, 117, 0.20);
 }
+
 .MuiToggleButtonGroup-root .MuiButtonBase-root.Mui-disabled
 {
    border: none;
+}
+
+.MuiPickersDay-root.Mui-selected, .MuiPickersDay-root.MuiPickersDay-dayWithMargin:hover
+{
+   color: white;
+   background-color: #0062FF !important;
 }

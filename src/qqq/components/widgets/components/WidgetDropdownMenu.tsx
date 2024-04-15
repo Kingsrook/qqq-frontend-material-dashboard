@@ -26,7 +26,7 @@ import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import {SxProps} from "@mui/system";
-import {DatePicker, DateValidationError, LocalizationProvider, PickerChangeHandlerContext} from "@mui/x-date-pickers";
+import {DatePicker, DateValidationError, LocalizationProvider, PickerChangeHandlerContext, PickerValidDate} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import {Field, Form, Formik} from "formik";
@@ -34,7 +34,7 @@ import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
-import React, {useContext, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 
 
 export interface DropdownOption
@@ -110,6 +110,7 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
 
    const [isOpen, setIsOpen] = useState(false);
    const [value, setValue] = useState(defaultValue);
+   const [dateValue, setDateValue] = useState(defaultValue);
    const [inputValue, setInputValue] = useState("");
 
    const [backDisabled, setBackDisabled] = useState(false);
@@ -121,6 +122,14 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
    {
       setIsOpen(true);
    };
+
+   useEffect(() =>
+   {
+      if (type == "DATE_PICKER")
+      {
+         handleOnChange(null, defaultValue, null);
+      }
+   }, [defaultValue]);
 
    function getSelectedIndex(value: DropdownOption)
    {
@@ -136,9 +145,19 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
       return currentIndex;
    }
 
-   const navigateBackAndForth = (event: React.MouseEvent, direction: -1 | 1) =>
+
+   const navigateBackAndForth = (event: React.MouseEvent, direction: -1 | 1, type: string) =>
    {
       event.stopPropagation();
+
+      if (type == "DATE_PICKER")
+      {
+         let currentDate = new Date(dateValue);
+         currentDate.setDate(currentDate.getDate() + direction);
+         handleOnChange(null, currentDate, null);
+         return;
+      }
+
       let currentIndex = getSelectedIndex(value);
 
       if (currentIndex == null)
@@ -163,15 +182,26 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
    };
 
 
-   const handleDatePickerOnChange = (value: any, context: PickerChangeHandlerContext<DateValidationError>) =>
+   const handleDatePickerOnChange = (value: PickerValidDate, context: PickerChangeHandlerContext<DateValidationError>) =>
    {
-      handleOnChange(null, {id: value.$d.toLocaleDateString()}, null);
+      if (value.isValid())
+      {
+         handleOnChange(null, value.toDate(), null);
+      }
    };
 
 
    const handleOnChange = (event: any, newValue: any, reason: string) =>
    {
-      setValue(newValue);
+      if (type == "DATE_PICKER")
+      {
+         setDateValue(newValue);
+         newValue = {"id": new Date(newValue).toLocaleDateString()};
+      }
+      else
+      {
+         setValue(newValue);
+      }
 
       const isTimeframeCustom = name == "timeframe" && newValue && newValue.id == "custom";
       setCustomTimesVisible(isTimeframeCustom);
@@ -276,21 +306,27 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
    {
       return (
          <Box sx={{
-            whiteSpace: "nowrap", display: "flex",
-            "& .MuiPopperUnstyled-root": {
-               border: `1px solid ${colors.grayLines.main}`,
-               borderTop: "none",
-               borderRadius: "0 0 0.75rem 0.75rem",
-               padding: 0,
-            }, "& .MuiPaper-rounded": {
-               borderRadius: "0 0 0.75rem 0.75rem",
-            }
-         }} className="dashboardDropdownMenu">
-            <Box sx={{...sx, width: `${width}px`, background: "white", borderRadius: "0.75rem", border: `1px solid ${colors.grayLines.main}`, "& *": {cursor: "pointer"}}} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker sx={{color: "green"}} defaultValue={dayjs(defaultValue)} onChange={handleDatePickerOnChange} />
-               </LocalizationProvider>
-            </Box>
+            ...sx,
+            background: "white",
+            width: "250px",
+            borderRadius: "0.75rem !important",
+            border: `1px solid ${colors.grayLines.main}`,
+            "& *": {cursor: "pointer"}
+         }} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
+            {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+               <DatePicker
+                  defaultValue={dayjs(defaultValue)}
+                  name={name}
+                  value={dayjs(dateValue)}
+                  onChange={handleDatePickerOnChange}
+                  slotProps={{
+                     actionBar: {actions: ["today"]},
+                     textField: {variant: "standard", InputProps: {sx: {fontSize: "16px", color: "#495057"}, disableUnderline: true}}
+                  }}
+               />
+            </LocalizationProvider>
+            {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1, type)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
          </Box>
       );
    }
@@ -339,14 +375,14 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
                   renderInput={(params: any) =>
                      <>
                         <Box sx={{width: `${width}px`, background: "white", borderRadius: isOpen ? "0.75rem 0.75rem 0 0" : "0.75rem", border: `1px solid ${colors.grayLines.main}`, "& *": {cursor: "pointer"}}} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
-                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
                            <TextField {...params} placeholder={label} sx={{
                               "& .MuiInputBase-input": {
                                  fontSize: fontSize
                               }
                            }} InputProps={{...params.InputProps, startAdornment: startAdornment/*, endAdornment: endAdornment*/}}
                            />
-                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
+                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1, type)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
                         </Box>
                      </>
                   }
