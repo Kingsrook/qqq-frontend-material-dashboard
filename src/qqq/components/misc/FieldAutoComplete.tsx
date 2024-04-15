@@ -73,7 +73,7 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
          continue;
       }
 
-      if (availableFieldNames && availableFieldNames.indexOf(fieldName) == -1)
+      if (availableFieldNames?.length && availableFieldNames.indexOf(fieldName) == -1)
       {
          continue;
       }
