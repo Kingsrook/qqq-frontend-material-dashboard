@@ -32,6 +32,7 @@ import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryF
 import {ThisOrLastPeriodExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import Box from "@mui/material/Box";
 import {GridSortModel} from "@mui/x-data-grid-pro";
+import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
@@ -612,6 +613,58 @@ class FilterUtils
       }
    }
 
+
+   /*******************************************************************************
+    ** make a new query filter, based on the input one, but w/ values good for the
+    ** backend.  such as, possible values as just ids, not objects w/ a label;
+    ** date-times formatted properly and in UTC
+    *******************************************************************************/
+   public static prepQueryFilterForBackend(tableMetaData: QTableMetaData, sourceFilter: QQueryFilter, pageNumber?: number, rowsPerPage?: number): QQueryFilter
+   {
+      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.subFilters, sourceFilter.booleanOperator);
+      for (let i = 0; i < sourceFilter?.criteria?.length; i++)
+      {
+         const criteria = sourceFilter.criteria[i];
+         const {criteriaIsValid} = validateCriteria(criteria, null);
+         if (criteriaIsValid)
+         {
+            if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////
+               // do this to avoid submitting an empty-string argument for blank/not-blank operators... //
+               ///////////////////////////////////////////////////////////////////////////////////////////
+               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, []));
+            }
+            else
+            {
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // else push a clone of the criteria - since it may get manipulated below (convertFilterPossibleValuesToIds) //
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName);
+               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, FilterUtils.cleanseCriteriaValueForQQQ(criteria.values, field)));
+            }
+         }
+      }
+
+      /////////////////////////////////////////
+      // recursively prep subfilters as well //
+      /////////////////////////////////////////
+      let subFilters = [] as QQueryFilter[];
+      for (let j = 0; j < sourceFilter?.subFilters?.length; j++)
+      {
+         subFilters.push(FilterUtils.prepQueryFilterForBackend(tableMetaData, sourceFilter.subFilters[j]));
+      }
+
+      filterForBackend.subFilters = subFilters;
+
+      if(pageNumber !== undefined && rowsPerPage !== undefined)
+      {
+         filterForBackend.skip = pageNumber * rowsPerPage;
+         filterForBackend.limit = rowsPerPage;
+      }
+
+      return filterForBackend;
+   };
 }
 
 export default FilterUtils;

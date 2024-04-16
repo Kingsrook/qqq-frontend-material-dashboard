@@ -86,10 +86,16 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
 
    const [alertContent, setAlertContent] = useState(null as string);
 
+   //////////////////////////////////////////////////////////////////////////////////////////////////
+   // we'll actually keep 2 copies of the query filter around here -                               //
+   // the one in the record (as json) is one that the backend likes (e.g., possible values as ids) //
+   // this "frontend" one is one that the frontend can use (possible values as objects w/ labels). //
+   //////////////////////////////////////////////////////////////////////////////////////////////////
+   const [frontendQueryFilter, setFrontendQueryFilter] = useState(null as QQueryFilter);
+
    const {helpHelpActive} = useContext(QContext);
 
    const recordQueryRef = useRef();
-
 
    /////////////////////////////
    // load values from record //
@@ -100,10 +106,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       queryFilter = new QQueryFilter();
    }
 
-   let columns = recordValues["columnsJson"] && JSON.parse(recordValues["columnsJson"]) as QQueryColumns;
-   if(!columns)
+   let columns: QQueryColumns = null;
+   if(recordValues["columnsJson"])
    {
-      columns = new QQueryColumns();
+      columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
    }
 
    //////////////////////////////////////////////////////////////////////
@@ -117,6 +123,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
          {
             const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"])
             setTableMetaData(tableMetaData);
+
+            const queryFilterForFrontend = Object.assign({}, queryFilter);
+            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend)
+            setFrontendQueryFilter(queryFilterForFrontend)
          })();
       }
    }, [recordValues]);
@@ -150,7 +160,14 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
 
       view.queryColumns.sortColumnsFixingPinPositions();
 
-      onSaveCallback({queryFilterJson: JSON.stringify(view.queryFilter), columnsJson: JSON.stringify(view.queryColumns)});
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // keep the query filter that came from the recordQuery screen as the front-end version (w/ possible value objects) //
+      // but prep a copy of it for the backend, to stringify as json in the record being edited                           //
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      setFrontendQueryFilter(view.queryFilter);
+      const filter = FilterUtils.prepQueryFilterForBackend(tableMetaData, view.queryFilter);
+
+      onSaveCallback({queryFilterJson: JSON.stringify(filter), columnsJson: JSON.stringify(view.queryColumns)});
 
       closeEditor();
    }
@@ -197,7 +214,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    {
       if(tableMetaData)
       {
-         if(queryFilter?.criteria?.length > 0 || queryFilter?.subFilters?.length > 0)
+         if(frontendQueryFilter?.criteria?.length > 0 || frontendQueryFilter?.subFilters?.length > 0)
          {
             return (true);
          }
@@ -271,7 +288,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
             <h5>Query Filter</h5>
             {
                mayShowQueryPreview() &&
-               <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={queryFilter} isEditable={false} isQueryTooComplex={queryFilter.subFilters?.length > 0} removeCriteriaByIndexCallback={null} />
+               <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={frontendQueryFilter} isEditable={false} isQueryTooComplex={frontendQueryFilter.subFilters?.length > 0} removeCriteriaByIndexCallback={null} />
             }
             {
                !mayShowQueryPreview() &&
@@ -329,7 +346,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                               ref={recordQueryRef}
                               table={tableMetaData}
                               usage="reportSetup"
-                              isModal={true} />
+                              isModal={true}
+                              initialQueryFilter={frontendQueryFilter}
+                              initialColumns={columns}
+                           />
                         }
 
                         <Box>

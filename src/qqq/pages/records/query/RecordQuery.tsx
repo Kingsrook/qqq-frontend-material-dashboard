@@ -92,6 +92,8 @@ interface Props
    launchProcess?: QProcessMetaData;
    usage?: QueryScreenUsage;
    isModal?: boolean;
+   initialQueryFilter?: QQueryFilter;
+   initialColumns?: QQueryColumns;
 }
 
 ///////////////////////////////////////////////////////
@@ -123,7 +125,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
+const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, initialColumns}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -193,7 +195,9 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    /////////////////////////////////////
    const densityLocalStorageKey = `${DENSITY_LOCAL_STORAGE_KEY_ROOT}`;
 
-   // only load things out of local storage on the first render
+   ///////////////////////////////////////////////////////////////
+   // only load things out of local storage on the first render //
+   ///////////////////////////////////////////////////////////////
    if (firstRender)
    {
       console.log("This is firstRender, so reading defaults from local storage...");
@@ -222,6 +226,25 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
       defaultView.rowsPerPage = defaultRowsPerPage;
       // ... defaultView.quickFilterFieldNames = [];
       defaultView.mode = defaultMode;
+   }
+
+   if(firstRender)
+   {
+      /////////////////////////////////////////////////////////////////////////
+      // allow a caller to send in an initial filter & set of columns.       //
+      // only to be used on "first render"                                   //
+      // JSON.parse(JSON.stringify()) to do deep clone and keep object clean //
+      // unclear why not needed on initialColumns...                         //
+      /////////////////////////////////////////////////////////////////////////
+      if (initialQueryFilter)
+      {
+         defaultView.queryFilter = JSON.parse(JSON.stringify(initialQueryFilter));
+      }
+
+      if (initialColumns)
+      {
+         defaultView.queryColumns = initialColumns;
+      }
    }
 
    /////////////////////////////////////////////////////////////////////////////////////////
@@ -431,51 +454,6 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    };
 
 
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   const prepQueryFilterForBackend = (sourceFilter: QQueryFilter) =>
-   {
-      const filterForBackend = new QQueryFilter([], sourceFilter.orderBys, sourceFilter.subFilters, sourceFilter.booleanOperator);
-      for (let i = 0; i < sourceFilter?.criteria?.length; i++)
-      {
-         const criteria = sourceFilter.criteria[i];
-         const {criteriaIsValid} = validateCriteria(criteria, null);
-         if (criteriaIsValid)
-         {
-            if (criteria.operator == QCriteriaOperator.IS_BLANK || criteria.operator == QCriteriaOperator.IS_NOT_BLANK)
-            {
-               ///////////////////////////////////////////////////////////////////////////////////////////
-               // do this to avoid submitting an empty-string argument for blank/not-blank operators... //
-               ///////////////////////////////////////////////////////////////////////////////////////////
-               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, []));
-            }
-            else
-            {
-               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               // else push a clone of the criteria - since it may get manipulated below (convertFilterPossibleValuesToIds) //
-               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const [field] = FilterUtils.getField(tableMetaData, criteria.fieldName);
-               filterForBackend.criteria.push(new QFilterCriteria(criteria.fieldName, criteria.operator, FilterUtils.cleanseCriteriaValueForQQQ(criteria.values, field)));
-            }
-         }
-      }
-
-      /////////////////////////////////////////
-      // recursively prep subfilters as well //
-      /////////////////////////////////////////
-      let subFilters = [] as QQueryFilter[];
-      for (let j = 0; j < sourceFilter?.subFilters?.length; j++)
-      {
-         subFilters.push(prepQueryFilterForBackend(sourceFilter.subFilters[j]));
-      }
-
-      filterForBackend.subFilters = subFilters;
-      filterForBackend.skip = pageNumber * rowsPerPage;
-      filterForBackend.limit = rowsPerPage;
-      return filterForBackend;
-   };
-
 
    /*******************************************************************************
     **
@@ -507,7 +485,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
             totalRecords: totalRecords,
             columnsModel: columnsModel,
             columnVisibilityModel: columnVisibilityModel,
-            queryFilter: prepQueryFilterForBackend(queryFilter)
+            queryFilter: FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter)
          };
 
       exportMenu = (<>
@@ -877,7 +855,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    /*******************************************************************************
     ** This is the method that actually executes a query to update the data in the table.
     *******************************************************************************/
-   const updateTable = (reason?: string) =>
+   const updateTable = (reason?: string, clearOutCount = true) =>
    {
       if (pageState != "ready")
       {
@@ -901,7 +879,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
          // copy the orderBys & operator into it - but we'll build its criteria one-by-one, //
          // as clones, as we'll need to tweak them a bit                                    //
          /////////////////////////////////////////////////////////////////////////////////////
-         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter, pageNumber, rowsPerPage);
 
          //////////////////////////////////////////
          // figure out joins to use in the query //
@@ -927,6 +905,12 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
          console.log(`Issuing query: ${thisQueryId}`);
          if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
+            if(clearOutCount)
+            {
+               setTotalRecords(null);
+               setDistinctRecords(null);
+            }
+
             let includeDistinct = isJoinMany(tableMetaData, getVisibleJoinTables());
             qController.count(tableName, filterForBackend, queryJoins, includeDistinct, tableVariant).then(([count, distinctCount]) =>
             {
@@ -1428,7 +1412,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    {
       if (selectFullFilterState === "filter")
       {
-         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
          filterForBackend.skip = 0;
          filterForBackend.limit = null;
          return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(filterForBackend))}`;
@@ -1436,7 +1420,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
 
       if (selectFullFilterState === "filterSubset")
       {
-         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
          filterForBackend.skip = 0;
          filterForBackend.limit = selectionSubsetSize;
          return `?recordsParam=filterJSON&filterJSON=${encodeURIComponent(JSON.stringify(filterForBackend))}`;
@@ -1459,14 +1443,14 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
    {
       if (selectFullFilterState === "filter")
       {
-         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
          filterForBackend.skip = 0;
          filterForBackend.limit = null;
          setRecordIdsForProcess(filterForBackend);
       }
       else if (selectFullFilterState === "filterSubset")
       {
-         const filterForBackend = prepQueryFilterForBackend(queryFilter);
+         const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
          filterForBackend.skip = 0;
          filterForBackend.limit = selectionSubsetSize;
          setRecordIdsForProcess(filterForBackend);
@@ -1924,7 +1908,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
     *******************************************************************************/
    const openColumnStatistics = async (column: GridColDef) =>
    {
-      setFilterForColumnStats(prepQueryFilterForBackend(queryFilter));
+      setFilterForColumnStats(FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter));
       setColumnStatsFieldName(column.field);
 
       const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, column.field);
@@ -2285,7 +2269,7 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
          // to avoid both this useEffect and the one below from both doing an "initial query", //
          // only run this one if at least 1 query has already been ran                         //
          ////////////////////////////////////////////////////////////////////////////////////////
-         updateTable("useEffect(pageNumber,rowsPerPage)");
+         updateTable("useEffect(pageNumber,rowsPerPage)", false);
       }
    }, [pageNumber, rowsPerPage]);
 
@@ -2320,7 +2304,16 @@ const RecordQuery = forwardRef(({table, usage, isModal}: Props, ref) =>
 
    if (pageState == "ready")
    {
-      const filterForBackend = prepQueryFilterForBackend(queryFilter);
+      const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
+
+      ///////////////////////////////////////////////////////////////////////
+      // remove the skip & limit (e.g., pagination) from this hash -       //
+      // as we have a specific useEffect watching these, specifically      //
+      // so we can pass the dont-clear-count flag into updateTable,        //
+      // to try to keep the count from flashing back & forth to "Counting" //
+      ///////////////////////////////////////////////////////////////////////
+      filterForBackend.skip = null;
+      filterForBackend.limit = null;
 
       const newFilterHash = JSON.stringify(filterForBackend);
       if (filterHash != newFilterHash)
@@ -2960,6 +2953,8 @@ RecordQuery.defaultProps = {
    usage: "queryScreen",
    launchProcess: null,
    isModal: false,
+   initialQueryFilter: null,
+   initialColumns: null,
 };
 
 
