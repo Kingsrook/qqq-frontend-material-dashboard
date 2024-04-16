@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {CalendarTodayOutlined} from "@mui/icons-material";
 import {Collapse, InputAdornment, Theme} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -313,14 +314,19 @@ function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, 
             border: `1px solid ${colors.grayLines.main}`,
             "& *": {cursor: "pointer"}
          }} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
-            {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+            {allowBackAndForth && <IconButton sx={{padding: 0, margin: "8px"}} onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                <DatePicker
+                  sx={{paddingRight: "8px"}}
                   defaultValue={dayjs(defaultValue)}
                   name={name}
                   value={dayjs(dateValue)}
                   onChange={handleDatePickerOnChange}
+                  slots={{
+                     openPickerIcon: CalendarTodayOutlined
+                  }}
                   slotProps={{
+                     openPickerIcon: {sx: {fontSize: "1.25rem !important", color: "#757575"}},
                      actionBar: {actions: ["today"]},
                      textField: {variant: "standard", InputProps: {sx: {fontSize: "16px", color: "#495057"}, disableUnderline: true}}
                   }}
