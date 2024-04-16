@@ -31,8 +31,6 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
-import React, {useContext, useEffect, useState} from "react";
-import {Link, useLocation} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -41,6 +39,8 @@ import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import MiniStatisticsCard from "qqq/components/widgets/statistics/MiniStatisticsCard";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import Client from "qqq/utils/qqq/Client";
+import React, {useContext, useEffect, useState} from "react";
+import {Link, useLocation} from "react-router-dom";
 
 const qController = Client.getInstance();
 
@@ -62,7 +62,7 @@ function AppHome({app}: Props): JSX.Element
    const [updatedTableCounts, setUpdatedTableCounts] = useState(new Date());
    const [widgets, setWidgets] = useState([] as any[]);
 
-   const {pageHeader, setPageHeader} = useContext(QContext);
+   const {pageHeader, recordAnalytics, setPageHeader} = useContext(QContext);
 
    const location = useLocation();
 
@@ -86,8 +86,9 @@ function AppHome({app}: Props): JSX.Element
 
    useEffect(() =>
    {
-      // setPageHeader(app.label);
       setPageHeader(null);
+      recordAnalytics({location: window.location, title: "App: " + app.label});
+      recordAnalytics({category: "appEvents", action: "loadAppScreen", label: app.label});
 
       if (!qInstance)
       {

@@ -121,7 +121,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive} = useContext(QContext);
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics} = useContext(QContext);
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -384,6 +384,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
 
+         recordAnalytics({location: window.location, title: "View: " + tableMetaData.label});
+
          //////////////////////////////////////////////////////////////////
          // load top-level meta-data (e.g., to find processes for table) //
          //////////////////////////////////////////////////////////////////
@@ -430,6 +432,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          {
             record = await qController.get(tableName, id, tableVariant, null, queryJoins);
             setRecord(record);
+            recordAnalytics({category: "tableEvents", action: "view", label: tableMetaData?.label + " / " + record?.recordLabel});
          }
          catch (e)
          {
@@ -631,6 +634,8 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       event?.preventDefault();
       (async () =>
       {
+         recordAnalytics({category: "tableEvents", action: "delete", label: tableMetaData?.label + " / " + record?.recordLabel});
+
          await qController.delete(tableName, id)
             .then(() =>
             {

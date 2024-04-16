@@ -49,7 +49,7 @@ import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
-import GoogleAnalyticsUtils from "qqq/utils/GoogleAnalyticsUtils";
+import GoogleAnalyticsUtils, {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
@@ -656,7 +656,7 @@ export default function App()
       },
    );
 
-   const [pageHeader, setPageHeaderState] = useState("" as string | JSX.Element);
+   const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
    const [accentColorLight, setAccentColorLight] = useState("#C0D6F7")
    const [tableMetaData, setTableMetaData] = useState(null);
@@ -671,26 +671,9 @@ export default function App()
    /*******************************************************************************
     **
     *******************************************************************************/
-   function setPageHeader(header: string | JSX.Element)
+   function recordAnalytics(model: AnalyticsModel)
    {
-      setPageHeaderState(header);
-      if(typeof header == "string")
-      {
-         recordAnalytics(header)
-      }
-      else
-      {
-         recordAnalytics("Title not available")
-      }
-   }
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
-   function recordAnalytics(title: string)
-   {
-      googleAnalyticsUtils.recordAnalytics(location, title)
+      googleAnalyticsUtils.recordAnalytics(model)
    }
 
 

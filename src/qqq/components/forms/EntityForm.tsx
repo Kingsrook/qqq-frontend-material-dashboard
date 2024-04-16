@@ -82,7 +82,7 @@ function EntityForm(props: Props): JSX.Element
    const qController = Client.getInstance();
    const tableNameParam = useParams().tableName;
    const tableName = props.table === null ? tableNameParam : props.table.name;
-   const {accentColor} = useContext(QContext);
+   const {accentColor, recordAnalytics} = useContext(QContext);
 
    const [formTitle, setFormTitle] = useState("");
    const [validations, setValidations] = useState({});
@@ -359,6 +359,7 @@ function EntityForm(props: Props): JSX.Element
       {
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
+         recordAnalytics({location: window.location, title: (props.isCopy ? "Copy" : props.id ? "Edit" : "New") + ": " + tableMetaData.label});
 
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
@@ -389,6 +390,7 @@ function EntityForm(props: Props): JSX.Element
          {
             record = await qController.get(tableName, props.id);
             setRecord(record);
+            recordAnalytics({category: "tableEvents", action: props.isCopy ? "copy" : "edit", label: tableMetaData?.label + " / " + record?.recordLabel});
 
             const titleVerb = props.isCopy ? "Copy" : "Edit";
             setFormTitle(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
@@ -428,6 +430,7 @@ function EntityForm(props: Props): JSX.Element
             // else handle preparing to do an insert //
             ///////////////////////////////////////////
             setFormTitle(`Creating New ${tableMetaData?.label}`);
+            recordAnalytics({category: "tableEvents", action: "new", label: tableMetaData?.label});
 
             if (!props.isModal)
             {
@@ -757,6 +760,8 @@ function EntityForm(props: Props): JSX.Element
 
          if (props.id !== null && !props.isCopy)
          {
+            recordAnalytics({category: "tableEvents", action: "saveEdit", label: tableMetaData?.label});
+
             ///////////////////////
             // perform an update //
             ///////////////////////
@@ -799,6 +804,8 @@ function EntityForm(props: Props): JSX.Element
          }
          else
          {
+            recordAnalytics({category: "tableEvents", action: props.isCopy ? "saveCopy" : "saveNew", label: tableMetaData?.label});
+
             /////////////////////////////////
             // perform an insert           //
             // todo - audit if it's a dupe //
