@@ -33,12 +33,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
-import jwt_decode from "jwt-decode";
-import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
-import {useCookies} from "react-cookie";
-import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
-import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
+import jwt_decode from "jwt-decode";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -53,8 +49,13 @@ import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
+import GoogleAnalyticsUtils from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
+import {useCookies} from "react-cookie";
+import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
+import {Md5} from "ts-md5/dist/md5";
 
 
 const qController = Client.getInstance();
@@ -160,7 +161,7 @@ export default function App()
                if (shouldStoreNewToken(accessToken, lsAccessToken))
                {
                   console.log("Sending accessToken to backend, requesting a sessionUUID...");
-                  const newSessionUuid = await qController.manageSession(accessToken, null);
+                  const {uuid: newSessionUuid, values} = await qController.manageSession(accessToken, null);
 
                   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
                   // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
@@ -168,6 +169,7 @@ export default function App()
                   // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
 
                   localStorage.setItem("accessToken", accessToken);
+                  localStorage.setItem("sessionValues", JSON.stringify(values));
                   console.log("Got new sessionUUID from backend, and stored new accessToken");
                }
                else
@@ -654,7 +656,7 @@ export default function App()
       },
    );
 
-   const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
+   const [pageHeader, setPageHeaderState] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
    const [accentColorLight, setAccentColorLight] = useState("#C0D6F7");
    const [tableMetaData, setTableMetaData] = useState(null);
@@ -662,6 +664,35 @@ export default function App()
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
+
+   const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function setPageHeader(header: string | JSX.Element)
+   {
+      setPageHeaderState(header);
+      if(typeof header == "string")
+      {
+         recordAnalytics(header)
+      }
+      else
+      {
+         recordAnalytics("Title not available")
+      }
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function recordAnalytics(title: string)
+   {
+      googleAnalyticsUtils.recordAnalytics(location, title)
+   }
+
 
    return (
 
@@ -682,6 +713,7 @@ export default function App()
             setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
             setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent),
             setKeyboardHelpOpen: (keyboardHelpOpen: boolean) => setKeyboardHelpOpen(keyboardHelpOpen),
+            recordAnalytics: recordAnalytics,
             pathToLabelMap: pathToLabelMap,
             branding: branding
          }}>

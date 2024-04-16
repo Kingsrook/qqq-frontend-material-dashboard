@@ -47,6 +47,11 @@ interface QContext
    tableProcesses?: QProcessMetaData[];
    setTableProcesses?: (tableProcesses: QProcessMetaData[]) => void;
 
+   ///////////////////////////////////////////
+   // function to record an analytics event //
+   ///////////////////////////////////////////
+   recordAnalytics?: (title: string) => void;
+
    ///////////////////////////////////
    // constants - no setters needed //
    ///////////////////////////////////
