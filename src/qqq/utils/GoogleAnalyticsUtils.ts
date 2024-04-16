@@ -24,6 +24,21 @@ import Client from "qqq/utils/qqq/Client";
 import ReactGA from "react-ga4";
 
 
+export interface PageView
+{
+   location: Location;
+   title: string;
+}
+
+export interface UserEvent
+{
+   action: string;
+   category: string;
+   label?: string;
+}
+
+export type AnalyticsModel = PageView | UserEvent;
+
 const qController = Client.getInstance();
 
 /*******************************************************************************
@@ -46,14 +61,27 @@ export default class GoogleAnalyticsUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   private send = (location: Location, title: string) =>
+   private send = (model: AnalyticsModel) =>
    {
       if(!this.active)
       {
          return;
       }
 
-      ReactGA.send({hitType: "pageview", page: location.pathname + location.search, title: title});
+      if(model.hasOwnProperty("location"))
+      {
+         const pageView = model as PageView;
+         ReactGA.send({hitType: "pageview", page: pageView.location.pathname + pageView.location.search, title: pageView.title});
+      }
+      else if(model.hasOwnProperty("action") || model.hasOwnProperty("category") || model.hasOwnProperty("label"))
+      {
+         const userEvent = model as UserEvent;
+         ReactGA.event({action: userEvent.action, category: userEvent.category, label: userEvent.label})
+      }
+      else
+      {
+         console.log("Unrecognizable analytics model", model);
+      }
    }
 
 
@@ -99,7 +127,7 @@ export default class GoogleAnalyticsUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public recordAnalytics = (location: Location, title: string) =>
+   public recordAnalytics = (model: AnalyticsModel) =>
    {
       if(this.metaData == null)
       {
@@ -109,7 +137,7 @@ export default class GoogleAnalyticsUtils
          })()
       }
 
-      this.send(location, title);
+      this.send(model);
    }
 
 }

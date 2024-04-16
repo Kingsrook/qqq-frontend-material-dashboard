@@ -374,7 +374,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    /////////////////////////////
    // page context references //
    /////////////////////////////
-   const {accentColor, accentColorLight, setPageHeader, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
+   const {accentColor, accentColorLight, setPageHeader, recordAnalytics, dotMenuOpen, keyboardHelpOpen} = useContext(QContext);
 
    //////////////////////////////////////////////////////////////////
    // we use our own header - so clear out the context page header //
@@ -868,6 +868,8 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          console.log("In updateTable, but a variant is needed, so returning with noop");
          return;
       }
+
+      recordAnalytics({category: "tableEvents", action: "query", label: tableMetaData.label});
 
       console.log(`In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
       setLoading(true);
@@ -1642,6 +1644,8 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    {
       if (selectedSavedViewId != null)
       {
+         recordAnalytics({category: "tableEvents", action: "activateSavedView", label: tableMetaData.label});
+
          //////////////////////////////////////////////
          // fetch, then activate the selected filter //
          //////////////////////////////////////////////
@@ -1657,6 +1661,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          /////////////////////////////////
          // this is 'new view' - right? //
          /////////////////////////////////
+         recordAnalytics({category: "tableEvents", action: "activateNewView", label: tableMetaData.label});
 
          //////////////////////////////
          // wipe away the saved view //
@@ -2340,6 +2345,8 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
+
+         recordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
 
          setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
          setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
