@@ -33,12 +33,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
-import jwt_decode from "jwt-decode";
-import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
-import {useCookies} from "react-cookie";
-import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
-import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
+import jwt_decode from "jwt-decode";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -53,8 +49,13 @@ import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
+import GoogleAnalyticsUtils, {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
+import {useCookies} from "react-cookie";
+import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
+import {Md5} from "ts-md5/dist/md5";
 
 
 const qController = Client.getInstance();
@@ -160,7 +161,7 @@ export default function App()
                if (shouldStoreNewToken(accessToken, lsAccessToken))
                {
                   console.log("Sending accessToken to backend, requesting a sessionUUID...");
-                  const newSessionUuid = await qController.manageSession(accessToken, null);
+                  const {uuid: newSessionUuid, values} = await qController.manageSession(accessToken, null);
 
                   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
                   // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
@@ -168,6 +169,7 @@ export default function App()
                   // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
 
                   localStorage.setItem("accessToken", accessToken);
+                  localStorage.setItem("sessionValues", JSON.stringify(values));
                   console.log("Got new sessionUUID from backend, and stored new accessToken");
                }
                else
@@ -575,7 +577,7 @@ export default function App()
             console.error(e);
             if (e instanceof QException)
             {
-               if ((e as QException).status === "401")
+               if ((e as QException).status === 401)
                {
                   console.log("Exception is a QException with status = 401.  Clearing some of localStorage & cookies");
                   qController.clearAuthenticationMetaDataLocalStorage();
@@ -663,6 +665,18 @@ export default function App()
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
 
+   const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function recordAnalytics(model: AnalyticsModel)
+   {
+      googleAnalyticsUtils.recordAnalytics(model)
+   }
+
+
    return (
 
       appRoutes && (
@@ -682,6 +696,7 @@ export default function App()
             setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
             setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent),
             setKeyboardHelpOpen: (keyboardHelpOpen: boolean) => setKeyboardHelpOpen(keyboardHelpOpen),
+            recordAnalytics: recordAnalytics,
             pathToLabelMap: pathToLabelMap,
             branding: branding
          }}>
