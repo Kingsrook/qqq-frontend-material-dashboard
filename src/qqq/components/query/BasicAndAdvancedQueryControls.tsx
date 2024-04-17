@@ -85,6 +85,26 @@ interface BasicAndAdvancedQueryControlsProps
 
 let debounceTimeout: string | number | NodeJS.Timeout;
 
+
+/*******************************************************************************
+ ** function to generate an element that says how a filter is sorted.
+ *******************************************************************************/
+export function getCurrentSortIndicator(queryFilter: QQueryFilter, tableMetaData: QTableMetaData, toggleSortDirection: (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void)
+{
+   if (queryFilter && queryFilter.orderBys && queryFilter.orderBys.length > 0)
+   {
+      const orderBy = queryFilter.orderBys[0];
+      const orderByFieldName = orderBy.fieldName;
+      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, orderByFieldName);
+      const fieldLabel = fieldTable.name == tableMetaData.name ? field.label : `${fieldTable.label}: ${field.label}`;
+      return <>Sort: {fieldLabel} <Icon onClick={toggleSortDirection} sx={{ml: "0.5rem"}}>{orderBy.isAscending ? "arrow_upward" : "arrow_downward"}</Icon></>;
+   }
+   else
+   {
+      return <>Sort...</>;
+   }
+}
+
 /*******************************************************************************
  ** Component to provide the basic & advanced query-filter controls for the
  ** RecordQueryOrig screen.
@@ -558,15 +578,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    /////////////////////////////////
    // set up the sort menu button //
    /////////////////////////////////
-   let sortButtonContents = <>Sort...</>;
-   if (queryFilter && queryFilter.orderBys && queryFilter.orderBys.length > 0)
-   {
-      const orderBy = queryFilter.orderBys[0];
-      const orderByFieldName = orderBy.fieldName;
-      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, orderByFieldName);
-      const fieldLabel = fieldTable.name == tableMetaData.name ? field.label : `${fieldTable.label}: ${field.label}`;
-      sortButtonContents = <>Sort: {fieldLabel} <Icon onClick={toggleSortDirection} sx={{ml: "0.5rem"}}>{orderBy.isAscending ? "arrow_upward" : "arrow_downward"}</Icon></>;
-   }
+   let sortButtonContents = getCurrentSortIndicator(queryFilter, tableMetaData, toggleSortDirection);
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // this is being used as a version of like forcing that we get re-rendered if the query filter changes... //

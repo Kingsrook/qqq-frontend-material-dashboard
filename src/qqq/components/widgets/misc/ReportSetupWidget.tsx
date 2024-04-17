@@ -34,6 +34,7 @@ import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import AdvancedQueryPreview from "qqq/components/query/AdvancedQueryPreview";
+import {getCurrentSortIndicator} from "qqq/components/query/BasicAndAdvancedQueryControls";
 import Widget, {HeaderLinkButtonComponent} from "qqq/components/widgets/Widget";
 import QQueryColumns, {Column} from "qqq/models/query/QQueryColumns";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
@@ -101,9 +102,11 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    // load values from record //
    /////////////////////////////
    let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   let usingDefaultEmptyFilter = false;
    if(!queryFilter)
    {
       queryFilter = new QQueryFilter();
+      usingDefaultEmptyFilter = true;
    }
 
    let columns: QQueryColumns = null;
@@ -285,7 +288,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
             <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
          </Collapse>
          <Box pt="0.5rem">
-            <h5>Query Filter</h5>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+               <h5>Query Filter</h5>
+               <Box fontSize="0.75rem" fontWeight="700">{mayShowQueryPreview() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
+            </Box>
             {
                mayShowQueryPreview() &&
                <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={frontendQueryFilter} isEditable={false} isQueryTooComplex={frontendQueryFilter.subFilters?.length > 0} removeCriteriaByIndexCallback={null} />
@@ -347,7 +353,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                               table={tableMetaData}
                               usage="reportSetup"
                               isModal={true}
-                              initialQueryFilter={frontendQueryFilter}
+                              initialQueryFilter={usingDefaultEmptyFilter ? null : frontendQueryFilter}
                               initialColumns={columns}
                            />
                         }
