@@ -141,6 +141,34 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    const [firstRender, setFirstRender] = useState(true);
    const [isFirstRenderAfterChangingTables, setIsFirstRenderAfterChangingTables] = useState(false);
 
+   const [loadedFilterFromInitialFilterParam, setLoadedFilterFromInitialFilterParam] = useState(false);
+
+   const mayWriteLocalStorage = usage == "queryScreen";
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function localStorageSet(key: string, value: string)
+   {
+      if(mayWriteLocalStorage)
+      {
+         localStorage.setItem(key, value);
+      }
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function localStorageRemove(key: string)
+   {
+      if(mayWriteLocalStorage)
+      {
+         localStorage.removeItem(key);
+      }
+   }
+
    useImperativeHandle(ref, () =>
    {
       return {
@@ -232,13 +260,14 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    {
       /////////////////////////////////////////////////////////////////////////
       // allow a caller to send in an initial filter & set of columns.       //
-      // only to be used on "first render"                                   //
+      // only to be used on "first render".                                  //
       // JSON.parse(JSON.stringify()) to do deep clone and keep object clean //
       // unclear why not needed on initialColumns...                         //
       /////////////////////////////////////////////////////////////////////////
       if (initialQueryFilter)
       {
          defaultView.queryFilter = JSON.parse(JSON.stringify(initialQueryFilter));
+         setLoadedFilterFromInitialFilterParam(true);
       }
 
       if (initialColumns)
@@ -720,7 +749,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          {
             FilterUtils.stripAwayIncompleteCriteria(viewForLocalStorage.queryFilter)
          }
-         localStorage.setItem(viewLocalStorageKey, JSON.stringify(viewForLocalStorage));
+         localStorageSet(viewLocalStorageKey, JSON.stringify(viewForLocalStorage));
       }
       catch(e)
       {
@@ -1110,7 +1139,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       if (state && state.density && state.density.value !== density)
       {
          setDensity(state.density.value);
-         localStorage.setItem(densityLocalStorageKey, JSON.stringify(state.density.value));
+         localStorageSet(densityLocalStorageKey, JSON.stringify(state.density.value));
       }
    };
 
@@ -1607,7 +1636,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       ////////////////////////////////////////////////////////////////
       // todo can/should/does this move into the view's "identity"? //
       ////////////////////////////////////////////////////////////////
-      localStorage.setItem(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
+      localStorageSet(currentSavedViewLocalStorageKey, `${savedViewRecord.values.get("id")}`);
    };
 
 
@@ -1617,7 +1646,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    const doClearCurrentSavedView = () =>
    {
       setCurrentSavedView(null);
-      localStorage.removeItem(currentSavedViewLocalStorageKey);
+      localStorageRemove(currentSavedViewLocalStorageKey);
    };
 
 
@@ -1667,7 +1696,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          // wipe away the saved view //
          //////////////////////////////
          setCurrentSavedView(null);
-         localStorage.removeItem(currentSavedViewLocalStorageKey);
+         localStorageRemove(currentSavedViewLocalStorageKey);
 
          ///////////////////////////////////////////////
          // activate a new default view for the table //
@@ -2491,7 +2520,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
             // if the last time we were on this table, a currentSavedView was written to local storage - //
             // then navigate back to that view's URL - unless - it looks like we're on a process!        //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            if (localStorage.getItem(currentSavedViewLocalStorageKey) && !urlLooksLikeProcess())
+            if (localStorage.getItem(currentSavedViewLocalStorageKey) && !urlLooksLikeProcess() && !loadedFilterFromInitialFilterParam)
             {
                const currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
                console.log(`returning to previously active saved view ${currentSavedViewId}`);
