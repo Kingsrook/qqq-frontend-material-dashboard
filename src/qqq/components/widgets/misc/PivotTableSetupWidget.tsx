@@ -145,6 +145,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    const [modalPivotTableDefinition, setModalPivotTableDefinition] = useState(null as PivotTableDefinition);
 
    const [usedGroupByFieldNames, setUsedGroupByFieldNames] = useState([] as string[]);
+   const [usedValueFieldNames, setUsedValueByFieldNames] = useState([] as string[]);
    const [availableFieldNames, setAvailableFieldNames] = useState([] as string[]);
 
    const {helpHelpActive} = useContext(QContext);
@@ -192,6 +193,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
 
          setPivotTableDefinition(originalPivotTableDefinition);
          updateUsedGroupByFieldNames(originalPivotTableDefinition);
+         updateUsedValueFieldNames(modalPivotTableDefinition);
       }
 
       if (recordValues["columnsJson"])
@@ -286,9 +288,10 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    /*******************************************************************************
     **
     *******************************************************************************/
-   function groupByChangedCallback()
+   function childElementChangedCallback()
    {
       updateUsedGroupByFieldNames(modalPivotTableDefinition);
+      updateUsedValueFieldNames(modalPivotTableDefinition);
       validateForm()
       forceUpdate();
    }
@@ -339,6 +342,22 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       }
 
       setUsedGroupByFieldNames(usedFieldNames);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function updateUsedValueFieldNames(ptd: PivotTableDefinition = pivotTableDefinition)
+   {
+      const usedFieldNames: string[] = [];
+
+      for (let i = 0; i < ptd?.values?.length; i++)
+      {
+         usedFieldNames.push(ptd?.values[i].fieldName);
+      }
+
+      setUsedValueByFieldNames(usedFieldNames);
    }
 
 
@@ -502,12 +521,12 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
             metaData={metaData}
             tableMetaData={tableMetaData}
             pivotTableDefinition={forModal ? modalPivotTableDefinition : pivotTableDefinition}
-            usedGroupByFieldNames={usedGroupByFieldNames}
+            usedGroupByFieldNames={[...usedGroupByFieldNames, ...usedValueFieldNames]}
             availableFieldNames={availableFieldNames}
             isEditable={isEditable && forModal}
             groupBy={groupBy}
             rowsOrColumns={rowsOrColumns}
-            callback={groupByChangedCallback}
+            callback={childElementChangedCallback}
             attemptedSubmit={attemptedSubmit}
          />
       );
@@ -531,9 +550,10 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
             tableMetaData={tableMetaData}
             pivotTableDefinition={forModal ? modalPivotTableDefinition : pivotTableDefinition}
             availableFieldNames={availableFieldNames}
+            usedGroupByFieldNames={usedGroupByFieldNames}
             isEditable={isEditable && forModal}
             value={value}
-            callback={groupByChangedCallback}
+            callback={childElementChangedCallback}
             attemptedSubmit={attemptedSubmit}
          />
       );
@@ -715,6 +735,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
 
       setPivotTableDefinition(Object.assign({}, modalPivotTableDefinition));
       updateUsedGroupByFieldNames(modalPivotTableDefinition);
+      updateUsedValueFieldNames(modalPivotTableDefinition);
 
       onSaveCallback({pivotTableJson: JSON.stringify(modalPivotTableDefinition)});
 

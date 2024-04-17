@@ -45,6 +45,7 @@ interface FieldAutoCompleteProps
    textFieldSX?: any;
    autocompleteSlotProps?: any;
    hasError?: boolean;
+   noOptionsText?: string;
 }
 
 FieldAutoComplete.defaultProps =
@@ -59,6 +60,7 @@ FieldAutoComplete.defaultProps =
       textFieldSX: null,
       autocompleteSlotProps: null,
       hasError: false,
+      noOptionsText: "No options",
    };
 
 function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: any[], isJoinTable: boolean, hiddenFieldNames: string[], availableFieldNames: string[], selectedFieldName: string)
@@ -86,7 +88,7 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
 /*******************************************************************************
  ** Component for rendering a list of field names from a table as an auto-complete.
  *******************************************************************************/
-export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, availableFieldNames, variant, label, textFieldSX, autocompleteSlotProps, hasError}: FieldAutoCompleteProps): JSX.Element
+export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, availableFieldNames, variant, label, textFieldSX, autocompleteSlotProps, hasError, noOptionsText}: FieldAutoCompleteProps): JSX.Element
 {
    const [selectedFieldName, setSelectedFieldName] = useState(defaultValue ? defaultValue.fieldName : null);
 
@@ -196,6 +198,7 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
          autoSelect={true}
          autoHighlight={true}
          slotProps={autocompleteSlotProps ?? {}}
+         noOptionsText={noOptionsText}
          {...alsoOpen}
       />
 

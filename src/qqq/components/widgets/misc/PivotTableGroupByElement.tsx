@@ -199,6 +199,7 @@ export const PivotTableGroupByElement: FC<PivotTableGroupByElementProps> = ({id,
             availableFieldNames={availableFieldNames}
             defaultValue={getSelectedFieldForAutoComplete(tableMetaData, groupBy.fieldName)}
             hasError={showError}
+            noOptionsText="There are no fields available."
          />
       </Box>
       <Box>

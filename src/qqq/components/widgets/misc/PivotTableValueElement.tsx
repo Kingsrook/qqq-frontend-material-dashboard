@@ -50,6 +50,7 @@ export interface PivotTableValueElementProps
    tableMetaData: QTableMetaData;
    pivotTableDefinition: PivotTableDefinition;
    availableFieldNames: string[];
+   usedGroupByFieldNames: string[];
    isEditable: boolean;
    value: PivotTableValue;
    callback: () => void;
@@ -71,7 +72,7 @@ interface DragItem
 /*******************************************************************************
  ** Element to render 1 pivot-table value.
  *******************************************************************************/
-export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, index, dragCallback, metaData, tableMetaData, pivotTableDefinition, availableFieldNames, value, isEditable, callback, attemptedSubmit}) =>
+export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, index, dragCallback, metaData, tableMetaData, pivotTableDefinition, availableFieldNames, usedGroupByFieldNames, value, isEditable, callback, attemptedSubmit}) =>
 {
    const [defaultFunctionValue, setDefaultFunctionValue] = useState(null);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -278,8 +279,10 @@ export const PivotTableValueElement: FC<PivotTableValueElementProps> = ({id, ind
             tableMetaData={tableMetaData}
             handleFieldChange={handleFieldChange}
             availableFieldNames={availableFieldNames}
+            hiddenFieldNames={usedGroupByFieldNames}
             defaultValue={selectedField}
             hasError={showValueError}
+            noOptionsText="There are no fields available."
          />
       </Box>
       <Box width="370px">

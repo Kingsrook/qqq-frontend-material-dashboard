@@ -217,8 +217,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    {
       const defaultValues: {[key: string]: any} = {};
       defaultValues.tableName = tableMetaData.name;
-      defaultValues.queryFilterJson = JSON.stringify(view.queryFilter, null, 3);
-      defaultValues.columnsJson = JSON.stringify(view.queryColumns, null, 3);
+
+      let filterForBackend = JSON.parse(JSON.stringify(view.queryFilter));
+      filterForBackend  = FilterUtils.prepQueryFilterForBackend(tableMetaData, filterForBackend);
+
+      defaultValues.queryFilterJson = JSON.stringify(filterForBackend);
+      defaultValues.columnsJson = JSON.stringify(view.queryColumns);
       navigate(`${metaData.getTablePathByName("savedReport")}/create#defaultValues=${encodeURIComponent(JSON.stringify(defaultValues))}`);
    }
 
