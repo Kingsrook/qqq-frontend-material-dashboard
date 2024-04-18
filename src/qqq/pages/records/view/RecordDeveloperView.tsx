@@ -69,13 +69,9 @@ function RecordDeveloperView({table}: Props): JSX.Element
    const [associatedScripts, setAssociatedScripts] = useState([] as any[]);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
 
-   const [selectedTabs, setSelectedTabs] = useState({} as any);
-   const [viewingRevisions, setViewingRevisions] = useState({} as any);
-   const [scriptLogs, setScriptLogs] = useState({} as any);
-
    const [alertText, setAlertText] = useState(null as string);
 
-   const {setPageHeader} = useContext(QContext);
+   const {setPageHeader, recordAnalytics} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    if (!asyncLoadInited)
@@ -89,6 +85,8 @@ function RecordDeveloperView({table}: Props): JSX.Element
          /////////////////////////////////////////////////////////////////////
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
+
+         recordAnalytics({location: window.location, title: "Developer Mode: " + tableMetaData.label});
 
          //////////////////////////////
          // load top-level meta-data //
