@@ -91,7 +91,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const processNameParam = useParams().processName;
    const processName = process === null ? processNameParam : process.name;
    let tableVariantLocalStorageKey: string | null = null;
-   if(table)
+   if (table)
    {
       tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${table.name}`;
    }
@@ -124,7 +124,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
 
-   const {pageHeader, setPageHeader} = useContext(QContext);
+   const {pageHeader, recordAnalytics, setPageHeader} = useContext(QContext);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for setting the processError state - call this function, which will also set the isUserFacingError state //
@@ -427,10 +427,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                //////////////////////////////////////////////////
                step.components && (step.components.map((component: QFrontendComponent, index: number) =>
                {
-                  let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"]
-                  if(component.type == QComponentType.BULK_EDIT_FORM)
+                  let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
+                  if (component.type == QComponentType.BULK_EDIT_FORM)
                   {
-                     helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"]
+                     helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
                   }
 
                   return (
@@ -1157,6 +1157,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             const processMetaData = await Client.getInstance().loadProcessMetaData(processName);
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
+
+            recordAnalytics({location: window.location, title: "Process: " + processMetaData?.label});
+            recordAnalytics({category: "processEvents", action: "startProcess", label: processMetaData?.label});
+
             if (processMetaData.tableName && !tableMetaData)
             {
                try
@@ -1262,6 +1266,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
       setTimeout(async () =>
       {
+         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+
          const processResponse = await Client.getInstance().processStep(
             processName,
             processUUID,

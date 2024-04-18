@@ -22,6 +22,7 @@
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import {createContext} from "react";
 
 interface QContext
@@ -46,6 +47,11 @@ interface QContext
 
    tableProcesses?: QProcessMetaData[];
    setTableProcesses?: (tableProcesses: QProcessMetaData[]) => void;
+
+   ///////////////////////////////////////////
+   // function to record an analytics event //
+   ///////////////////////////////////////////
+   recordAnalytics?: (model: AnalyticsModel) => void;
 
    ///////////////////////////////////
    // constants - no setters needed //

@@ -23,9 +23,9 @@ import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
-import {ReactNode} from "react";
 import colors from "qqq/assets/theme/base/colors";
 import {useMaterialUIController} from "qqq/context";
+import {ReactNode} from "react";
 
 // Declaring props types for DataTableHeadCell
 interface Props
@@ -50,7 +50,7 @@ function DataTableHeadCell({width, children, sorted, align, tooltip, ...rest}: P
          px={1.5}
          sx={({palette: {light}, borders: {borderWidth}}: Theme) => ({
             borderBottom: `${borderWidth[1]} solid ${colors.grayLines.main}`,
-            "&:nth-child(1)": {
+            "&:nth-of-type(1)": {
                paddingLeft: "1rem"
             },
             "&:last-child": {

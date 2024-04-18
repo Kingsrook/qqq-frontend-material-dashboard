@@ -33,12 +33,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
-import jwt_decode from "jwt-decode";
-import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
-import {useCookies} from "react-cookie";
-import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
-import {Md5} from "ts-md5/dist/md5";
 import CommandMenu from "CommandMenu";
+import jwt_decode from "jwt-decode";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
@@ -53,8 +49,13 @@ import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
+import GoogleAnalyticsUtils, {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
+import React, {JSXElementConstructor, Key, ReactElement, useEffect, useState,} from "react";
+import {useCookies} from "react-cookie";
+import {Navigate, Route, Routes, useLocation, useSearchParams,} from "react-router-dom";
+import {Md5} from "ts-md5/dist/md5";
 
 
 const qController = Client.getInstance();
@@ -79,7 +80,7 @@ export default function App()
    Client.setUnauthorizedCallback(() =>
    {
       logout();
-   })
+   });
 
    const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
    {
@@ -104,7 +105,7 @@ export default function App()
          // if the old (local storage) token is expired, then we need to store the new one //
          ////////////////////////////////////////////////////////////////////////////////////
          const oldExp = oldJSON["exp"];
-         if(oldExp * 1000 < (new Date().getTime()))
+         if (oldExp * 1000 < (new Date().getTime()))
          {
             console.log("Access token in local storage was expired - so we should store a new one.");
             return (true);
@@ -114,21 +115,21 @@ export default function App()
          // remove the exp & iat values from what we compare - as they are always different from auth0 //
          // note, this is only deleting them from what we compare, not from what we'd store.           //
          ////////////////////////////////////////////////////////////////////////////////////////////////
-         delete newJSON["exp"]
-         delete newJSON["iat"]
-         delete oldJSON["exp"]
-         delete oldJSON["iat"]
+         delete newJSON["exp"];
+         delete newJSON["iat"];
+         delete oldJSON["exp"];
+         delete oldJSON["iat"];
 
          const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
-         if(different)
+         if (different)
          {
             console.log("Latest access token from auth0 has changed vs localStorage - so we should store a new one.");
          }
          return (different);
       }
-      catch(e)
+      catch (e)
       {
-         console.log("Caught in shouldStoreNewToken: " + e)
+         console.log("Caught in shouldStoreNewToken: " + e);
       }
 
       return (true);
@@ -160,7 +161,7 @@ export default function App()
                if (shouldStoreNewToken(accessToken, lsAccessToken))
                {
                   console.log("Sending accessToken to backend, requesting a sessionUUID...");
-                  const newSessionUuid = await qController.manageSession(accessToken, null);
+                  const {uuid: newSessionUuid, values} = await qController.manageSession(accessToken, null);
 
                   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
                   // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
@@ -168,6 +169,7 @@ export default function App()
                   // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
 
                   localStorage.setItem("accessToken", accessToken);
+                  localStorage.setItem("sessionValues", JSON.stringify(values));
                   console.log("Got new sessionUUID from backend, and stored new accessToken");
                }
                else
@@ -185,7 +187,7 @@ export default function App()
             {
                console.log(`Error loading token: ${JSON.stringify(e)}`);
                qController.clearAuthenticationMetaDataLocalStorage();
-               localStorage.removeItem("accessToken")
+               localStorage.removeItem("accessToken");
                removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                logout();
                return;
@@ -550,7 +552,7 @@ export default function App()
                });
             }
 
-            const pathToLabelMap: {[path: string]: string} = {}
+            const pathToLabelMap: { [path: string]: string } = {};
             for (let i = 0; i < appRoutesList.length; i++)
             {
                const route = appRoutesList[i];
@@ -579,7 +581,7 @@ export default function App()
                {
                   console.log("Exception is a QException with status = 401.  Clearing some of localStorage & cookies");
                   qController.clearAuthenticationMetaDataLocalStorage();
-                  localStorage.removeItem("accessToken")
+                  localStorage.removeItem("accessToken");
                   removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
 
                   //////////////////////////////////////////////////////
@@ -656,12 +658,24 @@ export default function App()
 
    const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
-   const [accentColorLight, setAccentColorLight] = useState("#C0D6F7")
+   const [accentColorLight, setAccentColorLight] = useState("#C0D6F7");
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableProcesses, setTableProcesses] = useState(null);
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
+
+   const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function recordAnalytics(model: AnalyticsModel)
+   {
+      googleAnalyticsUtils.recordAnalytics(model)
+   }
+
 
    return (
 
@@ -682,6 +696,7 @@ export default function App()
             setTableProcesses: (tableProcesses: QProcessMetaData[]) => setTableProcesses(tableProcesses),
             setDotMenuOpen: (dotMenuOpent: boolean) => setDotMenuOpen(dotMenuOpent),
             setKeyboardHelpOpen: (keyboardHelpOpen: boolean) => setKeyboardHelpOpen(keyboardHelpOpen),
+            recordAnalytics: recordAnalytics,
             pathToLabelMap: pathToLabelMap,
             branding: branding
          }}>

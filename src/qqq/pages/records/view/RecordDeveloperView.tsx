@@ -28,9 +28,6 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Snackbar from "@mui/material/Snackbar";
-import React, {useContext, useReducer, useState} from "react";
-import AceEditor from "react-ace";
-import {useParams} from "react-router-dom";
 import QContext from "QContext";
 import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import BaseLayout from "qqq/layouts/BaseLayout";
@@ -41,6 +38,9 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
+import React, {useContext, useReducer, useState} from "react";
+import AceEditor from "react-ace";
+import {useParams} from "react-router-dom";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 const qController = Client.getInstance();
@@ -69,13 +69,9 @@ function RecordDeveloperView({table}: Props): JSX.Element
    const [associatedScripts, setAssociatedScripts] = useState([] as any[]);
    const [notFoundMessage, setNotFoundMessage] = useState(null);
 
-   const [selectedTabs, setSelectedTabs] = useState({} as any);
-   const [viewingRevisions, setViewingRevisions] = useState({} as any);
-   const [scriptLogs, setScriptLogs] = useState({} as any);
-
    const [alertText, setAlertText] = useState(null as string);
 
-   const {setPageHeader} = useContext(QContext);
+   const {setPageHeader, recordAnalytics} = useContext(QContext);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    if (!asyncLoadInited)
@@ -89,6 +85,8 @@ function RecordDeveloperView({table}: Props): JSX.Element
          /////////////////////////////////////////////////////////////////////
          const tableMetaData = await qController.loadTableMetaData(tableName);
          setTableMetaData(tableMetaData);
+
+         recordAnalytics({location: window.location, title: "Developer Mode: " + tableMetaData.label});
 
          //////////////////////////////
          // load top-level meta-data //

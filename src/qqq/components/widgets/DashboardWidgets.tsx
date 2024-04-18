@@ -21,6 +21,7 @@
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Skeleton} from "@mui/material";
+import {Alert, Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Tab from "@mui/material/Tab";
@@ -95,9 +96,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
    let initialSelectedTab = 0;
    let selectedTabKey: string = null;
-   if(parentWidgetMetaData && wrapWidgetsInTabPanels)
+   if (parentWidgetMetaData && wrapWidgetsInTabPanels)
    {
-      selectedTabKey = `qqq.widgets.selectedTabs.${parentWidgetMetaData.name}`
+      selectedTabKey = `qqq.widgets.selectedTabs.${parentWidgetMetaData.name}`;
       if (localStorage.getItem(selectedTabKey))
       {
          initialSelectedTab = Number(localStorage.getItem(selectedTabKey));
@@ -195,7 +196,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
          const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
          for (let i = 0; i < metaDataToUse.dropdowns.length; i++)
          {
-            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
+            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName ?? metaDataToUse.dropdowns[i].name;
             const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
             const json = JSON.parse(localStorage.getItem(localStorageKey));
             if (json)
@@ -305,6 +306,21 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "alert" && widgetData[i]?.html && (
+                  <Widget
+                     omitPadding={true}
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+                  >
+                     <Alert severity={widgetData[i]?.alertType?.toLowerCase()}>{parse(widgetData[i]?.html)}</Alert>
+                  </Widget>
                )
             }
             {
@@ -585,7 +601,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
       );
    };
 
-   if(wrapWidgetsInTabPanels)
+   if (wrapWidgetsInTabPanels)
    {
       omitWrappingGridContainer = true;
    }
@@ -617,7 +633,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      </TabPanel>);
                   }
 
-                  return (<React.Fragment key={`${widgetMetaData.name}-${i}`}>{renderedWidget}</React.Fragment>)
+                  return (<React.Fragment key={`${widgetMetaData.name}-${i}`}>{renderedWidget}</React.Fragment>);
                })
             }
          </>
@@ -625,7 +641,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
    const tabs = widgetMetaDataList && wrapWidgetsInTabPanels ?
       <Tabs
-         sx={{m: 0, mb: 1.5, ml: -2, mr: -2, mt: -3,
+         sx={{
+            m: 0, mb: 1.5, ml: -2, mr: -2, mt: -3,
             "& .MuiTabs-scroller": {
                ml: 0
             }
@@ -638,7 +655,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
             <Tab key={widgetMetaData.name} label={widgetMetaData.label} />
          ))}
       </Tabs>
-      : <></>
+      : <></>;
 
    return (
       widgetCount > 0 ? (

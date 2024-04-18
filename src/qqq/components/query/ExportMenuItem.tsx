@@ -23,8 +23,9 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import MenuItem from "@mui/material/MenuItem";
 import {GridColDef, GridExportMenuItemProps} from "@mui/x-data-grid-pro";
-import React from "react";
+import QContext from "QContext";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext} from "react";
 
 interface QExportMenuItemProps extends GridExportMenuItemProps<{}>
 {
@@ -42,6 +43,10 @@ interface QExportMenuItemProps extends GridExportMenuItemProps<{}>
 export default function ExportMenuItem(props: QExportMenuItemProps)
 {
    const {format, tableMetaData, totalRecords, columnsModel, columnVisibilityModel, queryFilter, hideMenu} = props;
+
+   const {recordAnalytics} = useContext(QContext);
+
+   recordAnalytics({category: "tableEvents", action: "export", label: tableMetaData.label});
 
    return (
       <MenuItem
