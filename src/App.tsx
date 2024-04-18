@@ -80,7 +80,7 @@ export default function App()
    Client.setUnauthorizedCallback(() =>
    {
       logout();
-   })
+   });
 
    const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
    {
@@ -105,7 +105,7 @@ export default function App()
          // if the old (local storage) token is expired, then we need to store the new one //
          ////////////////////////////////////////////////////////////////////////////////////
          const oldExp = oldJSON["exp"];
-         if(oldExp * 1000 < (new Date().getTime()))
+         if (oldExp * 1000 < (new Date().getTime()))
          {
             console.log("Access token in local storage was expired - so we should store a new one.");
             return (true);
@@ -115,21 +115,21 @@ export default function App()
          // remove the exp & iat values from what we compare - as they are always different from auth0 //
          // note, this is only deleting them from what we compare, not from what we'd store.           //
          ////////////////////////////////////////////////////////////////////////////////////////////////
-         delete newJSON["exp"]
-         delete newJSON["iat"]
-         delete oldJSON["exp"]
-         delete oldJSON["iat"]
+         delete newJSON["exp"];
+         delete newJSON["iat"];
+         delete oldJSON["exp"];
+         delete oldJSON["iat"];
 
          const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
-         if(different)
+         if (different)
          {
             console.log("Latest access token from auth0 has changed vs localStorage - so we should store a new one.");
          }
          return (different);
       }
-      catch(e)
+      catch (e)
       {
-         console.log("Caught in shouldStoreNewToken: " + e)
+         console.log("Caught in shouldStoreNewToken: " + e);
       }
 
       return (true);
@@ -187,7 +187,7 @@ export default function App()
             {
                console.log(`Error loading token: ${JSON.stringify(e)}`);
                qController.clearAuthenticationMetaDataLocalStorage();
-               localStorage.removeItem("accessToken")
+               localStorage.removeItem("accessToken");
                removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
                logout();
                return;
@@ -552,7 +552,7 @@ export default function App()
                });
             }
 
-            const pathToLabelMap: {[path: string]: string} = {}
+            const pathToLabelMap: { [path: string]: string } = {};
             for (let i = 0; i < appRoutesList.length; i++)
             {
                const route = appRoutesList[i];
@@ -581,7 +581,7 @@ export default function App()
                {
                   console.log("Exception is a QException with status = 401.  Clearing some of localStorage & cookies");
                   qController.clearAuthenticationMetaDataLocalStorage();
-                  localStorage.removeItem("accessToken")
+                  localStorage.removeItem("accessToken");
                   removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
 
                   //////////////////////////////////////////////////////
@@ -658,7 +658,7 @@ export default function App()
 
    const [pageHeader, setPageHeader] = useState("" as string | JSX.Element);
    const [accentColor, setAccentColor] = useState("#0062FF");
-   const [accentColorLight, setAccentColorLight] = useState("#C0D6F7")
+   const [accentColorLight, setAccentColorLight] = useState("#C0D6F7");
    const [tableMetaData, setTableMetaData] = useState(null);
    const [tableProcesses, setTableProcesses] = useState(null);
    const [dotMenuOpen, setDotMenuOpen] = useState(false);

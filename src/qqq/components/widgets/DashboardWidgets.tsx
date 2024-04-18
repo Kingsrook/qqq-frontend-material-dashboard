@@ -19,13 +19,12 @@
  */
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Skeleton} from "@mui/material";
+import {Alert, Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import parse from "html-react-parser";
-import React, {useContext, useEffect, useReducer, useState} from "react";
 import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import TabPanel from "qqq/components/misc/TabPanel";
@@ -47,10 +46,11 @@ import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
-import Widget, {HeaderIcon, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT, LabelComponent} from "qqq/components/widgets/Widget";
+import Widget, {HeaderIcon, LabelComponent, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
+import React, {useContext, useEffect, useReducer, useState} from "react";
 import TableWidget from "./tables/TableWidget";
 
 
@@ -91,9 +91,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    let initialSelectedTab = 0;
    let selectedTabKey: string = null;
-   if(parentWidgetMetaData && wrapWidgetsInTabPanels)
+   if (parentWidgetMetaData && wrapWidgetsInTabPanels)
    {
-      selectedTabKey = `qqq.widgets.selectedTabs.${parentWidgetMetaData.name}`
+      selectedTabKey = `qqq.widgets.selectedTabs.${parentWidgetMetaData.name}`;
       if (localStorage.getItem(selectedTabKey))
       {
          initialSelectedTab = Number(localStorage.getItem(selectedTabKey));
@@ -191,7 +191,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
          const metaDataToUse = (thisWidgetHasDropdowns) ? widgetMetaData : parentWidgetMetaData;
          for (let i = 0; i < metaDataToUse.dropdowns.length; i++)
          {
-            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName;
+            const dropdownName = metaDataToUse.dropdowns[i].possibleValueSourceName ?? metaDataToUse.dropdowns[i].name;
             const localStorageKey = `${WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT}.${metaDataToUse.name}.${dropdownName}`;
             const json = JSON.parse(localStorage.getItem(localStorageKey));
             if (json)
@@ -284,6 +284,21 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      storeDropdownSelections={widgetMetaData.storeDropdownSelections}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "alert" && widgetData[i]?.html && (
+                  <Widget
+                     omitPadding={true}
+                     widgetMetaData={widgetMetaData}
+                     widgetData={widgetData[i]}
+                     reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                     isChild={areChildren}
+                     labelAdditionalComponentsRight={labelAdditionalComponentsRight}
+                     labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
+                  >
+                     <Alert severity={widgetData[i]?.alertType?.toLowerCase()}>{parse(widgetData[i]?.html)}</Alert>
+                  </Widget>
                )
             }
             {
@@ -550,7 +565,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
       );
    };
 
-   if(wrapWidgetsInTabPanels)
+   if (wrapWidgetsInTabPanels)
    {
       omitWrappingGridContainer = true;
    }
@@ -582,7 +597,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
                      </TabPanel>);
                   }
 
-                  return (<React.Fragment key={`${widgetMetaData.name}-${i}`}>{renderedWidget}</React.Fragment>)
+                  return (<React.Fragment key={`${widgetMetaData.name}-${i}`}>{renderedWidget}</React.Fragment>);
                })
             }
          </>
@@ -590,7 +605,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
 
    const tabs = widgetMetaDataList && wrapWidgetsInTabPanels ?
       <Tabs
-         sx={{m: 0, mb: 1.5, ml: -2, mr: -2, mt: -3,
+         sx={{
+            m: 0, mb: 1.5, ml: -2, mr: -2, mt: -3,
             "& .MuiTabs-scroller": {
                ml: 0
             }
@@ -603,7 +619,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, omit
             <Tab key={widgetMetaData.name} label={widgetMetaData.label} />
          ))}
       </Tabs>
-      : <></>
+      : <></>;
 
    return (
       widgetCount > 0 ? (

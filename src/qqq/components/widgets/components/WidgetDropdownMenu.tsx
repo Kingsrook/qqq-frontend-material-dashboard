@@ -19,18 +19,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Collapse, Theme, InputAdornment} from "@mui/material";
+import {CalendarTodayOutlined} from "@mui/icons-material";
+import {Collapse, InputAdornment, Theme} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import {SxProps} from "@mui/system";
+import {DatePicker, DateValidationError, LocalizationProvider, PickerChangeHandlerContext, PickerValidDate} from "@mui/x-date-pickers";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import {Field, Form, Formik} from "formik";
-import React, {useState} from "react";
+import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
 
 
 export interface DropdownOption
@@ -45,6 +50,7 @@ export interface DropdownOption
 interface Props
 {
    name: string;
+   type?: string;
    defaultValue?: any;
    label?: string;
    startIcon?: string;
@@ -96,7 +102,7 @@ function makeBackendValuesFromFrontendValues(frontendDefaultValues: StartAndEndD
    return (backendTimeValues);
 }
 
-function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disableClearable, allowBackAndForth, backAndForthInverted, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
+function WidgetDropdownMenu({name, type, defaultValue, label, startIcon, width, disableClearable, allowBackAndForth, backAndForthInverted, dropdownOptions, onChangeCallback, sx}: Props): JSX.Element
 {
    const [customTimesVisible, setCustomTimesVisible] = useState(defaultValue && defaultValue.id && defaultValue.id.startsWith("custom,"));
    const [customTimeValuesFrontend, setCustomTimeValuesFrontend] = useState(parseCustomTimeValuesFromDefaultValue(defaultValue) as StartAndEndDate);
@@ -105,15 +111,26 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
 
    const [isOpen, setIsOpen] = useState(false);
    const [value, setValue] = useState(defaultValue);
+   const [dateValue, setDateValue] = useState(defaultValue);
    const [inputValue, setInputValue] = useState("");
 
    const [backDisabled, setBackDisabled] = useState(false);
    const [forthDisabled, setForthDisabled] = useState(false);
 
+   const {accentColor} = useContext(QContext);
+
    const doForceOpen = (event: React.MouseEvent<HTMLDivElement>) =>
    {
       setIsOpen(true);
    };
+
+   useEffect(() =>
+   {
+      if (type == "DATE_PICKER")
+      {
+         handleOnChange(null, defaultValue, null);
+      }
+   }, [defaultValue]);
 
    function getSelectedIndex(value: DropdownOption)
    {
@@ -129,9 +146,19 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
       return currentIndex;
    }
 
-   const navigateBackAndForth = (event: React.MouseEvent, direction: -1 | 1) =>
+
+   const navigateBackAndForth = (event: React.MouseEvent, direction: -1 | 1, type: string) =>
    {
       event.stopPropagation();
+
+      if (type == "DATE_PICKER")
+      {
+         let currentDate = new Date(dateValue);
+         currentDate.setDate(currentDate.getDate() + direction);
+         handleOnChange(null, currentDate, null);
+         return;
+      }
+
       let currentIndex = getSelectedIndex(value);
 
       if (currentIndex == null)
@@ -156,9 +183,26 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
    };
 
 
+   const handleDatePickerOnChange = (value: PickerValidDate, context: PickerChangeHandlerContext<DateValidationError>) =>
+   {
+      if (value.isValid())
+      {
+         handleOnChange(null, value.toDate(), null);
+      }
+   };
+
+
    const handleOnChange = (event: any, newValue: any, reason: string) =>
    {
-      setValue(newValue);
+      if (type == "DATE_PICKER")
+      {
+         setDateValue(newValue);
+         newValue = {"id": new Date(newValue).toLocaleDateString()};
+      }
+      else
+      {
+         setValue(newValue);
+      }
 
       const isTimeframeCustom = name == "timeframe" && newValue && newValue.id == "custom";
       setCustomTimesVisible(isTimeframeCustom);
@@ -250,86 +294,123 @@ function WidgetDropdownMenu({name, defaultValue, label, startIcon, width, disabl
 
    const fontSize = "1rem";
    let optionPaddingLeftRems = 0.75;
-   if(startIcon)
+   if (startIcon)
    {
-      optionPaddingLeftRems += allowBackAndForth ? 1.5 : 1.75
+      optionPaddingLeftRems += allowBackAndForth ? 1.5 : 1.75;
    }
-   if(allowBackAndForth)
+   if (allowBackAndForth)
    {
       optionPaddingLeftRems += 2.5;
    }
 
-   return (
-      dropdownOptions ? (
-         <Box sx={{whiteSpace: "nowrap", display: "flex",
-            "& .MuiPopperUnstyled-root": {
-               border: `1px solid ${colors.grayLines.main}`,
-               borderTop: "none",
-               borderRadius: "0 0 0.75rem 0.75rem",
-               padding: 0,
-            }, "& .MuiPaper-rounded": {
-               borderRadius: "0 0 0.75rem 0.75rem",
-            }
-         }} className="dashboardDropdownMenu">
-            <Autocomplete
-               id={`${label}-combo-box`}
-
-               defaultValue={defaultValue}
-               value={value}
-               onChange={handleOnChange}
-               inputValue={inputValue}
-               onInputChange={handleOnInputChange}
-
-               isOptionEqualToValue={(option, value) => option.id === value.id}
-
-               open={isOpen}
-               onOpen={() => setIsOpen(true)}
-               onClose={() => setIsOpen(false)}
-
-               size="small"
-               disablePortal
-               disableClearable={disableClearable}
-               options={dropdownOptions}
-               sx={{
-                  ...sx,
-                  cursor: "pointer",
-                  display: "inline-block",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                     border: "none"
-                  },
-               }}
-               renderInput={(params: any) =>
-                  <>
-                     <Box sx={{width: `${width}px`, background: "white", borderRadius: isOpen ? "0.75rem 0.75rem 0 0" : "0.75rem", border: `1px solid ${colors.grayLines.main}`, "& *": {cursor: "pointer"}}} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
-                        {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
-                        <TextField {...params} placeholder={label} sx={{
-                           "& .MuiInputBase-input": {
-                              fontSize: fontSize
-                           }
-                        }} InputProps={{...params.InputProps, startAdornment: startAdornment/*, endAdornment: endAdornment*/}}
-                        />
-                        {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
-                     </Box>
-                  </>
-               }
-               renderOption={(props, option: DropdownOption) => (
-                  <li {...props} style={{whiteSpace: "normal", fontSize: fontSize, paddingLeft: `${optionPaddingLeftRems}rem`}}>{option.label}</li>
-               )}
-
-               noOptionsText={<Box fontSize={fontSize}>No options found</Box>}
-
-               slotProps={{
-                  popper: {
-                     sx: {
-                        width: `${width}px!important`
-                     }
-                  }
-               }}
-            />
-            {customTimes}
+   if (type == "DATE_PICKER")
+   {
+      return (
+         <Box sx={{
+            ...sx,
+            background: "white",
+            width: "250px",
+            borderRadius: "0.75rem !important",
+            border: `1px solid ${colors.grayLines.main}`,
+            "& *": {cursor: "pointer"}
+         }} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
+            {allowBackAndForth && <IconButton sx={{padding: 0, margin: "8px"}} onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+               <DatePicker
+                  sx={{paddingRight: "8px"}}
+                  defaultValue={dayjs(defaultValue)}
+                  name={name}
+                  value={dayjs(dateValue)}
+                  onChange={handleDatePickerOnChange}
+                  slots={{
+                     openPickerIcon: CalendarTodayOutlined
+                  }}
+                  slotProps={{
+                     openPickerIcon: {sx: {fontSize: "1.25rem !important", color: "#757575"}},
+                     actionBar: {actions: ["today"]},
+                     textField: {variant: "standard", InputProps: {sx: {fontSize: "16px", color: "#495057"}, disableUnderline: true}}
+                  }}
+               />
+            </LocalizationProvider>
+            {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1, type)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
          </Box>
-      ) : null
-   );
+      );
+   }
+   else
+   {
+      return (
+         dropdownOptions ? (
+            <Box sx={{
+               whiteSpace: "nowrap", display: "flex",
+               "& .MuiPopperUnstyled-root": {
+                  border: `1px solid ${colors.grayLines.main}`,
+                  borderTop: "none",
+                  borderRadius: "0 0 0.75rem 0.75rem",
+                  padding: 0,
+               }, "& .MuiPaper-rounded": {
+                  borderRadius: "0 0 0.75rem 0.75rem",
+               }
+            }} className="dashboardDropdownMenu">
+               <Autocomplete
+                  id={`${label}-combo-box`}
+
+                  defaultValue={defaultValue}
+                  value={value}
+                  onChange={handleOnChange}
+                  inputValue={inputValue}
+                  onInputChange={handleOnInputChange}
+
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+
+                  open={isOpen}
+                  onOpen={() => setIsOpen(true)}
+                  onClose={() => setIsOpen(false)}
+
+                  size="small"
+                  disablePortal
+                  disableClearable={disableClearable}
+                  options={dropdownOptions}
+                  sx={{
+                     ...sx,
+                     cursor: "pointer",
+                     display: "inline-block",
+                     "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none"
+                     },
+                  }}
+                  renderInput={(params: any) =>
+                     <>
+                        <Box sx={{width: `${width}px`, background: "white", borderRadius: isOpen ? "0.75rem 0.75rem 0 0" : "0.75rem", border: `1px solid ${colors.grayLines.main}`, "& *": {cursor: "pointer"}}} display="flex" alignItems="center" onClick={(event) => doForceOpen(event)}>
+                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? 1 : -1, type)} disabled={backDisabled}><Icon>navigate_before</Icon></IconButton>}
+                           <TextField {...params} placeholder={label} sx={{
+                              "& .MuiInputBase-input": {
+                                 fontSize: fontSize
+                              }
+                           }} InputProps={{...params.InputProps, startAdornment: startAdornment/*, endAdornment: endAdornment*/}}
+                           />
+                           {allowBackAndForth && <IconButton onClick={(event) => navigateBackAndForth(event, backAndForthInverted ? -1 : 1, type)} disabled={forthDisabled}><Icon>navigate_next</Icon></IconButton>}
+                        </Box>
+                     </>
+                  }
+                  renderOption={(props, option: DropdownOption) => (
+                     <li {...props} style={{whiteSpace: "normal", fontSize: fontSize, paddingLeft: `${optionPaddingLeftRems}rem`}}>{option.label}</li>
+                  )}
+
+                  noOptionsText={<Box fontSize={fontSize}>No options found</Box>}
+
+                  slotProps={{
+                     popper: {
+                        sx: {
+                           width: `${width}px!important`
+                        }
+                     }
+                  }}
+               />
+               {customTimes}
+            </Box>
+         ) : null
+      );
+   }
 }
 
 export default WidgetDropdownMenu;

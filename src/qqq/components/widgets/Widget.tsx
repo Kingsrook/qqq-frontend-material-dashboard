@@ -28,14 +28,14 @@ import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
-import React, {useContext, useEffect, useState} from "react";
-import {NavigateFunction, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import WidgetDropdownMenu, {DropdownOption} from "qqq/components/widgets/components/WidgetDropdownMenu";
 import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
+import React, {useContext, useEffect, useState} from "react";
+import {NavigateFunction, useNavigate} from "react-router-dom";
 
 export interface WidgetData
 {
@@ -240,12 +240,20 @@ export class Dropdown extends LabelComponent
             if (localStorageOption)
             {
                const id = localStorageOption.id;
-               for (let i = 0; i < this.options.length; i++)
+
+               if (this.dropdownMetaData.type == "DATE_PICKER")
                {
-                  if (this.options[i].id == id)
+                  defaultValue = id;
+               }
+               else
+               {
+                  for (let i = 0; i < this.options.length; i++)
                   {
-                     defaultValue = this.options[i];
-                     args.dropdownData[args.componentIndex] = defaultValue?.id;
+                     if (this.options[i].id == id)
+                     {
+                        defaultValue = this.options[i];
+                        args.dropdownData[args.componentIndex] = defaultValue?.id;
+                     }
                   }
                }
             }
@@ -299,6 +307,7 @@ export class Dropdown extends LabelComponent
          <Box mb={2} sx={{float: "right"}}>
             <WidgetDropdownMenu
                name={this.dropdownName}
+               type={this.dropdownMetaData.type}
                defaultValue={defaultValue}
                sx={{marginLeft: "1rem"}}
                label={label}
@@ -622,11 +631,11 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       setUsingLabelAsTitle(props.widgetData.isLabelPageTitle);
    }
 
-   const helpRoles = ["ALL_SCREENS"]
+   const helpRoles = ["ALL_SCREENS"];
    const slotName = "label";
    const showHelp = helpHelpActive || hasHelpContent(props.widgetMetaData?.helpContent?.get(slotName), helpRoles);
 
-   if(showHelp)
+   if (showHelp)
    {
       const formattedHelpContent = <HelpContent helpContents={props.widgetMetaData?.helpContent?.get(slotName)} roles={helpRoles} helpContentKey={`widget:${props.widgetMetaData?.name};slot:${slotName}`} />;
       labelElement = <Tooltip title={formattedHelpContent} arrow={true} placement="bottom-start">{labelElement}</Tooltip>;
