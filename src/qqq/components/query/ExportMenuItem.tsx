@@ -46,13 +46,13 @@ export default function ExportMenuItem(props: QExportMenuItemProps)
 
    const {recordAnalytics} = useContext(QContext);
 
-   recordAnalytics({category: "tableEvents", action: "export", label: tableMetaData.label});
-
    return (
       <MenuItem
          disabled={totalRecords === 0}
          onClick={() =>
          {
+            recordAnalytics({category: "tableEvents", action: "export", label: tableMetaData.label});
+
             ///////////////////////////////////////////////////////////////////////////////
             // build the list of visible fields.  note, not doing them in-order (in case //
             // the user did drag & drop), because column order model isn't right yet     //
