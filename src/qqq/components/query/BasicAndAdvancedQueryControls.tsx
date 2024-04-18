@@ -44,11 +44,13 @@ import {GridApiPro} from "@mui/x-data-grid-pro/models/gridApiPro";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+import AdvancedQueryPreview from "qqq/components/query/AdvancedQueryPreview";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import FieldListMenu from "qqq/components/query/FieldListMenu";
 import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import QuickFilter, {quickFilterButtonStyles} from "qqq/components/query/QuickFilter";
 import XIcon from "qqq/components/query/XIcon";
+import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import React, {forwardRef, useContext, useImperativeHandle, useReducer, useState} from "react";
@@ -75,11 +77,33 @@ interface BasicAndAdvancedQueryControlsProps
    /////////////////////////////////////////////////////////////////////////////////////////////
    queryFilterJSON: string;
 
+   queryScreenUsage: QueryScreenUsage;
+
    mode: string;
    setMode: (mode: string) => void;
 }
 
 let debounceTimeout: string | number | NodeJS.Timeout;
+
+
+/*******************************************************************************
+ ** function to generate an element that says how a filter is sorted.
+ *******************************************************************************/
+export function getCurrentSortIndicator(queryFilter: QQueryFilter, tableMetaData: QTableMetaData, toggleSortDirection: (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void)
+{
+   if (queryFilter && queryFilter.orderBys && queryFilter.orderBys.length > 0)
+   {
+      const orderBy = queryFilter.orderBys[0];
+      const orderByFieldName = orderBy.fieldName;
+      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, orderByFieldName);
+      const fieldLabel = fieldTable.name == tableMetaData.name ? field.label : `${fieldTable.label}: ${field.label}`;
+      return <>Sort: {fieldLabel} <Icon onClick={toggleSortDirection} sx={{ml: "0.5rem"}}>{orderBy.isAscending ? "arrow_upward" : "arrow_downward"}</Icon></>;
+   }
+   else
+   {
+      return <>Sort...</>;
+   }
+}
 
 /*******************************************************************************
  ** Component to provide the basic & advanced query-filter controls for the
@@ -398,60 +422,6 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
 
 
    /*******************************************************************************
-    ** format the current query as a string for showing on-screen as a preview.
-    *******************************************************************************/
-   const queryToAdvancedString = (thisQueryFilter: QQueryFilter) =>
-   {
-      if (queryFilter == null || !queryFilter.criteria)
-      {
-         return (<span></span>);
-      }
-
-      let counter = 0;
-
-      return (
-         <React.Fragment>
-            {thisQueryFilter.criteria?.map((criteria, i) =>
-            {
-               const {criteriaIsValid} = validateCriteria(criteria, null);
-               if (criteriaIsValid)
-               {
-                  counter++;
-                  return (
-                     <span key={i} style={{marginBottom: "0.125rem"}} onMouseOver={() => handleMouseOverElement(`queryPreview-${i}`)} onMouseOut={() => handleMouseOutElement()}>
-                        {counter > 1 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span />}
-                        {FilterUtils.criteriaToHumanString(tableMetaData, criteria, true)}
-                        {!isQueryTooComplex && (
-                           mouseOverElement == `queryPreview-${i}` && <span className={`advancedQueryPreviewX-${counter - 1}`}>
-                              <XIcon position="forAdvancedQueryPreview" onClick={() => removeCriteriaByIndex(i)} /></span>
-                        )}
-                        {counter > 1 && i == thisQueryFilter.criteria?.length - 1 && thisQueryFilter.subFilters?.length > 0 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span />}
-                     </span>
-                  );
-               }
-               else
-               {
-                  return (<span />);
-               }
-            })}
-
-            {thisQueryFilter.subFilters?.length > 0 && (thisQueryFilter.subFilters.map((filter: QQueryFilter, j) =>
-            {
-               return (
-                  <React.Fragment key={j}>
-                     {j > 0 ? <span style={{marginLeft: "0.25rem", marginRight: "0.25rem"}}>{thisQueryFilter.booleanOperator}&nbsp;</span> : <span></span>}
-                     <span style={{display: "flex", marginRight: "0.20rem"}}>(</span>
-                     {queryToAdvancedString(filter)}
-                     <span style={{display: "flex", marginRight: "0.20rem"}}>)</span>
-                  </React.Fragment>
-               );
-            }))}
-         </React.Fragment>
-      );
-   };
-
-
-   /*******************************************************************************
     ** event handler for toggling between modes - basic & advanced.
     *******************************************************************************/
    const modeToggleClicked = (newValue: string | null) =>
@@ -608,15 +578,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    /////////////////////////////////
    // set up the sort menu button //
    /////////////////////////////////
-   let sortButtonContents = <>Sort...</>;
-   if (queryFilter && queryFilter.orderBys && queryFilter.orderBys.length > 0)
-   {
-      const orderBy = queryFilter.orderBys[0];
-      const orderByFieldName = orderBy.fieldName;
-      const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, orderByFieldName);
-      const fieldLabel = fieldTable.name == tableMetaData.name ? field.label : `${fieldTable.label}: ${field.label}`;
-      sortButtonContents = <>Sort: {fieldLabel} <Icon onClick={toggleSortDirection} sx={{ml: "0.5rem"}}>{orderBy.isAscending ? "arrow_upward" : "arrow_downward"}</Icon></>;
-   }
+   let sortButtonContents = getCurrentSortIndicator(queryFilter, tableMetaData, toggleSortDirection);
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // this is being used as a version of like forcing that we get re-rendered if the query filter changes... //
@@ -807,26 +769,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                         {sortMenuComponent}
                      </Box>
                   </Box>
-                  <Box whiteSpace="nowrap" display="flex" flexShrink={1} flexGrow={1} alignItems="center">
-                     {
-                        <Box
-                           className="advancedQueryString"
-                           display="inline-block"
-                           borderTop={`1px solid ${borderGray}`}
-                           borderRadius="0 0 0.75rem 0.75rem"
-                           width="100%"
-                           sx={{fontSize: "1rem", background: "#FFFFFF"}}
-                           minHeight={"2.375rem"}
-                           p={"0.5rem"}
-                           pb={"0.125rem"}
-                           boxShadow={"inset 0px 0px 4px 2px #EFEFED"}
-                        >
-                           <Box display="flex" flexWrap="wrap" fontSize="0.875rem">
-                              {queryToAdvancedString(queryFilter)}
-                           </Box>
-                        </Box>
-                     }
-                  </Box>
+                  <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={queryFilter} isEditable={true} isQueryTooComplex={isQueryTooComplex} removeCriteriaByIndexCallback={removeCriteriaByIndex} />
                </Box>
             }
          </Box>

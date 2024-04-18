@@ -21,10 +21,12 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {InputLabel} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
+import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
 import parse from "html-react-parser";
@@ -60,6 +62,7 @@ interface Props
    labelAdditionalComponentsLeft: LabelComponent[];
    labelAdditionalElementsLeft: JSX.Element[];
    labelAdditionalComponentsRight: LabelComponent[];
+   labelAdditionalElementsRight: JSX.Element[];
    labelBoxAdditionalSx?: any;
    widgetMetaData?: QWidgetMetaData;
    widgetData?: WidgetData;
@@ -80,6 +83,7 @@ Widget.defaultProps = {
    labelAdditionalComponentsLeft: [],
    labelAdditionalElementsLeft: [],
    labelAdditionalComponentsRight: [],
+   labelAdditionalElementsRight: [],
    labelBoxAdditionalSx: {},
    omitPadding: false,
 };
@@ -158,6 +162,79 @@ export class HeaderIcon extends LabelComponent
       }
    };
 }
+
+
+/*******************************************************************************
+ ** a link (actually a button) for in a widget's header
+ *******************************************************************************/
+interface HeaderLinkButtonComponentProps
+{
+   label: string;
+   onClickCallback: () => void;
+   disabled?: boolean;
+   disabledTooltip?: string;
+}
+
+HeaderLinkButtonComponent.defaultProps = {
+   disabled: false,
+   disabledTooltip: null
+};
+
+export function HeaderLinkButtonComponent({label, onClickCallback, disabled, disabledTooltip}: HeaderLinkButtonComponentProps): JSX.Element
+{
+   return (
+      <Tooltip title={disabledTooltip}>
+         <span>
+            <Button disabled={disabled} onClick={() => onClickCallback()} sx={{p: 0}} disableRipple>
+               <Typography display="inline" textTransform="none" fontSize={"1.125rem"}>
+                  {label}
+               </Typography>
+            </Button>
+         </span>
+      </Tooltip>
+   );
+}
+
+
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
+interface HeaderToggleComponentProps
+{
+   label: string;
+   getValue: () => boolean;
+   onClickCallback: () => void;
+   disabled?: boolean;
+   disabledTooltip?: string;
+}
+
+HeaderToggleComponent.defaultProps = {
+   disabled: false,
+   disabledTooltip: null
+};
+
+export function HeaderToggleComponent({label, getValue, onClickCallback, disabled, disabledTooltip}: HeaderToggleComponentProps): JSX.Element
+{
+   const onClick = () =>
+   {
+      onClickCallback();
+   }
+
+   return (
+      <Box alignItems="baseline" mr="-0.75rem">
+         <Tooltip title={disabledTooltip}>
+            <span>
+               <InputLabel sx={{fontSize: "1.125rem", px: "0 !important", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.65 : 1}} unselectable="on">
+                  {label} <Switch disabled={disabled} checked={getValue()} onClick={onClick} />
+               </InputLabel>
+            </span>
+         </Tooltip>
+      </Box>
+   );
+}
+
 
 
 /*******************************************************************************
@@ -573,6 +650,8 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       localLabelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
    }
 
+   let localLabelAdditionalElementsRight = [...props.labelAdditionalElementsRight];
+
    const hasPermission = props.widgetData?.hasPermission === undefined || props.widgetData?.hasPermission === true;
 
    const isSet = (v: any): boolean =>
@@ -589,6 +668,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       needLabelBox ||= (labelComponentsLeft && labelComponentsLeft.length > 0);
       needLabelBox ||= (localLabelAdditionalElementsLeft && localLabelAdditionalElementsLeft.length > 0);
       needLabelBox ||= (labelComponentsRight && labelComponentsRight.length > 0);
+      needLabelBox ||= (localLabelAdditionalElementsRight && localLabelAdditionalElementsRight.length > 0);
       needLabelBox ||= isSet(props.widgetData?.icon);
       needLabelBox ||= isSet(props.widgetData?.label);
       needLabelBox ||= isSet(props.widgetMetaData?.label);
@@ -720,6 +800,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                         })
                      )
                   }
+                  {localLabelAdditionalElementsRight}
                </Box>
             </Box>
          }

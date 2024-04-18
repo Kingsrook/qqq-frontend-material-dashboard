@@ -682,6 +682,12 @@ input[type="search"]::-webkit-search-results-decoration
    border: none;
 }
 
+.entityForm h5,
+.recordView h5
+{
+   font-weight: 500;
+}
+
 .MuiPickersDay-root.Mui-selected, .MuiPickersDay-root.MuiPickersDay-dayWithMargin:hover
 {
    color: white;
