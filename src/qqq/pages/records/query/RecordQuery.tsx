@@ -408,7 +408,10 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    //////////////////////////////////////////////////////////////////
    // we use our own header - so clear out the context page header //
    //////////////////////////////////////////////////////////////////
-   setPageHeader(null);
+   if(!isModal)
+   {
+      setPageHeader(null);
+   }
 
    //////////////////////
    // ole' faithful... //
