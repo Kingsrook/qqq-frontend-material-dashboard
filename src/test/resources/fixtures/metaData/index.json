@@ -189,6 +189,26 @@
          "insertPermission": true,
          "editPermission": true,
          "deletePermission": true
+      },
+      "savedReport": {
+         "name": "savedReport",
+         "label": "Saved Report",
+         "isHidden": false,
+         "iconName": "article",
+         "capabilities": [
+            "TABLE_COUNT",
+            "TABLE_GET",
+            "TABLE_QUERY",
+            "QUERY_STATS",
+            "TABLE_UPDATE",
+            "TABLE_INSERT",
+            "TABLE_DELETE"
+         ],
+         "readPermission": true,
+         "insertPermission": true,
+         "editPermission": true,
+         "deletePermission": true,
+         "usesVariants": false
       }
    },
    "processes": {
@@ -416,6 +436,40 @@
                },
                "processes": [
                   "clonePeople"
+               ]
+            }
+         ]
+      },
+      "userCustomizations": {
+         "name": "userCustomizations",
+         "label": "User Customizations",
+         "iconName": "article",
+         "widgets": [],
+         "children": [
+            {
+               "type": "TABLE",
+               "name": "savedReport",
+               "label": "Saved Report",
+               "iconName": "article"
+            }
+         ],
+         "childMap": {
+            "savedReport": {
+               "type": "TABLE",
+               "name": "savedReport",
+               "label": "Saved Report",
+               "iconName": "article"
+            }
+         },
+         "sections": [
+            {
+               "name": "userCustomizations",
+               "label": "User Customizations",
+               "icon": {
+                  "name": "badge"
+               },
+               "tables": [
+                  "savedReport"
                ]
             }
          ]
@@ -730,6 +784,20 @@
             }
          ],
          "iconName": "data_object"
+      },
+      {
+         "type": "APP",
+         "name": "userCustomizations",
+         "label": "User Customizations",
+         "children": [
+            {
+               "type": "TABLE",
+               "name": "savedReport",
+               "label": "Saved Report",
+               "iconName": "article"
+            }
+         ],
+         "iconName": "data_object"
       }
    ],
    "branding": {
@@ -749,6 +817,28 @@
          "type": "scriptViewer",
          "isCard": true,
          "storeDropdownSelections": false,
+         "hasPermission": true
+      },
+      "reportSetupWidget": {
+         "name": "reportSetupWidget",
+         "label": "Filters and Columns",
+         "type": "reportSetup",
+         "isCard": true,
+         "storeDropdownSelections": false,
+         "showReloadButton": true,
+         "showExportButton": false,
+         "defaultValues": {},
+         "hasPermission": true
+      },
+      "pivotTableSetupWidget": {
+         "name": "pivotTableSetupWidget",
+         "label": "Pivot Table",
+         "type": "pivotTableSetup",
+         "isCard": true,
+         "storeDropdownSelections": false,
+         "showReloadButton": true,
+         "showExportButton": false,
+         "defaultValues": {},
          "hasPermission": true
       }
    },

@@ -261,10 +261,23 @@ public class QueryScreenLib
       if(StringUtils.hasContent(value))
       {
          qSeleniumLib.waitForSelector(".filterValuesColumn INPUT").click();
-         // todo - no, not in a listbox/LI here...
-         qSeleniumLib.waitForSelectorContaining(".MuiAutocomplete-listbox LI", value).click();
-         System.out.println(value);
+         qSeleniumLib.waitForSelector(".filterValuesColumn INPUT").sendKeys(value);
       }
+
+      qSeleniumLib.clickBackdrop();
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void setBasicBooleanFilter(String fieldLabel, String operatorLabel)
+   {
+      qSeleniumLib.waitForSelectorContaining("BUTTON", fieldLabel).click();
+      qSeleniumLib.waitForMillis(250);
+      qSeleniumLib.waitForSelector("#criteriaOperator").click();
+      qSeleniumLib.waitForSelectorContaining("LI", operatorLabel).click();
 
       qSeleniumLib.clickBackdrop();
    }
