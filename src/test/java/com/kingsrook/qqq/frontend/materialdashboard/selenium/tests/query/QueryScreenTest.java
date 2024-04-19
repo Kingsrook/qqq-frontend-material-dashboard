@@ -153,16 +153,16 @@ public class QueryScreenTest extends QBaseSeleniumTest
 
       queryScreenLib.addBasicFilter("Is Employed");
 
-      testBasicCriteria(queryScreenLib, "Is Employed", "equals yes", null, "(?s).*Is Employed:.*yes.*", """
+      testBasicBooleanCriteria(queryScreenLib, "Is Employed", "equals yes", "(?s).*Is Employed:.*yes.*", """
          {"fieldName":"isEmployed","operator":"EQUALS","values":[true]}""");
 
-      testBasicCriteria(queryScreenLib, "Is Employed", "equals no", null, "(?s).*Is Employed:.*no.*", """
+      testBasicBooleanCriteria(queryScreenLib, "Is Employed", "equals no", "(?s).*Is Employed:.*no.*", """
          {"fieldName":"isEmployed","operator":"EQUALS","values":[false]}""");
 
-      testBasicCriteria(queryScreenLib, "Is Employed", "is empty", null, "(?s).*Is Employed:.*is empty.*", """
+      testBasicBooleanCriteria(queryScreenLib, "Is Employed", "is empty", "(?s).*Is Employed:.*is empty.*", """
          {"fieldName":"isEmployed","operator":"IS_BLANK","values":[]}""");
 
-      testBasicCriteria(queryScreenLib, "Is Employed", "is not empty", null, "(?s).*Is Employed:.*is not empty.*", """
+      testBasicBooleanCriteria(queryScreenLib, "Is Employed", "is not empty", "(?s).*Is Employed:.*is not empty.*", """
          {"fieldName":"isEmployed","operator":"IS_NOT_BLANK","values":[]}""");
    }
 
@@ -203,10 +203,10 @@ public class QueryScreenTest extends QBaseSeleniumTest
    /*******************************************************************************
     **
     *******************************************************************************/
-   private void testBasicCriteria(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, String value, String expectButtonStringRegex, String expectFilterJsonContains)
+   private void testBasicBooleanCriteria(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, String expectButtonStringRegex, String expectFilterJsonContains)
    {
       qSeleniumJavalin.beginCapture();
-      queryScreenLib.setBasicFilter(fieldLabel, operatorLabel, value);
+      queryScreenLib.setBasicBooleanFilter(fieldLabel, operatorLabel);
       queryScreenLib.waitForBasicFilterButtonMatchingRegex(expectButtonStringRegex);
       qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
       qSeleniumJavalin.endCapture();
