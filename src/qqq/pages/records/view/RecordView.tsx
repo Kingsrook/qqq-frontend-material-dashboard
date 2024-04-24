@@ -49,11 +49,13 @@ import Tooltip from "@mui/material/Tooltip/Tooltip";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
-import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
+import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton, standardWidth} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
+import MDButton from "qqq/components/legacy/MDButton";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
+import ShareModal from "qqq/components/sharing/ShareModal";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
@@ -82,6 +84,10 @@ RecordView.defaultProps =
 
 const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 
+
+/*******************************************************************************
+ ** Record View Screen component.
+ *******************************************************************************/
 function RecordView({table, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
@@ -117,6 +123,9 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
    const [showAudit, setShowAudit] = useState(false);
+   const [showShareModal, setShowShareModal] = useState(false);
+
+   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
@@ -622,6 +631,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const handleClickDeleteButton = () =>
    {
       setDeleteConfirmationOpen(true);
+      setIsDeleteSubmitting(false);
    };
 
    const handleDeleteConfirmClose = () =>
@@ -631,6 +641,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const handleDelete = (event: { preventDefault: () => void }) =>
    {
+      setIsDeleteSubmitting(true);
       event?.preventDefault();
       (async () =>
       {
@@ -639,11 +650,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          await qController.delete(tableName, id)
             .then(() =>
             {
+               setIsDeleteSubmitting(false);
                const path = pathParts.slice(0, -1).join("/");
                navigate(path, {state: {deleteSuccess: true}});
             })
             .catch((error) =>
             {
+               setIsDeleteSubmitting(false);
                setDeleteConfirmationOpen(false);
                console.log("Caught:");
                console.log(error);
@@ -758,6 +771,44 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          }
       </Menu>
    );
+
+
+   /*******************************************************************************
+    ** function to open the sharing modal
+    *******************************************************************************/
+   const openShareModal = () =>
+   {
+      setShowShareModal(true);
+   };
+
+
+   /*******************************************************************************
+    ** function to close the sharing modal
+    *******************************************************************************/
+   const closeShareModal = () =>
+   {
+      setShowShareModal(false);
+   };
+
+
+   /*******************************************************************************
+    ** render the share button (if allowed for table)
+    *******************************************************************************/
+   const renderShareButton = () =>
+   {
+      if (tableMetaData && (tableMetaData.name == "savedReport" || tableMetaData.name == "savedView")) // todo - not just based on name
+      {
+         const shareDisabled = false; // todo - only share if you're the owner?  or do that in the modal?
+         return (<Box width={standardWidth} mr={3}>
+            <MDButton id="shareButton" type="button" color="info" size="small" onClick={() => openShareModal()} fullWidth startIcon={<Icon>share</Icon>} disabled={shareDisabled}>
+               Share
+            </MDButton>
+         </Box>);
+      }
+
+      return (<React.Fragment />);
+   };
+
 
    const openModalProcess = (process: QProcessMetaData = null) =>
    {
@@ -914,6 +965,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                                    </Typography>
                                                    <Box display="flex">
                                                       <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
+                                                      {renderShareButton()}
                                                       <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                                                    </Box>
                                                    {renderActionsMenu}
@@ -962,7 +1014,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  </DialogContent>
                                  <DialogActions>
                                     <Button onClick={handleDeleteConfirmClose}>No</Button>
-                                    <Button onClick={handleDelete} autoFocus>
+                                    <Button onClick={handleDelete} autoFocus disabled={isDeleteSubmitting}>
                                        Yes
                                     </Button>
                                  </DialogActions>
@@ -1008,6 +1060,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                        </Box>
                                     </div>
                                  </Modal>
+                              }
+
+                              {
+                                 showShareModal && tableMetaData && record &&
+                                 <ShareModal open={showShareModal} onClose={closeShareModal} tableMetaData={tableMetaData} record={record}></ShareModal>
                               }
 
                            </Box>
