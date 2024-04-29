@@ -130,7 +130,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics} = useContext(QContext);
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics, userId: currentUserId} = useContext(QContext);
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -796,13 +796,37 @@ function RecordView({table, launchProcess}: Props): JSX.Element
     *******************************************************************************/
    const renderShareButton = () =>
    {
-      if (tableMetaData && (tableMetaData.name == "savedReport" || tableMetaData.name == "savedView")) // todo - not just based on name
+      if (tableMetaData && tableMetaData.shareableTableMetaData)
       {
-         const shareDisabled = false; // todo - only share if you're the owner?  or do that in the modal?
-         return (<Box width={standardWidth} mr={3}>
-            <MDButton id="shareButton" type="button" color="info" size="small" onClick={() => openShareModal()} fullWidth startIcon={<Icon>share</Icon>} disabled={shareDisabled}>
-               Share
-            </MDButton>
+         let shareDisabled = true;
+         let disabledTooltipText = "";
+         if(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName && record)
+         {
+            const ownerId = record.values.get(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName);
+            if(ownerId != currentUserId)
+            {
+               disabledTooltipText = `Only the owner of a ${tableMetaData.label} may share it.`
+               shareDisabled = true;
+            }
+            else
+            {
+               disabledTooltipText = "";
+               shareDisabled = false;
+            }
+         }
+         else
+         {
+            shareDisabled = false;
+         }
+
+         return (<Box width={standardWidth} mr={2}>
+            <Tooltip title={disabledTooltipText}>
+               <span>
+                  <MDButton id="shareButton" type="button" color="info" size="small" onClick={() => openShareModal()} fullWidth startIcon={<Icon>group_add</Icon>} disabled={shareDisabled}>
+                     Share
+                  </MDButton>
+               </span>
+            </Tooltip>
          </Box>);
       }
 
