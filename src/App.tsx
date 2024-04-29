@@ -664,9 +664,9 @@ export default function App()
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
+   const [userId] = useState(user.email);
 
    const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
-
 
    /*******************************************************************************
     **
@@ -689,6 +689,7 @@ export default function App()
             dotMenuOpen: dotMenuOpen,
             keyboardHelpOpen: keyboardHelpOpen,
             helpHelpActive: helpHelpActive,
+            userId: userId,
             setPageHeader: (header: string | JSX.Element) => setPageHeader(header),
             setAccentColor: (accentColor: string) => setAccentColor(accentColor),
             setAccentColorLight: (accentColorLight: string) => setAccentColorLight(accentColorLight),
