@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /*******************************************************************************
  ** Base class for Selenium tests
  *******************************************************************************/
+@ExtendWith(SeleniumTestWatcher.class)
 public class QBaseSeleniumTest
 {
    protected static ChromeOptions chromeOptions;
@@ -92,6 +94,8 @@ public class QBaseSeleniumTest
 
       driver.manage().window().setSize(new Dimension(1700, 1300));
       qSeleniumLib = new QSeleniumLib(driver);
+
+      SeleniumTestWatcher.setCurrentSeleniumLib(qSeleniumLib);
 
       if(useInternalJavalin())
       {
@@ -197,10 +201,10 @@ public class QBaseSeleniumTest
          qSeleniumLib.takeScreenshotToFile(getClass().getSimpleName() + "/" + testInfo.getDisplayName());
       }
 
-      if(driver != null)
-      {
-         driver.quit();
-      }
+      ////////////////////////////////////////////////////////////////////////////////////////
+      // note - at one time we did a driver.quit here - but we're moving that into          //
+      // SeleniumTestWatcher, so it can dump logs if it wants to (it runs after the @After) //
+      ////////////////////////////////////////////////////////////////////////////////////////
 
       if(qSeleniumJavalin != null)
       {

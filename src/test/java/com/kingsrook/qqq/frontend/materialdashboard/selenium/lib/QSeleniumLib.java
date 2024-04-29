@@ -42,6 +42,8 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LogEntry;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -733,6 +735,24 @@ public class QSeleniumLib
    {
       this.autoHighlight = autoHighlight;
       return (this);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public void dumpConsole()
+   {
+      Set<String> availableLogTypes = driver.manage().logs().getAvailableLogTypes();
+      for(String logType : availableLogTypes)
+      {
+         LogEntries logEntries = driver.manage().logs().get(logType);
+         for(LogEntry logEntry : logEntries)
+         {
+            System.out.println(logEntry.toJson());
+         }
+      }
    }
 
 }
