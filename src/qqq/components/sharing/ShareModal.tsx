@@ -37,6 +37,7 @@ import Typography from "@mui/material/Typography";
 import FormData from "form-data";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton} from "qqq/components/buttons/DefaultButtons";
+import DynamicSelect, {getAutocompleteOutlinedStyle} from "qqq/components/forms/DynamicSelect";
 import Client from "qqq/utils/qqq/Client";
 import React, {useEffect, useReducer, useState} from "react";
 
@@ -75,6 +76,17 @@ const defaultScope = scopeOptions[0];
 
 const qController = Client.getInstance();
 
+interface ShareableTableMetaData
+{
+   sharedRecordTableName: string;
+   assetIdFieldName: string;
+   scopeFieldName: string;
+   audienceTypesPossibleValueSourceName: string;
+   audiencePossibleValueSourceName: string;
+   thisTableOwnerIdFieldName: string;
+   audienceTypes: {[name: string]: any}; // values here are: ShareableAudienceType
+}
+
 /*******************************************************************************
  ** component containing a Modal dialog for sharing records
  *******************************************************************************/
@@ -83,6 +95,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
    const [statusString, setStatusString] = useState("Loading...");
    const [alert, setAlert] = useState(null as string);
 
+   const [selectedAudienceOption, setSelectedAudienceOption] = useState(null as {id: string, label: string});
    const [selectedAudienceType, setSelectedAudienceType] = useState(null);
    const [selectedAudienceId, setSelectedAudienceId] = useState(null);
    const [selectedScopeId, setSelectedScopeId] = useState(defaultScope.id);
@@ -92,8 +105,14 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
    const [needToLoadCurrentShares, setNeedToLoadCurrentShares] = useState(true);
    const [everLoadedCurrentShares, setEverLoadedCurrentShares] = useState(false);
 
+   const shareableTableMetaData = tableMetaData.shareableTableMetaData as ShareableTableMetaData;
+
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+   if(!shareableTableMetaData)
+   {
+      console.error(`Did not find a shareableTableMetaData on table ${tableMetaData.name}`);
+   }
 
    /////////////////////////////////////////////////////////
    // trigger initial load, and post any changes, re-load //
@@ -124,7 +143,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
    /*******************************************************************************
     **
     *******************************************************************************/
-   function handleAudienceChange(event: React.SyntheticEvent, value: any | any[], reason: string)
+   function handleAudienceChange(value: any | any[], reason: string)
    {
       if(value)
       {
@@ -260,6 +279,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
          const result = processResult as QJobComplete;
          setStatusString(null);
          setAlert(null);
+         setSelectedAudienceOption(null);
          setNeedToLoadCurrentShares(true);
          setSubmitting(false)
       }
@@ -297,16 +317,6 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
    }
 
 
-   // todo - need this to be real
-   const audienceOptions = [
-      {id: "user:1", label: "Darin Kelkhoff"},
-      {id: "user:2", label: "Tom Chutterloin"},
-      {id: "user:3", label: "Tylers Ample"},
-      {id: "user:4", label: "Mames Mames"},
-      {id: "group:2", label: "Cold Track Engineering"}
-   ];
-
-
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -329,10 +339,11 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
     *******************************************************************************/
    function renderScopeDropdown(id: string, defaultValue: Scope, onChange: (event: React.SyntheticEvent, value: any | any[], reason: string) => void)
    {
+      const isDisabled = (id == "new-share-scope" && submitting);
       return (
          <Autocomplete
             id={id}
-            disabled={id == "new-share-scope" && submitting}
+            disabled={isDisabled}
             renderInput={(params) => (<TextField {...params} label="Scope" variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
             options={scopeOptions}
             // @ts-ignore
@@ -345,7 +356,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
             autoHighlight={true}
             disableClearable
             fullWidth
-            sx={autocompleteSX}
+            sx={getAutocompleteOutlinedStyle(isDisabled)}
          />
       );
    }
@@ -369,7 +380,8 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                      </Box>
                      <Box fontSize={14} maxWidth="590px" pb={1} fontWeight="300">
                         {alert && <Alert color="error" onClose={() => setAlert(null)}>{alert}</Alert>}
-                        {statusString}&nbsp;
+                        {statusString}
+                        {!alert && !statusString && (<>&nbsp;</>)}
                      </Box>
                   </Typography>
                </Box>
@@ -378,21 +390,14 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                <Box pb={3} display="flex" flexDirection="column">
                   {/* row for adding a new share */}
                   <Box display="flex" flexDirection="row" alignItems="center">
-                     <Box width="350px" pr={2}>
-                        <Autocomplete
-                           id="new-share-audience"
-                           disabled={submitting}
-                           renderInput={(params) => (<TextField {...params} label="User or Group" variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} />)}
-                           options={audienceOptions}
+                     <Box width="350px" pr={2} mb={-1.5}>
+                        <DynamicSelect
+                           possibleValueSourceName={shareableTableMetaData.audiencePossibleValueSourceName}
+                           fieldLabel="User or Group" // todo should come from shareableTableMetaData
+                           initialValue={selectedAudienceOption?.id}
+                           initialDisplayValue={selectedAudienceOption?.label}
+                           inForm={false}
                            onChange={handleAudienceChange}
-                           isOptionEqualToValue={(option, value) => option.id === value.id}
-                           // @ts-ignore Property label does not exist on string | {thing with label}
-                           getOptionLabel={(option) => option.label}
-                           autoSelect={true}
-                           autoHighlight={true}
-                           disableClearable
-                           fullWidth
-                           sx={autocompleteSX}
                         />
                      </Box>
                      <Box width="180px" pr={2}>
@@ -418,20 +423,22 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                            }
                         </h5>
                      </Box>
-                     <Box sx={{border: `1px solid ${colors.grayLines.main}`, borderRadius: "1rem", overflow: "auto"}} height="180px" pt="0.5rem">
-                        {
-                           currentShares.map((share) => (
-                              <Box key={share.shareId} display="flex" justifyContent="space-between" alignItems="center" p="0.25rem" fontSize="1rem">
-                                 <Box display="flex" alignItems="center">
-                                    <Box width="310px" pl="1rem">{share.audienceLabel}</Box>
-                                    <Box width="160px">{renderScopeDropdown(`scope-${share.shareId}`, getScopeOption(share.scopeId), (event: React.SyntheticEvent, value: any | any[], reason: string) => editingExistingShareScope(share.shareId, value))}</Box>
+                     <Box sx={{border: `1px solid ${colors.grayLines.main}`, borderRadius: "1rem", overflow: "hidden"}}>
+                        <Box sx={{overflow: "auto"}} height="210px" pt="0.75rem">
+                           {
+                              currentShares.map((share) => (
+                                 <Box key={share.shareId} display="flex" justifyContent="space-between" alignItems="center" p="0.25rem" pb="0.75rem" fontSize="1rem">
+                                    <Box display="flex" alignItems="center">
+                                       <Box width="310px" pl="1rem">{share.audienceLabel}</Box>
+                                       <Box width="160px">{renderScopeDropdown(`scope-${share.shareId}`, getScopeOption(share.scopeId), (event: React.SyntheticEvent, value: any | any[], reason: string) => editingExistingShareScope(share.shareId, value))}</Box>
+                                    </Box>
+                                    <Box pr="1rem">
+                                       <Button sx={{...iconButtonSX, ...redIconButton}} onClick={() => removeShare(share.shareId)}><Icon>clear</Icon></Button>
+                                    </Box>
                                  </Box>
-                                 <Box pr="1rem">
-                                    <Button sx={{...iconButtonSX, ...redIconButton}} onClick={() => removeShare(share.shareId)}><Icon>clear</Icon></Button>
-                                 </Box>
-                              </Box>
-                           ))
-                        }
+                              ))
+                           }
+                        </Box>
                      </Box>
                   </Box>
 
@@ -447,12 +454,6 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
    </Modal>);
 
 }
-
-const autocompleteSX =
-   {
-      "& .MuiAutocomplete-input": {padding: "0.125rem 0.5rem !important"},
-      "& .MuiOutlinedInput-root": {borderRadius: "0.75rem !important"}
-   };
 
 const iconButtonSX =
    {
