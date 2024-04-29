@@ -664,8 +664,14 @@ export default function App()
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
-   const [userId] = useState(user.email);
+   const [userId, setUserId] = useState(user?.email);
 
+   useEffect(() =>
+   {
+      setUserId(user?.email)
+   }, [user]);
+
+   
    const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
 
    /*******************************************************************************
