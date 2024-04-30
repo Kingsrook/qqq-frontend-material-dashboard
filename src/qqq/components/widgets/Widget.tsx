@@ -21,8 +21,7 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {InputLabel} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Box, InputLabel} from "@mui/material";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";

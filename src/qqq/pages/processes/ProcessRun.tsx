@@ -58,6 +58,7 @@ import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
 import ValidationReview from "qqq/components/processes/ValidationReview";
+import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
@@ -123,6 +124,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    );
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
+
+   const [renderedWidgets, setRenderedWidgets] = useState({} as {[step: string]: {[widgetName: string]: any}});
 
    const {pageHeader, recordAnalytics, setPageHeader} = useContext(QContext);
 
@@ -272,6 +275,42 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          }
       };
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function renderWidget(widgetName: string)
+   {
+      if(!renderedWidgets[activeStep.name])
+      {
+         renderedWidgets[activeStep.name] = {};
+         setRenderedWidgets(renderedWidgets);
+      }
+
+      if(renderedWidgets[activeStep.name][widgetName])
+      {
+         return renderedWidgets[activeStep.name][widgetName];
+      }
+
+      const widgetMetaData = qInstance.widgets.get(widgetName);
+      if(!widgetMetaData)
+      {
+         return (<Alert color="error">Unrecognized widget name: {widgetName}</Alert>);
+      }
+
+      const queryStringParts: string[] = [];
+      for (let name in processValues)
+      {
+         queryStringParts.push(`${name}=${encodeURIComponent(processValues[name])}`)
+      }
+
+      const renderedWidget = (<Box m={-2}>
+         <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} />
+      </Box>)
+      renderedWidgets[activeStep.name][widgetName] = renderedWidget;
+      return renderedWidget;
+   }
 
    ////////////////////////////////////////////////////
    // generate the main form body content for a step //
@@ -651,6 +690,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                               <Box fontSize="1rem">
                                  {parse(processValues[`${step.name}.html`])}
                               </Box>
+                           )
+                        }
+                        {
+                           component.type === QComponentType.WIDGET && (
+                              component.values?.widgetName &&
+                              renderWidget(component.values?.widgetName)
                            )
                         }
                      </div>

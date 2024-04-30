@@ -38,6 +38,7 @@ import StackedBarChart from "qqq/components/widgets/charts/StackedBarChart";
 import CompositeWidget from "qqq/components/widgets/CompositeWidget";
 import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
+import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
@@ -261,7 +262,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
    {
       const rs: {[name: string]: any} = {};
 
-      if(record.values)
+      if(record && record.values)
       {
          record.values.forEach((value, key) => rs[key] = value);
       }
@@ -594,6 +595,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                   widgetData && widgetData[i] && widgetData[i].queryParams &&
                   <PivotTableSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
                   {}} />
+               )
+            }
+            {
+               widgetMetaData.type === "dynamicForm" && (
+                  widgetData && widgetData[i] &&
+                  <DynamicFormWidget isEditable={false} widgetMetaData={widgetMetaData} widgetData={widgetData[i]} record={record} recordValues={convertQRecordValuesFromMapToObject(record)} />
                )
             }
          </Box>
