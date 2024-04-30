@@ -46,8 +46,8 @@ interface ReportSetupWidgetProps
 {
    isEditable: boolean;
    widgetMetaData: QWidgetMetaData;
-   recordValues: {[name: string]: any};
-   onSaveCallback?: (values: {[name: string]: any}) => void;
+   recordValues: { [name: string]: any };
+   onSaveCallback?: (values: { [name: string]: any }) => void;
 }
 
 ReportSetupWidget.defaultProps = {
@@ -103,14 +103,14 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    /////////////////////////////
    let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
    let usingDefaultEmptyFilter = false;
-   if(!queryFilter)
+   if (!queryFilter)
    {
       queryFilter = new QQueryFilter();
       usingDefaultEmptyFilter = true;
    }
 
    let columns: QQueryColumns = null;
-   if(recordValues["columnsJson"])
+   if (recordValues["columnsJson"])
    {
       columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
    }
@@ -124,12 +124,12 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
       {
          (async () =>
          {
-            const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"])
+            const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"]);
             setTableMetaData(tableMetaData);
 
             const queryFilterForFrontend = Object.assign({}, queryFilter);
-            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend)
-            setFrontendQueryFilter(queryFilterForFrontend)
+            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
+            setFrontendQueryFilter(queryFilterForFrontend);
          })();
       }
    }, [recordValues]);
@@ -140,7 +140,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function openEditor()
    {
-      if(recordValues["tableName"])
+      if (recordValues["tableName"])
       {
          setModalOpen(true);
       }
@@ -152,7 +152,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function saveClicked()
    {
-      if(!onSaveCallback)
+      if (!onSaveCallback)
       {
          console.log("onSaveCallback was not defined");
          return;
@@ -181,7 +181,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function closeEditor(event?: {}, reason?: "backdropClick" | "escapeKeyDown")
    {
-      if(reason == "backdropClick" || reason == "escapeKeyDown")
+      if (reason == "backdropClick" || reason == "escapeKeyDown")
       {
          return;
       }
@@ -195,9 +195,9 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function renderColumn(column: Column): JSX.Element
    {
-      const [field, table] = FilterUtils.getField(tableMetaData, column.name)
+      const [field, table] = FilterUtils.getField(tableMetaData, column.name);
 
-      if(!column || !column.isVisible || column.name == "__check__" || !field)
+      if (!column || !column.isVisible || column.name == "__check__" || !field)
       {
          return (<React.Fragment />);
       }
@@ -215,9 +215,9 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function mayShowQueryPreview(): boolean
    {
-      if(tableMetaData)
+      if (tableMetaData)
       {
-         if(frontendQueryFilter?.criteria?.length > 0 || frontendQueryFilter?.subFilters?.length > 0)
+         if (frontendQueryFilter?.criteria?.length > 0 || frontendQueryFilter?.subFilters?.length > 0)
          {
             return (true);
          }
@@ -231,11 +231,11 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function mayShowColumnsPreview(): boolean
    {
-      if(tableMetaData)
+      if (tableMetaData)
       {
-         for(let i = 0; i<columns?.columns?.length; i++)
+         for (let i = 0; i < columns?.columns?.length; i++)
          {
-            if(columns.columns[i].isVisible && columns.columns[i].name != "__check__")
+            if (columns.columns[i].isVisible && columns.columns[i].name != "__check__")
             {
                return (true);
             }
@@ -269,10 +269,10 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    // add link to widget header for opening modal //
    /////////////////////////////////////////////////
    const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up your report filters and columns";
-   const labelAdditionalElementsRight: JSX.Element[] = []
-   if(isEditable)
+   const labelAdditionalElementsRight: JSX.Element[] = [];
+   if (isEditable)
    {
-      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />)
+      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
    }
 
 
@@ -316,7 +316,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
             <Box display="flex" flexWrap="wrap" fontSize="1rem">
                {
                   mayShowColumnsPreview() &&
-                  columns.columns.map((column, i) => <React.Fragment key={i}>{renderColumn(column)}</React.Fragment>)
+                  columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
                }
                {
                   !mayShowColumnsPreview() &&

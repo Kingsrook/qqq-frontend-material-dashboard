@@ -196,8 +196,6 @@ export function HeaderLinkButtonComponent({label, onClickCallback, disabled, dis
 }
 
 
-
-
 /*******************************************************************************
  **
  *******************************************************************************/
@@ -220,7 +218,7 @@ export function HeaderToggleComponent({label, getValue, onClickCallback, disable
    const onClick = () =>
    {
       onClickCallback();
-   }
+   };
 
    return (
       <Box alignItems="baseline" mr="-0.75rem">
@@ -234,7 +232,6 @@ export function HeaderToggleComponent({label, getValue, onClickCallback, disable
       </Box>
    );
 }
-
 
 
 /*******************************************************************************
@@ -698,7 +695,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
    );
 
    let sublabelElement = (
-      <Box height="20px">
+      <Box key="sublabel" height="20px">
          <Typography sx={{position: "relative", top: "-18px"}} variant="caption">
             {props.widgetData?.sublabel}
          </Typography>
@@ -785,7 +782,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
                      }
                      {localLabelAdditionalElementsLeft}
                   </Box>
-                  <Box display="flex">
+                  <Box key="sublabelContainer" display="flex">
                      {
                         hasPermission && props.widgetData?.sublabel && (sublabelElement)
                      }

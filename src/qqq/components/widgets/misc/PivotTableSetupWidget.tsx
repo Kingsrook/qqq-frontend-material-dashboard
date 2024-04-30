@@ -280,7 +280,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       }
 
       modalPivotTableDefinition[rowsOrColumns].push(new PivotTableGroupBy());
-      validateForm()
+      validateForm();
       forceUpdate();
    }
 
@@ -292,7 +292,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    {
       updateUsedGroupByFieldNames(modalPivotTableDefinition);
       updateUsedValueFieldNames(modalPivotTableDefinition);
-      validateForm()
+      validateForm();
       forceUpdate();
    }
 
@@ -308,7 +308,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       }
 
       modalPivotTableDefinition.values.push(new PivotTableValue());
-      validateForm()
+      validateForm();
       forceUpdate();
    }
 
@@ -319,7 +319,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    function removeValue(index: number)
    {
       modalPivotTableDefinition.values.splice(index, 1);
-      validateForm()
+      validateForm();
       forceUpdate();
    }
 
@@ -503,7 +503,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
-      labelAdditionalElementsRight.push(<HeaderToggleComponent disabled={editPopupDisabled} disabledTooltip={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle} label="Use Pivot Table?" getValue={() => enabled} onClickCallback={toggleEnabled} />);
+      labelAdditionalElementsRight.push(<HeaderToggleComponent key="pivotTableHeader" disabled={editPopupDisabled} disabledTooltip={selectTableFirstTooltipTitle ?? selectColumnsFirstTooltipTitle} label="Use Pivot Table?" getValue={() => enabled} onClickCallback={toggleEnabled} />);
    }
 
 
@@ -659,7 +659,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
       // if this isn't a call from the on-submit handler, and we haven't previously attempted a submit, then return w/o setting any alerts //
       // this is like a version of considering "touched"...                                                                                //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      if(!submitting && !attemptedSubmit)
+      if (!submitting && !attemptedSubmit)
       {
          return;
       }
@@ -703,7 +703,7 @@ export default function PivotTableSetupWidget({isEditable, widgetMetaData, recor
          // now they've fixed 'em - so go back to a 'clean' state - so if they add more    //
          // boxes, they won't immediately show errors, until a re-submit                   //
          ////////////////////////////////////////////////////////////////////////////////////
-         if(attemptedSubmit)
+         if (attemptedSubmit)
          {
             setAttemptedSubmit(false);
          }
