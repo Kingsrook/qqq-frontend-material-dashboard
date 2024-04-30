@@ -172,6 +172,7 @@ class DynamicFormUtils
                   {
                      isPossibleValue: true,
                      tableName: tableName,
+                     fieldName: field.name,
                      initialDisplayValue: initialDisplayValue,
                   };
             }
@@ -181,6 +182,7 @@ class DynamicFormUtils
                   {
                      isPossibleValue: true,
                      processName: processName,
+                     fieldName: field.name,
                      initialDisplayValue: initialDisplayValue,
                   };
             }
@@ -190,6 +192,8 @@ class DynamicFormUtils
                   {
                      isPossibleValue: true,
                      initialDisplayValue: initialDisplayValue,
+                     fieldName: field.name,
+                     possibleValueSourceName: field.possibleValueSourceName
                   };
             }
          }

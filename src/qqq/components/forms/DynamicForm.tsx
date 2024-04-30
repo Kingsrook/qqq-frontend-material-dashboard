@@ -174,7 +174,8 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                               <DynamicSelect
                                  tableName={field.possibleValueProps.tableName}
                                  processName={field.possibleValueProps.processName}
-                                 fieldName={fieldName}
+                                 possibleValueSourceName={field.possibleValueProps.possibleValueSourceName}
+                                 fieldName={field.possibleValueProps.fieldName}
                                  isEditable={field.isEditable}
                                  fieldLabel=""
                                  initialValue={values[fieldName]}
