@@ -21,6 +21,7 @@
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {FilterVariableExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/FilterVariableExpression";
 import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
 import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
@@ -34,14 +35,14 @@ import MenuItem from "@mui/material/MenuItem";
 import {styled} from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Tooltip, {tooltipClasses, TooltipProps} from "@mui/material/Tooltip";
-import React, {SyntheticEvent, useEffect, useReducer, useState} from "react";
 import AdvancedDateTimeFilterValues from "qqq/components/query/AdvancedDateTimeFilterValues";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {EvaluatedExpression} from "qqq/components/query/EvaluatedExpression";
 import {makeTextField} from "qqq/components/query/FilterCriteriaRowValues";
+import React, {SyntheticEvent, useReducer, useState} from "react";
 
 
-export type Expression = NowWithOffsetExpression | ThisOrLastPeriodExpression | NowExpression;
+export type Expression = NowWithOffsetExpression | ThisOrLastPeriodExpression | NowExpression | FilterVariableExpression;
 
 
 interface CriteriaDateFieldProps
@@ -52,6 +53,7 @@ interface CriteriaDateFieldProps
    field: QFieldMetaData;
    criteria: QFilterCriteriaWithId;
    valueChangeHandler: (event: React.ChangeEvent | SyntheticEvent, valueIndex?: number | "all", newValue?: any) => void;
+   allowVariables?: boolean;
 }
 
 CriteriaDateField.defaultProps = {
@@ -60,19 +62,30 @@ CriteriaDateField.defaultProps = {
    idPrefix: "value-"
 };
 
-export default function CriteriaDateField({valueIndex, label, idPrefix, field, criteria, valueChangeHandler}: CriteriaDateFieldProps): JSX.Element
+export const NoWrapTooltip = styled(({className, children, ...props}: TooltipProps) => (
+   <Tooltip {...props} classes={{popper: className}}>{children}</Tooltip>
+))({
+   [`& .${tooltipClasses.tooltip}`]: {
+      whiteSpace: "nowrap"
+   },
+});
+
+export default function CriteriaDateField({valueIndex, label, idPrefix, field, criteria, valueChangeHandler, allowVariables}: CriteriaDateFieldProps): JSX.Element
 {
+   const [relativeDateTimeOpen, setRelativeDateTimeOpen] = useState(false);
    const [relativeDateTimeMenuAnchorElement, setRelativeDateTimeMenuAnchorElement] = useState(null);
-   const [forceAdvancedDateTimeDialogOpen, setForceAdvancedDateTimeDialogOpen] = useState(false)
+   const [forceAdvancedDateTimeDialogOpen, setForceAdvancedDateTimeDialogOpen] = useState(false);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const openRelativeDateTimeMenu = (event: React.MouseEvent<HTMLElement>) =>
    {
+      setRelativeDateTimeOpen(true);
       setRelativeDateTimeMenuAnchorElement(event.currentTarget);
    };
 
    const closeRelativeDateTimeMenu = () =>
    {
+      setRelativeDateTimeOpen(false);
       setRelativeDateTimeMenuAnchorElement(null);
    };
 
@@ -137,20 +150,12 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
    const isExpression = criteria.values && criteria.values[valueIndex] && criteria.values[valueIndex].type;
    const currentExpression = isExpression ? criteria.values[valueIndex] : null;
 
-   const NoWrapTooltip = styled(({className, children, ...props}: TooltipProps) => (
-      <Tooltip {...props} classes={{popper: className}}>{children}</Tooltip>
-   ))({
-      [`& .${tooltipClasses.tooltip}`]: {
-         whiteSpace: "nowrap"
-      },
-   });
-
    const tooltipMenuItemFromExpression = (valueIndex: number, tooltipPlacement: "left" | "right", expression: Expression) =>
    {
       let startOfPrefix = "";
-      if(expression.type == "ThisOrLastPeriod")
+      if (expression.type == "ThisOrLastPeriod")
       {
-         if(field.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
+         if (field.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
          {
             startOfPrefix = "start of ";
          }
@@ -194,14 +199,14 @@ export default function CriteriaDateField({valueIndex, label, idPrefix, field, c
    return <Box display="flex" alignItems="flex-end">
       {
          isExpression ? makeDateTimeExpressionTextField(criteria.values[valueIndex], valueIndex, label, idPrefix)
-            : makeTextField(field, criteria, valueChangeHandler, valueIndex, label, idPrefix)
+            : makeTextField(field, criteria, valueChangeHandler, valueIndex, label, idPrefix, allowVariables)
       }
       <Box>
          <Tooltip title={`Choose a common relative ${field.type == QFieldType.DATE ? "date" : "date-time"} expression`} placement="bottom">
             <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer", position: "relative", top: "2px"}} onClick={openRelativeDateTimeMenu}>date_range</Icon>
          </Tooltip>
          <Menu
-            open={relativeDateTimeMenuAnchorElement}
+            open={relativeDateTimeOpen}
             anchorEl={relativeDateTimeMenuAnchorElement}
             transformOrigin={{horizontal: "left", vertical: "top"}}
             onClose={closeRelativeDateTimeMenu}

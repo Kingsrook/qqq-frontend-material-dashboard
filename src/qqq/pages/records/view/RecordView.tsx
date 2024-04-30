@@ -21,6 +21,7 @@
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -83,6 +84,47 @@ RecordView.defaultProps =
    };
 
 const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
+
+
+/*******************************************************************************
+ **
+ *******************************************************************************/
+export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: {[name: string]: QFieldMetaData} )
+{
+   return <Box key={key} display="flex" flexDirection="column" py={1} pr={2}>
+      {
+         fieldNames.map((fieldName: string) =>
+         {
+            let [field, tableForField] = tableMetaData ? TableUtils.getFieldAndTable(tableMetaData, fieldName) : fieldMap ? [fieldMap[fieldName], null] : [null, null];
+
+            if (field != null)
+            {
+               let label = field.label;
+
+               const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
+               const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
+               const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableMetaData?.name};field:${fieldName}`} />;
+
+               const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>;
+
+               return (
+                  <Box key={fieldName} flexDirection="row" pr={2}>
+                     <>
+                        {
+                           showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
+                        }
+                        <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
+                        <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
+                           {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                        </Typography>
+                     </>
+                  </Box>
+               );
+            }
+         })
+      }
+   </Box>;
+}
 
 
 /*******************************************************************************
@@ -528,40 +570,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                // for a section with field names, render the field values.                                               //
                // for the T1 section, the "wrapper" will come out below - but for other sections, produce a wrapper too. //
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const fields = (
-                  <Box key={section.name} display="flex" flexDirection="column" py={1} pr={2}>
-                     {
-                        section.fieldNames.map((fieldName: string) =>
-                        {
-                           let [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-                           if (field != null)
-                           {
-                              let label = field.label;
-
-                              const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
-                              const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
-                              const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableName};field:${fieldName}`} />;
-
-                              const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>;
-
-                              return (
-                                 <Box key={fieldName} flexDirection="row" pr={2}>
-                                    <>
-                                       {
-                                          showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
-                                       }
-                                       <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
-                                       <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
-                                          {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
-                                       </Typography>
-                                    </>
-                                 </Box>
-                              );
-                           }
-                        })
-                     }
-                  </Box>
-               );
+               const fields = renderSectionOfFields(section.name, section.fieldNames, tableMetaData, helpHelpActive, record);
 
                if (section.tier === "T1")
                {
@@ -1055,7 +1064,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
                               {
                                  showEditChildForm &&
-                                 <Modal open={showEditChildForm as boolean} onClose={(event, reason) => closeEditChildForm(event, reason)}>
+                                 <Modal open={showEditChildForm !== null} onClose={(event, reason) => closeEditChildForm(event, reason)}>
                                     <div className="modalEditForm">
                                        <EntityForm
                                           isModal={true}

@@ -29,6 +29,7 @@ export interface FieldRule
    sourceField: string;
    action: FieldRuleAction;
    targetField: string;
+   targetWidget: string;
 }
 
 
@@ -46,5 +47,6 @@ export enum FieldRuleTrigger
  *******************************************************************************/
 export enum FieldRuleAction
 {
-   CLEAR_TARGET_FIELD = "CLEAR_TARGET_FIELD"
+   CLEAR_TARGET_FIELD = "CLEAR_TARGET_FIELD",
+   RELOAD_WIDGET = "RELOAD_WIDGET"
 }

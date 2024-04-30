@@ -175,12 +175,20 @@ class DynamicFormUtils
                      initialDisplayValue: initialDisplayValue,
                   };
             }
-            else
+            else if(processName)
             {
                dynamicFormFields[field.name].possibleValueProps =
                   {
                      isPossibleValue: true,
                      processName: processName,
+                     initialDisplayValue: initialDisplayValue,
+                  };
+            }
+            else
+            {
+               dynamicFormFields[field.name].possibleValueProps =
+                  {
+                     isPossibleValue: true,
                      initialDisplayValue: initialDisplayValue,
                   };
             }

@@ -27,5 +27,6 @@ package com.kingsrook.qqq.frontend.materialdashboard.model.metadata.fieldrules;
  *******************************************************************************/
 public enum FieldRuleAction
 {
-   CLEAR_TARGET_FIELD
+   CLEAR_TARGET_FIELD,
+   RELOAD_WIDGET
 }

@@ -185,7 +185,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    if(data && data.viewAllLink)
    {
       labelAdditionalElementsLeft.push(
-         <Typography variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative">
+         <Typography key={"viewAllLink"} variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative">
             <Link to={data.viewAllLink}>View All</Link>
          </Typography>
       )
@@ -225,8 +225,8 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    if(widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(
-         <Typography key={1} variant="body2" px={0} display="inline" position="relative">
-            <Tooltip title={tooltipTitle}><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.25}}>save_alt</Icon></Button></Tooltip>
+         <Typography key={"exportButton"} variant="body2" px={0} display="inline" position="relative">
+            <Tooltip title={tooltipTitle}><span><Button sx={{px: 1, py: 0, minWidth: "initial"}} onClick={onExportClick} disabled={isExportDisabled}><Icon sx={{color: "#757575", fontSize: 1.25}}>save_alt</Icon></Button></span></Tooltip>
          </Typography>
       );
    }
@@ -305,48 +305,50 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
          <Box mx={-2} mb={-3}>
-            <DataGridPro
-               autoHeight
-               sx={{
-                  borderBottom: "none",
-                  borderLeft: "none",
-                  borderRight: "none"
-               }}
-               rows={rows}
-               disableSelectionOnClick
-               columns={columns}
-               rowBuffer={10}
-               getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-               onRowClick={handleRowClick}
-               getRowId={(row) => row.__rowIndex}
-               // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-               components={{
-                  Toolbar: CustomToolbar
-               }}
-               // pinnedColumns={pinnedColumns}
-               // onPinnedColumnsChange={handlePinnedColumnsChange}
-               // pagination
-               // paginationMode="server"
-               // rowsPerPageOptions={[20]}
-               // sortingMode="server"
-               // filterMode="server"
-               // page={pageNumber}
-               // checkboxSelection
-               rowCount={data && data.totalRows}
-               // onPageSizeChange={handleRowsPerPageChange}
-               // onStateChange={handleStateChange}
-               // density={density}
-               // loading={loading}
-               // filterModel={filterModel}
-               // onFilterModelChange={handleFilterChange}
-               // columnVisibilityModel={columnVisibilityModel}
-               // onColumnVisibilityModelChange={handleColumnVisibilityChange}
-               // onColumnOrderChange={handleColumnOrderChange}
-               // onSelectionModelChange={selectionChanged}
-               // onSortModelChange={handleSortChange}
-               // sortingOrder={[ "asc", "desc" ]}
-               // sortModel={columnSortModel}
-            />
+            <Box className="recordGridWidget">
+               <DataGridPro
+                  autoHeight
+                  sx={{
+                     borderBottom: "none",
+                     borderLeft: "none",
+                     borderRight: "none"
+                  }}
+                  rows={rows}
+                  disableSelectionOnClick
+                  columns={columns}
+                  rowBuffer={10}
+                  getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+                  onRowClick={handleRowClick}
+                  getRowId={(row) => row.__rowIndex}
+                  // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
+                  components={{
+                     Toolbar: CustomToolbar
+                  }}
+                  // pinnedColumns={pinnedColumns}
+                  // onPinnedColumnsChange={handlePinnedColumnsChange}
+                  // pagination
+                  // paginationMode="server"
+                  // rowsPerPageOptions={[20]}
+                  // sortingMode="server"
+                  // filterMode="server"
+                  // page={pageNumber}
+                  // checkboxSelection
+                  rowCount={data && data.totalRows}
+                  // onPageSizeChange={handleRowsPerPageChange}
+                  // onStateChange={handleStateChange}
+                  // density={density}
+                  // loading={loading}
+                  // filterModel={filterModel}
+                  // onFilterModelChange={handleFilterChange}
+                  // columnVisibilityModel={columnVisibilityModel}
+                  // onColumnVisibilityModelChange={handleColumnVisibilityChange}
+                  // onColumnOrderChange={handleColumnOrderChange}
+                  // onSelectionModelChange={selectionChanged}
+                  // onSortModelChange={handleSortChange}
+                  // sortingOrder={[ "asc", "desc" ]}
+                  // sortModel={columnSortModel}
+               />
+            </Box>
          </Box>
       </Widget>
    );

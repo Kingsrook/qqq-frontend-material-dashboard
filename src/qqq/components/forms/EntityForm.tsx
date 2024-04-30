@@ -43,6 +43,7 @@ import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
+import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
 import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
@@ -409,6 +410,19 @@ function EntityForm(props: Props): JSX.Element
          />
       }
 
+      if(widgetMetaData.type == "dynamicForm")
+      {
+         return <DynamicFormWidget
+            key={formValues["savedReportId"]} // todo - pull this from the metaData (could do so above too...)
+            isEditable={true}
+            widgetMetaData={widgetMetaData}
+            widgetData={widgetData}
+            recordValues={formValues}
+            record={record}
+            onSaveCallback={setFormFieldValuesFromWidget}
+         />
+      }
+
       return (<Box>Unsupported widget type: {widgetMetaData.type}</Box>)
    }
 
@@ -482,7 +496,7 @@ function EntityForm(props: Props): JSX.Element
                   return (true);
                }
 
-               if(widget.type == "reportSetup" || widget.type == "pivotTableSetup")
+               if(widget.type == "reportSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
                {
                   return (true);
                }
@@ -706,7 +720,8 @@ function EntityForm(props: Props): JSX.Element
             else
             {
                const widgetMetaData = metaData.widgets.get(section.widgetName);
-               const widgetData = await qController.widget(widgetMetaData.name, props.id ? `${tableMetaData.primaryKeyField}=${props.id}` : "");
+               const widgetData = await qController.widget(widgetMetaData.name, makeQueryStringWithIdAndObject(tableMetaData, defaultValues));
+
                newRenderedWidgetSections[section.widgetName] = getWidgetSection(widgetMetaData, widgetData);
                newChildListWidgetData[section.widgetName] = widgetData;
             }
@@ -967,6 +982,51 @@ function EntityForm(props: Props): JSX.Element
 
 
    /*******************************************************************************
+    **
+    *******************************************************************************/
+   function makeQueryStringWithIdAndObject(tableMetaData: QTableMetaData, object: {[key: string]: any})
+   {
+      const queryParamsArray: string[] = [];
+      if(props.id)
+      {
+         queryParamsArray.push(`${tableMetaData.primaryKeyField}=${encodeURIComponent(props.id)}`)
+      }
+
+      if(object)
+      {
+         for (let key in object)
+         {
+            queryParamsArray.push(`${key}=${encodeURIComponent(object[key])}`)
+         }
+      }
+
+      return (queryParamsArray.join("&"));
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   async function reloadWidget(widgetName: string, additionalQueryParamsForWidget: {[key: string]: any })
+   {
+      const widgetData = await qController.widget(widgetName, makeQueryStringWithIdAndObject(tableMetaData, additionalQueryParamsForWidget));
+      const widgetMetaData = metaData.widgets.get(widgetName);
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      // todo - rename this - it holds all widget dta, not just child-lists.  also, the type is wrong... //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      const newChildListWidgetData: { [name: string]: ChildRecordListData } = Object.assign({}, childListWidgetData);
+      newChildListWidgetData[widgetName] = widgetData;
+      setChildListWidgetData(newChildListWidgetData);
+
+      const newRenderedWidgetSections = Object.assign({}, renderedWidgetSections);
+      newRenderedWidgetSections[widgetName] = getWidgetSection(widgetMetaData, widgetData);
+      setRenderedWidgetSections(newRenderedWidgetSections);
+      forceUpdate();
+   }
+
+
+   /*******************************************************************************
     ** process a form-field having a changed value (e.g., apply field rules).
     *******************************************************************************/
    function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: {[fieldName: string]: any})
@@ -981,6 +1041,10 @@ function EntityForm(props: Props): JSX.Element
                   console.log(`Clearing value from [${fieldRule.targetField}] due to change in [${fieldName}]`);
                   valueChangesToMake[fieldRule.targetField] = null;
                   break;
+               case FieldRuleAction.RELOAD_WIDGET:
+                  const additionalQueryParamsForWidget: {[key: string]: any} = {};
+                  additionalQueryParamsForWidget[fieldRule.sourceField] = newValue;
+                  reloadWidget(fieldRule.targetWidget, additionalQueryParamsForWidget);
             }
          }
       }

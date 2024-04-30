@@ -30,14 +30,15 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import TextField from "@mui/material/TextField";
-import React, {SyntheticEvent, useContext, useReducer, useState} from "react";
 import QContext from "QContext";
 import {QFilterCriteriaWithId} from "qqq/components/query/CustomFilterPanel";
 import {getDefaultCriteriaValue, getOperatorOptions, getValueModeRequiredCount, OperatorOption, validateCriteria} from "qqq/components/query/FilterCriteriaRow";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
 import XIcon from "qqq/components/query/XIcon";
+import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
+import React, {SyntheticEvent, useContext, useReducer, useState} from "react";
 
 export type CriteriaParamType = QFilterCriteriaWithId | null | "tooComplex";
 
@@ -50,6 +51,7 @@ interface QuickFilterProps
    updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean, doRemoveCriteria: boolean) => void;
    defaultOperator?: QCriteriaOperator;
    handleRemoveQuickFilterField?: (fieldName: string) => void;
+   queryScreenUsage?: QueryScreenUsage;
 }
 
 QuickFilter.defaultProps =
@@ -71,7 +73,7 @@ export const quickFilterButtonStyles = {
    minHeight: "auto",
    padding: "0.375rem 0.625rem", whiteSpace: "nowrap",
    marginBottom: "0.5rem"
-}
+};
 
 /*******************************************************************************
  ** Test if a CriteriaParamType represents an actual query criteria - or, if it's
@@ -89,11 +91,11 @@ const criteriaParamIsCriteria = (param: CriteriaParamType): boolean =>
  *******************************************************************************/
 const doesOperatorOptionEqualCriteria = (operatorOption: OperatorOption, criteria: QFilterCriteriaWithId): boolean =>
 {
-   if(operatorOption.value == criteria.operator)
+   if (operatorOption.value == criteria.operator)
    {
-      if(operatorOption.implicitValues)
+      if (operatorOption.implicitValues)
       {
-         if(JSON.stringify(operatorOption.implicitValues) == JSON.stringify(criteria.values))
+         if (JSON.stringify(operatorOption.implicitValues) == JSON.stringify(criteria.values))
          {
             return (true);
          }
@@ -107,7 +109,7 @@ const doesOperatorOptionEqualCriteria = (operatorOption: OperatorOption, criteri
    }
 
    return (false);
-}
+};
 
 
 /*******************************************************************************
@@ -117,29 +119,29 @@ const doesOperatorOptionEqualCriteria = (operatorOption: OperatorOption, criteri
  *******************************************************************************/
 const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: QFilterCriteriaWithId, defaultOperator: QCriteriaOperator): OperatorOption =>
 {
-   if(criteria)
+   if (criteria)
    {
       const filteredOptions = operatorOptions.filter(o => doesOperatorOptionEqualCriteria(o, criteria));
-      if(filteredOptions.length > 0)
+      if (filteredOptions.length > 0)
       {
          return (filteredOptions[0]);
       }
    }
 
    const filteredOptions = operatorOptions.filter(o => o.value == defaultOperator);
-   if(filteredOptions.length > 0)
+   if (filteredOptions.length > 0)
    {
       return (filteredOptions[0]);
    }
 
    return (null);
-}
+};
 
 /*******************************************************************************
  ** Component to render a QuickFilter - that is - a button, with a Menu under it,
  ** with Operator and Value controls.
  *******************************************************************************/
-export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, handleRemoveQuickFilterField}: QuickFilterProps): JSX.Element
+export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, handleRemoveQuickFilterField, queryScreenUsage}: QuickFilterProps): JSX.Element
 {
    const operatorOptions = fieldMetaData ? getOperatorOptions(tableMetaData, fullFieldName) : [];
    const [_, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fullFieldName);
@@ -190,7 +192,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    if (criteriaParamIsCriteria(criteriaParam) && JSON.stringify(criteriaParam) !== JSON.stringify(criteria))
    {
-      if(isOpen)
+      if (isOpen)
       {
          ////////////////////////////////////////////////////////////////////////////////
          // this was firing too-often for case where:  there was a criteria originally //
@@ -217,12 +219,12 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
     *******************************************************************************/
    const criteriaNeedsReset = (): boolean =>
    {
-      if(criteria != null && criteriaParam == null)
+      if (criteria != null && criteriaParam == null)
       {
          const defaultOperatorOption = operatorOptions.filter(o => o.value == defaultOperator)[0];
-         if(criteria.operator !== defaultOperatorOption?.value || JSON.stringify(criteria.values) !== JSON.stringify(getDefaultCriteriaValue()))
+         if (criteria.operator !== defaultOperatorOption?.value || JSON.stringify(criteria.values) !== JSON.stringify(getDefaultCriteriaValue()))
          {
-            if(isOpen)
+            if (isOpen)
             {
                //////////////////////////////////////////////////////////////////////////////////
                // this was firing too-often for case where:  there was no criteria originally, //
@@ -237,7 +239,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       }
 
       return (false);
-   }
+   };
 
    /*******************************************************************************
     ** Construct a new criteria object - resetting the values tied to the operator
@@ -251,8 +253,8 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       setOperatorSelectedValue(operatorOption);
       setOperatorInputValue(operatorOption?.label);
       setCriteria(criteria);
-      return(criteria);
-   }
+      return (criteria);
+   };
 
    /*******************************************************************************
     ** event handler to open the menu in response to the button being clicked.
@@ -266,7 +268,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       {
          const element = document.getElementById("value-" + criteria.id);
          element?.focus();
-      })
+      });
    };
 
    /*******************************************************************************
@@ -304,15 +306,15 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
          // we've seen cases where switching operators can sometimes put a null in as the first value... //
          // that just causes a bad time (e.g., null pointers in Autocomplete), so, get rid of that.      //
          //////////////////////////////////////////////////////////////////////////////////////////////////
-         if(criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
+         if (criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
          {
             criteria.values = [];
          }
 
-         if(newValue.valueMode && !newValue.implicitValues)
+         if (newValue.valueMode && !newValue.implicitValues)
          {
             const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
-            if(requiredValueCount != null && criteria.values.length > requiredValueCount)
+            if (requiredValueCount != null && criteria.values.length > requiredValueCount)
             {
                criteria.values.splice(requiredValueCount);
             }
@@ -345,6 +347,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       // @ts-ignore
       const value = newValue !== undefined ? newValue : event ? event.target.value : null;
 
+      console.log("IN HERE");
       if (!criteria.values)
       {
          criteria.values = [];
@@ -376,13 +379,13 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
     *******************************************************************************/
    const resetCriteria = (e: React.MouseEvent<HTMLSpanElement>) =>
    {
-      if(criteriaIsValid)
+      if (criteriaIsValid)
       {
          e.stopPropagation();
          const newCriteria = makeNewCriteria();
          updateCriteria(newCriteria, false, true);
       }
-   }
+   };
 
    /*******************************************************************************
     ** event handler for clicking the (x) icon that turns off this quick filter field.
@@ -390,17 +393,17 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
     *******************************************************************************/
    const handleTurningOffQuickFilterField = () =>
    {
-      closeMenu()
-      if(handleRemoveQuickFilterField)
+      closeMenu();
+      if (handleRemoveQuickFilterField)
       {
          handleRemoveQuickFilterField(criteria?.fieldName);
       }
-   }
+   };
 
    ////////////////////////////////////////////////////////////////////////////////////
    // if no field was input (e.g., record-query is still loading), return null early //
    ////////////////////////////////////////////////////////////////////////////////////
-   if(!fieldMetaData)
+   if (!fieldMetaData)
    {
       return (null);
    }
@@ -410,10 +413,10 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    // from the last selected one, then set the state vars that control that autocomplete   //
    //////////////////////////////////////////////////////////////////////////////////////////
    const maybeNewOperatorSelectedValue = getOperatorSelectedValue(operatorOptions, criteria, defaultOperator);
-   if(JSON.stringify(maybeNewOperatorSelectedValue) !== JSON.stringify(operatorSelectedValue))
+   if (JSON.stringify(maybeNewOperatorSelectedValue) !== JSON.stringify(operatorSelectedValue))
    {
-      setOperatorSelectedValue(maybeNewOperatorSelectedValue)
-      setOperatorInputValue(maybeNewOperatorSelectedValue?.label)
+      setOperatorSelectedValue(maybeNewOperatorSelectedValue);
+      setOperatorInputValue(maybeNewOperatorSelectedValue?.label);
    }
 
    /////////////////////////////////////////////////////////////////////////////////////
@@ -431,7 +434,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const tooltipEnterDelay = 500;
 
    let buttonAdditionalStyles: any = {};
-   let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>
+   let buttonContent = <span>{tableForField?.name != tableMetaData.name ? `${tableForField.label}: ` : ""}{fieldMetaData.label}</span>;
    let buttonClassName = "filterNotActive";
    if (criteriaIsValid)
    {
@@ -446,9 +449,9 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       // don't show the Equals or In operators //
       ///////////////////////////////////////////
       let operatorString = (<>{operatorSelectedValue.label}&nbsp;</>);
-      if(operatorSelectedValue.value == QCriteriaOperator.EQUALS || operatorSelectedValue.value == QCriteriaOperator.IN)
+      if (operatorSelectedValue.value == QCriteriaOperator.EQUALS || operatorSelectedValue.value == QCriteriaOperator.IN)
       {
-         operatorString = (<></>)
+         operatorString = (<></>);
       }
 
       buttonContent = (<><span style={{fontWeight: 700}}>{buttonContent}:</span>&nbsp;<span style={{fontWeight: 400}}>{operatorString}{valuesString}</span></>);
@@ -491,7 +494,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const xClicked = (e: React.MouseEvent<HTMLSpanElement>) =>
    {
       e.stopPropagation();
-      if(criteriaIsValid)
+      if (criteriaIsValid)
       {
          resetCriteria(e);
       }
@@ -499,12 +502,12 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
       {
          handleTurningOffQuickFilterField();
       }
-   }
+   };
 
    //////////////////////////////
    // return the button & menu //
    //////////////////////////////
-   const widthAndMaxWidth = fieldMetaData?.type == QFieldType.DATE_TIME ? 275 : 250
+   const widthAndMaxWidth = (fieldMetaData?.type == QFieldType.DATE_TIME) ? 295 : 250;
    return (
       <>
          {button}
@@ -541,6 +544,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                </Box>
                <Box width={widthAndMaxWidth} maxWidth={widthAndMaxWidth} className="quickFilter filterValuesColumn">
                   <FilterCriteriaRowValues
+                     queryScreenUsage={queryScreenUsage}
                      operatorOption={operatorSelectedValue}
                      criteria={criteria}
                      field={fieldMetaData}

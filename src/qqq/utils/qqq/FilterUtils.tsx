@@ -23,6 +23,7 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {FilterVariableExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/FilterVariableExpression";
 import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
 import {NowWithOffsetExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
@@ -365,7 +366,12 @@ class FilterUtils
          for (let i = 0; i < maxLoops; i++)
          {
             const value = criteria.values[i];
-            if (value.type == "NowWithOffset")
+            if (value.type == "FilterVariableExpression")
+            {
+               const expression = new FilterVariableExpression(value);
+               labels.push(expression.toString());
+            }
+            else if (value.type == "NowWithOffset")
             {
                const expression = new NowWithOffsetExpression(value);
                labels.push(expression.toString());
@@ -657,7 +663,7 @@ class FilterUtils
 
       filterForBackend.subFilters = subFilters;
 
-      if(pageNumber !== undefined && rowsPerPage !== undefined)
+      if (pageNumber !== undefined && rowsPerPage !== undefined)
       {
          filterForBackend.skip = pageNumber * rowsPerPage;
          filterForBackend.limit = rowsPerPage;
