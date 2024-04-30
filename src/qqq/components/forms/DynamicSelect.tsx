@@ -28,16 +28,17 @@ import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import {ErrorMessage, useFormikContext} from "formik";
-import React, {useEffect, useState} from "react";
 import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import Client from "qqq/utils/qqq/Client";
+import React, {useEffect, useState} from "react";
 
 interface Props
 {
    tableName?: string;
    processName?: string;
-   fieldName: string;
+   fieldName?: string;
+   possibleValueSourceName?: string;
    overrideId?: string;
    fieldLabel: string;
    inForm: boolean;
@@ -57,6 +58,8 @@ interface Props
 DynamicSelect.defaultProps = {
    tableName: null,
    processName: null,
+   fieldName: null,
+   possibleValueSourceName: null,
    inForm: true,
    initialValue: null,
    initialDisplayValue: null,
@@ -73,16 +76,78 @@ DynamicSelect.defaultProps = {
    },
 };
 
+const {inputBorderColor} = colors;
+
+
+export const getAutocompleteOutlinedStyle = (isDisabled: boolean) =>
+{
+   return ({
+      "& .MuiOutlinedInput-root": {
+         borderRadius: "0.75rem",
+      },
+      "& .MuiInputBase-root": {
+         padding: "0.5rem",
+         background: isDisabled ? "#f0f2f5!important" : "initial",
+      },
+      "& .MuiOutlinedInput-root .MuiAutocomplete-input": {
+         padding: "0",
+         fontSize: "1rem"
+      },
+      "& .Mui-disabled .MuiOutlinedInput-notchedOutline": {
+         borderColor: inputBorderColor
+      }
+   });
+}
+
+
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen}: Props)
+function DynamicSelect({tableName, processName, fieldName, possibleValueSourceName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen}: Props)
 {
    const [open, setOpen] = useState(initiallyOpen);
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
    const [firstRender, setFirstRender] = useState(true);
    const [otherValuesWhenResultsWereLoaded, setOtherValuesWhenResultsWereLoaded] = useState(JSON.stringify(Object.fromEntries((otherValues))))
-   const {inputBorderColor} = colors;
+
+   useEffect(() =>
+   {
+      if(tableName && processName)
+      {
+         console.log("DynamicSelect - you may not provide both a tableName and a processName")
+      }
+      if(tableName && !fieldName)
+      {
+         console.log("DynamicSelect - if you provide a tableName, you must also provide a fieldName");
+      }
+      if(processName && !fieldName)
+      {
+         console.log("DynamicSelect - if you provide a processName, you must also provide a fieldName");
+      }
+      if(fieldName && possibleValueSourceName)
+      {
+         console.log("DynamicSelect - if you provide a fieldName and a possibleValueSourceName, the possibleValueSourceName will be ignored");
+      }
+      if(!fieldName && !possibleValueSourceName)
+      {
+         console.log("DynamicSelect - you must provide either a fieldName (and a tableName or processName) or a possibleValueSourceName");
+      }
+      if(fieldName)
+      {
+         if(!tableName || !processName)
+         {
+            console.log("DynamicSelect - if you provide a fieldName, you must also provide a tableName or processName");
+         }
+      }
+      if(possibleValueSourceName)
+      {
+         if(tableName || processName)
+         {
+            console.log("DynamicSelect - if you provide a possibleValueSourceName, you should not also provide a tableName or processName");
+         }
+      }
+
+   }, [tableName, processName, fieldName, possibleValueSourceName]);
 
    ////////////////////////////////////////////////////////////////////////////////////////////////
    // default value - needs to be an array (from initialValues (array) prop) for multiple mode - //
@@ -133,7 +198,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "", null, otherValues);
+         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName ?? possibleValueSourceName, searchTerm ?? "", null, otherValues);
 
          if(tableMetaData == null && tableName)
          {
@@ -166,7 +231,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
             setLoading(true);
             setOptions([]);
             console.log("Refreshing possible values...");
-            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName, searchTerm ?? "", null, otherValues);
+            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName ?? possibleValueSourceName, searchTerm ?? "", null, otherValues);
             setLoading(false);
             setOptions([ ...results ]);
             setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));
@@ -206,7 +271,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
             onChange(value ? new QPossibleValue(value) : null);
          }
       }
-      else if(setFieldValueRef)
+      else if(setFieldValueRef && fieldName)
       {
          setFieldValueRef(fieldName, value ? value.id : null);
       }
@@ -282,28 +347,13 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
    let autocompleteSX = {};
    if (variant == "outlined")
    {
-      autocompleteSX = {
-         "& .MuiOutlinedInput-root": {
-            borderRadius: "0.75rem",
-         },
-         "& .MuiInputBase-root": {
-            padding: "0.5rem",
-            background: isDisabled ? "#f0f2f5!important" : "initial",
-         },
-         "& .MuiOutlinedInput-root .MuiAutocomplete-input": {
-            padding: "0",
-            fontSize: "1rem"
-         },
-         "& .Mui-disabled .MuiOutlinedInput-notchedOutline": {
-            borderColor: inputBorderColor
-         }
-      }
+      autocompleteSX = getAutocompleteOutlinedStyle(isDisabled);
    }
 
    const autocomplete = (
       <Box>
          <Autocomplete
-            id={overrideId ?? fieldName}
+            id={overrideId ?? fieldName ?? possibleValueSourceName}
             sx={autocompleteSX}
             open={open}
             fullWidth
@@ -383,7 +433,7 @@ function DynamicSelect({tableName, processName, fieldName, overrideId, fieldLabe
             inForm &&
             <Box mt={0.75}>
                <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
+                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName ?? possibleValueSourceName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
                </MDTypography>
             </Box>
          }

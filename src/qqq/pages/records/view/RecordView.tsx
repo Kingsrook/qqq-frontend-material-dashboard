@@ -50,11 +50,13 @@ import Tooltip from "@mui/material/Tooltip/Tooltip";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
-import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton} from "qqq/components/buttons/DefaultButtons";
+import {QActionsMenuButton, QCancelButton, QDeleteButton, QEditButton, standardWidth} from "qqq/components/buttons/DefaultButtons";
 import EntityForm from "qqq/components/forms/EntityForm";
+import MDButton from "qqq/components/legacy/MDButton";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
+import ShareModal from "qqq/components/sharing/ShareModal";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
@@ -124,6 +126,10 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
    </Box>;
 }
 
+
+/*******************************************************************************
+ ** Record View Screen component.
+ *******************************************************************************/
 function RecordView({table, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
@@ -159,11 +165,14 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [launchingProcess, setLaunchingProcess] = useState(launchProcess);
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
    const [showAudit, setShowAudit] = useState(false);
+   const [showShareModal, setShowShareModal] = useState(false);
+
+   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
 
    const openActionsMenu = (event: any) => setActionsMenu(event.currentTarget);
    const closeActionsMenu = () => setActionsMenu(null);
 
-   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics} = useContext(QContext);
+   const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics, userId: currentUserId} = useContext(QContext);
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -631,6 +640,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const handleClickDeleteButton = () =>
    {
       setDeleteConfirmationOpen(true);
+      setIsDeleteSubmitting(false);
    };
 
    const handleDeleteConfirmClose = () =>
@@ -640,6 +650,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
    const handleDelete = (event: { preventDefault: () => void }) =>
    {
+      setIsDeleteSubmitting(true);
       event?.preventDefault();
       (async () =>
       {
@@ -648,11 +659,13 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          await qController.delete(tableName, id)
             .then(() =>
             {
+               setIsDeleteSubmitting(false);
                const path = pathParts.slice(0, -1).join("/");
                navigate(path, {state: {deleteSuccess: true}});
             })
             .catch((error) =>
             {
+               setIsDeleteSubmitting(false);
                setDeleteConfirmationOpen(false);
                console.log("Caught:");
                console.log(error);
@@ -767,6 +780,68 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          }
       </Menu>
    );
+
+
+   /*******************************************************************************
+    ** function to open the sharing modal
+    *******************************************************************************/
+   const openShareModal = () =>
+   {
+      setShowShareModal(true);
+   };
+
+
+   /*******************************************************************************
+    ** function to close the sharing modal
+    *******************************************************************************/
+   const closeShareModal = () =>
+   {
+      setShowShareModal(false);
+   };
+
+
+   /*******************************************************************************
+    ** render the share button (if allowed for table)
+    *******************************************************************************/
+   const renderShareButton = () =>
+   {
+      if (tableMetaData && tableMetaData.shareableTableMetaData)
+      {
+         let shareDisabled = true;
+         let disabledTooltipText = "";
+         if(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName && record)
+         {
+            const ownerId = record.values.get(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName);
+            if(ownerId != currentUserId)
+            {
+               disabledTooltipText = `Only the owner of a ${tableMetaData.label} may share it.`
+               shareDisabled = true;
+            }
+            else
+            {
+               disabledTooltipText = "";
+               shareDisabled = false;
+            }
+         }
+         else
+         {
+            shareDisabled = false;
+         }
+
+         return (<Box width={standardWidth} mr={2}>
+            <Tooltip title={disabledTooltipText}>
+               <span>
+                  <MDButton id="shareButton" type="button" color="info" size="small" onClick={() => openShareModal()} fullWidth startIcon={<Icon>group_add</Icon>} disabled={shareDisabled}>
+                     Share
+                  </MDButton>
+               </span>
+            </Tooltip>
+         </Box>);
+      }
+
+      return (<React.Fragment />);
+   };
+
 
    const openModalProcess = (process: QProcessMetaData = null) =>
    {
@@ -923,6 +998,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                                    </Typography>
                                                    <Box display="flex">
                                                       <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
+                                                      {renderShareButton()}
                                                       <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />
                                                    </Box>
                                                    {renderActionsMenu}
@@ -971,7 +1047,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                  </DialogContent>
                                  <DialogActions>
                                     <Button onClick={handleDeleteConfirmClose}>No</Button>
-                                    <Button onClick={handleDelete} autoFocus>
+                                    <Button onClick={handleDelete} autoFocus disabled={isDeleteSubmitting}>
                                        Yes
                                     </Button>
                                  </DialogActions>
@@ -1017,6 +1093,11 @@ function RecordView({table, launchProcess}: Props): JSX.Element
                                        </Box>
                                     </div>
                                  </Modal>
+                              }
+
+                              {
+                                 showShareModal && tableMetaData && record &&
+                                 <ShareModal open={showShareModal} onClose={closeShareModal} tableMetaData={tableMetaData} record={record}></ShareModal>
                               }
 
                            </Box>
