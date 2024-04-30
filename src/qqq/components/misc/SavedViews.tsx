@@ -25,8 +25,7 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Button} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Alert, Box, Button} from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -60,7 +59,7 @@ interface Props
    view?: RecordQueryView;
    viewAsJson?: string;
    viewOnChangeCallback?: (selectedSavedViewId: number) => void;
-   loadingSavedView: boolean
+   loadingSavedView: boolean;
    queryScreenUsage: QueryScreenUsage;
 }
 
@@ -69,6 +68,8 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    const navigate = useNavigate();
 
    const [savedViews, setSavedViews] = useState([] as QRecord[]);
+   const [yourSavedViews, setYourSavedViews] = useState([] as QRecord[]);
+   const [viewsSharedWithYou, setViewsSharedWithYou] = useState([] as QRecord[]);
    const [savedViewsMenu, setSavedViewsMenu] = useState(null);
    const [savedViewsHaveLoaded, setSavedViewsHaveLoaded] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,7 +92,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    const CLEAR_OPTION = "New View";
    const NEW_REPORT_OPTION = "Create Report from Current View";
 
-   const {accentColor, accentColorLight} = useContext(QContext);
+   const {accentColor, accentColorLight, userId: currentUserId} = useContext(QContext);
 
    /////////////////////////////////////////////////////////////////////////////////////////
    // this component is used by <RecordQuery> - but that component has different usages - //
@@ -114,13 +115,13 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          {
             setSavedViewsHaveLoaded(true);
          });
-   }, [location, tableMetaData])
+   }, [location, tableMetaData]);
 
 
    const baseView = currentSavedView ? JSON.parse(currentSavedView.values.get("viewJson")) as RecordQueryView : tableDefaultView;
    const viewDiffs = SavedViewUtils.diffViews(tableMetaData, baseView, view);
    let viewIsModified = false;
-   if(viewDiffs.length > 0)
+   if (viewDiffs.length > 0)
    {
       viewIsModified = true;
    }
@@ -130,7 +131,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
     *******************************************************************************/
    async function loadSavedViews()
    {
-      if (! tableMetaData)
+      if (!tableMetaData)
       {
          return;
       }
@@ -140,8 +141,24 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
 
       let savedViews = await makeSavedViewRequest("querySavedView", formData);
       setSavedViews(savedViews);
-   }
 
+      const yourSavedViews: QRecord[] = [];
+      const viewsSharedWithYou: QRecord[] = [];
+      for (let i = 0; i < savedViews.length; i++)
+      {
+         const record = savedViews[i];
+         if (record.values.get("userId") == currentUserId)
+         {
+            yourSavedViews.push(record);
+         }
+         else
+         {
+            viewsSharedWithYou.push(record);
+         }
+      }
+      setYourSavedViews(yourSavedViews);
+      setViewsSharedWithYou(viewsSharedWithYou);
+   }
 
 
    /*******************************************************************************
@@ -152,12 +169,11 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       setSaveFilterPopupOpen(false);
       closeSavedViewsMenu();
       viewOnChangeCallback(record.values.get("id"));
-      if(isQueryScreen)
+      if (isQueryScreen)
       {
          navigate(`${metaData.getTablePathByName(tableMetaData.name)}/savedView/${record.values.get("id")}`);
       }
    };
-
 
 
    /*******************************************************************************
@@ -171,12 +187,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       setSaveFilterPopupOpen(true);
       setIsSaveFilterAs(false);
       setIsRenameFilter(false);
-      setIsDeleteFilter(false)
+      setIsDeleteFilter(false);
 
-      switch(optionName)
+      switch (optionName)
       {
          case SAVE_OPTION:
-            if(currentSavedView == null)
+            if (currentSavedView == null)
             {
                setSavedViewNameInputValue("");
             }
@@ -186,28 +202,28 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             setIsSaveFilterAs(true);
             break;
          case CLEAR_OPTION:
-            setSaveFilterPopupOpen(false)
+            setSaveFilterPopupOpen(false);
             viewOnChangeCallback(null);
-            if(isQueryScreen)
+            if (isQueryScreen)
             {
                navigate(metaData.getTablePathByName(tableMetaData.name));
             }
             break;
          case RENAME_OPTION:
-            if(currentSavedView != null)
+            if (currentSavedView != null)
             {
                setSavedViewNameInputValue(currentSavedView.values.get("label"));
             }
             setIsRenameFilter(true);
             break;
          case DELETE_OPTION:
-            setIsDeleteFilter(true)
+            setIsDeleteFilter(true);
             break;
          case NEW_REPORT_OPTION:
             createNewReport();
             break;
       }
-   }
+   };
 
 
    /*******************************************************************************
@@ -215,17 +231,16 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
     *******************************************************************************/
    function createNewReport()
    {
-      const defaultValues: {[key: string]: any} = {};
+      const defaultValues: { [key: string]: any } = {};
       defaultValues.tableName = tableMetaData.name;
 
       let filterForBackend = JSON.parse(JSON.stringify(view.queryFilter));
-      filterForBackend  = FilterUtils.prepQueryFilterForBackend(tableMetaData, filterForBackend);
+      filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, filterForBackend);
 
       defaultValues.queryFilterJson = JSON.stringify(filterForBackend);
       defaultValues.columnsJson = JSON.stringify(view.queryColumns);
       navigate(`${metaData.getTablePathByName("savedReport")}/create#defaultValues=${encodeURIComponent(JSON.stringify(defaultValues))}`);
    }
-
 
 
    /*******************************************************************************
@@ -247,7 +262,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             setSaveFilterPopupOpen(false);
             setSaveOptionsOpen(false);
 
-            await(async() =>
+            await (async () =>
             {
                handleDropdownOptionClick(CLEAR_OPTION);
             })();
@@ -267,14 +282,14 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
             ////////////////////////////////////////////////////////////////////////////
             // strip away incomplete filters too, just for cleaner saved view filters //
             ////////////////////////////////////////////////////////////////////////////
-            FilterUtils.stripAwayIncompleteCriteria(viewObject.queryFilter)
+            FilterUtils.stripAwayIncompleteCriteria(viewObject.queryFilter);
 
             formData.append("viewJson", JSON.stringify(viewObject));
 
             if (isSaveFilterAs || isRenameFilter || currentSavedView == null)
             {
                formData.append("label", savedViewNameInputValue);
-               if(currentSavedView != null && isRenameFilter)
+               if (currentSavedView != null && isRenameFilter)
                {
                   formData.append("id", currentSavedView.values.get("id"));
                }
@@ -285,7 +300,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                formData.append("label", currentSavedView?.values.get("label"));
             }
             const recordList = await makeSavedViewRequest("storeSavedView", formData);
-            await(async() =>
+            await (async () =>
             {
                if (recordList && recordList.length > 0)
                {
@@ -302,11 +317,11 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       catch (e: any)
       {
          let message = JSON.stringify(e);
-         if(typeof e == "string")
+         if (typeof e == "string")
          {
             message = e;
          }
-         else if(typeof e == "object" && e.message)
+         else if (typeof e == "object" && e.message)
          {
             message = e.message;
          }
@@ -321,7 +336,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    }
 
 
-
    /*******************************************************************************
     ** hides/shows the save options
     *******************************************************************************/
@@ -329,7 +343,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    {
       setSaveOptionsOpen((prevOpen) => !prevOpen);
    };
-
 
 
    /*******************************************************************************
@@ -346,7 +359,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    };
 
 
-
    /*******************************************************************************
     ** stores the current dialog input text to state
     *******************************************************************************/
@@ -354,7 +366,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    {
       setSavedViewNameInputValue(event.target.value);
    };
-
 
 
    /*******************************************************************************
@@ -366,7 +377,6 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    };
 
 
-
    /*******************************************************************************
     ** make a request to the backend for various savedView processes
     *******************************************************************************/
@@ -375,7 +385,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       /////////////////////////
       // fetch saved filters //
       /////////////////////////
-      let savedViews = [] as QRecord[]
+      let savedViews = [] as QRecord[];
       try
       {
          //////////////////////////////////////////////////////////////////
@@ -386,12 +396,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          if (processResult instanceof QJobError)
          {
             const jobError = processResult as QJobError;
-            throw(jobError.error);
+            throw (jobError.error);
          }
          else
          {
             const result = processResult as QJobComplete;
-            if(result.values.savedViewList)
+            if (result.values.savedViewList)
             {
                for (let i = 0; i < result.values.savedViewList.length; i++)
                {
@@ -403,7 +413,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
       }
       catch (e)
       {
-         throw(e);
+         throw (e);
       }
 
       return (savedViews);
@@ -416,16 +426,26 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
 
    const tooltipMaxWidth = (maxWidth: string) =>
    {
-      return ({slotProps: {
-         tooltip: {
-            sx: {
-               maxWidth: maxWidth
+      return ({
+         slotProps: {
+            tooltip: {
+               sx: {
+                  maxWidth: maxWidth
+               }
             }
          }
-      }})
-   }
+      });
+   };
 
    const menuTooltipAttribs = {...tooltipMaxWidth("250px"), placement: "left", enterDelay: 1000} as TooltipProps;
+
+   let disabledBecauseNotOwner = false;
+   let notOwnerTooltipText = null;
+   if (currentSavedView && currentSavedView.values.get("userId") != currentUserId)
+   {
+      disabledBecauseNotOwner = true;
+      notOwnerTooltipText = "You may not save changes to this view, because you are not its owner.";
+   }
 
    const renderSavedViewsMenu = tableMetaData && (
       <Menu
@@ -443,72 +463,98 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          }
          {
             isQueryScreen && hasStorePermission &&
-            <Tooltip {...menuTooltipAttribs} title={<>Save your current filters, columns and settings, for quick re-use at a later time.<br /><br />You will be prompted to enter a name if you choose this option.</>}>
-               <MenuItem onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
-                  <ListItemIcon><Icon>save</Icon></ListItemIcon>
-                  {currentSavedView ? "Save..." : "Save As..."}
-               </MenuItem>
+            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? <>Save your current filters, columns and settings, for quick re-use at a later time.<br /><br />You will be prompted to enter a name if you choose this option.</>}>
+               <span>
+                  <MenuItem disabled={disabledBecauseNotOwner} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>
+                     <ListItemIcon><Icon>save</Icon></ListItemIcon>
+                     {currentSavedView ? "Save..." : "Save As..."}
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
             isQueryScreen && hasStorePermission && currentSavedView != null &&
-            <Tooltip {...menuTooltipAttribs} title="Change the name for this saved view.">
-               <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
-                  <ListItemIcon><Icon>edit</Icon></ListItemIcon>
-                  Rename...
-               </MenuItem>
+            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Change the name for this saved view."}>
+               <span>
+                  <MenuItem disabled={currentSavedView === null || disabledBecauseNotOwner} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
+                     <ListItemIcon><Icon>edit</Icon></ListItemIcon>
+                     Rename...
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
             isQueryScreen && hasStorePermission && currentSavedView != null &&
             <Tooltip {...menuTooltipAttribs} title="Save a new copy this view, with a different name, separate from the original.">
-               <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
-                  <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
-                  Save As...
-               </MenuItem>
+               <span>
+                  <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
+                     <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
+                     Save As...
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
             isQueryScreen && hasDeletePermission && currentSavedView != null &&
-            <Tooltip {...menuTooltipAttribs} title="Delete this saved view.">
-               <MenuItem disabled={currentSavedView === null} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
-                  <ListItemIcon><Icon>delete</Icon></ListItemIcon>
-                  Delete...
-               </MenuItem>
+            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Delete this saved view."}>
+               <span>
+                  <MenuItem disabled={currentSavedView === null || disabledBecauseNotOwner} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
+                     <ListItemIcon><Icon>delete</Icon></ListItemIcon>
+                     Delete...
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
             isQueryScreen &&
             <Tooltip {...menuTooltipAttribs} title="Create a new view of this table, resetting the filters and columns to their defaults.">
-               <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
-                  <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
-                  New View
-               </MenuItem>
+               <span>
+                  <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
+                     <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
+                     New View
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
             isQueryScreen && hasSavedReportsPermission &&
             <Tooltip {...menuTooltipAttribs} title="Create a new Saved Report using your current view of this table as a starting point.">
-               <MenuItem onClick={() => handleDropdownOptionClick(NEW_REPORT_OPTION)}>
-                  <ListItemIcon><Icon>article</Icon></ListItemIcon>
-                  Create Report from Current View
-               </MenuItem>
+               <span>
+                  <MenuItem onClick={() => handleDropdownOptionClick(NEW_REPORT_OPTION)}>
+                     <ListItemIcon><Icon>article</Icon></ListItemIcon>
+                     Create Report from Current View
+                  </MenuItem>
+               </span>
             </Tooltip>
          }
          {
-            isQueryScreen && <Divider/>
+            isQueryScreen && <Divider />
          }
          <MenuItem disabled style={{"opacity": "initial"}}><b>Your Saved Views</b></MenuItem>
          {
-            savedViews && savedViews.length > 0 ? (
-               savedViews.map((record: QRecord, index: number) =>
+            yourSavedViews && yourSavedViews.length > 0 ? (
+               yourSavedViews.map((record: QRecord, index: number) =>
                   <MenuItem sx={{paddingLeft: "50px"}} key={`savedFiler-${index}`} onClick={() => handleSavedViewRecordOnClick(record)}>
                      {record.values.get("label")}
                   </MenuItem>
                )
-            ): (
+            ) : (
                <MenuItem disabled sx={{opacity: "1 !important"}}>
                   <i>You do not have any saved views for this table.</i>
+               </MenuItem>
+            )
+         }
+         <MenuItem disabled style={{"opacity": "initial"}}><b>Views Shared with you</b></MenuItem>
+         {
+            viewsSharedWithYou && viewsSharedWithYou.length > 0 ? (
+               viewsSharedWithYou.map((record: QRecord, index: number) =>
+                  <MenuItem sx={{paddingLeft: "50px"}} key={`savedFiler-${index}`} onClick={() => handleSavedViewRecordOnClick(record)}>
+                     {record.values.get("label")}
+                  </MenuItem>
+               )
+            ) : (
+               <MenuItem disabled sx={{opacity: "1 !important"}}>
+                  <i>You do not have any views shared with you for this table.</i>
                </MenuItem>
             )
          }
@@ -520,7 +566,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
    let buttonBorder = colors.grayLines.main;
    let buttonColor = colors.gray.main;
 
-   if(currentSavedView)
+   if (currentSavedView)
    {
       if (viewIsModified)
       {
@@ -548,23 +594,23 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
          color: buttonColor,
          backgroundColor: buttonBackground,
       }
-   }
+   };
 
    /*******************************************************************************
     **
     *******************************************************************************/
    function isSaveButtonDisabled(): boolean
    {
-      if(isSubmitting)
+      if (isSubmitting)
       {
          return (true);
       }
 
-      const haveInputText = (savedViewNameInputValue != null && savedViewNameInputValue.trim() != "")
+      const haveInputText = (savedViewNameInputValue != null && savedViewNameInputValue.trim() != "");
 
-      if(isSaveFilterAs || isRenameFilter || currentSavedView == null)
+      if (isSaveFilterAs || isRenameFilter || currentSavedView == null)
       {
-         if(!haveInputText)
+         if (!haveInputText)
          {
             return (true);
          }
@@ -593,7 +639,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                      fontWeight: 500,
                      fontSize: "0.875rem",
                      p: "0.5rem",
-                     ... buttonStyles
+                     ...buttonStyles
                   }}
                >
                   <Icon sx={{mr: "0.5rem"}}>save</Icon>
@@ -624,7 +670,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                            </>
                         }
 
-                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset All Changes</Button>
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ...linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset All Changes</Button>
                      </>
                   }
                   {
@@ -635,16 +681,20 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                               {
                                  viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
                               }
-                           </ul></>}>
+                           </ul>
+                           {
+                              notOwnerTooltipText && <i>{notOwnerTooltipText}</i>
+                           }
+                        </>}>
                            <Box display="inline" sx={{...linkButtonStyle, p: 0, cursor: "default", position: "relative", top: "-1px"}}>{viewDiffs.length} Unsaved Change{viewDiffs.length == 1 ? "" : "s"}</Box>
                         </Tooltip>
 
-                        <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save&hellip;</Button>
+                        {disabledBecauseNotOwner ? <>&nbsp;&nbsp;</> : <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save&hellip;</Button>}
 
                         {/* vertical rule */}
                         <Box display="inline-block" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
 
-                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset All Changes</Button>
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ...linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset All Changes</Button>
                      </>
                   }
                   {
@@ -663,16 +713,17 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                                     {
                                        viewDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)
                                     }
-                                 </ul></>}>
+                                 </ul>
+                              </>}>
                                  <Box display="inline" ml="0.25rem" mr="0.25rem" sx={{...linkButtonStyle, p: 0, cursor: "default", position: "relative", top: "-1px"}}>with {viewDiffs.length} Change{viewDiffs.length == 1 ? "" : "s"}</Box>
                               </Tooltip>
-                              <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset Changes</Button>
+                              <Button disableRipple={true} sx={{color: colors.gray.main, ...linkButtonStyle}} onClick={() => handleSavedViewRecordOnClick(currentSavedView)}>Reset Changes</Button>
                            </>
                         }
 
                         {/* vertical rule */}
                         <Box display="inline-block" ml="0.25rem" borderLeft={`1px solid ${colors.grayLines.main}`} height="1rem" width="1px" position="relative" />
-                        <Button disableRipple={true} sx={{color: colors.gray.main, ... linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset to New View</Button>
+                        <Button disableRipple={true} sx={{color: colors.gray.main, ...linkButtonStyle}} onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>Reset to New View</Button>
                      </Box>
                   }
                </Box>
@@ -702,15 +753,15 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                         ) : (
                            isSaveFilterAs ? (
                               <DialogTitle id="alert-dialog-title">Save View As</DialogTitle>
-                           ):(
+                           ) : (
                               isRenameFilter ? (
                                  <DialogTitle id="alert-dialog-title">Rename View</DialogTitle>
-                              ):(
+                              ) : (
                                  <DialogTitle id="alert-dialog-title">Update Existing View</DialogTitle>
                               )
                            )
                         )
-                     ):(
+                     ) : (
                         <DialogTitle id="alert-dialog-title">Save New View</DialogTitle>
                      )
                   }
@@ -721,12 +772,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                         </Box>
                      ) : ("")}
                      {
-                        (! currentSavedView || isSaveFilterAs || isRenameFilter) && ! isDeleteFilter ? (
+                        (!currentSavedView || isSaveFilterAs || isRenameFilter) && !isDeleteFilter ? (
                            <Box>
                               {
                                  isSaveFilterAs ? (
                                     <Box mb={3}>Enter a name for this new saved view.</Box>
-                                 ):(
+                                 ) : (
                                     <Box mb={3}>Enter a new name for this saved view.</Box>
                                  )
                               }
@@ -744,10 +795,10 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                                  }}
                               />
                            </Box>
-                        ):(
+                        ) : (
                            isDeleteFilter ? (
                               <Box>Are you sure you want to delete the view {`'${currentSavedView?.values.get("label")}'`}?</Box>
-                           ):(
+                           ) : (
                               <Box>Are you sure you want to update the view {`'${currentSavedView?.values.get("label")}'`}?</Box>
                            )
                         )
@@ -759,7 +810,7 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
                         isDeleteFilter ?
                            <QDeleteButton onClickHandler={handleFilterDialogButtonOnClick} disabled={isSubmitting} />
                            :
-                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={isSaveButtonDisabled()}/>
+                           <QSaveButton label="Save" onClickHandler={handleFilterDialogButtonOnClick} disabled={isSaveButtonDisabled()} />
                      }
                   </DialogActions>
                </Dialog>
