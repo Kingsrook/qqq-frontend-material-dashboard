@@ -21,9 +21,9 @@
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import React, {useEffect, useState} from "react";
 import {Expression} from "qqq/components/query/CriteriaDateField";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useEffect, useState} from "react";
 
 /*******************************************************************************
  ** Helper component to show value inside tooltips that ticks up every second.
@@ -57,6 +57,11 @@ const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const evaluateExpression = (time: Date, field: QFieldMetaData, expression: Expression): string =>
 {
+   if (expression.type == "FilterVariableExpression")
+   {
+      return (expression.toString());
+   }
+
    let rs: Date = null;
    if (expression.type == "NowWithOffset")
    {

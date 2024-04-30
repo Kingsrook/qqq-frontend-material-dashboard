@@ -21,7 +21,9 @@
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {Box, FormControlLabel, FormGroup} from "@mui/material";
+
+import {FormControlLabel, FormGroup} from "@mui/material";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
@@ -56,7 +58,7 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       const someRef = createRef();
 
       const textRef = useRef(null);
-      const [didInitialFocus, setDidInitialFocus] = useState(false)
+      const [didInitialFocus, setDidInitialFocus] = useState(false);
 
       const [openGroups, setOpenGroups] = useState(props.initialOpenedGroups || {});
       const openGroupsBecauseOfFilter = {} as { [name: string]: boolean };
@@ -71,9 +73,9 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
 
       console.log(`Open groups: ${JSON.stringify(openGroups)}`);
 
-      if(!didInitialFocus)
+      if (!didInitialFocus)
       {
-         if(textRef.current)
+         if (textRef.current)
          {
             textRef.current.select();
             setDidInitialFocus(true);
@@ -189,11 +191,11 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       ///////////////////////////////////////////////////////////////////////////////////////////////////////
       // always sort columns by label.  note, in future may offer different sorts - here's where to do it. //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      const sortedColumns = [... columns];
+      const sortedColumns = [...columns];
       sortedColumns.sort((a, b): number =>
       {
          return a.headerName.localeCompare(b.headerName);
-      })
+      });
 
       for (let i = 0; i < sortedColumns.length; i++)
       {
@@ -361,7 +363,7 @@ export const CustomColumnsPanel = forwardRef<any, GridColumnsPanelProps>(
       const changeFilterText = (newValue: string) =>
       {
          setFilterText(newValue);
-         props.filterTextChanger(newValue)
+         props.filterTextChanger(newValue);
       };
 
       const filterTextChanged = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) =>

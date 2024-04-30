@@ -114,7 +114,7 @@ export function getCurrentSortIndicator(queryFilter: QQueryFilter, tableMetaData
  *******************************************************************************/
 const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryControlsProps, ref) =>
 {
-   const {metaData, tableMetaData, savedViewsComponent, columnMenuComponent, quickFilterFieldNames, setQuickFilterFieldNames, setQueryFilter, queryFilter, gridApiRef, queryFilterJSON, mode, setMode} = props;
+   const {metaData, tableMetaData, savedViewsComponent, columnMenuComponent, quickFilterFieldNames, setQuickFilterFieldNames, setQueryFilter, queryFilter, gridApiRef, queryFilterJSON, mode, setMode, queryScreenUsage} = props;
 
    /////////////////////
    // state variables //
@@ -682,6 +682,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                  criteriaParam={getQuickCriteriaParam(fieldName)}
                                  fieldMetaData={field}
                                  defaultOperator={defaultOperator}
+                                 queryScreenUsage={queryScreenUsage}
                                  handleRemoveQuickFilterField={null} />);
                            })
                         }
@@ -701,6 +702,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                  criteriaParam={getQuickCriteriaParam(fieldName)}
                                  fieldMetaData={field}
                                  defaultOperator={defaultOperator}
+                                 queryScreenUsage={queryScreenUsage}
                                  handleRemoveQuickFilterField={handleRemoveQuickFilterField} />);
                            })
                         }
