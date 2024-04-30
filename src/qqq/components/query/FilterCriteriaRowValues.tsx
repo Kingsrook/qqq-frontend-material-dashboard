@@ -227,18 +227,18 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       case ValueMode.SINGLE:
          return makeTextField(field, criteria, valueChangeHandler, 0, undefined, undefined, allowVariables);
       case ValueMode.SINGLE_DATE:
-         return <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} />;
+         return <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} allowVariables={allowVariables} />;
       case ValueMode.DOUBLE_DATE:
          return <Box>
-            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" />
-            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" allowVariables={allowVariables} />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" allowVariables={allowVariables} />
          </Box>;
       case ValueMode.SINGLE_DATE_TIME:
          return <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} allowVariables={allowVariables} />;
       case ValueMode.DOUBLE_DATE_TIME:
          return <Box>
-            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" />
-            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={0} label="From" idPrefix="from-" allowVariables={allowVariables} />
+            <CriteriaDateField field={field} valueChangeHandler={valueChangeHandler} criteria={criteria} valueIndex={1} label="To" idPrefix="to-" allowVariables={allowVariables} />
          </Box>;
       case ValueMode.DOUBLE:
          return <Box>
