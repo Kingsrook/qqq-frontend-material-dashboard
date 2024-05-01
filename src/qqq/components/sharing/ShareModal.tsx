@@ -369,15 +369,15 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
             <Card sx={{my: 5, mx: "auto", p: 3}}>
 
                {/* header */}
-               <Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="flex-start">
+               <Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="flex-start" maxWidth="590px">
                   <Typography variant="h4" pb={1} fontWeight="600">
                      Share {tableMetaData.label}: {record?.recordLabel ?? record?.values?.get(tableMetaData.primaryKeyField) ?? "Unknown"}
-                     <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"} fontWeight="400" maxWidth="590px">
+                     <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"} fontWeight="400">
                         {/* todo move to helpContent (what do we attach the meta-data too??) */}
                         Select a user or a group to share this record with.
                         {/*You can choose if they should only be able to Read the record, or also make Edits to it.*/}
                      </Box>
-                     <Box fontSize={14} maxWidth="590px" pb={1} fontWeight="300">
+                     <Box fontSize={14} pb={1} fontWeight="300">
                         {alert && <Alert color="error" onClose={() => setAlert(null)}>{alert}</Alert>}
                         {statusString}
                         {!alert && !statusString && (<>&nbsp;</>)}
