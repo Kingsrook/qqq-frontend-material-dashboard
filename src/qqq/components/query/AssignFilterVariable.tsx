@@ -57,7 +57,7 @@ export default function AssignFilterVariable({valueIndex, field, valueChangeHand
 
    return <Box display="flex" alignItems="flex-end">
       <Box>
-         <Tooltip title={`Use a variable as the value for the ${field.name} field`} placement="bottom">
+         <Tooltip title={`Use a variable as the value for the ${field.label} field`} placement="bottom">
             <Icon fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer", position: "relative", top: "2px"}} onClick={handleVariableButtonOnClick}>functions</Icon>
          </Tooltip>
       </Box>

@@ -28,8 +28,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button/Button";
 import Icon from "@mui/material/Icon/Icon";
 import {GridFilterPanelProps, GridSlotsComponentsProps} from "@mui/x-data-grid-pro";
-import React, {forwardRef, useReducer} from "react";
 import {FilterCriteriaRow, getDefaultCriteriaValue} from "qqq/components/query/FilterCriteriaRow";
+import React, {forwardRef, useReducer} from "react";
 
 
 declare module "@mui/x-data-grid"
@@ -49,7 +49,7 @@ declare module "@mui/x-data-grid"
 
 export class QFilterCriteriaWithId extends QFilterCriteria
 {
-   id: number
+   id: number;
 }
 
 
@@ -62,6 +62,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
       const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
       const queryFilter = props.queryFilter;
+
       // console.log(`CustomFilterPanel: filter: ${JSON.stringify(queryFilter)}`);
 
       function focusLastField()
@@ -124,7 +125,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
          }
       }
 
-      if(queryFilter.criteria.length == 1 && !queryFilter.criteria[0].fieldName)
+      if (queryFilter.criteria.length == 1 && !queryFilter.criteria[0].fieldName)
       {
          focusLastField();
       }
@@ -142,7 +143,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
       {
          queryFilter.criteria[index] = newCriteria;
 
-         clearTimeout(debounceTimeout)
+         clearTimeout(debounceTimeout);
          debounceTimeout = setTimeout(() => props.updateFilter(queryFilter), needDebounce ? 500 : 1);
 
          forceUpdate();
@@ -178,6 +179,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
                            updateCriteria={(newCriteria, needDebounce) => updateCriteria(newCriteria, index, needDebounce)}
                            removeCriteria={() => removeCriteria(index)}
                            updateBooleanOperator={(newValue) => updateBooleanOperator(newValue)}
+                           queryScreenUsage={props.queryScreenUsage}
                         />
                         {/*JSON.stringify(criteria)*/}
                      </Box>

@@ -220,6 +220,8 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       forceUpdate();
    }
 
+   const isExpression = criteria.values && criteria.values[0] && criteria.values[0].type;
+
    switch (operatorOption.valueMode)
    {
       case ValueMode.NONE:
@@ -279,19 +281,30 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
          {
             selectedPossibleValue = criteria.values[0];
          }
-         return <Box mb={-1.5}>
-            <DynamicSelect
-               tableName={table.name}
-               fieldName={field.name}
-               overrideId={field.name + "-single-" + criteria.id}
-               key={field.name + "-single-" + criteria.id}
-               fieldLabel="Value"
-               initialValue={selectedPossibleValue?.id}
-               initialDisplayValue={selectedPossibleValue?.label}
-               inForm={false}
-               onChange={(value: any) => valueChangeHandler(null, 0, value)}
-               variant="standard"
-            />
+         return <Box display="flex">
+            {
+               isExpression ? (
+                  makeTextField(field, criteria, valueChangeHandler, 0, undefined, undefined, allowVariables)
+               ) : (
+                  <Box mb={-1.5} width={allowVariables && !isExpression ? "100%" : "100%"}>
+                     <DynamicSelect
+                        tableName={table.name}
+                        fieldName={field.name}
+                        overrideId={field.name + "-single-" + criteria.id}
+                        key={field.name + "-single-" + criteria.id}
+                        fieldLabel="Value"
+                        initialValue={selectedPossibleValue?.id}
+                        initialDisplayValue={selectedPossibleValue?.label}
+                        inForm={false}
+                        onChange={(value: any) => valueChangeHandler(null, 0, value)}
+                        variant="standard"
+                     />
+                  </Box>
+               )
+            }
+            {
+               allowVariables && !isExpression && <Box mt={2.0}><AssignFilterVariable field={field} valueChangeHandler={valueChangeHandler} valueIndex={0} /></Box>
+            }
          </Box>;
       case ValueMode.PVS_MULTI:
          console.log("Doing pvs multi: " + criteria.values);
@@ -307,20 +320,31 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                initialValues = criteria.values;
             }
          }
-         return <Box mb={-1.5}>
-            <DynamicSelect
-               tableName={table.name}
-               fieldName={field.name}
-               overrideId={field.name + "-multi-" + criteria.id}
-               key={field.name + "-multi-" + criteria.id}
-               isMultiple
-               fieldLabel="Values"
-               initialValues={initialValues}
-               initiallyOpen={false /*initiallyOpenMultiValuePvs*/}
-               inForm={false}
-               onChange={(value: any) => valueChangeHandler(null, "all", value)}
-               variant="standard"
-            />
+         return <Box display="flex">
+            {
+               isExpression ? (
+                  makeTextField(field, criteria, valueChangeHandler, 0, undefined, undefined, allowVariables)
+               ) : (
+                  <Box mb={-1.5} width={allowVariables && !isExpression ? "90%" : "100%"}>
+                     <DynamicSelect
+                        tableName={table.name}
+                        fieldName={field.name}
+                        overrideId={field.name + "-multi-" + criteria.id}
+                        key={field.name + "-multi-" + criteria.id}
+                        isMultiple
+                        fieldLabel="Values"
+                        initialValues={initialValues}
+                        initiallyOpen={false /*initiallyOpenMultiValuePvs*/}
+                        inForm={false}
+                        onChange={(value: any) => valueChangeHandler(null, "all", value)}
+                        variant="standard"
+                     />
+                  </Box>
+               )
+            }
+            {
+               allowVariables && !isExpression && <Box mt={2.0} sx={{width: "10%"}}><AssignFilterVariable field={field} valueChangeHandler={valueChangeHandler} valueIndex={0} /></Box>
+            }
          </Box>;
    }
 
