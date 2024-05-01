@@ -110,6 +110,7 @@ class FilterUtils
 
          let values = criteria.values;
          let hasFilterVariable = false;
+
          if (field.possibleValueSourceName)
          {
             //////////////////////////////////////////////////////////////////////////////////
@@ -123,6 +124,9 @@ class FilterUtils
             //////////////////////////////////////////////////////////////////////////////////
             if (values && values.length > 0 && values[0] !== null && values[0] !== undefined && values[0] !== "")
             {
+               ////////////////////////////////////////////////////////////////////////
+               // do not do this lookup if the field is a filter variable expression //
+               ////////////////////////////////////////////////////////////////////////
                if (values[0].type && values[0].type == "FilterVariableExpression")
                {
                   hasFilterVariable = true;
@@ -142,11 +146,7 @@ class FilterUtils
             }
          }
 
-         if (hasFilterVariable)
-         {
-            values[0] = new FilterVariableExpression({fieldName: field.name, valueIndex: 0});
-         }
-         else if (values && values.length)
+         if (values && values.length)
          {
             for (let i = 0; i < values.length; i++)
             {
@@ -244,6 +244,10 @@ class FilterUtils
          else if (value.type == "ThisOrLastPeriod")
          {
             return (new ThisOrLastPeriodExpression(value));
+         }
+         else if (value.type == "FilterVariableExpression")
+         {
+            return (new FilterVariableExpression(value));
          }
       }
 
