@@ -927,7 +927,7 @@ function EntityForm(props: Props): JSX.Element
                   else
                   {
                      setAlertContent(error.message);
-                     HtmlUtils.autoScroll(0);
+                     scrollToTopToShowAlert();
                   }
                });
          }
@@ -973,12 +973,28 @@ function EntityForm(props: Props): JSX.Element
                   else
                   {
                      setAlertContent(error.message);
-                     HtmlUtils.autoScroll(0);
+                     scrollToTopToShowAlert();
                   }
                });
          }
       })();
    };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function scrollToTopToShowAlert()
+   {
+      if (props.isModal)
+      {
+         document.getElementById("modalTopReference")?.scrollIntoView();
+      }
+      else
+      {
+         HtmlUtils.autoScroll(0);
+      }
+   }
 
 
    /*******************************************************************************
@@ -1265,6 +1281,7 @@ function EntityForm(props: Props): JSX.Element
       return (
          <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
             <Card sx={{my: 5, mx: "auto", p: 6, pb: 0, maxWidth: "1024px"}}>
+               <span id="modalTopReference"></span>
                {body}
             </Card>
          </Box>

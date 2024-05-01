@@ -94,16 +94,19 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    {
       ////////////////////////////////////////////////////////
       // avoid showing "saved view" as a breadcrumb element //
+      // e.g., if at /app/table/savedView/1 (so where i==2) //
       ////////////////////////////////////////////////////////
-      if(routes[i] === "savedView")
+      if(routes[i] === "savedView" && i == 2)
       {
          continue;
       }
 
       ///////////////////////////////////////////////////////////////////////
       // avoid showing the table name if it's the element before savedView //
+      // e.g., when at /app/table/savedView/1 (so where i==1)              //
+      // we want to just be showing "App"                                  //
       ///////////////////////////////////////////////////////////////////////
-      if(i < routes.length - 1 && routes[i+1] == "savedView")
+      if(i < routes.length - 1 && routes[i+1] == "savedView" && i == 1)
       {
          continue;
       }
