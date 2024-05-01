@@ -124,19 +124,15 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       {
          console.log("DynamicSelect - if you provide a processName, you must also provide a fieldName");
       }
-      if(fieldName && possibleValueSourceName)
-      {
-         console.log("DynamicSelect - if you provide a fieldName and a possibleValueSourceName, the possibleValueSourceName will be ignored");
-      }
       if(!fieldName && !possibleValueSourceName)
       {
          console.log("DynamicSelect - you must provide either a fieldName (and a tableName or processName) or a possibleValueSourceName");
       }
-      if(fieldName)
+      if(fieldName && !possibleValueSourceName)
       {
          if(!tableName || !processName)
          {
-            console.log("DynamicSelect - if you provide a fieldName, you must also provide a tableName or processName");
+            console.log("DynamicSelect - if you provide a fieldName and not a possibleValueSourceName, then you must also provide a tableName or processName");
          }
       }
       if(possibleValueSourceName)
@@ -198,7 +194,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName ?? possibleValueSourceName, searchTerm ?? "", null, otherValues);
+         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
 
          if(tableMetaData == null && tableName)
          {
@@ -231,7 +227,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             setLoading(true);
             setOptions([]);
             console.log("Refreshing possible values...");
-            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, fieldName ?? possibleValueSourceName, searchTerm ?? "", null, otherValues);
+            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
             setLoading(false);
             setOptions([ ...results ]);
             setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));

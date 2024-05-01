@@ -99,9 +99,10 @@ export default function DynamicFormWidget({isEditable, widgetMetaData, widgetDat
 
          if(newFields.length > 0)
          {
+            const recordOfFieldValues = widgetData.recordOfFieldValues ? new QRecord(widgetData.recordOfFieldValues) : null;
             const {dynamicFormFields: newDynamicFormFields, formValidations: newFormValidations} = DynamicFormUtils.getFormData(newFields);
             const defaultDisplayValues = new Map<string,string>(); // todo - seems not right?
-            DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, newFields, recordValues.tableName, null, record ? record.displayValues : defaultDisplayValues);
+            DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, newFields, recordValues.tableName, null, recordOfFieldValues ? recordOfFieldValues.displayValues : defaultDisplayValues);
             setDynamicFormFields(newDynamicFormFields)
             setFormValidations(newFormValidations)
          }
@@ -226,7 +227,7 @@ export default function DynamicFormWidget({isEditable, widgetMetaData, widgetDat
    {
       const fieldNames: string[] = [];
       const fieldMap: {[name: string]: QFieldMetaData} = {};
-      const fakeRecord = new QRecord({});
+      const fakeRecord = new QRecord(widgetData.recordOfFieldValues ?? {});
 
       const mergedDynamicFormValuesIntoFieldName = widgetData.mergedDynamicFormValuesIntoFieldName;
 

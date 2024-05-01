@@ -35,6 +35,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
+import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import React, {ReactNode, SyntheticEvent, useState} from "react";
 
@@ -197,6 +198,7 @@ interface FilterCriteriaRowProps
    updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean) => void;
    removeCriteria: () => void;
    updateBooleanOperator: (newValue: string) => void;
+   queryScreenUsage?: QueryScreenUsage;
 }
 
 FilterCriteriaRow.defaultProps =
@@ -265,7 +267,7 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
    return {criteriaIsValid, criteriaStatusTooltip};
 }
 
-export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator}: FilterCriteriaRowProps): JSX.Element
+export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage}: FilterCriteriaRowProps): JSX.Element
 {
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
@@ -513,6 +515,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                field={field}
                table={fieldTable}
                valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
+               queryScreenUsage={queryScreenUsage}
             />
          </Box>
          <Box display="inline-block">

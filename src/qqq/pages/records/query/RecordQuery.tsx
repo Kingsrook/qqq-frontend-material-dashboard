@@ -900,6 +900,26 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          return;
       }
 
+      /////////////////////////////////////////////////////////////////////////////////////////////////
+      // if any values in the query are of type "FilterVariableExpression", display an error showing //
+      // that a backend query cannot be made because of missing values for that expression           //
+      /////////////////////////////////////////////////////////////////////////////////////////////////
+      setWarningAlert(null);
+      for (var i = 0; i < queryFilter?.criteria.length; i++)
+      {
+         for (var j = 0; j < queryFilter?.criteria[i].values.length; j++)
+         {
+            const value = queryFilter.criteria[i].values[j];
+            if (value?.type == "FilterVariableExpression")
+            {
+               setWarningAlert("Cannot perform query because of a missing value for a variable.");
+               setLoading(false);
+               setRows([]);
+               return;
+            }
+         }
+      }
+
       recordAnalytics({category: "tableEvents", action: "query", label: tableMetaData.label});
 
       console.log(`In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
@@ -2888,6 +2908,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
                            filterPanel:
                               {
                                  tableMetaData: tableMetaData,
+                                 queryScreenUsage: usage,
                                  metaData: metaData,
                                  queryFilter: queryFilter,
                                  updateFilter: doSetQueryFilter,
