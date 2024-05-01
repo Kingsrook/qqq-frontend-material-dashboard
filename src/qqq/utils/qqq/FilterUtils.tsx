@@ -109,6 +109,7 @@ class FilterUtils
          let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
 
          let values = criteria.values;
+         let hasFilterVariable = false;
          if (field.possibleValueSourceName)
          {
             //////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +123,14 @@ class FilterUtils
             //////////////////////////////////////////////////////////////////////////////////
             if (values && values.length > 0 && values[0] !== null && values[0] !== undefined && values[0] !== "")
             {
-               values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
+               if (values[0].type && values[0].type == "FilterVariableExpression")
+               {
+                  hasFilterVariable = true;
+               }
+               else
+               {
+                  values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
+               }
             }
 
             ////////////////////////////////////////////
@@ -134,7 +142,11 @@ class FilterUtils
             }
          }
 
-         if (values && values.length)
+         if (hasFilterVariable)
+         {
+            values[0] = new FilterVariableExpression({fieldName: field.name, valueIndex: 0});
+         }
+         else if (values && values.length)
          {
             for (let i = 0; i < values.length; i++)
             {
