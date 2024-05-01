@@ -24,9 +24,8 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert} from "@mui/material";
+import {Alert, Box} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
@@ -376,7 +375,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                      <Box color={colors.gray.main} pb={"0.5rem"} fontSize={"0.875rem"} fontWeight="400" maxWidth="590px">
                         {/* todo move to helpContent (what do we attach the meta-data too??) */}
                         Select a user or a group to share this record with.
-                        You can choose if they should only be able to Read the record, or also make Edits to it.
+                        {/*You can choose if they should only be able to Read the record, or also make Edits to it.*/}
                      </Box>
                      <Box fontSize={14} maxWidth="590px" pb={1} fontWeight="300">
                         {alert && <Alert color="error" onClose={() => setAlert(null)}>{alert}</Alert>}
@@ -390,7 +389,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                <Box pb={3} display="flex" flexDirection="column">
                   {/* row for adding a new share */}
                   <Box display="flex" flexDirection="row" alignItems="center">
-                     <Box width="350px" pr={2} mb={-1.5}>
+                     <Box width="550px" pr={2} mb={-1.5}>
                         <DynamicSelect
                            possibleValueSourceName={shareableTableMetaData.audiencePossibleValueSourceName}
                            fieldLabel="User or Group" // todo should come from shareableTableMetaData
@@ -400,9 +399,12 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                            onChange={handleAudienceChange}
                         />
                      </Box>
-                     <Box width="180px" pr={2}>
-                        {renderScopeDropdown("new-share-scope", defaultScope, handleScopeChange)}
-                     </Box>
+                     {/*
+                        when turning scope back on, change width of audience box to 350px
+                        <Box width="180px" pr={2}>
+                           {renderScopeDropdown("new-share-scope", defaultScope, handleScopeChange)}
+                        </Box>
+                     */}
                      <Box>
                         <Tooltip title={selectedAudienceId == null ? "Select a user or group to share with." : null}>
                            <span>
@@ -429,8 +431,11 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                               currentShares.map((share) => (
                                  <Box key={share.shareId} display="flex" justifyContent="space-between" alignItems="center" p="0.25rem" pb="0.75rem" fontSize="1rem">
                                     <Box display="flex" alignItems="center">
-                                       <Box width="310px" pl="1rem">{share.audienceLabel}</Box>
-                                       <Box width="160px">{renderScopeDropdown(`scope-${share.shareId}`, getScopeOption(share.scopeId), (event: React.SyntheticEvent, value: any | any[], reason: string) => editingExistingShareScope(share.shareId, value))}</Box>
+                                       <Box width="490px" pl="1rem">{share.audienceLabel}</Box>
+                                       {/*
+                                          when turning scope back on, change width of audience box to 310px
+                                          <Box width="160px">{renderScopeDropdown(`scope-${share.shareId}`, getScopeOption(share.scopeId), (event: React.SyntheticEvent, value: any | any[], reason: string) => editingExistingShareScope(share.shareId, value))}</Box>
+                                       */}
                                     </Box>
                                     <Box pr="1rem">
                                        <Button sx={{...iconButtonSX, ...redIconButton}} onClick={() => removeShare(share.shareId)}><Icon>clear</Icon></Button>
