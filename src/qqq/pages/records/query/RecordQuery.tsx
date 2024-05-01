@@ -905,9 +905,9 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       // that a backend query cannot be made because of missing values for that expression           //
       /////////////////////////////////////////////////////////////////////////////////////////////////
       setWarningAlert(null);
-      for (var i = 0; i < queryFilter?.criteria.length; i++)
+      for (var i = 0; i < queryFilter?.criteria?.length; i++)
       {
-         for (var j = 0; j < queryFilter?.criteria[i].values.length; j++)
+         for (var j = 0; j < queryFilter?.criteria[i]?.values?.length; j++)
          {
             const value = queryFilter.criteria[i].values[j];
             if (value?.type == "FilterVariableExpression")
