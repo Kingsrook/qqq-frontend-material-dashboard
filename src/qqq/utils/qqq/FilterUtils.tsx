@@ -23,6 +23,7 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {FilterVariableExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/FilterVariableExpression";
 import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
 import {NowWithOffsetExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
@@ -108,6 +109,8 @@ class FilterUtils
          let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
 
          let values = criteria.values;
+         let hasFilterVariable = false;
+
          if (field.possibleValueSourceName)
          {
             //////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +124,17 @@ class FilterUtils
             //////////////////////////////////////////////////////////////////////////////////
             if (values && values.length > 0 && values[0] !== null && values[0] !== undefined && values[0] !== "")
             {
-               values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
+               ////////////////////////////////////////////////////////////////////////
+               // do not do this lookup if the field is a filter variable expression //
+               ////////////////////////////////////////////////////////////////////////
+               if (values[0].type && values[0].type == "FilterVariableExpression")
+               {
+                  hasFilterVariable = true;
+               }
+               else
+               {
+                  values = await qController.possibleValues(fieldTable.name, null, field.name, "", values);
+               }
             }
 
             ////////////////////////////////////////////
@@ -231,6 +244,10 @@ class FilterUtils
          else if (value.type == "ThisOrLastPeriod")
          {
             return (new ThisOrLastPeriodExpression(value));
+         }
+         else if (value.type == "FilterVariableExpression")
+         {
+            return (new FilterVariableExpression(value));
          }
       }
 
@@ -365,7 +382,12 @@ class FilterUtils
          for (let i = 0; i < maxLoops; i++)
          {
             const value = criteria.values[i];
-            if (value.type == "NowWithOffset")
+            if (value.type == "FilterVariableExpression")
+            {
+               const expression = new FilterVariableExpression(value);
+               labels.push(expression.toString());
+            }
+            else if (value.type == "NowWithOffset")
             {
                const expression = new NowWithOffsetExpression(value);
                labels.push(expression.toString());
@@ -657,7 +679,7 @@ class FilterUtils
 
       filterForBackend.subFilters = subFilters;
 
-      if(pageNumber !== undefined && rowsPerPage !== undefined)
+      if (pageNumber !== undefined && rowsPerPage !== undefined)
       {
          filterForBackend.skip = pageNumber * rowsPerPage;
          filterForBackend.limit = rowsPerPage;

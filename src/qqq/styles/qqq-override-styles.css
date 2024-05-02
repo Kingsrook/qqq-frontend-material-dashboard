@@ -688,6 +688,21 @@ input[type="search"]::-webkit-search-results-decoration
    font-weight: 500;
 }
 
+.recordView .widget
+{
+   padding: 24px;
+}
+
+.entityForm .widget
+{
+   padding: 24px;
+}
+
+.recordView .widget .recordGridWidget
+{
+   margin: -8px;
+}
+
 .MuiPickersDay-root.Mui-selected, .MuiPickersDay-root.MuiPickersDay-dayWithMargin:hover
 {
    color: white;

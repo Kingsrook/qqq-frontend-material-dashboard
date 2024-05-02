@@ -172,6 +172,17 @@ class DynamicFormUtils
                   {
                      isPossibleValue: true,
                      tableName: tableName,
+                     fieldName: field.name,
+                     initialDisplayValue: initialDisplayValue,
+                  };
+            }
+            else if(processName)
+            {
+               dynamicFormFields[field.name].possibleValueProps =
+                  {
+                     isPossibleValue: true,
+                     processName: processName,
+                     fieldName: field.name,
                      initialDisplayValue: initialDisplayValue,
                   };
             }
@@ -180,8 +191,9 @@ class DynamicFormUtils
                dynamicFormFields[field.name].possibleValueProps =
                   {
                      isPossibleValue: true,
-                     processName: processName,
                      initialDisplayValue: initialDisplayValue,
+                     fieldName: field.name,
+                     possibleValueSourceName: field.possibleValueSourceName
                   };
             }
          }

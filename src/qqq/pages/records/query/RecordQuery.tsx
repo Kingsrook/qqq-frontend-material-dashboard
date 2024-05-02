@@ -109,7 +109,7 @@ const qController = Client.getInstance();
  *******************************************************************************/
 const getLoadingScreen = (isModal: boolean) =>
 {
-   if(isModal)
+   if (isModal)
    {
       return (<Box>&nbsp;</Box>);
    }
@@ -151,7 +151,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
     *******************************************************************************/
    function localStorageSet(key: string, value: string)
    {
-      if(mayWriteLocalStorage)
+      if (mayWriteLocalStorage)
       {
          localStorage.setItem(key, value);
       }
@@ -163,7 +163,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
     *******************************************************************************/
    function localStorageRemove(key: string)
    {
-      if(mayWriteLocalStorage)
+      if (mayWriteLocalStorage)
       {
          localStorage.removeItem(key);
       }
@@ -176,7 +176,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          {
             return view;
          }
-      }
+      };
    });
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,7 +256,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       defaultView.mode = defaultMode;
    }
 
-   if(firstRender)
+   if (firstRender)
    {
       /////////////////////////////////////////////////////////////////////////
       // allow a caller to send in an initial filter & set of columns.       //
@@ -408,7 +408,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
    //////////////////////////////////////////////////////////////////
    // we use our own header - so clear out the context page header //
    //////////////////////////////////////////////////////////////////
-   if(!isModal)
+   if (!isModal)
    {
       setPageHeader(null);
    }
@@ -484,7 +484,6 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       }
       return (false);
    };
-
 
 
    /*******************************************************************************
@@ -711,7 +710,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          {
             if (localStorage.getItem(currentSavedViewLocalStorageKey))
             {
-               if(usage == "queryScreen")
+               if (usage == "queryScreen")
                {
                   currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
                   navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
@@ -750,13 +749,13 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          const viewForLocalStorage: RecordQueryView = JSON.parse(viewAsJSON);
          if (viewForLocalStorage?.queryFilter?.criteria?.length > 0)
          {
-            FilterUtils.stripAwayIncompleteCriteria(viewForLocalStorage.queryFilter)
+            FilterUtils.stripAwayIncompleteCriteria(viewForLocalStorage.queryFilter);
          }
          localStorageSet(viewLocalStorageKey, JSON.stringify(viewForLocalStorage));
       }
-      catch(e)
+      catch (e)
       {
-         console.log("Error storing view in local storage: " + e)
+         console.log("Error storing view in local storage: " + e);
       }
    };
 
@@ -901,6 +900,26 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          return;
       }
 
+      /////////////////////////////////////////////////////////////////////////////////////////////////
+      // if any values in the query are of type "FilterVariableExpression", display an error showing //
+      // that a backend query cannot be made because of missing values for that expression           //
+      /////////////////////////////////////////////////////////////////////////////////////////////////
+      setWarningAlert(null);
+      for (var i = 0; i < queryFilter?.criteria?.length; i++)
+      {
+         for (var j = 0; j < queryFilter?.criteria[i]?.values?.length; j++)
+         {
+            const value = queryFilter.criteria[i].values[j];
+            if (value?.type == "FilterVariableExpression")
+            {
+               setWarningAlert("Cannot perform query because of a missing value for a variable.");
+               setLoading(false);
+               setRows([]);
+               return;
+            }
+         }
+      }
+
       recordAnalytics({category: "tableEvents", action: "query", label: tableMetaData.label});
 
       console.log(`In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
@@ -939,7 +958,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
          console.log(`Issuing query: ${thisQueryId}`);
          if (tableMetaData.capabilities.has(Capability.TABLE_COUNT))
          {
-            if(clearOutCount)
+            if (clearOutCount)
             {
                setTotalRecords(null);
                setDistinctRecords(null);
@@ -1436,7 +1455,6 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
 
       return (selectedIds.length);
    };
-
 
    /*******************************************************************************
     ** get a query-string to put on the url to indicate what records are going into
@@ -2527,7 +2545,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
             {
                const currentSavedViewId = Number.parseInt(localStorage.getItem(currentSavedViewLocalStorageKey));
                console.log(`returning to previously active saved view ${currentSavedViewId}`);
-               if(usage == "queryScreen")
+               if (usage == "queryScreen")
                {
                   navigate(`${metaData.getTablePathByName(tableName)}/savedView/${currentSavedViewId}`);
                }
@@ -2770,7 +2788,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       spaceAboveGrid += 60;
    }
 
-   if(isModal)
+   if (isModal)
    {
       spaceAboveGrid += 130;
    }
@@ -2890,6 +2908,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
                            filterPanel:
                               {
                                  tableMetaData: tableMetaData,
+                                 queryScreenUsage: usage,
                                  metaData: metaData,
                                  queryFilter: queryFilter,
                                  updateFilter: doSetQueryFilter,
@@ -2976,15 +2995,15 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       </React.Fragment>
    );
 
-   if(isModal)
+   if (isModal)
    {
       return body;
    }
 
    return (
       <BaseLayout>{body}</BaseLayout>
-   )
-})
+   );
+});
 
 
 RecordQuery.defaultProps = {

@@ -35,6 +35,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
+import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import React, {ReactNode, SyntheticEvent, useState} from "react";
 
@@ -72,7 +73,7 @@ export const getValueModeRequiredCount = (valueMode: ValueMode): number =>
       case ValueMode.PVS_MULTI:
          return (null);
    }
-}
+};
 
 export interface OperatorOption
 {
@@ -183,7 +184,7 @@ export const getOperatorOptions = (tableMetaData: QTableMetaData, fieldName: str
    }
 
    return (operatorOptions);
-}
+};
 
 
 interface FilterCriteriaRowProps
@@ -197,13 +198,13 @@ interface FilterCriteriaRowProps
    updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean) => void;
    removeCriteria: () => void;
    updateBooleanOperator: (newValue: string) => void;
+   queryScreenUsage?: QueryScreenUsage;
 }
 
 FilterCriteriaRow.defaultProps =
-   {
-   };
+   {};
 
-export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue?: OperatorOption): {criteriaIsValid: boolean, criteriaStatusTooltip: string}
+export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValue?: OperatorOption): { criteriaIsValid: boolean, criteriaStatusTooltip: string }
 {
    let criteriaIsValid = true;
    let criteriaStatusTooltip = "This condition is fully defined and is part of your filter.";
@@ -213,7 +214,7 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
       return (value === null || value == undefined || String(value).trim() === "");
    }
 
-   if(!criteria)
+   if (!criteria)
    {
       criteriaIsValid = false;
       criteriaStatusTooltip = "This condition is not defined.";
@@ -266,7 +267,7 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
    return {criteriaIsValid, criteriaStatusTooltip};
 }
 
-export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator}: FilterCriteriaRowProps): JSX.Element
+export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage}: FilterCriteriaRowProps): JSX.Element
 {
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
@@ -284,7 +285,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    let defaultFieldValue;
    let field = null;
    let fieldTable = null;
-   if(criteria && criteria.fieldName)
+   if (criteria && criteria.fieldName)
    {
       [field, fieldTable] = FilterUtils.getField(tableMetaData, criteria.fieldName);
       if (field && fieldTable)
@@ -303,9 +304,9 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
 
          let newOperatorSelectedValue = operatorOptions.filter(option =>
          {
-            if(option.value == criteria.operator)
+            if (option.value == criteria.operator)
             {
-               if(option.implicitValues)
+               if (option.implicitValues)
                {
                   return (JSON.stringify(option.implicitValues) == JSON.stringify(criteria.values));
                }
@@ -316,7 +317,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
             }
             return (false);
          })[0];
-         if(newOperatorSelectedValue?.label !== operatorSelectedValue?.label)
+         if (newOperatorSelectedValue?.label !== operatorSelectedValue?.label)
          {
             setOperatorSelectedValue(newOperatorSelectedValue);
             setOperatorInputValue(newOperatorSelectedValue?.label);
@@ -379,12 +380,12 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
    {
       criteria.operator = newValue ? newValue.value : null;
 
-      if(newValue)
+      if (newValue)
       {
          setOperatorSelectedValue(newValue);
          setOperatorInputValue(newValue.label);
 
-         if(newValue.implicitValues)
+         if (newValue.implicitValues)
          {
             criteria.values = newValue.implicitValues;
          }
@@ -393,15 +394,15 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          // we've seen cases where switching operators can sometimes put a null in as the first value... //
          // that just causes a bad time (e.g., null pointers in Autocomplete), so, get rid of that.      //
          //////////////////////////////////////////////////////////////////////////////////////////////////
-         if(criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
+         if (criteria.values && criteria.values.length == 1 && criteria.values[0] == null)
          {
             criteria.values = [];
          }
 
-         if(newValue.valueMode && !newValue.implicitValues)
+         if (newValue.valueMode && !newValue.implicitValues)
          {
             const requiredValueCount = getValueModeRequiredCount(newValue.valueMode);
-            if(requiredValueCount != null && criteria.values.length > requiredValueCount)
+            if (requiredValueCount != null && criteria.values.length > requiredValueCount)
             {
                criteria.values.splice(requiredValueCount);
             }
@@ -424,12 +425,12 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
       // @ts-ignore
       const value = newValue !== undefined ? newValue : event ? event.target.value : null;
 
-      if(!criteria.values)
+      if (!criteria.values)
       {
          criteria.values = [];
       }
 
-      if(valueIndex == "all")
+      if (valueIndex == "all")
       {
          criteria.values = value;
       }
@@ -514,6 +515,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                field={field}
                table={fieldTable}
                valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
+               queryScreenUsage={queryScreenUsage}
             />
          </Box>
          <Box display="inline-block">

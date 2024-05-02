@@ -29,6 +29,9 @@ import com.kingsrook.qqq.backend.core.instances.QInstanceValidator;
 import com.kingsrook.qqq.backend.core.model.metadata.QInstance;
 import com.kingsrook.qqq.frontend.materialdashboard.junit.BaseTest;
 import com.kingsrook.qqq.frontend.materialdashboard.junit.TestUtils;
+import com.kingsrook.qqq.frontend.materialdashboard.model.metadata.fieldrules.FieldRule;
+import com.kingsrook.qqq.frontend.materialdashboard.model.metadata.fieldrules.FieldRuleAction;
+import com.kingsrook.qqq.frontend.materialdashboard.model.metadata.fieldrules.FieldRuleTrigger;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +79,37 @@ class MaterialDashboardTableMetaDataTest extends BaseTest
 
       assertValidationFailureReasons(qInstance -> qInstance.getTable(TestUtils.TABLE_NAME_PERSON).withSupplementalMetaData(new MaterialDashboardTableMetaData().withDefaultQuickFilterFieldNames(List.of("firstName", "lastName", "firstName"))),
          "duplicated field name: firstName");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testValidateFieldRules()
+   {
+      assertValidationFailureReasons(qInstance -> qInstance.getTable(TestUtils.TABLE_NAME_PERSON).withSupplementalMetaData(new MaterialDashboardTableMetaData().withFieldRule(new FieldRule())),
+         "without an action",
+         "without a trigger",
+         "without a sourceField");
+
+      assertValidationFailureReasons(qInstance -> qInstance.getTable(TestUtils.TABLE_NAME_PERSON).withSupplementalMetaData(new MaterialDashboardTableMetaData().withFieldRule(new FieldRule()
+            .withTrigger(FieldRuleTrigger.ON_CHANGE)
+            .withAction(FieldRuleAction.CLEAR_TARGET_FIELD)
+            .withSourceField("notAField")
+            .withTargetField("alsoNotAField")
+         )),
+         "unrecognized sourceField: notAField",
+         "unrecognized targetField: alsoNotAField");
+
+      assertValidationFailureReasons(qInstance -> qInstance.getTable(TestUtils.TABLE_NAME_PERSON).withSupplementalMetaData(new MaterialDashboardTableMetaData().withFieldRule(new FieldRule()
+            .withTrigger(FieldRuleTrigger.ON_CHANGE)
+            .withAction(FieldRuleAction.RELOAD_WIDGET)
+            .withSourceField("id")
+            .withTargetWidget("notAWidget")
+         )),
+         "unrecognized targetWidget: notAWidget");
 
    }
 

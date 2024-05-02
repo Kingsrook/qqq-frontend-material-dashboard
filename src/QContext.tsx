@@ -59,6 +59,7 @@ interface QContext
    pathToLabelMap?: {[path: string]: string};
    branding?: QBrandingMetaData;
    helpHelpActive?: boolean;
+   userId?: string;
 }
 
 const defaultState = {

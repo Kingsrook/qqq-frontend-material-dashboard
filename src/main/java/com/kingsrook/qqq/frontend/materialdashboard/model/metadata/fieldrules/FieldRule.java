@@ -38,6 +38,8 @@ public class FieldRule implements Serializable
    private FieldRuleAction  action;
    private String           targetField;
 
+   private String targetWidget;
+
 
 
    /*******************************************************************************
@@ -159,6 +161,37 @@ public class FieldRule implements Serializable
    public FieldRule withTargetField(String targetField)
    {
       this.targetField = targetField;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    ** Getter for targetWidget
+    *******************************************************************************/
+   public String getTargetWidget()
+   {
+      return (this.targetWidget);
+   }
+
+
+
+   /*******************************************************************************
+    ** Setter for targetWidget
+    *******************************************************************************/
+   public void setTargetWidget(String targetWidget)
+   {
+      this.targetWidget = targetWidget;
+   }
+
+
+
+   /*******************************************************************************
+    ** Fluent setter for targetWidget
+    *******************************************************************************/
+   public FieldRule withTargetWidget(String targetWidget)
+   {
+      this.targetWidget = targetWidget;
       return (this);
    }
 

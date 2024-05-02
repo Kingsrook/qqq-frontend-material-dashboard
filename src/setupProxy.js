@@ -47,6 +47,8 @@ module.exports = function (app)
    app.use("/download/*", getRequestHandler());
    app.use("/metaData/*", getRequestHandler());
    app.use("/data/*", getRequestHandler());
+   app.use("/possibleValues/*", getRequestHandler());
+   app.use("/possibleValues", getRequestHandler());
    app.use("/widget/*", getRequestHandler());
    app.use("/serverInfo", getRequestHandler());
    app.use("/manageSession", getRequestHandler());

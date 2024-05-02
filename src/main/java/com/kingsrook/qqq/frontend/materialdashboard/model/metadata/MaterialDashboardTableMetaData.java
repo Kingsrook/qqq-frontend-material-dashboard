@@ -134,17 +134,36 @@ public class MaterialDashboardTableMetaData extends QSupplementalTableMetaData
 
       for(FieldRule fieldRule : CollectionUtils.nonNullList(fieldRules))
       {
-         qInstanceValidator.assertCondition(fieldRule.getTrigger() != null, prefix + "has a fieldRule without a trigger");
-         qInstanceValidator.assertCondition(fieldRule.getAction() != null, prefix + "has a fieldRule without an action");
+         validateFieldRule(qInstance, tableMetaData, qInstanceValidator, fieldRule, prefix);
+      }
+   }
 
-         if(qInstanceValidator.assertCondition(StringUtils.hasContent(fieldRule.getSourceField()), prefix + "has a fieldRule without a sourceField"))
-         {
-            qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getSourceField()), prefix + "has a fieldRule with an unrecognized sourceField: " + fieldRule.getSourceField());
-         }
 
-         if(qInstanceValidator.assertCondition(StringUtils.hasContent(fieldRule.getTargetField()), prefix + "has a fieldRule without a targetField"))
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   static void validateFieldRule(QInstance qInstance, QTableMetaData tableMetaData, QInstanceValidator qInstanceValidator, FieldRule fieldRule, String prefix)
+   {
+      qInstanceValidator.assertCondition(fieldRule.getTrigger() != null, prefix + "has a fieldRule without a trigger");
+      qInstanceValidator.assertCondition(fieldRule.getAction() != null, prefix + "has a fieldRule without an action");
+
+      if(qInstanceValidator.assertCondition(StringUtils.hasContent(fieldRule.getSourceField()), prefix + "has a fieldRule without a sourceField"))
+      {
+         qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getSourceField()), prefix + "has a fieldRule with an unrecognized sourceField: " + fieldRule.getSourceField());
+      }
+
+      if(StringUtils.hasContent(fieldRule.getTargetField()))
+      {
+         qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getTargetField()), prefix + "has a fieldRule with an unrecognized targetField: " + fieldRule.getTargetField());
+      }
+
+      if(StringUtils.hasContent(fieldRule.getTargetWidget()))
+      {
+         if(qInstanceValidator.assertCondition(qInstance.getWidget(fieldRule.getTargetWidget()) != null, prefix + "has a widgetRule with an unrecognized targetWidget: " + fieldRule.getTargetWidget()))
          {
-            qInstanceValidator.assertNoException(() -> tableMetaData.getField(fieldRule.getTargetField()), prefix + "has a fieldRule with an unrecognized targetField: " + fieldRule.getTargetField());
+            qInstanceValidator.assertCondition(CollectionUtils.nonNullList(tableMetaData.getSections()).stream().anyMatch(s -> fieldRule.getTargetWidget().equals(s.getWidgetName())),
+               prefix + "has a widgetRule with a targetWidget which is not used in any sections on the table");
          }
       }
    }
