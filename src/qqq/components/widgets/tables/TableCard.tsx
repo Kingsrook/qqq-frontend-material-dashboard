@@ -28,13 +28,13 @@ import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import parse from "html-react-parser";
-import React, {useEffect, useState} from "react";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import DataTableBodyCell from "qqq/components/widgets/tables/cells/DataTableBodyCell";
 import DataTableHeadCell from "qqq/components/widgets/tables/cells/DataTableHeadCell";
 import DefaultCell from "qqq/components/widgets/tables/cells/DefaultCell";
 import DataTable from "qqq/components/widgets/tables/DataTable";
 import Client from "qqq/utils/qqq/Client";
+import React, {useEffect, useState} from "react";
 
 
 //////////////////////////////////////
@@ -43,7 +43,7 @@ import Client from "qqq/utils/qqq/Client";
 export interface TableDataInput
 {
    columns: { [key: string]: any }[];
-   columnHeaderTooltips?: { [columnName: string]: string | JSX.Element }
+   columnHeaderTooltips?: { [columnName: string]: string | JSX.Element };
    rows: { [key: string]: any }[];
 }
 
@@ -63,6 +63,7 @@ interface Props
 }
 
 const qController = Client.getInstance();
+
 function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, fixedStickyLastRow, fixedHeight, widgetMetaData}: Props): JSX.Element
 {
    const [qInstance, setQInstance] = useState(null as QInstance);
@@ -108,7 +109,7 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
                   <TableContainer sx={{boxShadow: "none"}}>
                      <Table>
                         <Box component="thead">
-                           <TableRow key="header">
+                           <TableRow sx={{alignItems: "flex-end"}} key="header">
                               {Array(8).fill(0).map((_, i) =>
                                  <DataTableHeadCell key={`head-${i}`} sorted={false} width="auto" align="center">
                                     <Skeleton width="100%" />

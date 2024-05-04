@@ -23,7 +23,6 @@
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 // @ts-ignore
 import {htmlToText} from "html-to-text";
-import React, {useContext, useEffect, useState} from "react";
 import QContext from "QContext";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import TableCard from "qqq/components/widgets/tables/TableCard";
@@ -31,6 +30,7 @@ import Widget, {WidgetData} from "qqq/components/widgets/Widget";
 import {WidgetUtils} from "qqq/components/widgets/WidgetUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useContext, useEffect, useState} from "react";
 
 interface Props
 {
@@ -40,8 +40,7 @@ interface Props
    isChild?: boolean;
 }
 
-TableWidget.defaultProps = {
-};
+TableWidget.defaultProps = {};
 
 function TableWidget(props: Props): JSX.Element
 {
@@ -86,7 +85,7 @@ function TableWidget(props: Props): JSX.Element
 
                const cell = rows[i][columns[j].accessor];
                let text = cell;
-               if(columns[j].type != "default")
+               if (columns[j].type != "default")
                {
                   text = htmlToText(cell,
                      {
@@ -105,7 +104,7 @@ function TableWidget(props: Props): JSX.Element
          setCsv(csv);
 
          const fileName = WidgetUtils.makeExportFileName(props.widgetData, props.widgetMetaData);
-         setFileName(fileName)
+         setFileName(fileName);
 
          console.log(`useEffect, setting fileName ${fileName}`);
       }
@@ -114,24 +113,24 @@ function TableWidget(props: Props): JSX.Element
 
    const onExportClick = () =>
    {
-      if(props.widgetData?.csvData)
+      if (props.widgetData?.csvData)
       {
          const csv = WidgetUtils.widgetCsvDataToString(props.widgetData);
          const fileName = WidgetUtils.makeExportFileName(props.widgetData, props.widgetMetaData);
          HtmlUtils.download(fileName, csv);
       }
-      else if(csv)
+      else if (csv)
       {
          HtmlUtils.download(fileName, csv);
       }
       else
       {
-         alert("There is no data available to export.")
+         alert("There is no data available to export.");
       }
-   }
+   };
 
    const labelAdditionalElementsLeft: JSX.Element[] = [];
-   if(props.widgetMetaData?.showExportButton)
+   if (props.widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
    }
@@ -139,14 +138,14 @@ function TableWidget(props: Props): JSX.Element
    //////////////////////////////////////////////////////
    // look for column-header tooltips from helpContent //
    //////////////////////////////////////////////////////
-   const columnHeaderTooltips: {[columnName: string]: JSX.Element} = {}
+   const columnHeaderTooltips: { [columnName: string]: JSX.Element } = {};
    for (let column of props.widgetData?.columns ?? [])
    {
-      const helpRoles = ["ALL_SCREENS"]
+      const helpRoles = ["ALL_SCREENS"];
       const slotName = `columnHeader=${column.accessor}`;
       const showHelp = helpHelpActive || hasHelpContent(props.widgetMetaData?.helpContent?.get(slotName), helpRoles);
 
-      if(showHelp)
+      if (showHelp)
       {
          const formattedHelpContent = <HelpContent helpContents={props.widgetMetaData?.helpContent?.get(slotName)} roles={helpRoles} helpContentKey={`widget:${props.widgetMetaData?.name};slot:${slotName}`} />;
          columnHeaderTooltips[column.accessor] = formattedHelpContent;
