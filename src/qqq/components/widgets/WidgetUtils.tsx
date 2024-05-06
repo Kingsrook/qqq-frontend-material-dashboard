@@ -58,7 +58,7 @@ export class WidgetUtils
     *******************************************************************************/
    public static generateLabelLink = (linkText: string, linkURL: string): JSX.Element =>
    {
-      return (<Box key={1} fontSize="0.875rem" pl={1} display="inline" position="relative">
+      return (<Box key={1} fontSize="1rem" pl={1} display="inline" position="relative">
          (<Link to={linkURL}>{linkText}</Link>)
       </Box>);
    };
