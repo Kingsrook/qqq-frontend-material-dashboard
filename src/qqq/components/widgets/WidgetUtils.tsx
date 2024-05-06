@@ -21,14 +21,16 @@
 
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
-import React from "react";
 import colors from "qqq/assets/theme/base/colors";
 import {WidgetData} from "qqq/components/widgets/Widget";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React from "react";
+import {Link} from "react-router-dom";
 
 /*******************************************************************************
  ** Utility class used by Widgets
@@ -48,6 +50,17 @@ export class WidgetUtils
             </Button>
          </Tooltip>
       </Typography>);
+   };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   public static generateLabelLink = (linkText: string, linkURL: string): JSX.Element =>
+   {
+      return (<Box key={1} fontSize="0.875rem" pl={1} display="inline" position="relative">
+         (<Link to={linkURL}>{linkText}</Link>)
+      </Box>);
    };
 
 

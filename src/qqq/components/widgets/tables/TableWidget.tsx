@@ -130,6 +130,10 @@ function TableWidget(props: Props): JSX.Element
    };
 
    const labelAdditionalElementsLeft: JSX.Element[] = [];
+   if (props.widgetData?.linkText && props.widgetData?.linkURL)
+   {
+      labelAdditionalElementsLeft.push(WidgetUtils.generateLabelLink(props.widgetData?.linkText, props.widgetData?.linkURL));
+   }
    if (props.widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(WidgetUtils.generateExportButton(onExportClick));
