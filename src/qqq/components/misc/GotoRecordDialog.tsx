@@ -35,6 +35,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import TextField from "@mui/material/TextField";
+import {any} from "prop-types";
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {QCancelButton} from "qqq/components/buttons/DefaultButtons";
@@ -71,7 +72,12 @@ function hasGotoFieldNames(tableMetaData: QTableMetaData): boolean
 
 function GotoRecordDialog(props: Props): JSX.Element
 {
-   const fields: QFieldMetaData[] = [];
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // this is an array of array of fields.                                                                      //
+   // that is - each entry in the top-level array is a set of fields that can be used together to goto a record //
+   // such as (pkey), (ukey-field1,ukey-field2).                                                                //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   const options: QFieldMetaData[][] = [];
 
    let pkey = props?.tableMetaData?.fields.get(props?.tableMetaData?.primaryKeyField);
    let addedPkey = false;
@@ -82,31 +88,38 @@ function GotoRecordDialog(props: Props): JSX.Element
       {
          for (let i = 0; i < mdbMetaData.gotoFieldNames.length; i++)
          {
-            // todo - multi-field keys!!
-            let fieldName = mdbMetaData.gotoFieldNames[i][0];
-            let field = props.tableMetaData.fields.get(fieldName);
-            if (field)
+            const option: QFieldMetaData[] = [];
+            options.push(option);
+            for (let j = 0; j < mdbMetaData.gotoFieldNames[i].length; j++)
             {
-               fields.push(field);
-
-               if (field.name == pkey.name)
+               let fieldName = mdbMetaData.gotoFieldNames[i][j];
+               let field = props.tableMetaData.fields.get(fieldName);
+               if (field)
                {
-                  addedPkey = true;
+                  option.push(field);
+
+                  if (pkey != null && field.name == pkey.name)
+                  {
+                     addedPkey = true;
+                  }
                }
             }
          }
       }
    }
 
+   //////////////////////////////////////////////////////////////////////////////////////////
+   // if pkey wasn't in the gotoField options meta-data, go ahead add it as an option here //
+   //////////////////////////////////////////////////////////////////////////////////////////
    if (pkey && !addedPkey)
    {
-      fields.unshift(pkey);
+      options.unshift([pkey]);
    }
 
    const makeInitialValues = () =>
    {
       const rs = {} as { [field: string]: string };
-      fields.forEach((field) => rs[field.name] = "");
+      options.forEach((option) => option.forEach((field) => rs[field.name] = ""));
       return (rs);
    };
 
@@ -141,11 +154,16 @@ function GotoRecordDialog(props: Props): JSX.Element
       }
       else if (e.key == "Enter" && targetId?.startsWith("gotoInput-"))
       {
-         const index = targetId?.replaceAll("gotoInput-", "");
+         const parts = targetId?.split(/-/);
+         const index = parts[1];
          document.getElementById("gotoButton-" + index).click();
       }
    };
 
+
+   /***************************************************************************
+   ** event handler for close button
+   ***************************************************************************/
    const closeRequested = () =>
    {
       if (props.mayClose)
@@ -154,10 +172,47 @@ function GotoRecordDialog(props: Props): JSX.Element
       }
    };
 
-   const goClicked = async (fieldName: string) =>
+
+   /*******************************************************************************
+    ** function to say if an option's submit button should be disabled
+    *******************************************************************************/
+   const isOptionSubmitButtonDisabled = (optionIndex: number) =>
+   {
+      let anyFieldsInThisOptionHaveAValue = false;
+
+      options[optionIndex].forEach((field) =>
+      {
+         if(values[field.name])
+         {
+            anyFieldsInThisOptionHaveAValue = true;
+         }
+      })
+
+      if(!anyFieldsInThisOptionHaveAValue)
+      {
+         return (true);
+      }
+      return (false);
+   }
+
+
+   /***************************************************************************
+   ** event handler for clicking an 'option's go/submit button
+   ***************************************************************************/
+   const optionGoClicked = async (optionIndex: number) =>
    {
       setError("");
-      const filter = new QQueryFilter([new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [values[fieldName]])], null, null, "AND", null, 10);
+
+      const criteria: QFilterCriteria[] = [];
+      const queryStringParts: string[] = [];
+      options[optionIndex].forEach((field) =>
+      {
+         criteria.push(new QFilterCriteria(field.name, QCriteriaOperator.EQUALS, [values[field.name]]))
+         queryStringParts.push(`${field.name}=${encodeURIComponent(values[field.name])}`)
+      })
+
+      const filter = new QQueryFilter(criteria, null, null, "AND", null, 10);
+
       try
       {
          const queryResult = await qController.query(props.tableMetaData.name, filter, null, props.tableVariant);
@@ -168,12 +223,26 @@ function GotoRecordDialog(props: Props): JSX.Element
          }
          else if (queryResult.length == 1)
          {
-            navigate(`${props.metaData.getTablePathByName(props.tableMetaData.name)}/${encodeURIComponent(queryResult[0].values.get(props.tableMetaData.primaryKeyField))}`);
+            if(options[optionIndex].length == 1 && options[optionIndex][0].name == pkey?.name)
+            {
+               /////////////////////////////////////////////////
+               // navigate by pkey, if that's how we searched //
+               /////////////////////////////////////////////////
+               navigate(`${props.metaData.getTablePathByName(props.tableMetaData.name)}/${encodeURIComponent(queryResult[0].values.get(props.tableMetaData.primaryKeyField))}`);
+            }
+            else
+            {
+               /////////////////////////////////
+               // else navigate by unique-key //
+               /////////////////////////////////
+               navigate(`${props.metaData.getTablePathByName(props.tableMetaData.name)}/key/?${queryStringParts.join("&")}`);
+            }
+
             close();
          }
          else
          {
-            setError("More than 1 record found...");
+            setError("More than 1 record was found...");
             setTimeout(() => setError(""), 3000);
          }
       }
@@ -187,7 +256,7 @@ function GotoRecordDialog(props: Props): JSX.Element
 
    if (props.tableMetaData)
    {
-      if (fields.length == 0 && !error)
+      if (options.length == 0 && !error)
       {
          setError("This table is not configured for this feature.");
       }
@@ -200,31 +269,38 @@ function GotoRecordDialog(props: Props): JSX.Element
          <DialogContent>
             {props.subHeader}
             {
-               fields.map((field, index) =>
-                  (
-                     <Grid key={field.name} container alignItems="center" py={1}>
-                        <Grid item xs={3} textAlign="right" pr={2}>
-                           {field.label}
-                        </Grid>
-                        <Grid item xs={6}>
-                           <TextField
-                              id={`gotoInput-${index}`}
-                              autoFocus={index == 0}
-                              autoComplete="off"
-                              inputProps={{width: "100%"}}
-                              onChange={(e) => handleChange(field.name, e.target.value)}
-                              value={values[field.name]}
-                              sx={{width: "100%"}}
-                              onFocus={event => event.target.select()}
-                           />
-                        </Grid>
-                        <Grid item xs={1} pl={2}>
-                           <MDButton id={`gotoButton-${index}`} type="submit" variant="gradient" color="info" size="small" onClick={() => goClicked(field.name)} fullWidth startIcon={<Icon>double_arrow</Icon>} disabled={`${values[field.name]}`.length == 0}>
-                              Go
-                           </MDButton>
-                        </Grid>
-                     </Grid>
-                  ))
+               options.map((option, optionIndex) =>
+                  <Box key={optionIndex}>
+                     {
+                        option.map((field, index) =>
+                           (
+                              <Grid key={field.name} container alignItems="center" py={1}>
+                                 <Grid item xs={3} textAlign="right" pr={2}>
+                                    {field.label}
+                                 </Grid>
+                                 <Grid item xs={6}>
+                                    <TextField
+                                       id={`gotoInput-${optionIndex}-${index}`}
+                                       autoFocus={optionIndex == 0 && index == 0}
+                                       autoComplete="off"
+                                       inputProps={{width: "100%"}}
+                                       onChange={(e) => handleChange(field.name, e.target.value)}
+                                       value={values[field.name]}
+                                       sx={{width: "100%"}}
+                                       onFocus={event => event.target.select()}
+                                    />
+                                 </Grid>
+                                 <Grid item xs={1} pl={2}>
+                                    {
+                                       (index == option.length - 1) &&
+                                       <MDButton id={`gotoButton-${optionIndex}`} type="submit" variant="gradient" color="info" size="small" onClick={() => optionGoClicked(optionIndex)} fullWidth startIcon={<Icon>double_arrow</Icon>} disabled={isOptionSubmitButtonDisabled(optionIndex)}>Go</MDButton>
+                                    }
+                                 </Grid>
+                              </Grid>
+                           ))
+                     }
+                  </Box>
+               )
             }
             {
                error &&
