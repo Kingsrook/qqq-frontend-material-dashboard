@@ -74,12 +74,14 @@ const qController = Client.getInstance();
 interface Props
 {
    table?: QTableMetaData;
+   record?: QRecord;
    launchProcess?: QProcessMetaData;
 }
 
 RecordView.defaultProps =
    {
       table: null,
+      record: null,
       launchProcess: null,
    };
 
@@ -130,7 +132,7 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
 /*******************************************************************************
  ** Record View Screen component.
  *******************************************************************************/
-function RecordView({table, launchProcess}: Props): JSX.Element
+function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
 
@@ -147,7 +149,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [metaData, setMetaData] = useState(null as QInstance);
-   const [record, setRecord] = useState(null as QRecord);
+   const [record, setRecord] = useState(overrideRecord ?? null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1Section, setT1Section] = useState(null as QTableSection);
    const [t1SectionName, setT1SectionName] = useState(null as string);
@@ -481,7 +483,18 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          let record: QRecord;
          try
          {
-            record = await qController.get(tableName, id, tableVariant, null, queryJoins);
+            ////////////////////////////////////////////////////////////////////////////
+            // if the component took in a record object, then we don't need to GET it //
+            ////////////////////////////////////////////////////////////////////////////
+            if(overrideRecord)
+            {
+               record = overrideRecord;
+            }
+            else
+            {
+               record = await qController.get(tableName, id, tableVariant, null, queryJoins);
+            }
+
             setRecord(record);
             recordAnalytics({category: "tableEvents", action: "view", label: tableMetaData?.label + " / " + record?.recordLabel});
          }
