@@ -133,6 +133,11 @@ class TableUtils
     *******************************************************************************/
    public static getFieldAndTable(tableMetaData: QTableMetaData, fieldName: string): [QFieldMetaData, QTableMetaData]
    {
+      if(!fieldName)
+      {
+         return [null, null];
+      }
+
       if (fieldName.indexOf(".") > -1)
       {
          const nameParts = fieldName.split(".", 2);
