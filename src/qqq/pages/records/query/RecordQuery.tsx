@@ -867,7 +867,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
       for (let i = 0; i < queryFilter?.orderBys?.length; i++)
       {
          const fieldName = queryFilter.orderBys[i].fieldName;
-         if (fieldName.indexOf(".") > -1)
+         if (fieldName != null && fieldName.indexOf(".") > -1)
          {
             const joinTableName = fieldName.replaceAll(/\..*/g, "");
             if (!vjtToUse.has(joinTableName))
