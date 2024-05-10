@@ -35,8 +35,7 @@ import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJob
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Alert, Box, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Step from "@mui/material/Step";
@@ -472,6 +471,23 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                      helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
                   }
 
+                  //////////////////////////////////////////////////////////////////////////
+                  // if the component specifies a sub-set of field names to include, then //
+                  // edit the formData object to just include those.                      //
+                  //////////////////////////////////////////////////////////////////////////
+                  let formDataToUse = formData;
+                  if(component.values && component.values.includeFieldNames)
+                  {
+                     formDataToUse = Object.assign({}, formData);
+
+                     formDataToUse.formFields = {};
+                     for (let i = 0; i < component.values.includeFieldNames.length; i++)
+                     {
+                        const fieldName = component.values.includeFieldNames[i];
+                        formDataToUse.formFields[fieldName] = formData.formFields[fieldName];
+                     }
+                  }
+
                   return (
                      <div key={index}>
                         {
@@ -567,9 +583,22 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                            )
                         }
                         {
-                           component.type === QComponentType.EDIT_FORM && (
-                              <QDynamicForm formData={formData} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
-                           )
+                           component.type === QComponentType.EDIT_FORM &&
+                              <>
+                                 {
+                                    component.values?.sectionLabel ?
+                                       <Box py={1.5}>
+                                          <Card sx={{scrollMarginTop: "20px"}}>
+                                             <MDTypography variant="h5" p={3} pl={2} pb={1}>
+                                                {component.values?.sectionLabel}
+                                             </MDTypography>
+                                             <Box pt={0} p={2}>
+                                                <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                                             </Box>
+                                          </Card>
+                                       </Box> : <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                                 }
+                              </>
                         }
                         {
                            component.type === QComponentType.VIEW_FORM && step.viewFields && (
@@ -1026,6 +1055,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setProcessValues(qJobComplete.values);
             setQJobRunning(null);
 
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
+            if(updatedFrontendStepList)
+            {
+               setSteps(updatedFrontendStepList);
+            }
+
             if (activeStep && activeStep.recordListFields)
             {
                setNeedRecords(true);
@@ -1390,7 +1428,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                <Card sx={mainCardStyles}>
                   {
                      !isWidget && (
-                        <Box mx={2} mt={-3}>
+                        <Box mx={2} mt={-3} sx={{"& .MuiStepper-horizontal": {minHeight: "5rem"}}}>
                            <Stepper activeStep={activeStepIndex} alternativeLabel>
                               {steps.map((step) => (
                                  <Step key={step.name}>
