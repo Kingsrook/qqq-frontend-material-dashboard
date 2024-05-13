@@ -25,11 +25,13 @@ import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Box} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import BaseLayout from "qqq/layouts/BaseLayout";
-import RecordView from "qqq/pages/records/view/RecordView";
+import RecordView, {getVisibleJoinTables} from "qqq/pages/records/view/RecordView";
 import Client from "qqq/utils/qqq/Client";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 import React, {useEffect, useState} from "react";
 import {useSearchParams} from "react-router-dom";
 
@@ -79,8 +81,15 @@ export default function RecordViewByUniqueKey({table}: RecordViewByUniqueKeyProp
             }
          }
 
+         let queryJoins: QueryJoin[] = null;
+         const visibleJoinTables = getVisibleJoinTables(tableMetaData);
+         if (visibleJoinTables.size > 0)
+         {
+            queryJoins = TableUtils.getQueryJoins(tableMetaData, visibleJoinTables);
+         }
+
          const filter = new QQueryFilter(criteria, null, null, "AND", 0, 2);
-         qController.query(tableName, filter)
+         qController.query(tableName, filter, queryJoins)
             .then((queryResult) =>
             {
                setDoneLoading(true);

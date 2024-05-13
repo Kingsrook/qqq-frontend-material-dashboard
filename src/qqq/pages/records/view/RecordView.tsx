@@ -129,6 +129,35 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
 }
 
 
+/***************************************************************************
+**
+***************************************************************************/
+export function getVisibleJoinTables(tableMetaData: QTableMetaData): Set<string>
+{
+   const visibleJoinTables = new Set<string>();
+
+   for (let i = 0; i < tableMetaData?.sections.length; i++)
+   {
+      const section = tableMetaData?.sections[i];
+      if (section.isHidden || !section.fieldNames || !section.fieldNames.length)
+      {
+         continue;
+      }
+
+      section.fieldNames.forEach((fieldName) =>
+      {
+         const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (tableForField && tableForField.name != tableMetaData.name)
+         {
+            visibleJoinTables.add(tableForField.name);
+         }
+      });
+   }
+
+   return (visibleJoinTables);
+}
+
+
 /*******************************************************************************
  ** Record View Screen component.
  *******************************************************************************/
@@ -382,31 +411,6 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
       setActiveModalProcess(null);
       reload();
    }, [location.pathname, location.hash]);
-
-   const getVisibleJoinTables = (tableMetaData: QTableMetaData): Set<string> =>
-   {
-      const visibleJoinTables = new Set<string>();
-
-      for (let i = 0; i < tableMetaData?.sections.length; i++)
-      {
-         const section = tableMetaData?.sections[i];
-         if (section.isHidden || !section.fieldNames || !section.fieldNames.length)
-         {
-            continue;
-         }
-
-         section.fieldNames.forEach((fieldName) =>
-         {
-            const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-            if (tableForField && tableForField.name != tableMetaData.name)
-            {
-               visibleJoinTables.add(tableForField.name);
-            }
-         });
-      }
-
-      return (visibleJoinTables);
-   };
 
 
    /*******************************************************************************
