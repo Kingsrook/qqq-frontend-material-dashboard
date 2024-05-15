@@ -535,7 +535,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
 
          setPageHeader(record.recordLabel);
 
-         if (!launchingProcess)
+         if (!launchingProcess && !activeModalProcess)
          {
             try
             {
