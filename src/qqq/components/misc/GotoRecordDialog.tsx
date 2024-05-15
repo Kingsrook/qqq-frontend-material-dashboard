@@ -358,7 +358,7 @@ export function GotoRecordButton(props: GotoRecordButtonProps): JSX.Element
    return (
       <React.Fragment>
          {
-            props.buttonVisible && hasGotoFieldNames(props.tableMetaData) && <Button onClick={openGoto}>Go To...</Button>
+            props.buttonVisible && hasGotoFieldNames(props.tableMetaData) && <Button onClick={openGoto} sx={{whiteSpace: "nowrap"}}>Go To...</Button>
          }
          <GotoRecordDialog metaData={props.metaData} tableMetaData={props.tableMetaData} tableVariant={props.tableVariant} isOpen={gotoIsOpen} closeHandler={closeGoto} mayClose={props.mayClose} subHeader={props.subHeader} />
       </React.Fragment>
