@@ -455,7 +455,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          });
       }
 
-      // todo not commit - not ready - need process (or screen) meta-data to have helpContents...
+      // todo - not ready - need process (or screen) meta-data to have helpContents...
       /*
       ///////////////////////////////
       // screen-level help content //
@@ -480,7 +480,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
             {
                /*
-               // todo not commit - not ready - need process (or screen) meta-data to have helpContents...
+               // todo - not ready - need process (or screen) meta-data to have helpContents...
                formattedHelpContent &&
                <Box px={"1.5rem"} fontSize={"0.875rem"} color={colors.blueGray.main}>
                   {formattedHelpContent}
@@ -1091,7 +1091,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                //////////////////////////////////
                for (let key in qJobComplete.values)
                {
-                  formikSetFieldValueFunction(key, qJobComplete.values[key]);
+                  if(Object.hasOwn(formFields, key))
+                  {
+                     console.log(`(re)setting form field [${key}] to [${qJobComplete.values[key]}]`);
+                     formikSetFieldValueFunction(key, qJobComplete.values[key]);
+                  }
                }
             }
 
