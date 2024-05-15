@@ -22,7 +22,7 @@
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import Box from "@mui/material/Box";
+import {Box} from "@mui/material";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
 import {Theme} from "@mui/material/styles";
@@ -76,12 +76,12 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
 
 
    return (
-      <Card sx={{borderRadius: "0.75rem", position: "sticky", top: stickyTop, overflow: "auto", maxHeight: "calc(100vh - 2rem)"}}>
-         <Box component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none"}}>
+      <Card sx={{borderRadius: "0.75rem", position: "sticky", top: stickyTop, overflow: "hidden", maxHeight: "calc(100vh - 2rem)"}}>
+         <Box component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none", overflow: "auto", height: "100%"}}>
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
 
-                  <HashLink key={`section-link-${entry.name}`} to={`#${entry.name}`}>
+                  <Box key={`section-link-${entry.name}`} onClick={() => document.getElementById(entry.name).scrollIntoView()} sx={{cursor: "pointer"}}>
                      <Box key={`section-${entry.name}`} component="li" pt={key === 0 ? 0 : 1}>
                         <MDTypography
                            variant="button"
@@ -112,7 +112,7 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
 
                         </MDTypography>
                      </Box>
-                  </HashLink>
+                  </Box>
                )) : null
             }
          </Box>
