@@ -35,8 +35,7 @@ import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJob
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Alert, Box, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Step from "@mui/material/Step";
@@ -48,12 +47,14 @@ import FormData from "form-data";
 import {Form, Formik} from "formik";
 import parse from "html-react-parser";
 import QContext from "QContext";
+import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDButton from "qqq/components/legacy/MDButton";
 import MDProgress from "qqq/components/legacy/MDProgress";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
@@ -86,6 +87,14 @@ interface Props
 const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
+
+////////////////////////////////////////////////////////////////////////////
+// define a function that we can make referenes to, which we'll overwrite //
+// with formik's setFieldValue function, once we're inside formik.        //
+////////////////////////////////////////////////////////////////////////////
+let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
+{
+}
 
 function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
@@ -446,6 +455,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          });
       }
 
+      // todo - not ready - need process (or screen) meta-data to have helpContents...
+      /*
+      ///////////////////////////////
+      // screen-level help content //
+      ///////////////////////////////
+      let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
+      const formattedHelpContent = <HelpContent helpContents={process.helpContents} roles={helpRoles} helpContentKey={`table:${tableName};section:${section.name}`} />;
+       */
+
       return (
          <>
             {
@@ -461,6 +479,16 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
 
             {
+               /*
+               // todo - not ready - need process (or screen) meta-data to have helpContents...
+               formattedHelpContent &&
+               <Box px={"1.5rem"} fontSize={"0.875rem"} color={colors.blueGray.main}>
+                  {formattedHelpContent}
+               </Box>
+               */
+            }
+
+            {
                //////////////////////////////////////////////////
                // render all of the components for this screen //
                //////////////////////////////////////////////////
@@ -470,6 +498,23 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                   if (component.type == QComponentType.BULK_EDIT_FORM)
                   {
                      helpRoles = ["EDIT_SCREEN", "WRITE_SCREENS", "ALL_SCREENS"];
+                  }
+
+                  //////////////////////////////////////////////////////////////////////////
+                  // if the component specifies a sub-set of field names to include, then //
+                  // edit the formData object to just include those.                      //
+                  //////////////////////////////////////////////////////////////////////////
+                  let formDataToUse = formData;
+                  if(component.values && component.values.includeFieldNames)
+                  {
+                     formDataToUse = Object.assign({}, formData);
+
+                     formDataToUse.formFields = {};
+                     for (let i = 0; i < component.values.includeFieldNames.length; i++)
+                     {
+                        const fieldName = component.values.includeFieldNames[i];
+                        formDataToUse.formFields[fieldName] = formData.formFields[fieldName];
+                     }
                   }
 
                   return (
@@ -567,9 +612,22 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                            )
                         }
                         {
-                           component.type === QComponentType.EDIT_FORM && (
-                              <QDynamicForm formData={formData} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
-                           )
+                           component.type === QComponentType.EDIT_FORM &&
+                              <>
+                                 {
+                                    component.values?.sectionLabel ?
+                                       <Box py={1.5}>
+                                          <Card sx={{scrollMarginTop: "20px"}}>
+                                             <MDTypography variant="h5" p={3} pl={2} pb={1}>
+                                                {component.values?.sectionLabel}
+                                             </MDTypography>
+                                             <Box pt={0} p={2}>
+                                                <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                                             </Box>
+                                          </Card>
+                                       </Box> : <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                                 }
+                              </>
                         }
                         {
                            component.type === QComponentType.VIEW_FORM && step.viewFields && (
@@ -1026,6 +1084,30 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setProcessValues(qJobComplete.values);
             setQJobRunning(null);
 
+            if(formikSetFieldValueFunction)
+            {
+               //////////////////////////////////
+               // reset field values in formik //
+               //////////////////////////////////
+               for (let key in qJobComplete.values)
+               {
+                  if(Object.hasOwn(formFields, key))
+                  {
+                     console.log(`(re)setting form field [${key}] to [${qJobComplete.values[key]}]`);
+                     formikSetFieldValueFunction(key, qJobComplete.values[key]);
+                  }
+               }
+            }
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
+            if(updatedFrontendStepList)
+            {
+               setSteps(updatedFrontendStepList);
+            }
+
             if (activeStep && activeStep.recordListFields)
             {
                setNeedRecords(true);
@@ -1385,89 +1467,98 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       >
          {({
             values, errors, touched, isSubmitting, setFieldValue,
-         }) => (
-            <Form style={formStyles} id={formId} autoComplete="off">
-               <Card sx={mainCardStyles}>
-                  {
-                     !isWidget && (
-                        <Box mx={2} mt={-3}>
-                           <Stepper activeStep={activeStepIndex} alternativeLabel>
-                              {steps.map((step) => (
-                                 <Step key={step.name}>
-                                    <StepLabel>{step.label}</StepLabel>
-                                 </Step>
-                              ))}
-                           </Stepper>
-                        </Box>
-                     )
-                  }
+         }) =>
+         {
+            ///////////////////////////////////////////////////////////////////
+            // once we're in the formik form, use its setFieldValue function //
+            // over top of the default one we created globally               //
+            ///////////////////////////////////////////////////////////////////
+            formikSetFieldValueFunction = setFieldValue;
 
-                  <Box p={3}>
-                     <Box pb={isWidget ? 6 : "initial"}>
-                        {/***************************************************************************
+            return (
+               <Form style={formStyles} id={formId} autoComplete="off">
+                  <Card sx={mainCardStyles}>
+                     {
+                        !isWidget && (
+                           <Box mx={2} mt={-3} sx={{"& .MuiStepper-horizontal": {minHeight: "5rem"}}}>
+                              <Stepper activeStep={activeStepIndex} alternativeLabel>
+                                 {steps.map((step) => (
+                                    <Step key={step.name}>
+                                       <StepLabel>{step.label}</StepLabel>
+                                    </Step>
+                                 ))}
+                              </Stepper>
+                           </Box>
+                        )
+                     }
+
+                     <Box p={3}>
+                        <Box pb={isWidget ? 6 : "initial"}>
+                           {/***************************************************************************
                          ** step content - e.g., the appropriate form or other screen for the step **
                          ***************************************************************************/}
-                        {getDynamicStepContent(
-                           activeStepIndex,
-                           activeStep,
-                           {
-                              values,
-                              touched,
-                              formFields,
-                              errors,
-                           },
-                           processError,
-                           processValues,
-                           recordConfig,
-                           setFieldValue,
-                        )}
-                        {/********************************
+                           {getDynamicStepContent(
+                              activeStepIndex,
+                              activeStep,
+                              {
+                                 values,
+                                 touched,
+                                 formFields,
+                                 errors,
+                              },
+                              processError,
+                              processValues,
+                              recordConfig,
+                              setFieldValue,
+                           )}
+                           {/********************************
                          ** back &| next/submit buttons **
                          ********************************/}
-                        <Box mt={6} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
-                           {true || activeStepIndex === 0 ? (
-                              <Box />
-                           ) : (
-                              <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
-                           )}
-                           {processError || qJobRunning || !activeStep ? (
-                              <Box />
-                           ) : (
-                              <>
-                                 {formError && (
-                                    <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
-                                       {formError}
-                                    </MDTypography>
-                                 )}
-                                 {
-                                    noMoreSteps && <QCancelButton
-                                       onClickHandler={handleCancelClicked}
-                                       label={isModal ? "Close" : "Return"}
-                                       iconName={isModal ? "cancel" : "arrow_back"}
-                                       disabled={isSubmitting} />
-                                 }
-                                 {
-                                    !noMoreSteps && (
-                                       <Box component="div" py={3}>
-                                          <Grid container justifyContent="flex-end" spacing={3}>
-                                             {
-                                                !isWidget && (
-                                                   <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
-                                                )
-                                             }
-                                             <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
-                                          </Grid>
-                                       </Box>
-                                    )
-                                 }
-                              </>
-                           )}
+                           <Box mt={6} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
+                              {true || activeStepIndex === 0 ? (
+                                 <Box />
+                              ) : (
+                                 <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
+                              )}
+                              {processError || qJobRunning || !activeStep ? (
+                                 <Box />
+                              ) : (
+                                 <>
+                                    {formError && (
+                                       <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
+                                          {formError}
+                                       </MDTypography>
+                                    )}
+                                    {
+                                       noMoreSteps && <QCancelButton
+                                          onClickHandler={handleCancelClicked}
+                                          label={isModal ? "Close" : "Return"}
+                                          iconName={isModal ? "cancel" : "arrow_back"}
+                                          disabled={isSubmitting} />
+                                    }
+                                    {
+                                       !noMoreSteps && (
+                                          <Box component="div" py={3}>
+                                             <Grid container justifyContent="flex-end" spacing={3}>
+                                                {
+                                                   !isWidget && (
+                                                      <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                                                   )
+                                                }
+                                                <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
+                                             </Grid>
+                                          </Box>
+                                       )
+                                    }
+                                 </>
+                              )}
+                           </Box>
                         </Box>
                      </Box>
-                  </Box>
-               </Card>
-            </Form>
-         )}
+                  </Card>
+               </Form>
+            )
+         }}
       </Formik>
    );
 

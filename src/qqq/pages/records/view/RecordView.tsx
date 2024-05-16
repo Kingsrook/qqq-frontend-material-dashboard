@@ -74,12 +74,14 @@ const qController = Client.getInstance();
 interface Props
 {
    table?: QTableMetaData;
+   record?: QRecord;
    launchProcess?: QProcessMetaData;
 }
 
 RecordView.defaultProps =
    {
       table: null,
+      record: null,
       launchProcess: null,
    };
 
@@ -127,10 +129,39 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
 }
 
 
+/***************************************************************************
+**
+***************************************************************************/
+export function getVisibleJoinTables(tableMetaData: QTableMetaData): Set<string>
+{
+   const visibleJoinTables = new Set<string>();
+
+   for (let i = 0; i < tableMetaData?.sections.length; i++)
+   {
+      const section = tableMetaData?.sections[i];
+      if (section.isHidden || !section.fieldNames || !section.fieldNames.length)
+      {
+         continue;
+      }
+
+      section.fieldNames.forEach((fieldName) =>
+      {
+         const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+         if (tableForField && tableForField.name != tableMetaData.name)
+         {
+            visibleJoinTables.add(tableForField.name);
+         }
+      });
+   }
+
+   return (visibleJoinTables);
+}
+
+
 /*******************************************************************************
  ** Record View Screen component.
  *******************************************************************************/
-function RecordView({table, launchProcess}: Props): JSX.Element
+function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.Element
 {
    const {id} = useParams();
 
@@ -147,7 +178,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
    const [metaData, setMetaData] = useState(null as QInstance);
-   const [record, setRecord] = useState(null as QRecord);
+   const [record, setRecord] = useState(overrideRecord ?? null as QRecord);
    const [tableSections, setTableSections] = useState([] as QTableSection[]);
    const [t1Section, setT1Section] = useState(null as QTableSection);
    const [t1SectionName, setT1SectionName] = useState(null as string);
@@ -381,31 +412,6 @@ function RecordView({table, launchProcess}: Props): JSX.Element
       reload();
    }, [location.pathname, location.hash]);
 
-   const getVisibleJoinTables = (tableMetaData: QTableMetaData): Set<string> =>
-   {
-      const visibleJoinTables = new Set<string>();
-
-      for (let i = 0; i < tableMetaData?.sections.length; i++)
-      {
-         const section = tableMetaData?.sections[i];
-         if (section.isHidden || !section.fieldNames || !section.fieldNames.length)
-         {
-            continue;
-         }
-
-         section.fieldNames.forEach((fieldName) =>
-         {
-            const [field, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
-            if (tableForField && tableForField.name != tableMetaData.name)
-            {
-               visibleJoinTables.add(tableForField.name);
-            }
-         });
-      }
-
-      return (visibleJoinTables);
-   };
-
 
    /*******************************************************************************
     ** get an element (or empty) to use as help content for a section
@@ -481,7 +487,18 @@ function RecordView({table, launchProcess}: Props): JSX.Element
          let record: QRecord;
          try
          {
-            record = await qController.get(tableName, id, tableVariant, null, queryJoins);
+            ////////////////////////////////////////////////////////////////////////////
+            // if the component took in a record object, then we don't need to GET it //
+            ////////////////////////////////////////////////////////////////////////////
+            if(overrideRecord)
+            {
+               record = overrideRecord;
+            }
+            else
+            {
+               record = await qController.get(tableName, id, tableVariant, null, queryJoins);
+            }
+
             setRecord(record);
             recordAnalytics({category: "tableEvents", action: "view", label: tableMetaData?.label + " / " + record?.recordLabel});
          }
@@ -518,7 +535,7 @@ function RecordView({table, launchProcess}: Props): JSX.Element
 
          setPageHeader(record.recordLabel);
 
-         if (!launchingProcess)
+         if (!launchingProcess && !activeModalProcess)
          {
             try
             {

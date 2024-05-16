@@ -49,6 +49,7 @@ import EntityEdit from "qqq/pages/records/edit/RecordEdit";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import RecordDeveloperView from "qqq/pages/records/view/RecordDeveloperView";
 import RecordView from "qqq/pages/records/view/RecordView";
+import RecordViewByUniqueKey from "qqq/pages/records/view/RecordViewByUniqueKey";
 import GoogleAnalyticsUtils, {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
@@ -390,6 +391,13 @@ export default function App()
                   key: `${app.name}.view`,
                   route: `${path}/:id`,
                   component: <RecordView table={table} />,
+               });
+
+               routeList.push({
+                  name: `${app.label} View`,
+                  key: `${app.name}.view`,
+                  route: `${path}/key`,
+                  component: <RecordViewByUniqueKey table={table} />,
                });
 
                routeList.push({

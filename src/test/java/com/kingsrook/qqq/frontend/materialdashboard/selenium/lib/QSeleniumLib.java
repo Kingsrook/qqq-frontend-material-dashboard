@@ -335,7 +335,7 @@ public class QSeleniumLib
             return;
          }
 
-         if(elements.stream().noneMatch(e -> e.getText().toLowerCase().contains(textContains)))
+         if(elements.stream().noneMatch(e -> e.getText().toLowerCase().contains(textContains.toLowerCase())))
          {
             LOG.debug("Found non-existence of element(s) matching selector [" + cssSelector + "] containing text [" + textContains + "]");
             return;
@@ -345,7 +345,7 @@ public class QSeleniumLib
       }
       while(start + (1000 * WAIT_SECONDS) > System.currentTimeMillis());
 
-      fail("Failed for non-existence of element matching selector [" + cssSelector + "] after [" + WAIT_SECONDS + "] seconds.");
+      fail("Failed for non-existence of element matching selector [" + cssSelector + "] containing text [" + textContains + "] after [" + WAIT_SECONDS + "] seconds.");
    }
 
 
