@@ -22,16 +22,16 @@
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Box, Skeleton} from "@mui/material";
-import React from "react";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
+import React from "react";
 
 
 interface CompositeData
 {
    blocks: BlockData[];
    styleOverrides?: any;
-   layout?: string
+   layout?: string;
 }
 
 
@@ -57,7 +57,14 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
    ////////////////////////////////////////////////////////////////////////////////////
    let layout = data?.layout;
    let boxStyle: any = {};
-   if (layout == "FLEX_ROW_WRAPPED")
+   if (layout == "FLEX_COLUMN")
+   {
+      boxStyle.display = "flex";
+      boxStyle.flexDirection = "column";
+      boxStyle.flexWrap = "wrap";
+      boxStyle.gap = "0.5rem";
+   }
+   else if (layout == "FLEX_ROW_WRAPPED")
    {
       boxStyle.display = "flex";
       boxStyle.flexDirection = "row";
@@ -68,7 +75,7 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
    {
       boxStyle.display = "flex";
       boxStyle.flexDirection = "row";
-      boxStyle.justifyContent = "space-between"
+      boxStyle.justifyContent = "space-between";
       boxStyle.gap = "0.25rem";
    }
    else if (layout == "TABLE_SUB_ROW_DETAILS")

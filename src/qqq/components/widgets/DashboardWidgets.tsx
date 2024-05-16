@@ -50,7 +50,7 @@ import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
 import ParentWidget from "qqq/components/widgets/ParentWidget";
 import MultiStatisticsCard from "qqq/components/widgets/statistics/MultiStatisticsCard";
 import StatisticsCard from "qqq/components/widgets/statistics/StatisticsCard";
-import Widget, {HeaderIcon, LabelComponent, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT} from "qqq/components/widgets/Widget";
+import Widget, {HeaderIcon, LabelComponent, WIDGET_DROPDOWN_SELECTION_LOCAL_STORAGE_KEY_ROOT, WidgetData} from "qqq/components/widgets/Widget";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import Client from "qqq/utils/qqq/Client";
@@ -258,11 +258,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
     ** helper function, to convert values from a QRecord values map to a regular old
     ** js object
     *******************************************************************************/
-   function convertQRecordValuesFromMapToObject(record: QRecord): {[name: string]: any}
+   function convertQRecordValuesFromMapToObject(record: QRecord): { [name: string]: any }
    {
-      const rs: {[name: string]: any} = {};
+      const rs: { [name: string]: any } = {};
 
-      if(record && record.values)
+      if (record && record.values)
       {
          record.values.forEach((value, key) => rs[key] = value);
       }
@@ -293,7 +293,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
       }
 
       return (
-         <Box key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%"}}>
+         <Box key={`${widgetMetaData.name}-${i}`} sx={{alignItems: "stretch", flexGrow: 1, display: "flex", marginTop: "0px", paddingTop: "0px", width: "100%", height: "100%", flexDirection: widgetMetaData.type == "multiTable" ? "column" : "row"}}>
             {
                haveLoadedParams && widgetMetaData.type === "parentWidget" && (
                   <ParentWidget
@@ -341,6 +341,20 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      reloadWidgetCallback={(data) => reloadWidget(i, data)}
                      isChild={areChildren}
                   />
+               )
+            }
+            {
+               widgetMetaData.type === "multiTable" && (
+                  widgetData[i]?.tableDataList?.map((tableData: WidgetData, index: number) =>
+                     <Box pb={3} key={`${widgetMetaData.type}-${index}`}>
+                        <TableWidget
+                           widgetMetaData={widgetMetaData}
+                           widgetData={tableData}
+                           reloadWidgetCallback={(data) => reloadWidget(i, data)}
+                           isChild={areChildren}
+                        />
+                     </Box>
+                  )
                )
             }
             {
@@ -587,14 +601,16 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                widgetMetaData.type === "reportSetup" && (
                   widgetData && widgetData[i] && widgetData[i].queryParams &&
                   <ReportSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
-                  {}} />
+                  {
+                  }} />
                )
             }
             {
                widgetMetaData.type === "pivotTableSetup" && (
                   widgetData && widgetData[i] && widgetData[i].queryParams &&
                   <PivotTableSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
-                  {}} />
+                  {
+                  }} />
                )
             }
             {

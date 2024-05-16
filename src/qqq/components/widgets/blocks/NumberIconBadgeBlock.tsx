@@ -41,7 +41,7 @@ export default function NumberIconBadgeBlock({widgetMetaData, data}: StandardBlo
          {
             data.values.iconName &&
             <BlockElementWrapper metaData={widgetMetaData} data={data} slot="icon">
-               <Icon style={{color: data.styles.color, fontSize: "1rem", position: "relative", top: "3px"}}>{data.values.iconName}</Icon>
+               <Icon style={{color: data.styles.color, fontSize: "1rem", marginLeft: "2px", position: "relative", top: "4px"}}>{data.values.iconName}</Icon>
             </BlockElementWrapper>
          }
       </div>);

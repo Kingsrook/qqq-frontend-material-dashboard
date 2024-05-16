@@ -30,8 +30,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
-import React, {useEffect, useMemo, useState} from "react";
-import {useAsyncDebounce, useExpanded, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
 import colors from "qqq/assets/theme/base/colors";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDPagination from "qqq/components/legacy/MDPagination";
@@ -43,6 +41,8 @@ import DefaultCell from "qqq/components/widgets/tables/cells/DefaultCell";
 import ImageCell from "qqq/components/widgets/tables/cells/ImageCell";
 import {TableDataInput} from "qqq/components/widgets/tables/TableCard";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
+import React, {useEffect, useMemo, useState} from "react";
+import {useAsyncDebounce, useExpanded, useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
 
 interface Props
 {
@@ -106,17 +106,17 @@ function DataTable({
    entries = entriesPerPageOptions ? entriesPerPageOptions : ["10", "25", "50", "100"];
 
    let widths = [];
-   for(let i = 0; i<table.columns.length; i++)
+   for (let i = 0; i < table.columns.length; i++)
    {
       const column = table.columns[i];
-      if(column.type !== "hidden")
+      if (column.type !== "hidden")
       {
          widths.push(table.columns[i].width ?? "1fr");
       }
    }
 
    let showExpandColumn = false;
-   if(table.rows)
+   if (table.rows)
    {
       for (let i = 0; i < table.rows.length; i++)
       {
@@ -129,7 +129,7 @@ function DataTable({
    }
 
    const columnsToMemo = [...table.columns];
-   if(showExpandColumn)
+   if (showExpandColumn)
    {
       widths.push("60px");
       columnsToMemo.push(
@@ -173,11 +173,11 @@ function DataTable({
       );
    }
 
-   if(table.columnHeaderTooltips)
+   if (table.columnHeaderTooltips)
    {
       for (let column of columnsToMemo)
       {
-         if(table.columnHeaderTooltips[column.accessor])
+         if (table.columnHeaderTooltips[column.accessor])
          {
             column.tooltip = table.columnHeaderTooltips[column.accessor];
          }
@@ -297,7 +297,7 @@ function DataTable({
    }
 
    let visibleFooterRows = 1;
-   if(expanded && expanded[`${table.rows.length-1}`])
+   if (expanded && expanded[`${table.rows.length - 1}`])
    {
       //////////////////////////////////////////////////
       // todo - should count how many are expanded... //
@@ -308,7 +308,7 @@ function DataTable({
    function getTable(includeHead: boolean, rows: any, isFooter: boolean)
    {
       let boxStyle = {};
-      if(fixedStickyLastRow)
+      if (fixedStickyLastRow)
       {
          boxStyle = isFooter
             ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, backgroundColor: "#EEEEEE"}
@@ -316,7 +316,7 @@ function DataTable({
       }
 
       let innerBoxStyle = {};
-      if(fixedStickyLastRow && isFooter)
+      if (fixedStickyLastRow && isFooter)
       {
          innerBoxStyle = {overflowY: "auto", scrollbarGutter: "stable"};
       }
@@ -327,7 +327,7 @@ function DataTable({
                includeHead && (
                   <Box component="thead" sx={{position: "sticky", top: 0, background: "white", zIndex: 10}}>
                      {headerGroups.map((headerGroup: any, i: number) => (
-                        <TableRow key={i} {...headerGroup.getHeaderGroupProps()} sx={{display: "grid", gridTemplateColumns: gridTemplateColumns}}>
+                        <TableRow key={i} {...headerGroup.getHeaderGroupProps()} sx={{display: "grid", alignItems: "flex-end", gridTemplateColumns: gridTemplateColumns}}>
                            {headerGroup.headers.map((column: any) => (
                               column.type !== "hidden" && (
                                  <DataTableHeadCell
@@ -356,10 +356,10 @@ function DataTable({
                   //////////////////////////////////////////////////////////////////////////////////
                   // don't do an end-border on nested rows - unless they're the last one in a set //
                   //////////////////////////////////////////////////////////////////////////////////
-                  if(row.depth > 0)
+                  if (row.depth > 0)
                   {
                      overrideNoEndBorder = true;
-                     if(key + 1 < rows.length && rows[key + 1].depth == 0)
+                     if (key + 1 < rows.length && rows[key + 1].depth == 0)
                      {
                         overrideNoEndBorder = false;
                      }
@@ -368,17 +368,17 @@ function DataTable({
                   ///////////////////////////////////////
                   // don't do end-border on the footer //
                   ///////////////////////////////////////
-                  if(isFooter)
+                  if (isFooter)
                   {
                      overrideNoEndBorder = true;
                   }
 
                   let background = "initial";
-                  if(isFooter)
+                  if (isFooter)
                   {
                      background = "#EEEEEE";
                   }
-                  else if(row.depth > 0 || row.isExpanded)
+                  else if (row.depth > 0 || row.isExpanded)
                   {
                      background = "#FAFAFA";
                   }
@@ -453,7 +453,7 @@ function DataTable({
 
             </TableBody>
          </Table>
-      </Box></Box>
+      </Box></Box>;
    }
 
    return (
