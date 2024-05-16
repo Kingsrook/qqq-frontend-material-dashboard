@@ -54,7 +54,7 @@ import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDButton from "qqq/components/legacy/MDButton";
 import MDProgress from "qqq/components/legacy/MDProgress";
 import MDTypography from "qqq/components/legacy/MDTypography";
-import HelpContent from "qqq/components/misc/HelpContent";
+import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
@@ -136,7 +136,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as {[step: string]: {[widgetName: string]: any}});
 
-   const {pageHeader, recordAnalytics, setPageHeader} = useContext(QContext);
+   const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for setting the processError state - call this function, which will also set the isUserFacingError state //
@@ -455,14 +455,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          });
       }
 
-      // todo - not ready - need process (or screen) meta-data to have helpContents...
-      /*
-      ///////////////////////////////
-      // screen-level help content //
-      ///////////////////////////////
+      /////////////////////////////////////
+      // screen(step)-level help content //
+      /////////////////////////////////////
       let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
-      const formattedHelpContent = <HelpContent helpContents={process.helpContents} roles={helpRoles} helpContentKey={`table:${tableName};section:${section.name}`} />;
-       */
+      const showHelp = helpHelpActive || hasHelpContent(step.helpContents, helpRoles);
+      const formattedHelpContent = <HelpContent helpContents={step.helpContents} roles={helpRoles} helpContentKey={`process:${processName};step:${step?.name}`} />;
 
       return (
          <>
@@ -479,13 +477,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
 
             {
-               /*
-               // todo - not ready - need process (or screen) meta-data to have helpContents...
-               formattedHelpContent &&
-               <Box px={"1.5rem"} fontSize={"0.875rem"} color={colors.blueGray.main}>
+               showHelp &&
+               <Box fontSize={"0.875rem"} color={colors.blueGray.main} pb={2}>
                   {formattedHelpContent}
                </Box>
-               */
             }
 
             {
@@ -1018,7 +1013,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          });
 
-         DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, fullFieldList, tableMetaData.name, null, null);
+         DynamicFormUtils.addPossibleValueProps(newDynamicFormFields, fullFieldList, tableMetaData?.name, null, null);
 
          setFormFields(newDynamicFormFields);
          setValidationScheme(Yup.object().shape(newFormValidations));

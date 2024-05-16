@@ -653,6 +653,11 @@ input[type="search"]::-webkit-search-results-decoration
    min-height: unset !important;
 }
 
+.MuiDataGrid-columnHeaders
+{
+   scrollbar-gutter: stable;
+}
+
 /* new style for toggle buttons */
 .MuiToggleButtonGroup-root
 {
@@ -707,4 +712,67 @@ input[type="search"]::-webkit-search-results-decoration
 {
    color: white;
    background-color: #0062FF !important;
+}
+
+.helpContentAlert
+{
+   padding: 6px 16px;
+   font-size: 1rem;
+   font-weight: 300;
+   line-height: 1.6;
+   display: flex;
+}
+
+.helpContentAlert .MuiAlert-icon
+{
+   display: flex;
+   margin-right: 12px;
+   padding: 7px 0;
+   font-size: 22px;
+   opacity: 0.9;
+}
+
+.helpContentAlert .MuiAlert-icon .material-icons-round
+{
+   display: inline-block;
+   width: 1em;
+   height: 1em;
+}
+
+.helpContentAlert .MuiAlert-message
+{
+   padding: 8px 0;
+}
+
+.helpContentAlert.success
+{
+   background-color: rgb(240, 248, 241);
+   color: rgb(44, 76, 46);
+}
+
+.helpContentAlert.success .MuiAlert-icon .material-icons-round
+{
+   color: #4CAF50;
+}
+
+.helpContentAlert.warning
+{
+   background-color: rgb(254, 245, 234);
+   color: rgb(100, 65, 20);
+}
+
+.helpContentAlert.warning .MuiAlert-icon .material-icons-round
+{
+   color: #fb8c00;
+}
+
+.helpContentAlert.error
+{
+   background-color: rgb(254, 239, 238);
+   color: rgb(98, 41, 37);
+}
+
+.helpContentAlert.error .MuiAlert-icon .material-icons-round
+{
+   color: #F44335;
 }
