@@ -189,16 +189,20 @@ const CommandMenu = ({metaData}: Props) =>
             return B_FIRST;
          }
 
-         aStartsWith = labelA.toLowerCase().startsWith(searchString.toLowerCase());
-         bStartsWith = labelB.toLowerCase().startsWith(searchString.toLowerCase());
+         const indexOfSpace = searchString.indexOf(" ");
+         if (indexOfSpace > 0)
+         {
+            aStartsWith = labelA.toLowerCase().startsWith(searchString.substring(0, indexOfSpace).toLowerCase());
+            bStartsWith = labelB.toLowerCase().startsWith(searchString.substring(0, indexOfSpace).toLowerCase());
 
-         if (aStartsWith && !bStartsWith)
-         {
-            return A_FIRST;
-         }
-         else if (bStartsWith && !aStartsWith)
-         {
-            return B_FIRST;
+            if (aStartsWith && !bStartsWith)
+            {
+               return A_FIRST;
+            }
+            else if (bStartsWith && !aStartsWith)
+            {
+               return B_FIRST;
+            }
          }
       }
 
@@ -439,7 +443,7 @@ const CommandMenu = ({metaData}: Props) =>
          <Box ref={containerElement} className="raycast" sx={{position: "relative", zIndex: 10_000}}>
             {
                <Dialog open={dotMenuOpen} onClose={closeDotMenu}>
-                  <Command.Dialog open={dotMenuOpen} onOpenChange={setDotMenuOpen} container={containerElement.current} label="Test Global Command Menu" filter={(value, search) => doFilter(value, search)}>
+                  <Command.Dialog open={dotMenuOpen} onOpenChange={setDotMenuOpen} container={containerElement.current} filter={(value, search) => doFilter(value, search)}>
                      <Box sx={{display: "flex"}}>
                         <Command.Input placeholder="Search for Tables, Actions, or Recently Viewed Items..." />
                         <Button onClick={closeDotMenu}><Icon>close</Icon></Button>
