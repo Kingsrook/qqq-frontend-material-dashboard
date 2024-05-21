@@ -22,6 +22,9 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -83,6 +86,7 @@ const qController = Client.getInstance();
 export default function ReportSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: ReportSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
+   const [hideColumns, setHideColumns] = useState(widgetMetaData?.defaultValues?.has("hideColumns") && widgetMetaData?.defaultValues?.get("hideColumns"));
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    const [alertContent, setAlertContent] = useState(null as string);
@@ -101,15 +105,36 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    /////////////////////////////
    // load values from record //
    /////////////////////////////
-   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
+   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
    if (!queryFilter)
    {
       queryFilter = new QQueryFilter();
-      usingDefaultEmptyFilter = true;
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // if there is no queryFilter provided, see if there are default fields from which a query should be seeded //
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const defaultFilterFields = getDefaultFilterFieldNames(widgetMetaData);
+      if (defaultFilterFields?.length > 0)
+      {
+         defaultFilterFields.forEach((fieldName: string) =>
+         {
+            if (recordValues[fieldName])
+            {
+               queryFilter.addCriteria(new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [recordValues[fieldName]]));
+            }
+         });
+
+         queryFilter.addOrderBy(new QFilterOrderBy("id", false));
+         queryFilter = Object.assign({}, queryFilter);
+      }
+      else
+      {
+         usingDefaultEmptyFilter = true;
+      }
    }
 
-   let columns: QQueryColumns = null;
    if (recordValues["columnsJson"])
    {
       columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
@@ -120,11 +145,20 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    //////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if (recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
+      ////////////////////////////////////////////////////////////////////////////////////////
+      // if a default table name specified, use it, otherwise use it from the record values //
+      ////////////////////////////////////////////////////////////////////////////////////////
+      let tableName = widgetMetaData?.defaultValues?.get("tableName");
+      if (!tableName && recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
+      {
+         tableName = recordValues["tableName"];
+      }
+
+      if (tableName)
       {
          (async () =>
          {
-            const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"]);
+            const tableMetaData = await qController.loadTableMetaData(tableName);
             setTableMetaData(tableMetaData);
 
             const queryFilterForFrontend = Object.assign({}, queryFilter);
@@ -132,7 +166,21 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
             setFrontendQueryFilter(queryFilterForFrontend);
          })();
       }
-   }, [recordValues]);
+   }, [JSON.stringify(recordValues)]);
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function getDefaultFilterFieldNames(widgetMetaData: QWidgetMetaData)
+   {
+      if (widgetMetaData?.defaultValues?.has("filterDefaultFieldNames"))
+      {
+         return (widgetMetaData.defaultValues.get("filterDefaultFieldNames").split(","));
+      }
+
+      return ([]);
+   }
 
 
    /*******************************************************************************
@@ -140,8 +188,27 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function openEditor()
    {
+      let missingRequiredFields = [] as string[];
+      getDefaultFilterFieldNames(widgetMetaData)?.forEach((fieldName: string) =>
+      {
+         if (!recordValues[fieldName])
+         {
+            missingRequiredFields.push(tableMetaData.fields.get(fieldName).label);
+         }
+      });
+
+      ////////////////////////////////////////////////////////////////////
+      // display an alert and return if any required fields are missing //
+      ////////////////////////////////////////////////////////////////////
+      if (missingRequiredFields.length > 0)
+      {
+         setAlertContent("The following fields must first be selected to add Additional Order Filters: '" + missingRequiredFields.join(", ") + "'");
+         return;
+      }
+
       if (recordValues["tableName"])
       {
+         setAlertContent(null);
          setModalOpen(true);
       }
    }
@@ -272,7 +339,14 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
-      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      if (!hideColumns)
+      {
+         labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      }
+      else
+      {
+         labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      }
    }
 
 
@@ -311,29 +385,31 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                </Box>
             }
          </Box>
-         <Box pt="1rem">
-            <h5>Columns</h5>
-            <Box display="flex" flexWrap="wrap" fontSize="1rem">
-               {
-                  mayShowColumnsPreview() &&
-                  columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
-               }
-               {
-                  !mayShowColumnsPreview() &&
-                  <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
-                     {
-                        isEditable &&
-                        <Tooltip title={selectTableFirstTooltipTitle}>
-                           <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
-                        </Tooltip>
-                     }
-                     {
-                        !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
-                     }
-                  </Box>
-               }
+         {!hideColumns && (
+            <Box pt="1rem">
+               <h5>Columns</h5>
+               <Box display="flex" flexWrap="wrap" fontSize="1rem">
+                  {
+                     mayShowColumnsPreview() &&
+                     columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
+                  }
+                  {
+                     !mayShowColumnsPreview() &&
+                     <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
+                        {
+                           isEditable &&
+                           <Tooltip title={selectTableFirstTooltipTitle}>
+                              <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
+                           </Tooltip>
+                        }
+                        {
+                           !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
+                        }
+                     </Box>
+                  }
+               </Box>
             </Box>
-         </Box>
+         )}
          {
             modalOpen &&
             <Modal open={modalOpen} onClose={(event, reason) => closeEditor(event, reason)}>
