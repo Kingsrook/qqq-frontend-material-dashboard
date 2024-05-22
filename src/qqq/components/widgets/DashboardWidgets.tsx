@@ -40,10 +40,10 @@ import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
 import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidget";
+import FilterAndColumnsSetupWidget from "qqq/components/widgets/misc/FilterAndColumnsSetupWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
 import RecordGridWidget from "qqq/components/widgets/misc/RecordGridWidget";
-import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
 import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import StepperCard from "qqq/components/widgets/misc/StepperCard";
 import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
@@ -598,9 +598,9 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                )
             }
             {
-               widgetMetaData.type === "reportSetup" && (
+               widgetMetaData.type === "filterAndColumnsSetup" && (
                   widgetData && widgetData[i] && widgetData[i].queryParams &&
-                  <ReportSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
+                  <FilterAndColumnsSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
                   {
                   }} />
                )

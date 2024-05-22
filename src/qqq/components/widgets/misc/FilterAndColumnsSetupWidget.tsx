@@ -45,7 +45,7 @@ import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import React, {useContext, useEffect, useRef, useState} from "react";
 
-interface ReportSetupWidgetProps
+interface FilterAndColumnsSetupWidgetProps
 {
    isEditable: boolean;
    widgetMetaData: QWidgetMetaData;
@@ -53,7 +53,7 @@ interface ReportSetupWidgetProps
    onSaveCallback?: (values: { [name: string]: any }) => void;
 }
 
-ReportSetupWidget.defaultProps = {
+FilterAndColumnsSetupWidget.defaultProps = {
    onSaveCallback: null
 };
 
@@ -83,7 +83,7 @@ const qController = Client.getInstance();
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function ReportSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: ReportSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
    const [hideColumns, setHideColumns] = useState(widgetMetaData?.defaultValues?.has("hideColumns") && widgetMetaData?.defaultValues?.get("hideColumns"));

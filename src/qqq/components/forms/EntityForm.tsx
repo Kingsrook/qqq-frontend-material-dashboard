@@ -44,9 +44,9 @@ import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
+import FilterAndColumnsSetupWidget from "qqq/components/widgets/misc/FilterAndColumnsSetupWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
-import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
 import {FieldRule, FieldRuleAction, FieldRuleTrigger} from "qqq/models/fields/FieldRules";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -390,7 +390,7 @@ function EntityForm(props: Props): JSX.Element
          />;
       }
 
-      if (widgetMetaData.type == "reportSetup")
+      if (widgetMetaData.type == "filterAndColumnsSetup")
       {
          /////////////////////////////////////////////////////////////////////////////////////////////////////////
          // if the widget metadata specifies a table name, set form values to that so widget knows which to use //
@@ -401,7 +401,7 @@ function EntityForm(props: Props): JSX.Element
             formValues["tableName"] = widgetMetaData?.defaultValues.get("tableName");
          }
 
-         return <ReportSetupWidget
+         return <FilterAndColumnsSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
             isEditable={true}
             widgetMetaData={widgetMetaData}
@@ -507,7 +507,7 @@ function EntityForm(props: Props): JSX.Element
                   return (true);
                }
 
-               if (widget.type == "reportSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
+               if (widget.type == "filterAndColumnsSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
                {
                   return (true);
                }
