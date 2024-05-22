@@ -119,6 +119,7 @@ function EntityForm(props: Props): JSX.Element
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
+   const [modalDataChangedCounter, setModalDataChangedCount] = useState(0);
 
    const [notAllowedError, setNotAllowedError] = useState(null as string);
 
@@ -282,6 +283,8 @@ function EntityForm(props: Props): JSX.Element
       setRenderedWidgetSections(newRenderedWidgetSections);
       forceUpdate();
 
+      setModalDataChangedCount(modalDataChangedCounter + 1);
+
       setShowEditChildForm(null);
    }
 
@@ -375,7 +378,7 @@ function EntityForm(props: Props): JSX.Element
          widgetMetaData.showExportButton = false;
 
          return <RecordGridWidget
-            key={new Date().getTime()} // added so that editing values actually re-renders...
+            key={`${formValues["tableName"]}-${modalDataChangedCounter}`}
             widgetMetaData={widgetMetaData}
             data={widgetData}
             disableRowClick
@@ -389,6 +392,10 @@ function EntityForm(props: Props): JSX.Element
 
       if (widgetMetaData.type == "reportSetup")
       {
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if the widget metadata specifies a table name, set form values to that so widget knows which to use //
+         // (for the case when it is not being specified by a separate field in the record)                     //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
          if (widgetMetaData?.defaultValues?.has("tableName"))
          {
             formValues["tableName"] = widgetMetaData?.defaultValues.get("tableName");
