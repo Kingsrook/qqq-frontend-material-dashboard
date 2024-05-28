@@ -499,7 +499,7 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////////////////
          const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
          {
-            const widget = metaData.widgets.get(section.widgetName);
+            const widget = metaData?.widgets.get(section.widgetName);
             if (widget)
             {
                if (widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
@@ -730,7 +730,7 @@ function EntityForm(props: Props): JSX.Element
             }
             else
             {
-               const widgetMetaData = metaData.widgets.get(section.widgetName);
+               const widgetMetaData = metaData?.widgets.get(section.widgetName);
                const widgetData = await qController.widget(widgetMetaData.name, makeQueryStringWithIdAndObject(tableMetaData, defaultValues));
 
                newRenderedWidgetSections[section.widgetName] = getWidgetSection(widgetMetaData, widgetData);
