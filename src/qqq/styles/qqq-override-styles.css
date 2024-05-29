@@ -421,6 +421,14 @@ input[type="search"]::-webkit-search-results-decoration
    font-size: 2rem !important;
 }
 
+.dashboard-order-release-icon
+{
+   font-size: 1.5rem !important;
+   position: relative;
+   top: -5px;
+   margin-right: 8px;
+}
+
 .dashboard-schedule-icon
 {
    font-size: 1.1rem !important;

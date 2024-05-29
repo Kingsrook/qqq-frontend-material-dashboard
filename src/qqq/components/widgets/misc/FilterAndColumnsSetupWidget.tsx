@@ -380,7 +380,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                      </Tooltip>
                   }
                   {
-                     !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
+                     !isEditable && <Box color={colors.gray.main}>No filters are configured.</Box>
                   }
                </Box>
             }
@@ -403,7 +403,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                            </Tooltip>
                         }
                         {
-                           !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
+                           !isEditable && <Box color={colors.gray.main}>No columns are selected.</Box>
                         }
                      </Box>
                   }
