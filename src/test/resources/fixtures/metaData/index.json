@@ -822,7 +822,7 @@
       "reportSetupWidget": {
          "name": "reportSetupWidget",
          "label": "Filters and Columns",
-         "type": "reportSetup",
+         "type": "filterAndColumnsSetup",
          "isCard": true,
          "storeDropdownSelections": false,
          "showReloadButton": true,

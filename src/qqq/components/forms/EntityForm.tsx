@@ -44,9 +44,9 @@ import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
+import FilterAndColumnsSetupWidget from "qqq/components/widgets/misc/FilterAndColumnsSetupWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
-import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
 import {FieldRule, FieldRuleAction, FieldRuleTrigger} from "qqq/models/fields/FieldRules";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -88,7 +88,7 @@ EntityForm.defaultProps = {
 ////////////////////////////////////////////////////////////////////////////
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
 {
-}
+};
 
 function EntityForm(props: Props): JSX.Element
 {
@@ -119,11 +119,12 @@ function EntityForm(props: Props): JSX.Element
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
+   const [modalDataChangedCounter, setModalDataChangedCount] = useState(0);
 
    const [notAllowedError, setNotAllowedError] = useState(null as string);
 
    const [formValuesJSON, setFormValuesJSON] = useState("");
-   const [formValues, setFormValues] = useState({} as {[name: string]: any});
+   const [formValues, setFormValues] = useState({} as { [name: string]: any });
 
    const {pageHeader, setPageHeader} = useContext(QContext);
 
@@ -282,6 +283,8 @@ function EntityForm(props: Props): JSX.Element
       setRenderedWidgetSections(newRenderedWidgetSections);
       forceUpdate();
 
+      setModalDataChangedCount(modalDataChangedCounter + 1);
+
       setShowEditChildForm(null);
    }
 
@@ -291,7 +294,7 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    useEffect(() =>
    {
-      const newRenderedWidgetSections: {[name: string]: JSX.Element} = {};
+      const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
       for (let widgetName in renderedWidgetSections)
       {
          const widgetMetaData = metaData.widgets.get(widgetName);
@@ -351,12 +354,11 @@ function EntityForm(props: Props): JSX.Element
    }
 
 
-
    /*******************************************************************************
     ** if we have a widget that wants to set form-field values, they can take this
     ** function in as a callback, and then call it with their values.
     *******************************************************************************/
-   function setFormFieldValuesFromWidget(values: {[name: string]: any})
+   function setFormFieldValuesFromWidget(values: { [name: string]: any })
    {
       for (let key in values)
       {
@@ -370,13 +372,13 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    function getWidgetSection(widgetMetaData: QWidgetMetaData, widgetData: any): JSX.Element
    {
-      if(widgetMetaData.type == "childRecordList")
+      if (widgetMetaData.type == "childRecordList")
       {
          widgetData.viewAllLink = null;
          widgetMetaData.showExportButton = false;
 
          return <RecordGridWidget
-            key={new Date().getTime()} // added so that editing values actually re-renders...
+            key={`${formValues["tableName"]}-${modalDataChangedCounter}`}
             widgetMetaData={widgetMetaData}
             data={widgetData}
             disableRowClick
@@ -388,18 +390,27 @@ function EntityForm(props: Props): JSX.Element
          />;
       }
 
-      if(widgetMetaData.type == "reportSetup")
+      if (widgetMetaData.type == "filterAndColumnsSetup")
       {
-         return <ReportSetupWidget
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if the widget metadata specifies a table name, set form values to that so widget knows which to use //
+         // (for the case when it is not being specified by a separate field in the record)                     //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (widgetMetaData?.defaultValues?.has("tableName"))
+         {
+            formValues["tableName"] = widgetMetaData?.defaultValues.get("tableName");
+         }
+
+         return <FilterAndColumnsSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
             isEditable={true}
             widgetMetaData={widgetMetaData}
             recordValues={formValues}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      if(widgetMetaData.type == "pivotTableSetup")
+      if (widgetMetaData.type == "pivotTableSetup")
       {
          return <PivotTableSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
@@ -407,10 +418,10 @@ function EntityForm(props: Props): JSX.Element
             widgetMetaData={widgetMetaData}
             recordValues={formValues}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      if(widgetMetaData.type == "dynamicForm")
+      if (widgetMetaData.type == "dynamicForm")
       {
          return <DynamicFormWidget
             key={formValues["savedReportId"]} // todo - pull this from the metaData (could do so above too...)
@@ -420,10 +431,10 @@ function EntityForm(props: Props): JSX.Element
             recordValues={formValues}
             record={record}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      return (<Box>Unsupported widget type: {widgetMetaData.type}</Box>)
+      return (<Box>Unsupported widget type: {widgetMetaData.type}</Box>);
    }
 
 
@@ -449,12 +460,12 @@ function EntityForm(props: Props): JSX.Element
    function setupFieldRules(tableMetaData: QTableMetaData)
    {
       const mdbMetaData = tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
-      if(!mdbMetaData)
+      if (!mdbMetaData)
       {
          return;
       }
 
-      if(mdbMetaData.fieldRules)
+      if (mdbMetaData.fieldRules)
       {
          const newFieldRules: FieldRule[] = [];
          for (let i = 0; i < mdbMetaData.fieldRules.length; i++)
@@ -488,15 +499,15 @@ function EntityForm(props: Props): JSX.Element
          /////////////////////////////////////////////////
          const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
          {
-            const widget = metaData.widgets.get(section.widgetName);
-            if(widget)
+            const widget = metaData?.widgets.get(section.widgetName);
+            if (widget)
             {
-               if(widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
+               if (widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
                {
                   return (true);
                }
 
-               if(widget.type == "reportSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
+               if (widget.type == "filterAndColumnsSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
                {
                   return (true);
                }
@@ -680,7 +691,7 @@ function EntityForm(props: Props): JSX.Element
             }
 
             const hasFields = section.fieldNames && section.fieldNames.length > 0;
-            if(hasFields)
+            if (hasFields)
             {
                for (let j = 0; j < section.fieldNames.length; j++)
                {
@@ -719,7 +730,7 @@ function EntityForm(props: Props): JSX.Element
             }
             else
             {
-               const widgetMetaData = metaData.widgets.get(section.widgetName);
+               const widgetMetaData = metaData?.widgets.get(section.widgetName);
                const widgetData = await qController.widget(widgetMetaData.name, makeQueryStringWithIdAndObject(tableMetaData, defaultValues));
 
                newRenderedWidgetSections[section.widgetName] = getWidgetSection(widgetMetaData, widgetData);
@@ -1000,19 +1011,19 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   function makeQueryStringWithIdAndObject(tableMetaData: QTableMetaData, object: {[key: string]: any})
+   function makeQueryStringWithIdAndObject(tableMetaData: QTableMetaData, object: { [key: string]: any })
    {
       const queryParamsArray: string[] = [];
-      if(props.id)
+      if (props.id)
       {
-         queryParamsArray.push(`${tableMetaData.primaryKeyField}=${encodeURIComponent(props.id)}`)
+         queryParamsArray.push(`${tableMetaData.primaryKeyField}=${encodeURIComponent(props.id)}`);
       }
 
-      if(object)
+      if (object)
       {
          for (let key in object)
          {
-            queryParamsArray.push(`${key}=${encodeURIComponent(object[key])}`)
+            queryParamsArray.push(`${key}=${encodeURIComponent(object[key])}`);
          }
       }
 
@@ -1023,7 +1034,7 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   async function reloadWidget(widgetName: string, additionalQueryParamsForWidget: {[key: string]: any })
+   async function reloadWidget(widgetName: string, additionalQueryParamsForWidget: { [key: string]: any })
    {
       const widgetData = await qController.widget(widgetName, makeQueryStringWithIdAndObject(tableMetaData, additionalQueryParamsForWidget));
       const widgetMetaData = metaData.widgets.get(widgetName);
@@ -1045,11 +1056,11 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     ** process a form-field having a changed value (e.g., apply field rules).
     *******************************************************************************/
-   function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: {[fieldName: string]: any})
+   function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: { [fieldName: string]: any })
    {
       for (let fieldRule of fieldRules)
       {
-         if(fieldRule.trigger == FieldRuleTrigger.ON_CHANGE && fieldRule.sourceField == fieldName)
+         if (fieldRule.trigger == FieldRuleTrigger.ON_CHANGE && fieldRule.sourceField == fieldName)
          {
             switch (fieldRule.action)
             {
@@ -1058,7 +1069,7 @@ function EntityForm(props: Props): JSX.Element
                   valueChangesToMake[fieldRule.targetField] = null;
                   break;
                case FieldRuleAction.RELOAD_WIDGET:
-                  const additionalQueryParamsForWidget: {[key: string]: any} = {};
+                  const additionalQueryParamsForWidget: { [key: string]: any } = {};
                   additionalQueryParamsForWidget[fieldRule.sourceField] = newValue;
                   reloadWidget(fieldRule.targetWidget, additionalQueryParamsForWidget);
             }
@@ -1148,21 +1159,21 @@ function EntityForm(props: Props): JSX.Element
                         /////////////////////////////////////////////////
                         // if we have values from formik, look at them //
                         /////////////////////////////////////////////////
-                        if(values)
+                        if (values)
                         {
                            ////////////////////////////////////////////////////////////////////////
                            // use stringified values as cheap/easy way to see if any are changed //
                            ////////////////////////////////////////////////////////////////////////
                            const newFormValuesJSON = JSON.stringify(values);
-                           if(formValuesJSON != newFormValuesJSON)
+                           if (formValuesJSON != newFormValuesJSON)
                            {
-                              const valueChangesToMake: {[fieldName: string]: any} = {};
+                              const valueChangesToMake: { [fieldName: string]: any } = {};
 
                               ////////////////////////////////////////////////////////////////////
                               // if the form is dirty (e.g., we're not doing the initial load), //
                               // then process rules for any changed fields                      //
                               ////////////////////////////////////////////////////////////////////
-                              if(dirty)
+                              if (dirty)
                               {
                                  for (let fieldName in values)
                                  {
@@ -1194,7 +1205,7 @@ function EntityForm(props: Props): JSX.Element
                                  setFieldValue(fieldName, valueChangesToMake[fieldName], false);
                               }
 
-                              setFormValues(formValues)
+                              setFormValues(formValues);
                               setFormValuesJSON(JSON.stringify(values));
                            }
                         }

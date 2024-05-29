@@ -25,7 +25,8 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Alert, Box, Button} from "@mui/material";
+import {Alert, Button} from "@mui/material";
+import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -94,12 +95,12 @@ function SavedViews({qController, metaData, tableMetaData, currentSavedView, tab
 
    const {accentColor, accentColorLight, userId: currentUserId} = useContext(QContext);
 
-   /////////////////////////////////////////////////////////////////////////////////////////
-   // this component is used by <RecordQuery> - but that component has different usages - //
-   // e.g., the full-fledged query screen, but also, within other screens (e.g., a modal  //
-   // under the ReportSetupWidget).  So, there are some behaviors we only want when we're //
-   // on the full-fledged query screen, such as changing the URL with saved view ids.     //
-   /////////////////////////////////////////////////////////////////////////////////////////
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   // this component is used by <RecordQuery> - but that component has different usages -     //
+   // e.g., the full-fledged query screen, but also, within other screens (e.g., a modal      //
+   // under the FilterAndColumnsSetupWidget).  So, there are some behaviors we only want when //
+   // we're on the full-fledged query screen, such as changing the URL with saved view ids.   //
+   /////////////////////////////////////////////////////////////////////////////////////////////
    const isQueryScreen = queryScreenUsage == "queryScreen";
 
    const openSavedViewsMenu = (event: any) => setSavedViewsMenu(event.currentTarget);
