@@ -711,11 +711,6 @@ input[type="search"]::-webkit-search-results-decoration
    padding: 24px;
 }
 
-.recordView .widget .recordGridWidget
-{
-   margin: -8px;
-}
-
 .MuiPickersDay-root.Mui-selected, .MuiPickersDay-root.MuiPickersDay-dayWithMargin:hover
 {
    color: white;
