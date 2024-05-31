@@ -108,31 +108,40 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
    let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   const defaultFilterFields = getDefaultFilterFieldNames(widgetMetaData);
    if (!queryFilter)
    {
       queryFilter = new QQueryFilter();
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // if there is no queryFilter provided, see if there are default fields from which a query should be seeded //
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      const defaultFilterFields = getDefaultFilterFieldNames(widgetMetaData);
-      if (defaultFilterFields?.length > 0)
-      {
-         defaultFilterFields.forEach((fieldName: string) =>
-         {
-            if (recordValues[fieldName])
-            {
-               queryFilter.addCriteria(new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [recordValues[fieldName]]));
-            }
-         });
-
-         queryFilter.addOrderBy(new QFilterOrderBy("id", false));
-         queryFilter = Object.assign({}, queryFilter);
-      }
-      else
+      if (defaultFilterFields?.length == 0)
       {
          usingDefaultEmptyFilter = true;
       }
+   }
+   else
+   {
+      queryFilter = Object.assign(new QQueryFilter(), queryFilter);
+   }
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if there are default fields from which a query should be seeded, add/update the filter with them //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   if (defaultFilterFields?.length > 0)
+   {
+      defaultFilterFields.forEach((fieldName: string) =>
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         // if a value for the default field exists, remove the criteria for it in our query first //
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         queryFilter.criteria = queryFilter.criteria?.filter(c => c.fieldName != fieldName);
+
+         if (recordValues[fieldName])
+         {
+            queryFilter.addCriteria(new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [recordValues[fieldName]]));
+         }
+      });
+
+      queryFilter.addOrderBy(new QFilterOrderBy("id", false));
+      queryFilter = Object.assign({}, queryFilter);
    }
 
    if (recordValues["columnsJson"])
@@ -380,7 +389,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                      </Tooltip>
                   }
                   {
-                     !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
+                     !isEditable && <Box color={colors.gray.main}>No filters are configured.</Box>
                   }
                </Box>
             }
@@ -403,7 +412,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                            </Tooltip>
                         }
                         {
-                           !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
+                           !isEditable && <Box color={colors.gray.main}>No columns are selected.</Box>
                         }
                      </Box>
                   }

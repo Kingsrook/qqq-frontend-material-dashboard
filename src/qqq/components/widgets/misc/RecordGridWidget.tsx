@@ -40,14 +40,14 @@ import {Link, useNavigate} from "react-router-dom";
 export interface ChildRecordListData extends WidgetData
 {
    title: string;
-   queryOutput: {records: {values: any}[]}
+   queryOutput: { records: { values: any }[] };
    childTableMetaData: QTableMetaData;
    tablePath: string;
    viewAllLink: string;
    totalRows: number;
    canAddChildRecord: boolean;
-   defaultValuesForNewChildRecords: {[fieldName: string]: any};
-   disabledFieldsForNewChildRecords: {[fieldName: string]: any};
+   defaultValuesForNewChildRecords: { [fieldName: string]: any };
+   disabledFieldsForNewChildRecords: { [fieldName: string]: any };
 }
 
 interface Props
@@ -75,9 +75,9 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
 {
    const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
-   const [records, setRecords] = useState([] as QRecord[])
+   const [records, setRecords] = useState([] as QRecord[]);
    const [columns, setColumns] = useState([]);
-   const [allColumns, setAllColumns] = useState([])
+   const [allColumns, setAllColumns] = useState([]);
    const [csv, setCsv] = useState(null as string);
    const [fileName, setFileName] = useState(null as string);
    const [gridMouseDownX, setGridMouseDownX] = useState(0);
@@ -110,20 +110,20 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // capture all-columns to use for the export (before we might splice some away from the on-screen display) //
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         const allColumns = [... columns];
+         const allColumns = [...columns];
          setAllColumns(JSON.parse(JSON.stringify(columns)));
 
          ////////////////////////////////////////////////////////////////
          // do not not show the foreign-key column of the parent table //
          ////////////////////////////////////////////////////////////////
-         if(data.defaultValuesForNewChildRecords)
+         if (data.defaultValuesForNewChildRecords)
          {
             for (let i = 0; i < columns.length; i++)
             {
-               if(data.defaultValuesForNewChildRecords[columns[i].field])
+               if (data.defaultValuesForNewChildRecords[columns[i].field])
                {
                   columns.splice(i, 1);
-                  i--
+                  i--;
                }
             }
          }
@@ -131,7 +131,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          ////////////////////////////////////
          // add actions cell, if available //
          ////////////////////////////////////
-         if(allowRecordEdit || allowRecordDelete)
+         if (allowRecordEdit || allowRecordDelete)
          {
             columns.unshift({
                field: "_actions",
@@ -145,19 +145,19 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
                   return <Box>
                      {allowRecordEdit && <IconButton onClick={() => editRecordCallback(params.row.__rowIndex)}><Icon>edit</Icon></IconButton>}
                      {allowRecordDelete && <IconButton onClick={() => deleteRecordCallback(params.row.__rowIndex)}><Icon>delete</Icon></IconButton>}
-                  </Box>
+                  </Box>;
                })
-            })
+            });
          }
 
          setRows(rows);
-         setRecords(records)
+         setRecords(records);
          setColumns(columns);
 
          let csv = "";
          for (let i = 0; i < allColumns.length; i++)
          {
-            csv += `${i > 0 ? "," : ""}"${ValueUtils.cleanForCsv(allColumns[i].headerName)}"`
+            csv += `${i > 0 ? "," : ""}"${ValueUtils.cleanForCsv(allColumns[i].headerName)}"`;
          }
          csv += "\n";
 
@@ -165,8 +165,8 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          {
             for (let j = 0; j < allColumns.length; j++)
             {
-               const value = records[i].displayValues.get(allColumns[j].field) ?? records[i].values.get(allColumns[j].field)
-               csv += `${j > 0 ? "," : ""}"${ValueUtils.cleanForCsv(value)}"`
+               const value = records[i].displayValues.get(allColumns[j].field) ?? records[i].values.get(allColumns[j].field);
+               csv += `${j > 0 ? "," : ""}"${ValueUtils.cleanForCsv(value)}"`;
             }
             csv += "\n";
          }
@@ -182,13 +182,13 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    // view all link //
    ///////////////////
    const labelAdditionalElementsLeft: JSX.Element[] = [];
-   if(data && data.viewAllLink)
+   if (data && data.viewAllLink)
    {
       labelAdditionalElementsLeft.push(
          <Typography key={"viewAllLink"} variant="body2" p={2} display="inline" fontSize=".875rem" pt="0" position="relative">
             <Link to={data.viewAllLink}>View All</Link>
          </Typography>
-      )
+      );
    }
 
    ///////////////////
@@ -200,10 +200,10 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    {
       isExportDisabled = false;
 
-      if(data.totalRows && data.queryOutput.records.length < data.totalRows)
+      if (data.totalRows && data.queryOutput.records.length < data.totalRows)
       {
-         tooltipTitle = "Export these " + data.queryOutput.records.length + " records."
-         if(data.viewAllLink)
+         tooltipTitle = "Export these " + data.queryOutput.records.length + " records.";
+         if (data.viewAllLink)
          {
             tooltipTitle += "\nClick View All to export all records.";
          }
@@ -212,17 +212,17 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
 
    const onExportClick = () =>
    {
-      if(csv)
+      if (csv)
       {
          HtmlUtils.download(fileName, csv);
       }
       else
       {
-         alert("There is no data available to export.")
+         alert("There is no data available to export.");
       }
-   }
+   };
 
-   if(widgetMetaData?.showExportButton)
+   if (widgetMetaData?.showExportButton)
    {
       labelAdditionalElementsLeft.push(
          <Typography key={"exportButton"} variant="body2" px={0} display="inline" position="relative">
@@ -234,15 +234,15 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    ////////////////////
    // add new button //
    ////////////////////
-   const labelAdditionalComponentsRight: LabelComponent[] = []
-   if(data && data.canAddChildRecord)
+   const labelAdditionalComponentsRight: LabelComponent[] = [];
+   if (data && data.canAddChildRecord)
    {
       let disabledFields = data.disabledFieldsForNewChildRecords;
-      if(!disabledFields)
+      if (!disabledFields)
       {
          disabledFields = data.defaultValuesForNewChildRecords;
       }
-      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback))
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback));
    }
 
 
@@ -251,16 +251,16 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    /////////////////////////////////////////////////////////////////
    const handleRowClick = (params: GridRowParams, event: MuiEvent<React.MouseEvent>, details: GridCallbackDetails) =>
    {
-      if(disableRowClick)
+      if (disableRowClick)
       {
          return;
       }
 
       (async () =>
       {
-         const qInstance = await qController.loadMetaData()
-         let tablePath = qInstance.getTablePathByName(data.childTableMetaData.name)
-         if(tablePath)
+         const qInstance = await qController.loadMetaData();
+         let tablePath = qInstance.getTablePathByName(data.childTableMetaData.name);
+         if (tablePath)
          {
             tablePath = `${tablePath}/${params.row[data.childTableMetaData.primaryKeyField]}`;
             DataGridUtils.handleRowClick(tablePath, event, gridMouseDownX, gridMouseDownY, navigate, instance);
@@ -276,7 +276,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
     *******************************************************************************/
    function CustomToolbar()
    {
-      const handleMouseDown: GridEventListener<"cellMouseDown"> = ( params, event, details ) =>
+      const handleMouseDown: GridEventListener<"cellMouseDown"> = (params, event, details) =>
       {
          setGridMouseDownX(event.clientX);
          setGridMouseDownY(event.clientY);
@@ -304,8 +304,8 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
          labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
-         <Box mx={-2} mb={-3}>
-            <Box className="recordGridWidget">
+         <Box mx={-3} mb={-3}>
+            <Box>
                <DataGridPro
                   autoHeight
                   sx={{
