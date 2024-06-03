@@ -24,7 +24,6 @@ import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QT
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -139,9 +138,6 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
             queryFilter.addCriteria(new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [recordValues[fieldName]]));
          }
       });
-
-      queryFilter.addOrderBy(new QFilterOrderBy("id", false));
-      queryFilter = Object.assign({}, queryFilter);
    }
 
    if (recordValues["columnsJson"])
@@ -211,7 +207,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       ////////////////////////////////////////////////////////////////////
       if (missingRequiredFields.length > 0)
       {
-         setAlertContent("The following fields must first be selected to add Additional Order Filters: '" + missingRequiredFields.join(", ") + "'");
+         setAlertContent("The following fields must first be selected to edit the filter: '" + missingRequiredFields.join(", ") + "'");
          return;
       }
 

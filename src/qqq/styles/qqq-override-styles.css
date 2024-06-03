@@ -421,7 +421,7 @@ input[type="search"]::-webkit-search-results-decoration
    font-size: 2rem !important;
 }
 
-.dashboard-order-release-icon
+.dashboard-table-actions-icon
 {
    font-size: 1.5rem !important;
    position: relative;
