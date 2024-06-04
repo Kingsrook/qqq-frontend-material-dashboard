@@ -179,6 +179,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
                            updateCriteria={(newCriteria, needDebounce) => updateCriteria(newCriteria, index, needDebounce)}
                            removeCriteria={() => removeCriteria(index)}
                            updateBooleanOperator={(newValue) => updateBooleanOperator(newValue)}
+                           allowVariables={props.allowVariables}
                            queryScreenUsage={props.queryScreenUsage}
                         />
                         {/*JSON.stringify(criteria)*/}

@@ -599,8 +599,8 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
             }
             {
                widgetMetaData.type === "filterAndColumnsSetup" && (
-                  widgetData && widgetData[i] && widgetData[i].queryParams &&
-                  <FilterAndColumnsSetupWidget isEditable={false} widgetMetaData={widgetMetaData} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
+                  widgetData && widgetData[i] &&
+                  <FilterAndColumnsSetupWidget isEditable={false} widgetMetaData={widgetMetaData} widgetData={widgetData[i]} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
                   {
                   }} />
                )

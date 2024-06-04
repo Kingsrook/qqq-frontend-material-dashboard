@@ -396,15 +396,16 @@ function EntityForm(props: Props): JSX.Element
          // if the widget metadata specifies a table name, set form values to that so widget knows which to use //
          // (for the case when it is not being specified by a separate field in the record)                     //
          /////////////////////////////////////////////////////////////////////////////////////////////////////////
-         if (widgetMetaData?.defaultValues?.has("tableName"))
+         if (widgetData?.tableName)
          {
-            formValues["tableName"] = widgetMetaData?.defaultValues.get("tableName");
+            formValues["tableName"] = widgetData?.tableName;
          }
 
          return <FilterAndColumnsSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
             isEditable={true}
             widgetMetaData={widgetMetaData}
+            widgetData={widgetData}
             recordValues={formValues}
             onSaveCallback={setFormFieldValuesFromWidget}
          />;

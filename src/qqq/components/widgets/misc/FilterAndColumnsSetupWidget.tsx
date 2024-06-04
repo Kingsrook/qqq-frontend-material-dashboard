@@ -48,6 +48,7 @@ interface FilterAndColumnsSetupWidgetProps
 {
    isEditable: boolean;
    widgetMetaData: QWidgetMetaData;
+   widgetData: any;
    recordValues: { [name: string]: any };
    onSaveCallback?: (values: { [name: string]: any }) => void;
 }
@@ -82,10 +83,10 @@ const qController = Client.getInstance();
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
-   const [hideColumns, setHideColumns] = useState(widgetMetaData?.defaultValues?.has("hideColumns") && widgetMetaData?.defaultValues?.get("hideColumns"));
+   const [hideColumns, setHideColumns] = useState(widgetData?.hideColumns);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    const [alertContent, setAlertContent] = useState(null as string);
@@ -107,7 +108,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
    let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
-   const defaultFilterFields = getDefaultFilterFieldNames(widgetMetaData);
+   const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
       queryFilter = new QQueryFilter();
@@ -153,7 +154,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       ////////////////////////////////////////////////////////////////////////////////////////
       // if a default table name specified, use it, otherwise use it from the record values //
       ////////////////////////////////////////////////////////////////////////////////////////
-      let tableName = widgetMetaData?.defaultValues?.get("tableName");
+      let tableName = widgetData?.tableName;
       if (!tableName && recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
       {
          tableName = recordValues["tableName"];
@@ -177,24 +178,10 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /*******************************************************************************
     **
     *******************************************************************************/
-   function getDefaultFilterFieldNames(widgetMetaData: QWidgetMetaData)
-   {
-      if (widgetMetaData?.defaultValues?.has("filterDefaultFieldNames"))
-      {
-         return (widgetMetaData.defaultValues.get("filterDefaultFieldNames").split(","));
-      }
-
-      return ([]);
-   }
-
-
-   /*******************************************************************************
-    **
-    *******************************************************************************/
    function openEditor()
    {
       let missingRequiredFields = [] as string[];
-      getDefaultFilterFieldNames(widgetMetaData)?.forEach((fieldName: string) =>
+      widgetData?.filterDefaultFieldNames?.forEach((fieldName: string) =>
       {
          if (!recordValues[fieldName])
          {
@@ -430,6 +417,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                         }
                         {
                            tableMetaData && <RecordQuery
+                              allowVariables={widgetData?.allowVariables}
                               ref={recordQueryRef}
                               table={tableMetaData}
                               usage="reportSetup"

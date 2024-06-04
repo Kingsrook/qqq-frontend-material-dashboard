@@ -79,6 +79,8 @@ interface BasicAndAdvancedQueryControlsProps
 
    queryScreenUsage: QueryScreenUsage;
 
+   allowVariables?: boolean;
+
    mode: string;
    setMode: (mode: string) => void;
 }
@@ -676,6 +678,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
 
                               return (<QuickFilter
                                  key={fieldName}
+                                 allowVariables={props.allowVariables}
                                  fullFieldName={fieldName}
                                  tableMetaData={tableMetaData}
                                  updateCriteria={updateQuickCriteria}
@@ -701,6 +704,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                                  updateCriteria={updateQuickCriteria}
                                  criteriaParam={getQuickCriteriaParam(fieldName)}
                                  fieldMetaData={field}
+                                 allowVariables={props.allowVariables}
                                  defaultOperator={defaultOperator}
                                  queryScreenUsage={queryScreenUsage}
                                  handleRemoveQuickFilterField={handleRemoveQuickFilterField} />);
