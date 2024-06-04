@@ -63,7 +63,7 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    ///////////////////////////////////////////////////////////////////////
    // strip away empty elements of the route (e.g., trailing slash(es)) //
    ///////////////////////////////////////////////////////////////////////
-   if(route.length)
+   if (route.length)
    {
       // @ts-ignore
       route = route.filter(r => r != "");
@@ -74,18 +74,18 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
 
    const fullPathToLabel = (fullPath: string, route: string): string =>
    {
-      if(fullPath.endsWith("/"))
+      if (fullPath.endsWith("/"))
       {
          fullPath = fullPath.replace(/\/+$/, "");
       }
 
-      if(pathToLabelMap && pathToLabelMap[fullPath])
+      if (pathToLabelMap && pathToLabelMap[fullPath])
       {
          return pathToLabelMap[fullPath];
       }
 
       return (routeToLabel(route));
-   }
+   };
 
    let pageTitle = branding?.appName ?? "";
    const fullRoutes: string[] = [];
@@ -94,9 +94,9 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
    {
       ////////////////////////////////////////////////////////
       // avoid showing "saved view" as a breadcrumb element //
-      // e.g., if at /app/table/savedView/1 (so where i==2) //
+      // e.g., if at /app/table/savedView/1                 //
       ////////////////////////////////////////////////////////
-      if(routes[i] === "savedView" && i == 2)
+      if (routes[i] === "savedView" && i == routes.length - 1)
       {
          continue;
       }
@@ -106,12 +106,12 @@ function QBreadcrumbs({icon, title, route, light}: Props): JSX.Element
       // e.g., when at /app/table/savedView/1 (so where i==1)              //
       // we want to just be showing "App"                                  //
       ///////////////////////////////////////////////////////////////////////
-      if(i < routes.length - 1 && routes[i+1] == "savedView" && i == 1)
+      if (i < routes.length - 1 && routes[i + 1] == "savedView" && i == 1)
       {
          continue;
       }
 
-      if(routes[i] === "")
+      if (routes[i] === "")
       {
          continue;
       }
