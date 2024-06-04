@@ -1571,7 +1571,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    );
 
    const body = (
-      <Box py={3} mb={20}>
+      <Box py={3} mb={20} className="processRun">
          <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
             <Grid item xs={12} lg={10} xl={8}>
                {form}
