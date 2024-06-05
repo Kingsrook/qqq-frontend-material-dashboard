@@ -631,7 +631,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQ
          const type = (e.target as any).type;
          const validType = (type !== "text" && type !== "textarea" && type !== "input" && type !== "search");
 
-         if (validType && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
+         if (validType && !isModal && !dotMenuOpen && !keyboardHelpOpen && !activeModalProcess)
          {
             if (!e.metaKey && !e.ctrlKey && e.key === "n" && table.capabilities.has(Capability.TABLE_INSERT) && table.insertPermission)
             {
@@ -669,7 +669,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQ
       {
          document.removeEventListener("keydown", down);
       };
-   }, [dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess]);
+   }, [isModal, dotMenuOpen, keyboardHelpOpen, metaData, activeModalProcess]);
 
 
    /*******************************************************************************
