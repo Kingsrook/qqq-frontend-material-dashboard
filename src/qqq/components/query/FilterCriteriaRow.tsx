@@ -199,6 +199,7 @@ interface FilterCriteriaRowProps
    removeCriteria: () => void;
    updateBooleanOperator: (newValue: string) => void;
    queryScreenUsage?: QueryScreenUsage;
+   allowVariables?: boolean;
 }
 
 FilterCriteriaRow.defaultProps =
@@ -267,7 +268,7 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
    return {criteriaIsValid, criteriaStatusTooltip};
 }
 
-export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage}: FilterCriteriaRowProps): JSX.Element
+export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage, allowVariables}: FilterCriteriaRowProps): JSX.Element
 {
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
@@ -516,6 +517,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
                table={fieldTable}
                valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
                queryScreenUsage={queryScreenUsage}
+               allowVariables={allowVariables}
             />
          </Box>
          <Box display="inline-block">

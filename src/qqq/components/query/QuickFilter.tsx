@@ -52,6 +52,7 @@ interface QuickFilterProps
    defaultOperator?: QCriteriaOperator;
    handleRemoveQuickFilterField?: (fieldName: string) => void;
    queryScreenUsage?: QueryScreenUsage;
+   allowVariables?: boolean;
 }
 
 QuickFilter.defaultProps =
@@ -141,7 +142,7 @@ const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: Q
  ** Component to render a QuickFilter - that is - a button, with a Menu under it,
  ** with Operator and Value controls.
  *******************************************************************************/
-export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, handleRemoveQuickFilterField, queryScreenUsage}: QuickFilterProps): JSX.Element
+export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData, criteriaParam, updateCriteria, defaultOperator, handleRemoveQuickFilterField, queryScreenUsage, allowVariables}: QuickFilterProps): JSX.Element
 {
    const operatorOptions = fieldMetaData ? getOperatorOptions(tableMetaData, fullFieldName) : [];
    const [_, tableForField] = TableUtils.getFieldAndTable(tableMetaData, fullFieldName);
@@ -549,6 +550,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
                      criteria={criteria}
                      field={fieldMetaData}
                      table={tableForField}
+                     allowVariables={allowVariables}
                      valueChangeHandler={(event, valueIndex, newValue) => handleValueChange(event, valueIndex, newValue)}
                      initiallyOpenMultiValuePvs={true} // todo - maybe not?
                   />

@@ -22,6 +22,8 @@
 
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -42,15 +44,16 @@ import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import React, {useContext, useEffect, useRef, useState} from "react";
 
-interface ReportSetupWidgetProps
+interface FilterAndColumnsSetupWidgetProps
 {
    isEditable: boolean;
    widgetMetaData: QWidgetMetaData;
+   widgetData: any;
    recordValues: { [name: string]: any };
    onSaveCallback?: (values: { [name: string]: any }) => void;
 }
 
-ReportSetupWidget.defaultProps = {
+FilterAndColumnsSetupWidget.defaultProps = {
    onSaveCallback: null
 };
 
@@ -80,9 +83,10 @@ const qController = Client.getInstance();
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function ReportSetupWidget({isEditable, widgetMetaData, recordValues, onSaveCallback}: ReportSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
+   const [hideColumns, setHideColumns] = useState(widgetData?.hideColumns);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    const [alertContent, setAlertContent] = useState(null as string);
@@ -101,15 +105,42 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    /////////////////////////////
    // load values from record //
    /////////////////////////////
-   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
+   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
       queryFilter = new QQueryFilter();
-      usingDefaultEmptyFilter = true;
+      if (defaultFilterFields?.length == 0)
+      {
+         usingDefaultEmptyFilter = true;
+      }
+   }
+   else
+   {
+      queryFilter = Object.assign(new QQueryFilter(), queryFilter);
    }
 
-   let columns: QQueryColumns = null;
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   // if there are default fields from which a query should be seeded, add/update the filter with them //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////
+   if (defaultFilterFields?.length > 0)
+   {
+      defaultFilterFields.forEach((fieldName: string) =>
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         // if a value for the default field exists, remove the criteria for it in our query first //
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         queryFilter.criteria = queryFilter.criteria?.filter(c => c.fieldName != fieldName);
+
+         if (recordValues[fieldName])
+         {
+            queryFilter.addCriteria(new QFilterCriteria(fieldName, QCriteriaOperator.EQUALS, [recordValues[fieldName]]));
+         }
+      });
+   }
+
    if (recordValues["columnsJson"])
    {
       columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
@@ -120,11 +151,20 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    //////////////////////////////////////////////////////////////////////
    useEffect(() =>
    {
-      if (recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
+      ////////////////////////////////////////////////////////////////////////////////////////
+      // if a default table name specified, use it, otherwise use it from the record values //
+      ////////////////////////////////////////////////////////////////////////////////////////
+      let tableName = widgetData?.tableName;
+      if (!tableName && recordValues["tableName"] && (tableMetaData == null || tableMetaData.name != recordValues["tableName"]))
+      {
+         tableName = recordValues["tableName"];
+      }
+
+      if (tableName)
       {
          (async () =>
          {
-            const tableMetaData = await qController.loadTableMetaData(recordValues["tableName"]);
+            const tableMetaData = await qController.loadTableMetaData(tableName);
             setTableMetaData(tableMetaData);
 
             const queryFilterForFrontend = Object.assign({}, queryFilter);
@@ -132,7 +172,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
             setFrontendQueryFilter(queryFilterForFrontend);
          })();
       }
-   }, [recordValues]);
+   }, [JSON.stringify(recordValues)]);
 
 
    /*******************************************************************************
@@ -140,8 +180,27 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
     *******************************************************************************/
    function openEditor()
    {
+      let missingRequiredFields = [] as string[];
+      widgetData?.filterDefaultFieldNames?.forEach((fieldName: string) =>
+      {
+         if (!recordValues[fieldName])
+         {
+            missingRequiredFields.push(tableMetaData.fields.get(fieldName).label);
+         }
+      });
+
+      ////////////////////////////////////////////////////////////////////
+      // display an alert and return if any required fields are missing //
+      ////////////////////////////////////////////////////////////////////
+      if (missingRequiredFields.length > 0)
+      {
+         setAlertContent("The following fields must first be selected to edit the filter: '" + missingRequiredFields.join(", ") + "'");
+         return;
+      }
+
       if (recordValues["tableName"])
       {
+         setAlertContent(null);
          setModalOpen(true);
       }
    }
@@ -272,7 +331,14 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
-      labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      if (!hideColumns)
+      {
+         labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters and Columns" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      }
+      else
+      {
+         labelAdditionalElementsRight.push(<HeaderLinkButtonComponent key="filterAndColumnsHeader" label="Edit Filters" onClickCallback={openEditor} disabled={tableMetaData == null} disabledTooltip={selectTableFirstTooltipTitle} />);
+      }
    }
 
 
@@ -306,34 +372,36 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                      </Tooltip>
                   }
                   {
-                     !isEditable && <Box color={colors.gray.main}>Your report has no filters.</Box>
+                     !isEditable && <Box color={colors.gray.main}>No filters are configured.</Box>
                   }
                </Box>
             }
          </Box>
-         <Box pt="1rem">
-            <h5>Columns</h5>
-            <Box display="flex" flexWrap="wrap" fontSize="1rem">
-               {
-                  mayShowColumnsPreview() &&
-                  columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
-               }
-               {
-                  !mayShowColumnsPreview() &&
-                  <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
-                     {
-                        isEditable &&
-                        <Tooltip title={selectTableFirstTooltipTitle}>
-                           <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
-                        </Tooltip>
-                     }
-                     {
-                        !isEditable && <Box color={colors.gray.main}>Your report has no columns.</Box>
-                     }
-                  </Box>
-               }
+         {!hideColumns && (
+            <Box pt="1rem">
+               <h5>Columns</h5>
+               <Box display="flex" flexWrap="wrap" fontSize="1rem">
+                  {
+                     mayShowColumnsPreview() &&
+                     columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
+                  }
+                  {
+                     !mayShowColumnsPreview() &&
+                     <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
+                        {
+                           isEditable &&
+                           <Tooltip title={selectTableFirstTooltipTitle}>
+                              <span><Button disabled={!recordValues["tableName"]} sx={unborderedButtonSX} onClick={openEditor}>+ Add Columns</Button></span>
+                           </Tooltip>
+                        }
+                        {
+                           !isEditable && <Box color={colors.gray.main}>No columns are selected.</Box>
+                        }
+                     </Box>
+                  }
+               </Box>
             </Box>
-         </Box>
+         )}
          {
             modalOpen &&
             <Modal open={modalOpen} onClose={(event, reason) => closeEditor(event, reason)}>
@@ -349,6 +417,7 @@ export default function ReportSetupWidget({isEditable, widgetMetaData, recordVal
                         }
                         {
                            tableMetaData && <RecordQuery
+                              allowVariables={widgetData?.allowVariables}
                               ref={recordQueryRef}
                               table={tableMetaData}
                               usage="reportSetup"

@@ -44,9 +44,9 @@ import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
+import FilterAndColumnsSetupWidget from "qqq/components/widgets/misc/FilterAndColumnsSetupWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
-import ReportSetupWidget from "qqq/components/widgets/misc/ReportSetupWidget";
 import {FieldRule, FieldRuleAction, FieldRuleTrigger} from "qqq/models/fields/FieldRules";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
@@ -88,7 +88,7 @@ EntityForm.defaultProps = {
 ////////////////////////////////////////////////////////////////////////////
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
 {
-}
+};
 
 function EntityForm(props: Props): JSX.Element
 {
@@ -119,11 +119,12 @@ function EntityForm(props: Props): JSX.Element
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
+   const [modalDataChangedCounter, setModalDataChangedCount] = useState(0);
 
    const [notAllowedError, setNotAllowedError] = useState(null as string);
 
    const [formValuesJSON, setFormValuesJSON] = useState("");
-   const [formValues, setFormValues] = useState({} as {[name: string]: any});
+   const [formValues, setFormValues] = useState({} as { [name: string]: any });
 
    const {pageHeader, setPageHeader} = useContext(QContext);
 
@@ -204,7 +205,7 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   const deleteChildRecord = (name: string, widgetData: any, rowIndex: number) =>
+   function deleteChildRecord(name: string, widgetData: any, rowIndex: number)
    {
       updateChildRecordList(name, "delete", rowIndex);
    };
@@ -282,6 +283,8 @@ function EntityForm(props: Props): JSX.Element
       setRenderedWidgetSections(newRenderedWidgetSections);
       forceUpdate();
 
+      setModalDataChangedCount(modalDataChangedCounter + 1);
+
       setShowEditChildForm(null);
    }
 
@@ -291,7 +294,7 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    useEffect(() =>
    {
-      const newRenderedWidgetSections: {[name: string]: JSX.Element} = {};
+      const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
       for (let widgetName in renderedWidgetSections)
       {
          const widgetMetaData = metaData.widgets.get(widgetName);
@@ -351,12 +354,11 @@ function EntityForm(props: Props): JSX.Element
    }
 
 
-
    /*******************************************************************************
     ** if we have a widget that wants to set form-field values, they can take this
     ** function in as a callback, and then call it with their values.
     *******************************************************************************/
-   function setFormFieldValuesFromWidget(values: {[name: string]: any})
+   function setFormFieldValuesFromWidget(values: { [name: string]: any })
    {
       for (let key in values)
       {
@@ -370,13 +372,13 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    function getWidgetSection(widgetMetaData: QWidgetMetaData, widgetData: any): JSX.Element
    {
-      if(widgetMetaData.type == "childRecordList")
+      if (widgetMetaData.type == "childRecordList")
       {
          widgetData.viewAllLink = null;
          widgetMetaData.showExportButton = false;
 
-         return <RecordGridWidget
-            key={new Date().getTime()} // added so that editing values actually re-renders...
+         return Object.keys(childListWidgetData).length > 0 && (<RecordGridWidget
+            key={`${formValues["tableName"]}-${modalDataChangedCounter}`}
             widgetMetaData={widgetMetaData}
             data={widgetData}
             disableRowClick
@@ -385,21 +387,31 @@ function EntityForm(props: Props): JSX.Element
             addNewRecordCallback={() => openAddChildRecord(widgetMetaData.name, widgetData)}
             editRecordCallback={(rowIndex) => openEditChildRecord(widgetMetaData.name, widgetData, rowIndex)}
             deleteRecordCallback={(rowIndex) => deleteChildRecord(widgetMetaData.name, widgetData, rowIndex)}
-         />;
+         />);
       }
 
-      if(widgetMetaData.type == "reportSetup")
+      if (widgetMetaData.type == "filterAndColumnsSetup")
       {
-         return <ReportSetupWidget
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if the widget metadata specifies a table name, set form values to that so widget knows which to use //
+         // (for the case when it is not being specified by a separate field in the record)                     //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (widgetData?.tableName)
+         {
+            formValues["tableName"] = widgetData?.tableName;
+         }
+
+         return <FilterAndColumnsSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
             isEditable={true}
             widgetMetaData={widgetMetaData}
+            widgetData={widgetData}
             recordValues={formValues}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      if(widgetMetaData.type == "pivotTableSetup")
+      if (widgetMetaData.type == "pivotTableSetup")
       {
          return <PivotTableSetupWidget
             key={formValues["tableName"]} // todo, is this good?  it was added so that editing values actually re-renders...
@@ -407,10 +419,10 @@ function EntityForm(props: Props): JSX.Element
             widgetMetaData={widgetMetaData}
             recordValues={formValues}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      if(widgetMetaData.type == "dynamicForm")
+      if (widgetMetaData.type == "dynamicForm")
       {
          return <DynamicFormWidget
             key={formValues["savedReportId"]} // todo - pull this from the metaData (could do so above too...)
@@ -420,10 +432,10 @@ function EntityForm(props: Props): JSX.Element
             recordValues={formValues}
             record={record}
             onSaveCallback={setFormFieldValuesFromWidget}
-         />
+         />;
       }
 
-      return (<Box>Unsupported widget type: {widgetMetaData.type}</Box>)
+      return (<Box>Unsupported widget type: {widgetMetaData.type}</Box>);
    }
 
 
@@ -449,12 +461,12 @@ function EntityForm(props: Props): JSX.Element
    function setupFieldRules(tableMetaData: QTableMetaData)
    {
       const mdbMetaData = tableMetaData?.supplementalTableMetaData?.get("materialDashboard");
-      if(!mdbMetaData)
+      if (!mdbMetaData)
       {
          return;
       }
 
-      if(mdbMetaData.fieldRules)
+      if (mdbMetaData.fieldRules)
       {
          const newFieldRules: FieldRule[] = [];
          for (let i = 0; i < mdbMetaData.fieldRules.length; i++)
@@ -469,83 +481,164 @@ function EntityForm(props: Props): JSX.Element
    //////////////////
    // initial load //
    //////////////////
-   if (!asyncLoadInited)
+   useEffect(() =>
    {
-      setAsyncLoadInited(true);
-      (async () =>
+      if (!asyncLoadInited)
       {
-         const tableMetaData = await qController.loadTableMetaData(tableName);
-         setTableMetaData(tableMetaData);
-         recordAnalytics({location: window.location, title: (props.isCopy ? "Copy" : props.id ? "Edit" : "New") + ": " + tableMetaData.label});
-
-         setupFieldRules(tableMetaData);
-
-         const metaData = await qController.loadMetaData();
-         setMetaData(metaData);
-
-         /////////////////////////////////////////////////
-         // define the sections, e.g., for the left-bar //
-         /////////////////////////////////////////////////
-         const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
+         setAsyncLoadInited(true);
+         (async () =>
          {
-            const widget = metaData.widgets.get(section.widgetName);
-            if(widget)
+            const tableMetaData = await qController.loadTableMetaData(tableName);
+            setTableMetaData(tableMetaData);
+            recordAnalytics({location: window.location, title: (props.isCopy ? "Copy" : props.id ? "Edit" : "New") + ": " + tableMetaData.label});
+
+            setupFieldRules(tableMetaData);
+
+            const metaData = await qController.loadMetaData();
+            setMetaData(metaData);
+
+            /////////////////////////////////////////////////
+            // define the sections, e.g., for the left-bar //
+            /////////////////////////////////////////////////
+            const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
             {
-               if(widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
+               const widget = metaData?.widgets.get(section.widgetName);
+               if (widget)
                {
-                  return (true);
+                  if (widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
+                  {
+                     return (true);
+                  }
+
+                  if (widget.type == "filterAndColumnsSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
+                  {
+                     return (true);
+                  }
                }
 
-               if(widget.type == "reportSetup" || widget.type == "pivotTableSetup" || widget.type == "dynamicForm")
-               {
-                  return (true);
-               }
-            }
+               return (false);
+            });
+            setTableSections(tableSections);
 
-            return (false);
-         });
-         setTableSections(tableSections);
-
-         const fieldArray = [] as QFieldMetaData[];
-         const sortedKeys = [...tableMetaData.fields.keys()].sort();
-         sortedKeys.forEach((key) =>
-         {
-            const fieldMetaData = tableMetaData.fields.get(key);
-            fieldArray.push(fieldMetaData);
-         });
-
-         /////////////////////////////////////////////////////////////////////////////////////////
-         // if doing an edit or copy, fetch the record and pre-populate the form values from it //
-         /////////////////////////////////////////////////////////////////////////////////////////
-         let record: QRecord = null;
-         let defaultDisplayValues = new Map<string, string>();
-         if (props.id !== null)
-         {
-            record = await qController.get(tableName, props.id);
-            setRecord(record);
-            recordAnalytics({category: "tableEvents", action: props.isCopy ? "copy" : "edit", label: tableMetaData?.label + " / " + record?.recordLabel});
-
-            const titleVerb = props.isCopy ? "Copy" : "Edit";
-            setFormTitle(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
-
-            if (!props.isModal)
+            const fieldArray = [] as QFieldMetaData[];
+            const sortedKeys = [...tableMetaData.fields.keys()].sort();
+            sortedKeys.forEach((key) =>
             {
-               setPageHeader(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
-            }
-
-            tableMetaData.fields.forEach((fieldMetaData, key) =>
-            {
-               if (props.isCopy && fieldMetaData.name == tableMetaData.primaryKeyField)
-               {
-                  return;
-               }
-               initialValues[key] = record.values.get(key);
+               const fieldMetaData = tableMetaData.fields.get(key);
+               fieldArray.push(fieldMetaData);
             });
 
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // these checks are only for updating records, if copying, it is actually an insert, which is checked after this block //
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            if (!props.isCopy)
+            /////////////////////////////////////////////////////////////////////////////////////////
+            // if doing an edit or copy, fetch the record and pre-populate the form values from it //
+            /////////////////////////////////////////////////////////////////////////////////////////
+            let record: QRecord = null;
+            let defaultDisplayValues = new Map<string, string>();
+            if (props.id !== null)
+            {
+               record = await qController.get(tableName, props.id);
+               setRecord(record);
+               recordAnalytics({category: "tableEvents", action: props.isCopy ? "copy" : "edit", label: tableMetaData?.label + " / " + record?.recordLabel});
+
+               const titleVerb = props.isCopy ? "Copy" : "Edit";
+               setFormTitle(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
+
+               if (!props.isModal)
+               {
+                  setPageHeader(`${titleVerb} ${tableMetaData?.label}: ${record?.recordLabel}`);
+               }
+
+               tableMetaData.fields.forEach((fieldMetaData, key) =>
+               {
+                  if (props.isCopy && fieldMetaData.name == tableMetaData.primaryKeyField)
+                  {
+                     return;
+                  }
+                  initialValues[key] = record.values.get(key);
+               });
+
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // these checks are only for updating records, if copying, it is actually an insert, which is checked after this block //
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               if (!props.isCopy)
+               {
+                  if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
+                  {
+                     setNotAllowedError("Records may not be edited in this table");
+                  }
+                  else if (!tableMetaData.editPermission)
+                  {
+                     setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
+                  }
+               }
+            }
+            else
+            {
+               ///////////////////////////////////////////
+               // else handle preparing to do an insert //
+               ///////////////////////////////////////////
+               setFormTitle(`Creating New ${tableMetaData?.label}`);
+               recordAnalytics({category: "tableEvents", action: "new", label: tableMetaData?.label});
+
+               if (!props.isModal)
+               {
+                  setPageHeader(`Creating New ${tableMetaData?.label}`);
+               }
+
+               ////////////////////////////////////////////////////////////////////////////////////////////////
+               // if default values were supplied for a new record, then populate initialValues, for formik. //
+               ////////////////////////////////////////////////////////////////////////////////////////////////
+               for (let i = 0; i < fieldArray.length; i++)
+               {
+                  const fieldMetaData = fieldArray[i];
+                  const fieldName = fieldMetaData.name;
+                  const defaultValue = (defaultValues && defaultValues[fieldName]) ? defaultValues[fieldName] : fieldMetaData.defaultValue;
+                  if (defaultValue)
+                  {
+                     initialValues[fieldName] = defaultValue;
+
+                     ///////////////////////////////////////////////////////////////////////////////////////////
+                     // we need to set the initialDisplayValue for possible value fields with a default value //
+                     // so, look them up here now if needed                                                   //
+                     ///////////////////////////////////////////////////////////////////////////////////////////
+                     if (fieldMetaData.possibleValueSourceName)
+                     {
+                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
+                        if (results && results.length > 0)
+                        {
+                           defaultDisplayValues.set(fieldName, results[0].label);
+                        }
+                     }
+                  }
+               }
+            }
+
+            ///////////////////////////////////////////////////
+            // if an override heading was passed in, use it. //
+            ///////////////////////////////////////////////////
+            if (props.overrideHeading)
+            {
+               setFormTitle(props.overrideHeading);
+               if (!props.isModal)
+               {
+                  setPageHeader(props.overrideHeading);
+               }
+            }
+
+            //////////////////////////////////////
+            // check capabilities & permissions //
+            //////////////////////////////////////
+            if (props.isCopy || !props.id)
+            {
+               if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
+               {
+                  setNotAllowedError("Records may not be created in this table");
+               }
+               else if (!tableMetaData.insertPermission)
+               {
+                  setNotAllowedError(`You do not have permission to create ${tableMetaData.label} records`);
+               }
+            }
+            else
             {
                if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
                {
@@ -556,201 +649,123 @@ function EntityForm(props: Props): JSX.Element
                   setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
                }
             }
-         }
-         else
-         {
-            ///////////////////////////////////////////
-            // else handle preparing to do an insert //
-            ///////////////////////////////////////////
-            setFormTitle(`Creating New ${tableMetaData?.label}`);
-            recordAnalytics({category: "tableEvents", action: "new", label: tableMetaData?.label});
 
-            if (!props.isModal)
-            {
-               setPageHeader(`Creating New ${tableMetaData?.label}`);
-            }
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            // if default values were supplied for a new record, then populate initialValues, for formik. //
-            ////////////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////
+            // make sure all initialValues are properly formatted for the form //
+            /////////////////////////////////////////////////////////////////////
             for (let i = 0; i < fieldArray.length; i++)
             {
                const fieldMetaData = fieldArray[i];
-               const fieldName = fieldMetaData.name;
-               const defaultValue = (defaultValues && defaultValues[fieldName]) ? defaultValues[fieldName] : fieldMetaData.defaultValue;
-               if (defaultValue)
+               if (fieldMetaData.type == QFieldType.DATE_TIME && initialValues[fieldMetaData.name])
                {
-                  initialValues[fieldName] = defaultValue;
+                  initialValues[fieldMetaData.name] = ValueUtils.formatDateTimeValueForForm(initialValues[fieldMetaData.name]);
+               }
+            }
 
-                  ///////////////////////////////////////////////////////////////////////////////////////////
-                  // we need to set the initialDisplayValue for possible value fields with a default value //
-                  // so, look them up here now if needed                                                   //
-                  ///////////////////////////////////////////////////////////////////////////////////////////
-                  if (fieldMetaData.possibleValueSourceName)
+            setInitialValues(initialValues);
+
+            /////////////////////////////////////////////////////////
+            // get formField and formValidation objects for Formik //
+            /////////////////////////////////////////////////////////
+            const {
+               dynamicFormFields,
+               formValidations,
+            } = DynamicFormUtils.getFormData(fieldArray, disabledFields);
+            DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, null, record ? record.displayValues : defaultDisplayValues);
+
+            /////////////////////////////////////
+            // group the formFields by section //
+            /////////////////////////////////////
+            const dynamicFormFieldsBySection = new Map<string, any>();
+            let t1sectionName;
+            let t1section;
+            const nonT1Sections: QTableSection[] = [];
+            const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
+            const newChildListWidgetData: { [name: string]: ChildRecordListData } = {};
+
+            for (let i = 0; i < tableSections.length; i++)
+            {
+               const section = tableSections[i];
+               const sectionDynamicFormFields: any[] = [];
+
+               if (section.isHidden)
+               {
+                  continue;
+               }
+
+               const hasFields = section.fieldNames && section.fieldNames.length > 0;
+               if (hasFields)
+               {
+                  for (let j = 0; j < section.fieldNames.length; j++)
                   {
-                     const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
-                     if (results && results.length > 0)
+                     const fieldName = section.fieldNames[j];
+                     const field = tableMetaData.fields.get(fieldName);
+
+                     if (!field)
                      {
-                        defaultDisplayValues.set(fieldName, results[0].label);
+                        console.log(`Omitting un-found field ${fieldName} from form`);
+                        continue;
+                     }
+
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                     // if id !== null (and we're not copying) - means we're on the edit screen -- show all fields on the edit screen. //
+                     // || (or) we're on the insert screen in which case, only show editable fields.                                   //
+                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                     if ((props.id !== null && !props.isCopy) || field.isEditable)
+                     {
+                        sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
                      }
                   }
-               }
-            }
-         }
 
-         ///////////////////////////////////////////////////
-         // if an override heading was passed in, use it. //
-         ///////////////////////////////////////////////////
-         if (props.overrideHeading)
-         {
-            setFormTitle(props.overrideHeading);
-            if (!props.isModal)
-            {
-               setPageHeader(props.overrideHeading);
-            }
-         }
-
-         //////////////////////////////////////
-         // check capabilities & permissions //
-         //////////////////////////////////////
-         if (props.isCopy || !props.id)
-         {
-            if (!tableMetaData.capabilities.has(Capability.TABLE_INSERT))
-            {
-               setNotAllowedError("Records may not be created in this table");
-            }
-            else if (!tableMetaData.insertPermission)
-            {
-               setNotAllowedError(`You do not have permission to create ${tableMetaData.label} records`);
-            }
-         }
-         else
-         {
-            if (!tableMetaData.capabilities.has(Capability.TABLE_UPDATE))
-            {
-               setNotAllowedError("Records may not be edited in this table");
-            }
-            else if (!tableMetaData.editPermission)
-            {
-               setNotAllowedError(`You do not have permission to edit ${tableMetaData.label} records`);
-            }
-         }
-
-         /////////////////////////////////////////////////////////////////////
-         // make sure all initialValues are properly formatted for the form //
-         /////////////////////////////////////////////////////////////////////
-         for (let i = 0; i < fieldArray.length; i++)
-         {
-            const fieldMetaData = fieldArray[i];
-            if (fieldMetaData.type == QFieldType.DATE_TIME && initialValues[fieldMetaData.name])
-            {
-               initialValues[fieldMetaData.name] = ValueUtils.formatDateTimeValueForForm(initialValues[fieldMetaData.name]);
-            }
-         }
-
-         setInitialValues(initialValues);
-
-         /////////////////////////////////////////////////////////
-         // get formField and formValidation objects for Formik //
-         /////////////////////////////////////////////////////////
-         const {
-            dynamicFormFields,
-            formValidations,
-         } = DynamicFormUtils.getFormData(fieldArray, disabledFields);
-         DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fieldArray, tableName, null, record ? record.displayValues : defaultDisplayValues);
-
-         /////////////////////////////////////
-         // group the formFields by section //
-         /////////////////////////////////////
-         const dynamicFormFieldsBySection = new Map<string, any>();
-         let t1sectionName;
-         let t1section;
-         const nonT1Sections: QTableSection[] = [];
-         const newRenderedWidgetSections: { [name: string]: JSX.Element } = {};
-         const newChildListWidgetData: { [name: string]: ChildRecordListData } = {};
-
-         for (let i = 0; i < tableSections.length; i++)
-         {
-            const section = tableSections[i];
-            const sectionDynamicFormFields: any[] = [];
-
-            if (section.isHidden)
-            {
-               continue;
-            }
-
-            const hasFields = section.fieldNames && section.fieldNames.length > 0;
-            if(hasFields)
-            {
-               for (let j = 0; j < section.fieldNames.length; j++)
-               {
-                  const fieldName = section.fieldNames[j];
-                  const field = tableMetaData.fields.get(fieldName);
-
-                  if (!field)
+                  if (sectionDynamicFormFields.length === 0)
                   {
-                     console.log(`Omitting un-found field ${fieldName} from form`);
+                     ////////////////////////////////////////////////////////////////////////////////////////////////
+                     // in case there are no active fields in this section, remove it from the tableSections array //
+                     ////////////////////////////////////////////////////////////////////////////////////////////////
+                     tableSections.splice(i, 1);
+                     i--;
                      continue;
                   }
-
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // if id !== null (and we're not copying) - means we're on the edit screen -- show all fields on the edit screen. //
-                  // || (or) we're on the insert screen in which case, only show editable fields.                                   //
-                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  if ((props.id !== null && !props.isCopy) || field.isEditable)
+                  else
                   {
-                     sectionDynamicFormFields.push(dynamicFormFields[fieldName]);
+                     dynamicFormFieldsBySection.set(section.name, sectionDynamicFormFields);
                   }
-               }
-
-               if (sectionDynamicFormFields.length === 0)
-               {
-                  ////////////////////////////////////////////////////////////////////////////////////////////////
-                  // in case there are no active fields in this section, remove it from the tableSections array //
-                  ////////////////////////////////////////////////////////////////////////////////////////////////
-                  tableSections.splice(i, 1);
-                  i--;
-                  continue;
                }
                else
                {
-                  dynamicFormFieldsBySection.set(section.name, sectionDynamicFormFields);
+                  const widgetMetaData = metaData?.widgets.get(section.widgetName);
+                  const widgetData = await qController.widget(widgetMetaData.name, makeQueryStringWithIdAndObject(tableMetaData, defaultValues));
+
+                  newRenderedWidgetSections[section.widgetName] = getWidgetSection(widgetMetaData, widgetData);
+                  newChildListWidgetData[section.widgetName] = widgetData;
+               }
+
+               //////////////////////////////////////
+               // capture the tier1 section's name //
+               //////////////////////////////////////
+               if (section.tier === "T1")
+               {
+                  t1sectionName = section.name;
+                  t1section = section;
+               }
+               else
+               {
+                  nonT1Sections.push(section);
                }
             }
-            else
-            {
-               const widgetMetaData = metaData.widgets.get(section.widgetName);
-               const widgetData = await qController.widget(widgetMetaData.name, makeQueryStringWithIdAndObject(tableMetaData, defaultValues));
 
-               newRenderedWidgetSections[section.widgetName] = getWidgetSection(widgetMetaData, widgetData);
-               newChildListWidgetData[section.widgetName] = widgetData;
-            }
+            setT1SectionName(t1sectionName);
+            setT1Section(t1section);
+            setNonT1Sections(nonT1Sections);
+            setFormFields(dynamicFormFieldsBySection);
+            setValidations(Yup.object().shape(formValidations));
+            setRenderedWidgetSections(newRenderedWidgetSections);
+            setChildListWidgetData(newChildListWidgetData);
 
-            //////////////////////////////////////
-            // capture the tier1 section's name //
-            //////////////////////////////////////
-            if (section.tier === "T1")
-            {
-               t1sectionName = section.name;
-               t1section = section;
-            }
-            else
-            {
-               nonT1Sections.push(section);
-            }
-         }
-
-         setT1SectionName(t1sectionName);
-         setT1Section(t1section);
-         setNonT1Sections(nonT1Sections);
-         setFormFields(dynamicFormFieldsBySection);
-         setValidations(Yup.object().shape(formValidations));
-         setRenderedWidgetSections(newRenderedWidgetSections);
-         setChildListWidgetData(newChildListWidgetData);
-
-         forceUpdate();
-      })();
-   }
+            forceUpdate();
+         })();
+      }
+   }, []);
 
 
    //////////////////////////////////////////////////////////////////
@@ -870,16 +885,28 @@ function EntityForm(props: Props): JSX.Element
          let haveAssociationsToPost = false;
          for (let name of Object.keys(childListWidgetData))
          {
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // if cannot find association name, continue loop, since cannot tell backend which association this is for //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
             const manageAssociationName = metaData.widgets.get(name)?.defaultValues?.get("manageAssociationName");
             if (!manageAssociationName)
             {
                console.log(`Cannot send association data to backend - missing a manageAssociationName defaultValue in widget meta data for widget name ${name}`);
+               continue;
             }
-            associationsToPost[manageAssociationName] = [];
-            haveAssociationsToPost = true;
-            for (let i = 0; i < childListWidgetData[name].queryOutput?.records?.length; i++)
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // if the records array exists, add to associations to post - note: even if empty list, the backend will expect this //
+            // association name to be present if it is to act on it (for the case when all associations have been deleted)       //
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if (childListWidgetData[name].queryOutput.records)
             {
-               associationsToPost[manageAssociationName].push(childListWidgetData[name].queryOutput.records[i].values);
+               associationsToPost[manageAssociationName] = [];
+               haveAssociationsToPost = true;
+               for (let i = 0; i < childListWidgetData[name].queryOutput?.records?.length; i++)
+               {
+                  associationsToPost[manageAssociationName].push(childListWidgetData[name].queryOutput.records[i].values);
+               }
             }
          }
          if (haveAssociationsToPost)
@@ -1000,19 +1027,19 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   function makeQueryStringWithIdAndObject(tableMetaData: QTableMetaData, object: {[key: string]: any})
+   function makeQueryStringWithIdAndObject(tableMetaData: QTableMetaData, object: { [key: string]: any })
    {
       const queryParamsArray: string[] = [];
-      if(props.id)
+      if (props.id)
       {
-         queryParamsArray.push(`${tableMetaData.primaryKeyField}=${encodeURIComponent(props.id)}`)
+         queryParamsArray.push(`${tableMetaData.primaryKeyField}=${encodeURIComponent(props.id)}`);
       }
 
-      if(object)
+      if (object)
       {
          for (let key in object)
          {
-            queryParamsArray.push(`${key}=${encodeURIComponent(object[key])}`)
+            queryParamsArray.push(`${key}=${encodeURIComponent(object[key])}`);
          }
       }
 
@@ -1023,7 +1050,7 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   async function reloadWidget(widgetName: string, additionalQueryParamsForWidget: {[key: string]: any })
+   async function reloadWidget(widgetName: string, additionalQueryParamsForWidget: { [key: string]: any })
    {
       const widgetData = await qController.widget(widgetName, makeQueryStringWithIdAndObject(tableMetaData, additionalQueryParamsForWidget));
       const widgetMetaData = metaData.widgets.get(widgetName);
@@ -1045,11 +1072,11 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     ** process a form-field having a changed value (e.g., apply field rules).
     *******************************************************************************/
-   function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: {[fieldName: string]: any})
+   function handleChangedFieldValue(fieldName: string, oldValue: any, newValue: any, valueChangesToMake: { [fieldName: string]: any })
    {
       for (let fieldRule of fieldRules)
       {
-         if(fieldRule.trigger == FieldRuleTrigger.ON_CHANGE && fieldRule.sourceField == fieldName)
+         if (fieldRule.trigger == FieldRuleTrigger.ON_CHANGE && fieldRule.sourceField == fieldName)
          {
             switch (fieldRule.action)
             {
@@ -1058,7 +1085,7 @@ function EntityForm(props: Props): JSX.Element
                   valueChangesToMake[fieldRule.targetField] = null;
                   break;
                case FieldRuleAction.RELOAD_WIDGET:
-                  const additionalQueryParamsForWidget: {[key: string]: any} = {};
+                  const additionalQueryParamsForWidget: { [key: string]: any } = {};
                   additionalQueryParamsForWidget[fieldRule.sourceField] = newValue;
                   reloadWidget(fieldRule.targetWidget, additionalQueryParamsForWidget);
             }
@@ -1148,21 +1175,21 @@ function EntityForm(props: Props): JSX.Element
                         /////////////////////////////////////////////////
                         // if we have values from formik, look at them //
                         /////////////////////////////////////////////////
-                        if(values)
+                        if (values)
                         {
                            ////////////////////////////////////////////////////////////////////////
                            // use stringified values as cheap/easy way to see if any are changed //
                            ////////////////////////////////////////////////////////////////////////
                            const newFormValuesJSON = JSON.stringify(values);
-                           if(formValuesJSON != newFormValuesJSON)
+                           if (formValuesJSON != newFormValuesJSON)
                            {
-                              const valueChangesToMake: {[fieldName: string]: any} = {};
+                              const valueChangesToMake: { [fieldName: string]: any } = {};
 
                               ////////////////////////////////////////////////////////////////////
                               // if the form is dirty (e.g., we're not doing the initial load), //
                               // then process rules for any changed fields                      //
                               ////////////////////////////////////////////////////////////////////
-                              if(dirty)
+                              if (dirty)
                               {
                                  for (let fieldName in values)
                                  {
@@ -1194,7 +1221,7 @@ function EntityForm(props: Props): JSX.Element
                                  setFieldValue(fieldName, valueChangesToMake[fieldName], false);
                               }
 
-                              setFormValues(formValues)
+                              setFormValues(formValues);
                               setFormValuesJSON(JSON.stringify(values));
                            }
                         }

@@ -94,6 +94,7 @@ interface Props
    isModal?: boolean;
    initialQueryFilter?: QQueryFilter;
    initialColumns?: QQueryColumns;
+   allowVariables?: boolean;
 }
 
 ///////////////////////////////////////////////////////
@@ -125,7 +126,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, initialColumns}: Props, ref) =>
+const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -2884,6 +2885,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
                      gridApiRef={gridApiRef}
                      mode={mode}
                      queryScreenUsage={usage}
+                     allowVariables={allowVariables}
                      setMode={doSetMode}
                      savedViewsComponent={savedViewsComponent}
                      columnMenuComponent={buildColumnMenu()}
@@ -2912,6 +2914,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, initialQueryFilter, init
                                  metaData: metaData,
                                  queryFilter: queryFilter,
                                  updateFilter: doSetQueryFilter,
+                                 allowVariables: allowVariables
                               }
                         }}
                         localeText={{

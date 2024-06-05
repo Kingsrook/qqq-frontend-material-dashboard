@@ -39,7 +39,7 @@ import FilterCriteriaPaster from "qqq/components/query/FilterCriteriaPaster";
 import {OperatorOption, ValueMode} from "qqq/components/query/FilterCriteriaRow";
 import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
-import React, {SyntheticEvent, useReducer, useState} from "react";
+import React, {SyntheticEvent, useReducer} from "react";
 
 interface Props
 {
@@ -50,6 +50,7 @@ interface Props
    valueChangeHandler: (event: React.ChangeEvent | SyntheticEvent, valueIndex?: number | "all", newValue?: any) => void;
    initiallyOpenMultiValuePvs?: boolean;
    queryScreenUsage?: QueryScreenUsage;
+   allowVariables?: boolean;
 }
 
 FilterCriteriaRowValues.defaultProps =
@@ -187,10 +188,9 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
 };
 
 
-function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler, initiallyOpenMultiValuePvs, queryScreenUsage}: Props): JSX.Element
+function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler, initiallyOpenMultiValuePvs, queryScreenUsage, allowVariables}: Props): JSX.Element
 {
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
-   const [allowVariables, setAllowVariables] = useState(queryScreenUsage == "reportSetup");
 
    if (!operatorOption)
    {

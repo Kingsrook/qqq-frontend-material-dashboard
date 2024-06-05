@@ -94,7 +94,7 @@ const BACKOFF_AMOUNT = 1.5;
 ////////////////////////////////////////////////////////////////////////////
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
 {
-}
+};
 
 function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
@@ -134,7 +134,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
 
-   const [renderedWidgets, setRenderedWidgets] = useState({} as {[step: string]: {[widgetName: string]: any}});
+   const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
 
    const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
 
@@ -238,15 +238,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       setShowFullHelpText(!showFullHelpText);
    };
 
-   const download = (processValues: {[key: string]: string}) =>
+   const download = (processValues: { [key: string]: string }) =>
    {
       let url;
       let fileName = processValues.downloadFileName;
-      if(processValues.serverFilePath)
+      if (processValues.serverFilePath)
       {
          url = `/download/${encodeURIComponent(processValues.downloadFileName)}?filePath=${encodeURIComponent(processValues.serverFilePath)}`;
       }
-      else if(processValues.storageTableName && processValues.storageReference)
+      else if (processValues.storageTableName && processValues.storageReference)
       {
          url = `/download/${encodeURIComponent(processValues.downloadFileName)}?storageTableName=${encodeURIComponent(processValues.storageTableName)}&storageReference=${encodeURIComponent(processValues.storageReference)}`;
       }
@@ -291,19 +291,19 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
     *******************************************************************************/
    function renderWidget(widgetName: string)
    {
-      if(!renderedWidgets[activeStep.name])
+      if (!renderedWidgets[activeStep.name])
       {
          renderedWidgets[activeStep.name] = {};
          setRenderedWidgets(renderedWidgets);
       }
 
-      if(renderedWidgets[activeStep.name][widgetName])
+      if (renderedWidgets[activeStep.name][widgetName])
       {
          return renderedWidgets[activeStep.name][widgetName];
       }
 
       const widgetMetaData = qInstance.widgets.get(widgetName);
-      if(!widgetMetaData)
+      if (!widgetMetaData)
       {
          return (<Alert color="error">Unrecognized widget name: {widgetName}</Alert>);
       }
@@ -311,12 +311,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       const queryStringParts: string[] = [];
       for (let name in processValues)
       {
-         queryStringParts.push(`${name}=${encodeURIComponent(processValues[name])}`)
+         queryStringParts.push(`${name}=${encodeURIComponent(processValues[name])}`);
       }
 
       const renderedWidget = (<Box m={-2}>
          <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} />
-      </Box>)
+      </Box>);
       renderedWidgets[activeStep.name][widgetName] = renderedWidget;
       return renderedWidget;
    }
@@ -367,8 +367,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                </MDTypography>
                <Box component="div" py={3}>
                   <Grid container justifyContent="flex-end" spacing={3}>
-                     {isModal ? <QCancelButton onClickHandler={handleCancelClicked} disabled={false} label="Close" />
-                        : !isWidget && <QCancelButton onClickHandler={handleCancelClicked} disabled={false} />
+                     {isModal ? <QCancelButton onClickHandler={() => handleCancelClicked(true)} disabled={false} label="Close" />
+                        : !isWidget && <QCancelButton onClickHandler={() => handleCancelClicked(true)} disabled={false} />
                      }
                   </Grid>
                </Box>
@@ -500,7 +500,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                   // edit the formData object to just include those.                      //
                   //////////////////////////////////////////////////////////////////////////
                   let formDataToUse = formData;
-                  if(component.values && component.values.includeFieldNames)
+                  if (component.values && component.values.includeFieldNames)
                   {
                      formDataToUse = Object.assign({}, formData);
 
@@ -608,21 +608,21 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         }
                         {
                            component.type === QComponentType.EDIT_FORM &&
-                              <>
-                                 {
-                                    component.values?.sectionLabel ?
-                                       <Box py={1.5}>
-                                          <Card sx={{scrollMarginTop: "20px"}}>
-                                             <MDTypography variant="h5" p={3} pl={2} pb={1}>
-                                                {component.values?.sectionLabel}
-                                             </MDTypography>
-                                             <Box pt={0} p={2}>
-                                                <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
-                                             </Box>
-                                          </Card>
-                                       </Box> : <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
-                                 }
-                              </>
+                           <>
+                              {
+                                 component.values?.sectionLabel ?
+                                    <Box py={1.5}>
+                                       <Card sx={{scrollMarginTop: "20px"}}>
+                                          <MDTypography variant="h5" p={3} pl={2} pb={1}>
+                                             {component.values?.sectionLabel}
+                                          </MDTypography>
+                                          <Box pt={0} p={2}>
+                                             <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                                          </Box>
+                                       </Card>
+                                    </Box> : <QDynamicForm formData={formDataToUse} helpRoles={helpRoles} helpContentKeyPrefix={`process:${processName};`} />
+                              }
+                           </>
                         }
                         {
                            component.type === QComponentType.VIEW_FORM && step.viewFields && (
@@ -1079,14 +1079,14 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setProcessValues(qJobComplete.values);
             setQJobRunning(null);
 
-            if(formikSetFieldValueFunction)
+            if (formikSetFieldValueFunction)
             {
                //////////////////////////////////
                // reset field values in formik //
                //////////////////////////////////
                for (let key in qJobComplete.values)
                {
-                  if(Object.hasOwn(formFields, key))
+                  if (Object.hasOwn(formFields, key))
                   {
                      console.log(`(re)setting form field [${key}] to [${qJobComplete.values[key]}]`);
                      formikSetFieldValueFunction(key, qJobComplete.values[key]);
@@ -1098,7 +1098,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
-            if(updatedFrontendStepList)
+            if (updatedFrontendStepList)
             {
                setSteps(updatedFrontendStepList);
             }
@@ -1401,8 +1401,20 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       });
    };
 
-   const handleCancelClicked = () =>
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const handleCancelClicked = (isClose: boolean) =>
    {
+      //////////////////////////////////////////////////////////////////
+      // unless this is a 'close', then tell backend we're cancelling //
+      //////////////////////////////////////////////////////////////////
+      if (!isClose)
+      {
+         Client.getInstance().processCancel(processName, processUUID);
+      }
+
       if (isModal && closeModalHandler)
       {
          closeModalHandler(null, "cancelClicked");
@@ -1414,6 +1426,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       const path = pathParts.join("/");
       navigate(path, {replace: true});
    };
+
 
    const mainCardStyles: any = {};
    const formStyles: any = {};
@@ -1490,8 +1503,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                      <Box p={3}>
                         <Box pb={isWidget ? 6 : "initial"}>
                            {/***************************************************************************
-                         ** step content - e.g., the appropriate form or other screen for the step **
-                         ***************************************************************************/}
+                            ** step content - e.g., the appropriate form or other screen for the step **
+                            ***************************************************************************/}
                            {getDynamicStepContent(
                               activeStepIndex,
                               activeStep,
@@ -1507,8 +1520,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                               setFieldValue,
                            )}
                            {/********************************
-                         ** back &| next/submit buttons **
-                         ********************************/}
+                            ** back &| next/submit buttons **
+                            ********************************/}
                            <Box mt={6} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
                               {true || activeStepIndex === 0 ? (
                                  <Box />
@@ -1526,7 +1539,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                     )}
                                     {
                                        noMoreSteps && <QCancelButton
-                                          onClickHandler={handleCancelClicked}
+                                          onClickHandler={() => handleCancelClicked(true)}
                                           label={isModal ? "Close" : "Return"}
                                           iconName={isModal ? "cancel" : "arrow_back"}
                                           disabled={isSubmitting} />
@@ -1537,7 +1550,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                              <Grid container justifyContent="flex-end" spacing={3}>
                                                 {
                                                    !isWidget && (
-                                                      <QCancelButton onClickHandler={handleCancelClicked} disabled={isSubmitting} />
+                                                      <QCancelButton onClickHandler={() => handleCancelClicked(false)} disabled={isSubmitting} />
                                                    )
                                                 }
                                                 <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
@@ -1552,13 +1565,13 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                      </Box>
                   </Card>
                </Form>
-            )
+            );
          }}
       </Formik>
    );
 
    const body = (
-      <Box py={3} mb={20}>
+      <Box py={3} mb={20} className="processRun">
          <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
             <Grid item xs={12} lg={10} xl={8}>
                {form}

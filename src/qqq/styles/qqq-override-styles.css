@@ -421,6 +421,14 @@ input[type="search"]::-webkit-search-results-decoration
    font-size: 2rem !important;
 }
 
+.dashboard-table-actions-icon
+{
+   font-size: 1.5rem !important;
+   position: relative;
+   top: -5px;
+   margin-right: 8px;
+}
+
 .dashboard-schedule-icon
 {
    font-size: 1.1rem !important;
@@ -703,17 +711,13 @@ input[type="search"]::-webkit-search-results-decoration
    padding: 24px;
 }
 
-.recordView .widget .recordGridWidget
-{
-   margin: -8px;
-}
-
 .MuiPickersDay-root.Mui-selected, .MuiPickersDay-root.MuiPickersDay-dayWithMargin:hover
 {
    color: white;
    background-color: #0062FF !important;
 }
 
+/* several styles below here for user-defined alert inside helpContent */
 .helpContentAlert
 {
    padding: 6px 16px;
@@ -775,4 +779,11 @@ input[type="search"]::-webkit-search-results-decoration
 .helpContentAlert.error .MuiAlert-icon .material-icons-round
 {
    color: #F44335;
+}
+
+/* the alert widget, was built with minimal (no?) margins, for embedding in
+ a parent widget; but for using it on a process, give it some breathing room */
+.processRun .widget .MuiAlert-root
+{
+   margin: 2rem 1rem;
 }

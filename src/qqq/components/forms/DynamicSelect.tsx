@@ -97,7 +97,7 @@ export const getAutocompleteOutlinedStyle = (isDisabled: boolean) =>
          borderColor: inputBorderColor
       }
    });
-}
+};
 
 
 const qController = Client.getInstance();
@@ -108,36 +108,36 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
    const [firstRender, setFirstRender] = useState(true);
-   const [otherValuesWhenResultsWereLoaded, setOtherValuesWhenResultsWereLoaded] = useState(JSON.stringify(Object.fromEntries((otherValues))))
+   const [otherValuesWhenResultsWereLoaded, setOtherValuesWhenResultsWereLoaded] = useState(JSON.stringify(Object.fromEntries((otherValues))));
 
    useEffect(() =>
    {
-      if(tableName && processName)
+      if (tableName && processName)
       {
-         console.log("DynamicSelect - you may not provide both a tableName and a processName")
+         console.log("DynamicSelect - you may not provide both a tableName and a processName");
       }
-      if(tableName && !fieldName)
+      if (tableName && !fieldName)
       {
          console.log("DynamicSelect - if you provide a tableName, you must also provide a fieldName");
       }
-      if(processName && !fieldName)
+      if (processName && !fieldName)
       {
          console.log("DynamicSelect - if you provide a processName, you must also provide a fieldName");
       }
-      if(!fieldName && !possibleValueSourceName)
+      if (!fieldName && !possibleValueSourceName)
       {
          console.log("DynamicSelect - you must provide either a fieldName (and a tableName or processName) or a possibleValueSourceName");
       }
-      if(fieldName && !possibleValueSourceName)
+      if (fieldName && !possibleValueSourceName)
       {
-         if(!tableName || !processName)
+         if (!tableName || !processName)
          {
             console.log("DynamicSelect - if you provide a fieldName and not a possibleValueSourceName, then you must also provide a tableName or processName");
          }
       }
-      if(possibleValueSourceName)
+      if (possibleValueSourceName)
       {
-         if(tableName || processName)
+         if (tableName || processName)
          {
             console.log("DynamicSelect - if you provide a possibleValueSourceName, you should not also provide a tableName or processName");
          }
@@ -173,7 +173,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
 
    useEffect(() =>
    {
-      if(firstRender)
+      if (firstRender)
       {
          // console.log("First render, so not searching...");
          setFirstRender(false);
@@ -196,7 +196,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
          // console.log(`doing a search with ${searchTerm}`);
          const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
 
-         if(tableMetaData == null && tableName)
+         if (tableMetaData == null && tableName)
          {
             let tableMetaData: QTableMetaData = await qController.loadTableMetaData(tableName);
             setTableMetaData(tableMetaData);
@@ -207,7 +207,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
          // console.log(`${results}`);
          if (active)
          {
-            setOptions([ ...results ]);
+            setOptions([...results]);
          }
       })();
 
@@ -215,12 +215,12 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       {
          active = false;
       };
-   }, [ searchTerm ]);
+   }, [searchTerm]);
 
    // todo - finish... call it in onOpen?
    const reloadIfOtherValuesAreChanged = () =>
    {
-      if(JSON.stringify(Object.fromEntries(otherValues)) != otherValuesWhenResultsWereLoaded)
+      if (JSON.stringify(Object.fromEntries(otherValues)) != otherValuesWhenResultsWereLoaded)
       {
          (async () =>
          {
@@ -229,16 +229,16 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             console.log("Refreshing possible values...");
             const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
             setLoading(false);
-            setOptions([ ...results ]);
+            setOptions([...results]);
             setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));
          })();
       }
-   }
+   };
 
    const inputChanged = (event: React.SyntheticEvent, value: string, reason: string) =>
    {
       // console.log(`input changed.  Reason: ${reason}, setting search term to ${value}`);
-      if(reason !== "reset")
+      if (reason !== "reset")
       {
          // console.log(` -> setting search term to ${value}`);
          setSearchTerm(value);
@@ -248,7 +248,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
    const handleBlur = (x: any) =>
    {
       setSearchTerm(null);
-   }
+   };
 
    const handleChanged = (event: React.SyntheticEvent, value: any | any[], reason: string, details?: string) =>
    {
@@ -256,9 +256,9 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       // console.log(value);
       setSearchTerm(null);
 
-      if(onChange)
+      if (onChange)
       {
-         if(isMultiple)
+         if (isMultiple)
          {
             onChange(value);
          }
@@ -267,7 +267,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             onChange(value ? new QPossibleValue(value) : null);
          }
       }
-      else if(setFieldValueRef && fieldName)
+      else if (setFieldValueRef && fieldName)
       {
          setFieldValueRef(fieldName, value ? value.id : null);
       }
@@ -280,7 +280,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       // get options whose text/label matches the input (e.g., not ids that match)   //
       /////////////////////////////////////////////////////////////////////////////////
       return (options);
-   }
+   };
 
    // @ts-ignore
    const renderOption = (props: Object, option: any, {selected}) =>
@@ -289,23 +289,24 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
 
       try
       {
-         const field = tableMetaData?.fields.get(fieldName)
-         if(field)
+         const field = tableMetaData?.fields.get(fieldName);
+         if (field)
          {
             const adornment = field.getAdornment(AdornmentType.CHIP);
-            if(adornment)
+            if (adornment)
             {
-               const color = adornment.getValue("color." + option.id) ?? "default"
+               const color = adornment.getValue("color." + option.id) ?? "default";
                const iconName = adornment.getValue("icon." + option.id) ?? null;
                const iconElement = iconName ? <Icon>{iconName}</Icon> : null;
                content = (<Chip label={option.label} color={color} icon={iconElement} size="small" variant="outlined" sx={{fontWeight: 500}} />);
             }
          }
       }
-      catch(e)
-      { }
+      catch (e)
+      {
+      }
 
-      if(isMultiple)
+      if (isMultiple)
       {
          content = (
             <>
@@ -327,7 +328,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             {content}
          </li>
       );
-   }
+   };
 
    const bulkEditSwitchChanged = () =>
    {
@@ -357,7 +358,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             {
                setOpen(true);
                // console.log("setting open...");
-               if(options.length == 0)
+               if (options.length == 0)
                {
                   // console.log("no options yet, so setting search term to ''...");
                   setSearchTerm("");
@@ -370,19 +371,19 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             isOptionEqualToValue={(option, value) => value !== null && value !== undefined && option.id === value.id}
             getOptionLabel={(option) =>
             {
-               if(option === null || option === undefined)
+               if (option === null || option === undefined)
                {
                   return ("");
                }
 
                // @ts-ignore
-               if(option && option.length)
+               if (option && option.length)
                {
                   // @ts-ignore
                   option = option[0];
                }
                // @ts-ignore
-               return option.label
+               return option.label;
             }}
             options={options}
             loading={loading}
@@ -446,7 +447,8 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
                   id={`bulkEditSwitch-${fieldName}`}
                   checked={switchChecked}
                   onClick={bulkEditSwitchChanged}
-                  sx={{top: "-4px",
+                  sx={{
+                     top: "-4px",
                      "& .MuiSwitch-track": {
                         height: 20,
                         borderRadius: 10,
@@ -465,7 +467,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
    else
    {
       return (
-         <Box mb={1.5}>
+         <Box>
             {autocomplete}
          </Box>
       );
