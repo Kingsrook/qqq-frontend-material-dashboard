@@ -320,7 +320,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                initialValues = criteria.values;
             }
          }
-         return <Box mb={-1.5}>
+         return <Box>
             <DynamicSelect
                tableName={table.name}
                fieldName={field.name}
