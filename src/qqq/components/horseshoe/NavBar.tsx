@@ -19,16 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Popper, InputAdornment} from "@mui/material";
+import {Popper, InputAdornment, Box} from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import QContext from "QContext";
 import QBreadcrumbs, {routeToLabel} from "qqq/components/horseshoe/Breadcrumbs";
@@ -45,7 +44,8 @@ interface Props
    isMini?: boolean;
 }
 
-interface HistoryEntry {
+interface HistoryEntry
+{
    id: number;
    path: string;
    label: string;
@@ -64,7 +64,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const route = useLocation().pathname.split("/").slice(1);
    const navigate = useNavigate();
 
-   const {pageHeader} = useContext(QContext);
+   const {pageHeader, setDotMenuOpen} = useContext(QContext);
 
    useEffect(() =>
    {
@@ -99,7 +99,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       const options = [] as any;
       history.entries.reverse().forEach((entry, index) =>
          options.push({label: `${entry.label} index`, id: index, key: index, path: entry.path, iconName: entry.iconName})
-      )
+      );
       setHistory(options);
 
       // Remove event listener on cleanup
@@ -111,7 +111,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const goToHistory = (path: string) =>
    {
       navigate(path);
-   }
+   };
 
    function buildHistoryEntries()
    {
@@ -119,7 +119,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
       const options = [] as any;
       history.entries.reverse().forEach((entry, index) =>
          options.push({label: entry.label, id: index, key: index, path: entry.path, iconName: entry.iconName})
-      )
+      );
       setHistory(options);
    }
 
@@ -133,12 +133,12 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
 
    const handleAutocompleteOnChange = (event: any, value: any, reason: any, details: any) =>
    {
-      if(value)
+      if (value)
       {
          goToHistory(value.path);
       }
       setAutocompleteValue(null);
-   }
+   };
 
    const CustomPopper = function (props: any)
    {
@@ -146,8 +146,8 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
          {...props}
          style={{whiteSpace: "nowrap", width: "auto"}}
          placement="bottom-end"
-      />)
-   }
+      />);
+   };
 
    const renderHistory = () =>
    {
@@ -166,7 +166,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             PopperComponent={CustomPopper}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             sx={recentlyViewedMenu}
-            renderInput={(params) => <TextField {...params}  label="Recently Viewed Records" InputProps={{
+            renderInput={(params) => <TextField {...params} label="Recently Viewed Records" InputProps={{
                ...params.InputProps,
                endAdornment: (
                   <InputAdornment position="end">
@@ -184,7 +184,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             )}
          />
       );
-   }
+   };
 
    // Styles for the navbar icons
    const iconsStyle = ({
@@ -210,18 +210,18 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
    const {pathToLabelMap} = useContext(QContext);
    const fullPathToLabel = (fullPath: string, route: string): string =>
    {
-      if(fullPath.endsWith("/"))
+      if (fullPath.endsWith("/"))
       {
          fullPath = fullPath.replace(/\/+$/, "");
       }
 
-      if(pathToLabelMap && pathToLabelMap[fullPath])
+      if (pathToLabelMap && pathToLabelMap[fullPath])
       {
          return pathToLabelMap[fullPath];
       }
 
       return (routeToLabel(route));
-   }
+   };
 
    const breadcrumbTitle = fullPathToLabel(fullPath, route[route.length - 1]);
 
@@ -242,8 +242,13 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
             </Box>
             {isMini ? null : (
                <Box sx={(theme) => navbarRow(theme, {isMini})}>
-                  <Box pr={0} mr={-2}>
+                  <Box mt={"-0.25rem"} pb={"0.75rem"} pr={2} mr={-2} sx={{"& *": {cursor: "pointer !important"}}}>
                      {renderHistory()}
+                  </Box>
+                  <Box mt={"-1rem"}>
+                     <IconButton size="small" disableRipple color="inherit" onClick={() => setDotMenuOpen(true)}>
+                        <Icon sx={iconsStyle} fontSize="small">search</Icon>
+                     </IconButton>
                   </Box>
                </Box>
             )}
