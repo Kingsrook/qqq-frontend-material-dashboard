@@ -1348,7 +1348,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       const formData = new FormData();
       Object.keys(values).forEach((key) =>
       {
-         formData.append(key, values[key]);
+         if (values[key] !== undefined)
+         {
+            formData.append(key, values[key]);
+         }
       });
 
       if (tableVariantLocalStorageKey && localStorage.getItem(tableVariantLocalStorageKey))
