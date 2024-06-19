@@ -33,6 +33,7 @@ import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJo
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
 import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Box, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
@@ -95,6 +96,8 @@ const BACKOFF_AMOUNT = 1.5;
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
 {
 };
+
+const cachedPossibleValueLabels: { [fieldName: string]: { [id: string | number]: string } } = {};
 
 function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
@@ -443,7 +446,20 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                if (processValues[key])
                {
-                  formFields[key].possibleValueProps.initialDisplayValue = processValues[key];
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // if we have a cached possible-value label for this field name (key), then set it as the PV's initialDisplayValue //
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  if (cachedPossibleValueLabels[key] && cachedPossibleValueLabels[key][processValues[key]])
+                  {
+                     formFields[key].possibleValueProps.initialDisplayValue = cachedPossibleValueLabels[key][processValues[key]];
+                  }
+                  else
+                  {
+                     ////////////////////////////////////////////////////////////////////////////
+                     // else (and i don't think this should happen?) at least set something... //
+                     ////////////////////////////////////////////////////////////////////////////
+                     formFields[key].possibleValueProps.initialDisplayValue = processValues[key];
+                  }
                }
 
                formFields[key].possibleValueProps.otherValues = formFields[key].possibleValueProps.otherValues ?? new Map<string, any>();
@@ -865,6 +881,12 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          {
             dynamicFormFields[fieldName] = dynamicFormValue;
             initialValues[fieldName] = initialValue;
+
+            if (formikSetFieldValueFunction)
+            {
+               formikSetFieldValueFunction(fieldName, initialValue);
+            }
+
             formValidations[fieldName] = validation;
          };
 
@@ -914,6 +936,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             fullFieldList.forEach((field) =>
             {
                initialValues[field.name] = processValues[field.name];
+
+               if (formikSetFieldValueFunction)
+               {
+                  formikSetFieldValueFunction(field.name, processValues[field.name]);
+               }
             });
 
             ////////////////////////////////////////////////////////////////////////////////////
@@ -1073,40 +1100,88 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          if (lastProcessResponse instanceof QJobComplete)
          {
-            const qJobComplete = lastProcessResponse as QJobComplete;
-            setJobUUID(null);
-            setNewStep(qJobComplete.nextStep);
-            setProcessValues(qJobComplete.values);
-            setQJobRunning(null);
-
-            if (formikSetFieldValueFunction)
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            // run an async function here, in case we need to await looking up any possible-value labels //
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            (async () =>
             {
-               //////////////////////////////////
-               // reset field values in formik //
-               //////////////////////////////////
-               for (let key in qJobComplete.values)
+               const qJobComplete = lastProcessResponse as QJobComplete;
+               const newValues = qJobComplete.values;
+
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               let frontendSteps = steps;
+               const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
+               if (updatedFrontendStepList)
                {
-                  if (Object.hasOwn(formFields, key))
+                  setSteps(updatedFrontendStepList);
+                  frontendSteps = updatedFrontendStepList;
+               }
+
+               ///////////////////////////////////////////////////////////////////////////////////
+               // if the next screen has any PVS fields - look up their labels (display values) //
+               ///////////////////////////////////////////////////////////////////////////////////
+               const nextStepName = qJobComplete.nextStep;
+               let nextStep: QFrontendStepMetaData | null = null;
+               if (frontendSteps && nextStepName)
+               {
+                  for (let i = 0; i < frontendSteps.length; i++)
                   {
-                     console.log(`(re)setting form field [${key}] to [${qJobComplete.values[key]}]`);
-                     formikSetFieldValueFunction(key, qJobComplete.values[key]);
+                     if (frontendSteps[i].name === nextStepName)
+                     {
+                        nextStep = frontendSteps[i];
+                        break;
+                     }
+                  }
+
+                  if (nextStep && nextStep.formFields)
+                  {
+                     for (let i = 0; i < nextStep.formFields.length; i++)
+                     {
+                        const field = nextStep.formFields[i];
+                        const fieldName = field.name;
+                        if (field.possibleValueSourceName && newValues && newValues[fieldName])
+                        {
+                           const results: QPossibleValue[] = await Client.getInstance().possibleValues(null, processName, fieldName, null, [newValues[fieldName]]);
+                           if (results && results.length > 0)
+                           {
+                              if (!cachedPossibleValueLabels[fieldName])
+                              {
+                                 cachedPossibleValueLabels[fieldName] = {};
+                              }
+                              cachedPossibleValueLabels[fieldName][newValues[fieldName]] = results[0].label;
+                           }
+                        }
+                     }
                   }
                }
-            }
 
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
-            if (updatedFrontendStepList)
-            {
-               setSteps(updatedFrontendStepList);
-            }
+               setJobUUID(null);
+               setNewStep(nextStepName);
+               setProcessValues(newValues);
+               setQJobRunning(null);
 
-            if (activeStep && activeStep.recordListFields)
-            {
-               setNeedRecords(true);
-            }
+               if (formikSetFieldValueFunction)
+               {
+                  //////////////////////////////////
+                  // reset field values in formik //
+                  //////////////////////////////////
+                  for (let key in qJobComplete.values)
+                  {
+                     if (Object.hasOwn(formFields, key))
+                     {
+                        console.log(`(re)setting form field [${key}] to [${qJobComplete.values[key]}]`);
+                        formikSetFieldValueFunction(key, qJobComplete.values[key]);
+                     }
+                  }
+               }
+
+               if (activeStep && activeStep.recordListFields)
+               {
+                  setNeedRecords(true);
+               }
+            })();
          }
          else if (lastProcessResponse instanceof QJobStarted)
          {
