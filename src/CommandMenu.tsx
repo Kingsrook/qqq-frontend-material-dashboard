@@ -72,7 +72,7 @@ const CommandMenu = ({metaData}: Props) =>
    const navigate = useNavigate();
    const pathParts = location.pathname.replace(/\/+$/, "").split("/");
 
-   const {accentColor, tableMetaData, dotMenuOpen, setDotMenuOpen, keyboardHelpOpen, setKeyboardHelpOpen, setTableMetaData, tableProcesses} = useContext(QContext);
+   const {accentColor, tableMetaData, dotMenuOpen, setDotMenuOpen, keyboardHelpOpen, setKeyboardHelpOpen, setTableMetaData, tableProcesses, recordAnalytics} = useContext(QContext);
 
    const classes = useStyles();
 
@@ -87,6 +87,7 @@ const CommandMenu = ({metaData}: Props) =>
          if (e.key === "." && !keyboardHelpOpen)
          {
             e.preventDefault();
+            recordAnalytics({category: "globalEvents", action: "dotMenuKeyboardShortcut"});
             setDotMenuOpen(true);
          }
          else if (e.key === "?" && !dotMenuOpen)
@@ -423,9 +424,20 @@ const CommandMenu = ({metaData}: Props) =>
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // iterate over the search parts - if any don't match the corresponding value parts, then it's a non-match //
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         let valueIndex = 0;
          for (let i = 0; i < searchParts.length; i++)
          {
-            if (!valueParts[i].includes(searchParts[i]))
+            let foundMatch = false;
+            for (; valueIndex < valueParts.length; valueIndex++)
+            {
+               if (valueParts[valueIndex].includes(searchParts[i]))
+               {
+                  foundMatch = true;
+                  break;
+               }
+            }
+
+            if (!foundMatch)
             {
                return (0);
             }
