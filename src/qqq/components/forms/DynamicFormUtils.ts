@@ -228,7 +228,7 @@ class DynamicFormUtils
     ***************************************************************************/
    public static isToUpperCase(fieldMetaData: QFieldMetaData): boolean
    {
-      return this.hasFieldBehavior(fieldMetaData, "TO_UPPER_CASE");
+      return this.hasBehavior(fieldMetaData, "TO_UPPER_CASE");
    }
 
 
@@ -237,20 +237,20 @@ class DynamicFormUtils
     ***************************************************************************/
    public static isToLowerCase(fieldMetaData: QFieldMetaData): boolean
    {
-      return this.hasFieldBehavior(fieldMetaData, "TO_LOWER_CASE");
+      return this.hasBehavior(fieldMetaData, "TO_LOWER_CASE");
    }
 
 
    /***************************************************************************
     * check if a field has a specific behavior name on it.
     ***************************************************************************/
-   private static hasFieldBehavior(fieldMetaData: QFieldMetaData, behaviorName: string): boolean
+   private static hasBehavior(fieldMetaData: QFieldMetaData, behaviorName: string): boolean
    {
-      if (fieldMetaData && fieldMetaData.fieldBehaviors)
+      if (fieldMetaData && fieldMetaData.behaviors)
       {
-         for (let i = 0; i < fieldMetaData.fieldBehaviors.length; i++)
+         for (let i = 0; i < fieldMetaData.behaviors.length; i++)
          {
-            if (fieldMetaData.fieldBehaviors[i] == behaviorName)
+            if (fieldMetaData.behaviors[i] == behaviorName)
             {
                return (true);
             }
