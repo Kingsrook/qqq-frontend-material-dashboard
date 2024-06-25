@@ -191,30 +191,33 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       const beforeStart = event.target.selectionStart;
       const beforeEnd = event.target.selectionEnd;
 
-      flushSync(() =>
+      let isToUpperCase = DynamicFormUtils.isToUpperCase(field);
+      let isToLowerCase = DynamicFormUtils.isToLowerCase(field);
+
+      if (isToUpperCase || isToLowerCase)
       {
-         let newValue = event.currentTarget.value;
-
-         let isToUpperCase = DynamicFormUtils.isToUpperCase(field);
-         let isToLowerCase = DynamicFormUtils.isToLowerCase(field);
-
-         if (isToUpperCase)
+         flushSync(() =>
          {
-            newValue = newValue.toUpperCase();
-         }
-         if (isToLowerCase)
+            let newValue = event.currentTarget.value;
+
+            if (isToUpperCase)
+            {
+               newValue = newValue.toUpperCase();
+            }
+            if (isToLowerCase)
+            {
+               newValue = newValue.toLowerCase();
+            }
+
+            event.currentTarget.value = newValue;
+         });
+
+         const input = document.getElementById(inputId);
+         if (input)
          {
-            newValue = newValue.toLowerCase();
+            // @ts-ignore
+            input.setSelectionRange(beforeStart, beforeEnd);
          }
-
-         event.currentTarget.value = newValue;
-      });
-
-      const input = document.getElementById(inputId);
-      if (input)
-      {
-         // @ts-ignore
-         input.setSelectionRange(beforeStart, beforeEnd);
       }
 
       valueChangeHandler(event, valueIndex);
