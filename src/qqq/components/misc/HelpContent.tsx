@@ -22,6 +22,7 @@
 import {QHelpContent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QHelpContent";
 import Box from "@mui/material/Box";
 import parse from "html-react-parser";
+import ErrorBoundary from "qqq/components/misc/ErrorBoundary";
 import React, {useContext} from "react";
 import Markdown from "react-markdown";
 import QContext from "QContext";
@@ -128,6 +129,7 @@ function HelpContent({helpContents, roles, heading, helpContentKey}: Props): JSX
    let selectedHelpContent = getMatchingHelpContent(helpContentsArray, roles);
 
    let content = null;
+   let errorContent = "Error rendering help content.";
    if (helpHelpActive)
    {
       if (!selectedHelpContent)
@@ -135,6 +137,7 @@ function HelpContent({helpContents, roles, heading, helpContentKey}: Props): JSX
          selectedHelpContent = new QHelpContent({content: ""});
       }
       content = selectedHelpContent.content + ` [${helpContentKey ?? "?"}]`;
+      errorContent += ` [${helpContentKey ?? "?"}]`;
    }
    else if(selectedHelpContent)
    {
@@ -148,7 +151,9 @@ function HelpContent({helpContents, roles, heading, helpContentKey}: Props): JSX
    {
       return <Box display="inline" className="helpContent">
          {heading && <span className="header">{heading}</span>}
-         {formatHelpContent(content, selectedHelpContent.format)}
+         <ErrorBoundary errorElement={<i>{errorContent}</i>}>
+            {formatHelpContent(content, selectedHelpContent.format)}
+         </ErrorBoundary>
       </Box>;
    }
 
