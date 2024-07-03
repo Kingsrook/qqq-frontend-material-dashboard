@@ -176,7 +176,7 @@ class DynamicFormUtils
                      initialDisplayValue: initialDisplayValue,
                   };
             }
-            else if(processName)
+            else if (processName)
             {
                dynamicFormFields[field.name].possibleValueProps =
                   {
@@ -214,12 +214,50 @@ class DynamicFormUtils
 
       if (Array.isArray(disabledFields))
       {
-         return (disabledFields.indexOf(fieldName) > -1)
+         return (disabledFields.indexOf(fieldName) > -1);
       }
       else
       {
          return (disabledFields[fieldName]);
       }
+   }
+
+
+   /***************************************************************************
+    * check if a field has the TO_UPPER_CASE behavior on it.
+    ***************************************************************************/
+   public static isToUpperCase(fieldMetaData: QFieldMetaData): boolean
+   {
+      return this.hasBehavior(fieldMetaData, "TO_UPPER_CASE");
+   }
+
+
+   /***************************************************************************
+    * check if a field has the TO_LOWER_CASE behavior on it.
+    ***************************************************************************/
+   public static isToLowerCase(fieldMetaData: QFieldMetaData): boolean
+   {
+      return this.hasBehavior(fieldMetaData, "TO_LOWER_CASE");
+   }
+
+
+   /***************************************************************************
+    * check if a field has a specific behavior name on it.
+    ***************************************************************************/
+   private static hasBehavior(fieldMetaData: QFieldMetaData, behaviorName: string): boolean
+   {
+      if (fieldMetaData && fieldMetaData.behaviors)
+      {
+         for (let i = 0; i < fieldMetaData.behaviors.length; i++)
+         {
+            if (fieldMetaData.behaviors[i] == behaviorName)
+            {
+               return (true);
+            }
+         }
+      }
+
+      return (false);
    }
 
 }

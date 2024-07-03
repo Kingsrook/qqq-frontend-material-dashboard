@@ -30,6 +30,7 @@ import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment/InputAdornment";
 import TextField from "@mui/material/TextField";
+import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import AssignFilterVariable from "qqq/components/query/AssignFilterVariable";
 import CriteriaDateField, {NoWrapTooltip} from "qqq/components/query/CriteriaDateField";
@@ -40,6 +41,7 @@ import {OperatorOption, ValueMode} from "qqq/components/query/FilterCriteriaRow"
 import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 import React, {SyntheticEvent, useReducer} from "react";
+import {flushSync} from "react-dom";
 
 interface Props
 {
@@ -58,6 +60,10 @@ FilterCriteriaRowValues.defaultProps =
       initiallyOpenMultiValuePvs: false
    };
 
+
+/***************************************************************************
+ * get the type to use for an <input> from a QFieldMetaData
+ ***************************************************************************/
 export const getTypeForTextField = (field: QFieldMetaData): string =>
 {
    let type = "search";
@@ -78,10 +84,15 @@ export const getTypeForTextField = (field: QFieldMetaData): string =>
    return (type);
 };
 
+
+/***************************************************************************
+ * Make an <input type=text> (actually, might be a different type, but that's
+ * the gist of it), for a field.
+ ***************************************************************************/
 export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWithId, valueChangeHandler?: (event: (React.ChangeEvent | React.SyntheticEvent), valueIndex?: (number | "all"), newValue?: any) => void, valueIndex: number = 0, label = "Value", idPrefix = "value-", allowVariables = false) =>
 {
    const isExpression = criteria.values && criteria.values[valueIndex] && criteria.values[valueIndex].type;
-
+   const inputId = `${idPrefix}${criteria.id}`;
    let type = getTypeForTextField(field);
    const inputLabelProps: any = {};
 
@@ -96,10 +107,13 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       value = ValueUtils.formatDateTimeValueForForm(value);
    }
 
+   /***************************************************************************
+    * Event handler for the clear 'x'.
+    ***************************************************************************/
    const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
    {
       valueChangeHandler(event, index, "");
-      document.getElementById(`${idPrefix}${criteria.id}`).focus();
+      document.getElementById(inputId).focus();
    };
 
 
@@ -120,6 +134,10 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
    };
 
 
+   /***************************************************************************
+    * make a version of the text field for when the criteria's value is set to
+    * be a "variable"
+    ***************************************************************************/
    const makeFilterVariableTextField = (expression: FilterVariableExpression, valueIndex: number = 0, label = "Value", idPrefix = "value-") =>
    {
       const clearValue = (event: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>, index: number) =>
@@ -149,6 +167,10 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       /></NoWrapTooltip>;
    };
 
+
+   ///////////////////////////////////////////////////////////////////////////
+   // set up an 'x' icon as an end-adornment, to clear value from the field //
+   ///////////////////////////////////////////////////////////////////////////
    const inputProps: any = {};
    inputProps.endAdornment = (
       <InputAdornment position="end">
@@ -158,18 +180,64 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
       </InputAdornment>
    );
 
+
+   /***************************************************************************
+    * onChange event handler.  deals with, if the field has a to upper/lower
+    * case rule on it, to apply that transform, and adjust the cursor.
+    * See:  https://giacomocerquone.com/blog/keep-input-cursor-still
+    ***************************************************************************/
+   function onChange(event: any)
+   {
+      const beforeStart = event.target.selectionStart;
+      const beforeEnd = event.target.selectionEnd;
+
+      let isToUpperCase = DynamicFormUtils.isToUpperCase(field);
+      let isToLowerCase = DynamicFormUtils.isToLowerCase(field);
+
+      if (isToUpperCase || isToLowerCase)
+      {
+         flushSync(() =>
+         {
+            let newValue = event.currentTarget.value;
+
+            if (isToUpperCase)
+            {
+               newValue = newValue.toUpperCase();
+            }
+            if (isToLowerCase)
+            {
+               newValue = newValue.toLowerCase();
+            }
+
+            event.currentTarget.value = newValue;
+         });
+
+         const input = document.getElementById(inputId);
+         if (input)
+         {
+            // @ts-ignore
+            input.setSelectionRange(beforeStart, beforeEnd);
+         }
+      }
+
+      valueChangeHandler(event, valueIndex);
+   }
+
+   ////////////////////////
+   // return the element //
+   ////////////////////////
    return <Box sx={{margin: 0, padding: 0, display: "flex"}}>
       {
          isExpression ? (
             makeFilterVariableTextField(criteria.values[valueIndex], valueIndex, label, idPrefix)
          ) : (
             <TextField
-               id={`${idPrefix}${criteria.id}`}
+               id={inputId}
                label={label}
                variant="standard"
                autoComplete="off"
                type={type}
-               onChange={(event) => valueChangeHandler(event, valueIndex)}
+               onChange={onChange}
                onKeyDown={handleKeyDown}
                value={value}
                InputLabelProps={inputLabelProps}
@@ -188,6 +256,10 @@ export const makeTextField = (field: QFieldMetaData, criteria: QFilterCriteriaWi
 };
 
 
+/***************************************************************************
+ * Component that is the "values" portion of a FilterCriteria Row in the
+ * advanced query filter editor.
+ ***************************************************************************/
 function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueChangeHandler, initiallyOpenMultiValuePvs, queryScreenUsage, allowVariables}: Props): JSX.Element
 {
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -197,6 +269,10 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
       return null;
    }
 
+
+   /***************************************************************************
+    * Callback for the Save button from the paste-values modal
+    ***************************************************************************/
    function saveNewPasterValues(newValues: any[])
    {
       if (criteria.values)
@@ -222,6 +298,9 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
 
    const isExpression = criteria.values && criteria.values[0] && criteria.values[0].type;
 
+   //////////////////////////////////////////////////////////////////////////////
+   // render different form element9s) based on operator option's "value mode" //
+   //////////////////////////////////////////////////////////////////////////////
    switch (operatorOption.valueMode)
    {
       case ValueMode.NONE:

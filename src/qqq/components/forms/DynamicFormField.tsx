@@ -19,16 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {InputAdornment, InputLabel} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Box, InputAdornment, InputLabel} from "@mui/material";
 import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field, useFormikContext} from "formik";
-import React, {useState} from "react";
+import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
+import React, {useMemo, useState} from "react";
 import AceEditor from "react-ace";
 import colors from "qqq/assets/theme/base/colors";
 import BooleanFieldSwitch from "qqq/components/forms/BooleanFieldSwitch";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {flushSync} from "react-dom";
 
 // Declaring props types for FormField
 interface Props
@@ -85,6 +86,51 @@ function QDynamicFormField({
       }
    };
 
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // check the field meta data for behavior that says to do toUpperCase or toLowerCase //
+   ///////////////////////////////////////////////////////////////////////////////////////
+   let isToUpperCase = useMemo(() => DynamicFormUtils.isToUpperCase(formFieldObject?.fieldMetaData), [formFieldObject]);
+   let isToLowerCase = useMemo(() => DynamicFormUtils.isToLowerCase(formFieldObject?.fieldMetaData), [formFieldObject]);
+
+   ////////////////////////////////////////////////////////////////////////
+   // if the field has a toUpperCase or toLowerCase behavior on it, then //
+   // apply that rule.  But also, to avoid the cursor always jumping to  //
+   // the end of the input, do some manipulation of the selection.       //
+   // See: https://giacomocerquone.com/blog/keep-input-cursor-still      //
+   // Note, we only want an onChange handle if we're doing one of these  //
+   // behaviors, (because teh flushSync is potentially slow).  hence, we //
+   // put the onChange in an object and assign it with a spread          //
+   ////////////////////////////////////////////////////////////////////////
+   let onChange: any = {};
+   if (isToUpperCase || isToLowerCase)
+   {
+      onChange.onChange = (e: any) =>
+      {
+         const beforeStart = e.target.selectionStart;
+         const beforeEnd = e.target.selectionEnd;
+
+         flushSync(() =>
+         {
+            let newValue = e.currentTarget.value;
+            if (isToUpperCase)
+            {
+               newValue = newValue.toUpperCase();
+            }
+            if (isToLowerCase)
+            {
+               newValue = newValue.toLowerCase();
+            }
+            setFieldValue(name, newValue);
+         });
+
+         const input = document.getElementById(name) as HTMLInputElement;
+         if (input)
+         {
+            input.setSelectionRange(beforeStart, beforeEnd);
+         }
+      };
+   }
+
    let field;
    let getsBulkEditHtmlLabel = true;
    if (type === "checkbox")
@@ -102,7 +148,7 @@ function QDynamicFormField({
    else if (type === "ace")
    {
       let mode = "text";
-      if(formFieldObject && formFieldObject.languageMode)
+      if (formFieldObject && formFieldObject.languageMode)
       {
          mode = formFieldObject.languageMode;
       }
@@ -133,7 +179,7 @@ function QDynamicFormField({
    {
       field = (
          <>
-            <Field {...rest} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="outlined" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
+            <Field {...rest} {...onChange} onWheel={handleOnWheel} name={name} type={type} as={MDInput} variant="outlined" label={label} InputLabelProps={inputLabelProps} InputProps={inputProps} fullWidth disabled={isDisabled}
                onKeyPress={(e: any) =>
                {
                   if (e.key === "Enter")
@@ -173,7 +219,8 @@ function QDynamicFormField({
                   id={`bulkEditSwitch-${name}`}
                   checked={switchChecked}
                   onClick={bulkEditSwitchChanged}
-                  sx={{top: "-4px",
+                  sx={{
+                     top: "-4px",
                      "& .MuiSwitch-track": {
                         height: 20,
                         borderRadius: 10,
