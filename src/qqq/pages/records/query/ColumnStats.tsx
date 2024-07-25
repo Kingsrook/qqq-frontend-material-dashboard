@@ -121,7 +121,7 @@ function ColumnStats({tableMetaData, fieldMetaData, fieldTableName, filter}: Pro
             }
 
             const valueCounts = [] as QRecord[];
-            for(let i = 0; i < result.values.valueCounts.length; i++)
+            for(let i = 0; i < result.values.valueCounts?.length; i++)
             {
                let valueRecord = new QRecord(result.values.valueCounts[i]);
 
