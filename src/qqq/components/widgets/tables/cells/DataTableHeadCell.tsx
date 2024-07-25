@@ -44,18 +44,13 @@ function DataTableHeadCell({width, children, sorted, align, tooltip, ...rest}: P
 
    return (
       <Box
-         component="th"
+         component="div"
          width={width}
          py={1.5}
          px={1.5}
          sx={({palette: {light}, borders: {borderWidth}}: Theme) => ({
             borderBottom: `${borderWidth[1]} solid ${colors.grayLines.main}`,
-            "&:nth-of-type(1)": {
-               paddingLeft: "1rem"
-            },
-            "&:last-child": {
-               paddingRight: "1rem"
-            },
+            position: "sticky", top: 0, background: "white"
          })}
       >
          <Box

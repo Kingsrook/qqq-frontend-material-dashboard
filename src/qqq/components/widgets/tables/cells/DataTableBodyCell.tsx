@@ -36,7 +36,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
 {
    return (
       <Box
-         component="td"
+         component="div"
          textAlign={align}
          py={1.5}
          px={1.5}
