@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import Box from "@mui/material/Box";
+import {Box} from "@mui/material";
 import {Theme} from "@mui/material/styles";
 import colors from "qqq/assets/theme/base/colors";
 import {ReactNode} from "react";
@@ -30,9 +30,10 @@ interface Props
    children: ReactNode;
    noBorder?: boolean;
    align?: "left" | "right" | "center";
+   sx?: any;
 }
 
-function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
+function DataTableBodyCell({noBorder, align, sx, children}: Props): JSX.Element
 {
    return (
       <Box
@@ -54,7 +55,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
             },
             "&:last-child": {
                paddingRight: "1rem"
-            }
+            }, ...sx
          })}
       >
          <Box
@@ -72,6 +73,7 @@ function DataTableBodyCell({noBorder, align, children}: Props): JSX.Element
 DataTableBodyCell.defaultProps = {
    noBorder: false,
    align: "left",
+   sx: {}
 };
 
 export default DataTableBodyCell;
