@@ -56,8 +56,8 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
             "label": "Sample Table Widget",
             "footerHTML": "<span class='material-icons-round notranslate MuiIcon-root MuiIcon-fontSizeInherit' aria-hidden='true'><span class='dashboard-schedule-icon'>schedule</span></span>Updated at 2023-10-17 09:11:38 AM CDT",
             "columns": [
-                { "type": "html", "header": "Id", "accessor": "id", "width": "1%" },
-                { "type": "html", "header": "Name", "accessor": "name", "width": "99%" }
+                { "type": "html", "header": "Id", "accessor": "id", "width": "30px" },
+                { "type": "html", "header": "Name", "accessor": "name", "width": "1fr" }
             ],
             "rows": [
                 { "id": "1", "name": "<a href='/setup/person/1'>Homer S.</a>" },
@@ -83,7 +83,7 @@ public class DashboardTableWidgetExportTest extends QBaseSeleniumTest
       // assert that the table widget rendered its header and some contents //
       ////////////////////////////////////////////////////////////////////////
       qSeleniumLib.waitForSelectorContaining("#SampleTableWidget h6", "Sample Table Widget");
-      qSeleniumLib.waitForSelectorContaining("#SampleTableWidget table a", "Homer S.");
+      qSeleniumLib.waitForSelectorContaining("#SampleTableWidget a", "Homer S.");
       qSeleniumLib.waitForSelectorContaining("#SampleTableWidget div", "Updated at 2023-10-17 09:11:38 AM CDT");
 
       /////////////////////////////
