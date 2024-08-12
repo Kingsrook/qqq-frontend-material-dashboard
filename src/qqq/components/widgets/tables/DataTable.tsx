@@ -19,15 +19,12 @@
  */
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {tooltipClasses, TooltipProps} from "@mui/material";
+import {Box, tooltipClasses, TooltipProps} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import {styled} from "@mui/material/styles";
 import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import colors from "qqq/assets/theme/base/colors";
@@ -166,7 +163,7 @@ function DataTable({
                      })}
                   >
                      {/* float this icon to keep it "out of the flow" - in other words, to keep it from making the row taller than it otherwise would be... */}
-                     <Icon fontSize="medium" sx={{float: "left"}}>{row.isExpanded ? "expand_less" : "chevron_right"}</Icon>
+                     <Icon fontSize="medium" sx={{float: "left"}}>{row.isExpanded ? "expand_less" : "chevron_left"}</Icon>
                   </span>
                ) : null,
          },
@@ -312,7 +309,7 @@ function DataTable({
       {
          boxStyle = isFooter
             ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, backgroundColor: "#EEEEEE"}
-            : {flexGrow: 1, overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
+            : {height: fixedHeight ? `${fixedHeight}px` : "auto", flexGrow: 1, overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
       }
 
       let innerBoxStyle = {};
@@ -453,7 +450,7 @@ function DataTable({
    }
 
    return (
-      <TableContainer sx={{boxShadow: "none", height: fixedHeight ? `${fixedHeight}px` : "auto"}}>
+      <TableContainer sx={{boxShadow: "none", height: (fixedHeight && !fixedStickyLastRow) ? `${fixedHeight}px` : "auto"}}>
          {entriesPerPage && ((hidePaginationDropdown !== undefined && !hidePaginationDropdown) || canSearch) ? (
             <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
                {entriesPerPage && (hidePaginationDropdown === undefined || !hidePaginationDropdown) && (
