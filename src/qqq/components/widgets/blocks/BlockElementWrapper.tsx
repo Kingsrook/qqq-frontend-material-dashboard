@@ -21,18 +21,19 @@
 
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {Tooltip} from "@mui/material";
-import React, {ReactElement, useContext} from "react";
-import {Link} from "react-router-dom";
+import {Box, Tooltip} from "@mui/material";
 import QContext from "QContext";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import {BlockData, BlockLink, BlockTooltip} from "qqq/components/widgets/blocks/BlockModels";
+import CompositeWidget from "qqq/components/widgets/CompositeWidget";
+import React, {ReactElement, useContext} from "react";
+import {Link} from "react-router-dom";
 
 interface BlockElementWrapperProps
 {
    data: BlockData;
    metaData: QWidgetMetaData;
-   slot: string
+   slot: string;
    linkProps?: any;
    children: ReactElement;
 }
@@ -47,16 +48,16 @@ export default function BlockElementWrapper({data, metaData, slot, linkProps, ch
    let link: BlockLink;
    let tooltip: BlockTooltip;
 
-   if(slot)
+   if (slot)
    {
       link = data.linkMap && data.linkMap[slot.toUpperCase()];
-      if(!link)
+      if (!link)
       {
          link = data.link;
       }
 
       tooltip = data.tooltipMap && data.tooltipMap[slot.toUpperCase()];
-      if(!tooltip)
+      if (!tooltip)
       {
          tooltip = data.tooltip;
       }
@@ -67,9 +68,9 @@ export default function BlockElementWrapper({data, metaData, slot, linkProps, ch
       tooltip = data.tooltip;
    }
 
-   if(!tooltip)
+   if (!tooltip)
    {
-      const helpRoles = ["ALL_SCREENS"]
+      const helpRoles = ["ALL_SCREENS"];
 
       ///////////////////////////////////////////////////////////////////////////////////////////////
       // the full keys in the helpContent table will look like:                                    //
@@ -80,26 +81,39 @@ export default function BlockElementWrapper({data, metaData, slot, linkProps, ch
       const key = data.blockId ? `${data.blockId},${slot}` : slot;
       const showHelp = helpHelpActive || hasHelpContent(metaData?.helpContent?.get(key), helpRoles);
 
-      if(showHelp)
+      if (showHelp)
       {
          const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent?.get(key)} roles={helpRoles} helpContentKey={`widget:${metaData?.name};slot:${key}`} />;
-         tooltip = {title: formattedHelpContent, placement: "bottom"}
+         tooltip = {title: formattedHelpContent, placement: "bottom"};
       }
    }
 
    let rs = children;
 
-   if(link)
+   if (link)
    {
-      rs = <Link to={link.href} target={link.target} style={{color: "#546E7A"}} {...linkProps}>{rs}</Link>
+      rs = <Link to={link.href} target={link.target} style={{color: "#546E7A"}} {...linkProps}>{rs}</Link>;
    }
 
-   if(tooltip)
+   if (tooltip)
    {
-      let placement = tooltip.placement ? tooltip.placement.toLowerCase() : "bottom"
+      let placement = tooltip.placement ? tooltip.placement.toLowerCase() : "bottom";
 
       // @ts-ignore - placement possible values
-      rs = <Tooltip title={tooltip.title} placement={placement}>{rs}</Tooltip>
+      if (tooltip.blockData)
+      {
+         // @ts-ignore - special case for composite type block...
+         rs = <Tooltip title={
+            <Box sx={{border: "1px sold green", width: "200px"}}>
+               <CompositeWidget widgetMetaData={metaData} data={tooltip?.blockData} />
+            </Box>
+         }>{rs}</Tooltip>;
+      }
+      else
+      {
+         // @ts-ignore - placement possible values
+         rs = <Tooltip title={tooltip.title} placement={placement}>{rs}</Tooltip>;
+      }
    }
 
    return (rs);

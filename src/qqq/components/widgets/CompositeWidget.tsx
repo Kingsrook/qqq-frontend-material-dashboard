@@ -27,7 +27,7 @@ import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 import React from "react";
 
 
-interface CompositeData
+export interface CompositeData
 {
    blocks: BlockData[];
    styleOverrides?: any;

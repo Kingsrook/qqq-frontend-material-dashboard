@@ -20,6 +20,7 @@
  */
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {CompositeData} from "qqq/components/widgets/CompositeWidget";
 
 
 export interface BlockData
@@ -29,8 +30,8 @@ export interface BlockData
 
    tooltip?: BlockTooltip;
    link?: BlockLink;
-   tooltipMap?: {[slot: string]: BlockTooltip};
-   linkMap?: {[slot: string]: BlockLink};
+   tooltipMap?: { [slot: string]: BlockTooltip };
+   linkMap?: { [slot: string]: BlockLink };
 
    values: any;
    styles?: any;
@@ -39,6 +40,7 @@ export interface BlockData
 
 export interface BlockTooltip
 {
+   blockData?: CompositeData;
    title: string | JSX.Element;
    placement: string;
 }
