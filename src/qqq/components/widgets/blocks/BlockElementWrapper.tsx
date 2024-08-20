@@ -90,7 +90,7 @@ export default function BlockElementWrapper({data, metaData, slot, linkProps, ch
 
    let rs = children;
 
-   if (link)
+   if (link && link.href)
    {
       rs = <Link to={link.href} target={link.target} style={{color: "#546E7A"}} {...linkProps}>{rs}</Link>;
    }
