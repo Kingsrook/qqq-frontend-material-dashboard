@@ -643,7 +643,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      for(let size of ["xs", "sm", "md", "lg", "xl", "xxl"])
                      {
                         const key = `gridCols:sizeClass:${size}`
-                        if(widgetMetaData?.defaultValues.has(key))
+                        if(widgetMetaData?.defaultValues?.has(key))
                         {
                            gridProps[size] = widgetMetaData?.defaultValues.get(key);
                         }
