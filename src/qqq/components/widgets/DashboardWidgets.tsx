@@ -638,8 +638,28 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
                   if (!omitWrappingGridContainer)
                   {
-                     // @ts-ignore
-                     renderedWidget = (<Grid id={widgetMetaData.name} item xxl={widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12} xs={12} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
+                     const gridProps: {[key: string]: any} = {};
+
+                     for(let size of ["xs", "sm", "md", "lg", "xl", "xxl"])
+                     {
+                        const key = `gridCols:sizeClass:${size}`
+                        if(widgetMetaData?.defaultValues?.has(key))
+                        {
+                           gridProps[size] = widgetMetaData?.defaultValues.get(key);
+                        }
+                     }
+
+                     if(!gridProps["xxl"])
+                     {
+                        gridProps["xxl"] = widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12;
+                     }
+
+                     if(!gridProps["xs"])
+                     {
+                        gridProps["xs"] = 12;
+                     }
+
+                     renderedWidget = (<Grid id={widgetMetaData.name} item {...gridProps} sx={{display: "flex", alignItems: "stretch", scrollMarginTop: "100px"}}>
                         {renderedWidget}
                      </Grid>);
                   }

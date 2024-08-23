@@ -787,3 +787,20 @@ input[type="search"]::-webkit-search-results-decoration
 {
    margin: 2rem 1rem;
 }
+
+/* default styles for a block widget overlay */
+.blockWidgetOverlay
+{
+   font-weight: 400;
+   position: relative;
+   top: 15px;
+   height: 0;
+   display: flex;
+   font-size: 14px;
+   flex-direction: column;
+   align-items: center;
+}
+.blockWidgetOverlay a
+{
+   color: #0062FF !important;
+}
