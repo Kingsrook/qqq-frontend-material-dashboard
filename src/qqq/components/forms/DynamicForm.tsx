@@ -183,6 +183,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                                  bulkEditMode={bulkEditMode}
                                  bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                                  otherValues={otherValuesMap}
+                                 useCase="form"
                               />
                               {formattedHelpContent}
                            </Grid>
