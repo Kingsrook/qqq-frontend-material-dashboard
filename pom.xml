@@ -154,11 +154,11 @@
                   <versionTagPrefix>version-</versionTagPrefix>
                </gitFlowConfig>
                <skipFeatureVersion>true</skipFeatureVersion> <!-- Keep feature names out of versions -->
-               <postReleaseGoals>install</postReleaseGoals>  <!-- Let CI run deploys -->
                <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
                <versionDigitToIncrement>1</versionDigitToIncrement> <!-- In general, we update the minor -->
                <versionProperty>revision</versionProperty>
                <skipUpdateVersion>true</skipUpdateVersion>
+               <skipTestProject>true</skipTestProject> <!-- we allow CI to do the tests -->
             </configuration>
          </plugin>
 
