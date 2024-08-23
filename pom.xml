@@ -159,6 +159,7 @@
                <versionDigitToIncrement>1</versionDigitToIncrement> <!-- In general, we update the minor -->
                <versionProperty>revision</versionProperty>
                <skipUpdateVersion>true</skipUpdateVersion>
+               <skipTestProject>true</skipTestProject> <!-- we allow CI to do the tests -->
             </configuration>
          </plugin>
 
