@@ -25,6 +25,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
+import {Theme} from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import React, {useContext, useEffect, useRef, useState} from "react";
@@ -225,6 +226,19 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
 
    const breadcrumbTitle = fullPathToLabel(fullPath, route[route.length - 1]);
 
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   // set the right-half of the navbar up so that below the 'md' breakpoint, it just disappears //
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   const navbarRowRight = (theme: Theme, {isMini}: any) =>
+   {
+      return {
+         [theme.breakpoints.down("md")]: {
+            display: "none",
+         },
+         ...navbarRow(theme, isMini)
+      }
+   };
+
    return (
       <AppBar
          position={absolute ? "absolute" : navbarType}
@@ -241,7 +255,7 @@ function NavBar({absolute, light, isMini}: Props): JSX.Element
                <QBreadcrumbs icon="home" title={breadcrumbTitle} route={route} light={light} />
             </Box>
             {isMini ? null : (
-               <Box sx={(theme) => navbarRow(theme, {isMini})}>
+               <Box sx={(theme) => navbarRowRight(theme, {isMini})}>
                   <Box mt={"-0.25rem"} pb={"0.75rem"} pr={2} mr={-2} sx={{"& *": {cursor: "pointer !important"}}}>
                      {renderHistory()}
                   </Box>
