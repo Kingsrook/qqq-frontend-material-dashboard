@@ -93,41 +93,25 @@ function TableCard({noRowsFoundHTML, data, rowsPerPage, hidePaginationDropdown, 
                />
                : noRowsFoundHTML ?
                   <Box p={3} pt={0} pb={3} sx={{textAlign: "center"}}>
-                     <MDTypography
-                        variant="subtitle2"
-                        color="secondary"
-                        fontWeight="regular"
-                     >
-                        {
-                           noRowsFoundHTML ? (
-                              parse(noRowsFoundHTML)
-                           ) : "No rows found"
-                        }
+                     <MDTypography variant="subtitle2" color="secondary" fontWeight="regular">
+                        {noRowsFoundHTML ? (parse(noRowsFoundHTML)) : "No rows found"}
                      </MDTypography>
                   </Box>
                   :
                   <TableContainer sx={{boxShadow: "none"}}>
-                     <Table>
-                        <Box component="thead">
-                           <TableRow sx={{alignItems: "flex-end"}} key="header">
-                              {Array(8).fill(0).map((_, i) =>
-                                 <DataTableHeadCell key={`head-${i}`} sorted={false} width="auto" align="center">
-                                    <Skeleton width="100%" />
-                                 </DataTableHeadCell>
-                              )}
-                           </TableRow>
-                        </Box>
-                        <TableBody>
-                           {Array(5).fill(0).map((_, i) =>
-                              <TableRow sx={{verticalAlign: "top"}} key={`row-${i}`}>
-                                 {Array(8).fill(0).map((_, j) =>
-                                    <DataTableBodyCell key={`cell-${i}-${j}`} align="center">
-                                       <DefaultCell isFooter={false}><Skeleton /></DefaultCell>
-                                    </DataTableBodyCell>
-                                 )}
-                              </TableRow>
-                           )}
-                        </TableBody>
+                     <Table component="div" sx={{display: "grid", gridTemplateRows: "auto", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr"}}>
+                        {Array(8).fill(0).map((_, i) =>
+                           <DataTableHeadCell key={`head-${i}`} sorted={false} width="auto" align="center">
+                              <Skeleton width="100%" />
+                           </DataTableHeadCell>
+                        )}
+                        {Array(5).fill(0).map((_, i) =>
+                           Array(8).fill(0).map((_, j) =>
+                              <DataTableBodyCell key={`cell-${i}-${j}`} align="center">
+                                 <DefaultCell isFooter={false}><Skeleton /></DefaultCell>
+                              </DataTableBodyCell>
+                           )
+                        )}
                      </Table>
                   </TableContainer>
          }

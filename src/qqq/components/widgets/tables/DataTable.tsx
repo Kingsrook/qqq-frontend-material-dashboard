@@ -19,15 +19,12 @@
  */
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {tooltipClasses, TooltipProps} from "@mui/material";
+import {Box, tooltipClasses, TooltipProps} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import {styled} from "@mui/material/styles";
 import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import parse from "html-react-parser";
 import colors from "qqq/assets/theme/base/colors";
@@ -166,7 +163,7 @@ function DataTable({
                      })}
                   >
                      {/* float this icon to keep it "out of the flow" - in other words, to keep it from making the row taller than it otherwise would be... */}
-                     <Icon fontSize="medium" sx={{float: "left"}}>{row.isExpanded ? "expand_less" : "chevron_right"}</Icon>
+                     <Icon fontSize="medium" sx={{float: "left"}}>{row.isExpanded ? "expand_less" : "chevron_left"}</Icon>
                   </span>
                ) : null,
          },
@@ -312,7 +309,7 @@ function DataTable({
       {
          boxStyle = isFooter
             ? {borderTop: `0.0625rem solid ${colors.grayLines.main};`, backgroundColor: "#EEEEEE"}
-            : {flexGrow: 1, overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
+            : {height: fixedHeight ? `${fixedHeight}px` : "auto", flexGrow: 1, overflowY: "scroll", scrollbarGutter: "stable", marginBottom: "-1px"};
       }
 
       let innerBoxStyle = {};
@@ -321,143 +318,139 @@ function DataTable({
          innerBoxStyle = {overflowY: "auto", scrollbarGutter: "stable"};
       }
 
+      ///////////////////////////////////////////////////////////////////////////////////
+      // note - at one point, we had the table's sx including: whiteSpace: "nowrap"... //
+      ///////////////////////////////////////////////////////////////////////////////////
       return <Box sx={boxStyle}><Box sx={innerBoxStyle}>
-         <Table {...getTableProps()}>
+         <Table {...getTableProps()} component="div" sx={{display: "grid", gridTemplateRows: "auto", gridTemplateColumns: gridTemplateColumns}}>
             {
                includeHead && (
-                  <Box component="thead" sx={{position: "sticky", top: 0, background: "white", zIndex: 10}}>
-                     {headerGroups.map((headerGroup: any, i: number) => (
-                        <TableRow key={i} {...headerGroup.getHeaderGroupProps()} sx={{display: "grid", alignItems: "flex-end", gridTemplateColumns: gridTemplateColumns}}>
-                           {headerGroup.headers.map((column: any) => (
-                              column.type !== "hidden" && (
-                                 <DataTableHeadCell
-                                    key={i++}
-                                    {...column.getHeaderProps(isSorted && column.getSortByToggleProps())}
-                                    align={column.align ? column.align : "left"}
-                                    sorted={setSortedValue(column)}
-                                    tooltip={column.tooltip}
-                                 >
-                                    {column.render("header")}
-                                 </DataTableHeadCell>
-                              )
-                           ))}
-                        </TableRow>
-                     ))}
-                  </Box>
+                  headerGroups.map((headerGroup: any, i: number) => (
+                     headerGroup.headers.map((column: any) => (
+                        column.type !== "hidden" && (
+                           <DataTableHeadCell
+                              sx={{position: "sticky", top: 0, background: "white", zIndex: 10, alignItems: "flex-end"}}
+                              key={i++}
+                              {...column.getHeaderProps(isSorted && column.getSortByToggleProps())}
+                              align={column.align ? column.align : "left"}
+                              sorted={setSortedValue(column)}
+                              tooltip={column.tooltip}
+                           >
+                              {column.render("header")}
+                           </DataTableHeadCell>
+                        )
+                     ))
+                  ))
                )
             }
-            <TableBody {...getTableBodyProps()}>
-               {rows.map((row: any, key: any) =>
+            {rows.map((row: any, key: any) =>
+            {
+               prepareRow(row);
+
+               let overrideNoEndBorder = false;
+
+               //////////////////////////////////////////////////////////////////////////////////
+               // don't do an end-border on nested rows - unless they're the last one in a set //
+               //////////////////////////////////////////////////////////////////////////////////
+               if (row.depth > 0)
                {
-                  prepareRow(row);
-
-                  let overrideNoEndBorder = false;
-
-                  //////////////////////////////////////////////////////////////////////////////////
-                  // don't do an end-border on nested rows - unless they're the last one in a set //
-                  //////////////////////////////////////////////////////////////////////////////////
-                  if (row.depth > 0)
+                  overrideNoEndBorder = true;
+                  if (key + 1 < rows.length && rows[key + 1].depth == 0)
                   {
-                     overrideNoEndBorder = true;
-                     if (key + 1 < rows.length && rows[key + 1].depth == 0)
-                     {
-                        overrideNoEndBorder = false;
-                     }
+                     overrideNoEndBorder = false;
                   }
+               }
 
-                  ///////////////////////////////////////
-                  // don't do end-border on the footer //
-                  ///////////////////////////////////////
-                  if (isFooter)
-                  {
-                     overrideNoEndBorder = true;
-                  }
+               ///////////////////////////////////////
+               // don't do end-border on the footer //
+               ///////////////////////////////////////
+               if (isFooter)
+               {
+                  overrideNoEndBorder = true;
+               }
 
-                  let background = "initial";
-                  if (isFooter)
-                  {
-                     background = "#EEEEEE";
-                  }
-                  else if (row.depth > 0 || row.isExpanded)
-                  {
-                     background = "#FAFAFA";
-                  }
+               let background = "initial";
+               if (isFooter)
+               {
+                  background = "#EEEEEE";
+               }
+               else if (row.depth > 0 || row.isExpanded)
+               {
+                  background = "#FAFAFA";
+               }
 
-                  return (
-                     <TableRow sx={{verticalAlign: "top", display: "grid", gridTemplateColumns: gridTemplateColumns, background: background}} key={key} {...row.getRowProps()}>
-                        {row.cells.map((cell: any) => (
-                           cell.column.type !== "hidden" && (
-                              <DataTableBodyCell
-                                 key={key}
-                                 noBorder={noEndBorder || overrideNoEndBorder || row.isExpanded}
-                                 depth={row.depth}
-                                 align={cell.column.align ? cell.column.align : "left"}
-                                 {...cell.getCellProps()}
-                              >
-                                 {
-                                    cell.column.type === "default" && (
-                                       cell.value && "number" === typeof cell.value ? (
-                                          <DefaultCell isFooter={isFooter}>{cell.value.toLocaleString()}</DefaultCell>
-                                       ) : (<DefaultCell isFooter={isFooter}>{cell.render("Cell")}</DefaultCell>)
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "htmlAndTooltip" && (
-                                       <DefaultCell isFooter={isFooter}>
-                                          <NoMaxWidthTooltip title={parse(row.values["tooltip"])}>
-                                             <Box>
-                                                {parse(cell.value)}
-                                             </Box>
-                                          </NoMaxWidthTooltip>
-                                       </DefaultCell>
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "html" && (
-                                       <DefaultCell isFooter={isFooter}>{parse(cell.value ?? "")}</DefaultCell>
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "composite" && (
-                                       <DefaultCell isFooter={isFooter}>
-                                          <CompositeWidget widgetMetaData={widgetMetaData} data={cell.value} />
-                                       </DefaultCell>
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "block" && (
-                                       <DefaultCell isFooter={isFooter}>
-                                          <WidgetBlock widgetMetaData={widgetMetaData} block={cell.value} />
-                                       </DefaultCell>
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "image" && row.values["imageTotal"] && (
-                                       <ImageCell imageUrl={row.values["imageUrl"]} label={row.values["imageLabel"]} total={row.values["imageTotal"].toLocaleString()} totalType={row.values["imageTotalType"]} />
-                                    )
-                                 }
-                                 {
-                                    cell.column.type === "image" && !row.values["imageTotal"] && (
-                                       <ImageCell imageUrl={row.values["imageUrl"]} label={row.values["imageLabel"]} />
-                                    )
-                                 }
-                                 {
-                                    (cell.column.id === "__expander") && cell.render("cell")
-                                 }
-                              </DataTableBodyCell>
-                           )
-                        ))}
-                     </TableRow>
-                  );
-               })}
-
-            </TableBody>
+               return (
+                  row.cells.map((cell: any) => (
+                     cell.column.type !== "hidden" && (
+                        <DataTableBodyCell
+                           key={key}
+                           sx={{verticalAlign: "top", background: background}}
+                           noBorder={noEndBorder || overrideNoEndBorder || row.isExpanded}
+                           depth={row.depth}
+                           align={cell.column.align ? cell.column.align : "left"}
+                           {...cell.getCellProps()}
+                        >
+                           {
+                              cell.column.type === "default" && (
+                                 cell.value && "number" === typeof cell.value ? (
+                                    <DefaultCell isFooter={isFooter}>{cell.value.toLocaleString()}</DefaultCell>
+                                 ) : (<DefaultCell isFooter={isFooter}>{cell.render("Cell")}</DefaultCell>)
+                              )
+                           }
+                           {
+                              cell.column.type === "htmlAndTooltip" && (
+                                 <DefaultCell isFooter={isFooter}>
+                                    <NoMaxWidthTooltip title={parse(row.values["tooltip"])}>
+                                       <Box>
+                                          {parse(cell.value)}
+                                       </Box>
+                                    </NoMaxWidthTooltip>
+                                 </DefaultCell>
+                              )
+                           }
+                           {
+                              cell.column.type === "html" && (
+                                 <DefaultCell isFooter={isFooter}>{parse(cell.value ?? "")}</DefaultCell>
+                              )
+                           }
+                           {
+                              cell.column.type === "composite" && (
+                                 <DefaultCell isFooter={isFooter}>
+                                    <CompositeWidget widgetMetaData={widgetMetaData} data={cell.value} />
+                                 </DefaultCell>
+                              )
+                           }
+                           {
+                              cell.column.type === "block" && (
+                                 <DefaultCell isFooter={isFooter}>
+                                    <WidgetBlock widgetMetaData={widgetMetaData} block={cell.value} />
+                                 </DefaultCell>
+                              )
+                           }
+                           {
+                              cell.column.type === "image" && row.values["imageTotal"] && (
+                                 <ImageCell imageUrl={row.values["imageUrl"]} label={row.values["imageLabel"]} total={row.values["imageTotal"].toLocaleString()} totalType={row.values["imageTotalType"]} />
+                              )
+                           }
+                           {
+                              cell.column.type === "image" && !row.values["imageTotal"] && (
+                                 <ImageCell imageUrl={row.values["imageUrl"]} label={row.values["imageLabel"]} />
+                              )
+                           }
+                           {
+                              (cell.column.id === "__expander") && cell.render("cell")
+                           }
+                        </DataTableBodyCell>
+                     )
+                  ))
+               );
+            })}
          </Table>
       </Box></Box>;
    }
 
    return (
-      <TableContainer sx={{boxShadow: "none", height: fixedHeight ? `${fixedHeight}px` : "auto"}}>
+      <TableContainer sx={{boxShadow: "none", height: (fixedHeight && !fixedStickyLastRow) ? `${fixedHeight}px` : "auto"}}>
          {entriesPerPage && ((hidePaginationDropdown !== undefined && !hidePaginationDropdown) || canSearch) ? (
             <Box display="flex" justifyContent="space-between" alignItems="center" p={3}>
                {entriesPerPage && (hidePaginationDropdown === undefined || !hidePaginationDropdown) && (

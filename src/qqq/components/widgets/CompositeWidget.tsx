@@ -22,16 +22,19 @@
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Box, Skeleton} from "@mui/material";
+import parse from "html-react-parser";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
 import React from "react";
 
 
-interface CompositeData
+export interface CompositeData
 {
    blocks: BlockData[];
    styleOverrides?: any;
    layout?: string;
+   overlayHtml?: string;
+   overlayStyleOverrides?: any;
 }
 
 
@@ -97,20 +100,34 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
       boxStyle.borderRadius = "0.5rem";
       boxStyle.background = "#FFFFFF";
    }
-
    if (data?.styleOverrides)
    {
       boxStyle = {...boxStyle, ...data.styleOverrides};
    }
 
-   return (<Box sx={boxStyle} className="compositeWidget">
-      {
-         data.blocks.map((block: BlockData, index) => (
-            <React.Fragment key={index}>
-               <WidgetBlock widgetMetaData={widgetMetaData} block={block} />
-            </React.Fragment>
-         ))
-      }
-   </Box>);
+   let overlayStyle: any = {};
+
+   if (data?.overlayStyleOverrides)
+   {
+      overlayStyle = {...overlayStyle, ...data.overlayStyleOverrides};
+   }
+
+   return (
+      <>
+         {
+            data?.overlayHtml &&
+            <Box sx={overlayStyle} className="blockWidgetOverlay">{parse(data.overlayHtml)}</Box>
+         }
+         <Box sx={boxStyle} className="compositeWidget">
+            {
+               data.blocks.map((block: BlockData, index) => (
+                  <React.Fragment key={index}>
+                     <WidgetBlock widgetMetaData={widgetMetaData} block={block} />
+                  </React.Fragment>
+               ))
+            }
+         </Box>
+      </>
+   );
 
 }
