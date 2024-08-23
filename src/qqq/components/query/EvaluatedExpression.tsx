@@ -50,7 +50,7 @@ export function EvaluatedExpression({field, expression}: EvaluatedExpressionProp
       return () => clearInterval(interval);
    }, []);
 
-   return <>{`${evaluateExpression(timeForEvaluations, field, expression)}`}</>;
+   return <span style={{fontVariantNumeric: "tabular-nums"}}>{`${evaluateExpression(timeForEvaluations, field, expression)}`}</span>;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
