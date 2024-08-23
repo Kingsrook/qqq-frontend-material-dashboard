@@ -104,7 +104,7 @@ export default function BlockElementWrapper({data, metaData, slot, linkProps, ch
       {
          // @ts-ignore - special case for composite type block...
          rs = <Tooltip title={
-            <Box sx={{border: "1px sold green", width: "200px"}}>
+            <Box sx={{width: "200px"}}>
                <CompositeWidget widgetMetaData={metaData} data={tooltip?.blockData} />
             </Box>
          }>{rs}</Tooltip>;
