@@ -183,7 +183,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
    {
       // todo - sometimes i want contains instead of equals on strings (client.name, for example...)
       let defaultOperator = field?.possibleValueSourceName ? QCriteriaOperator.IN : QCriteriaOperator.EQUALS;
-      if (field?.type == QFieldType.DATE_TIME || field?.type == QFieldType.DATE)
+      if (field?.type == QFieldType.DATE_TIME)
       {
          defaultOperator = QCriteriaOperator.GREATER_THAN;
       }
