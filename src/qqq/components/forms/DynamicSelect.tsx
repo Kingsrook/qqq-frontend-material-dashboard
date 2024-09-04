@@ -53,6 +53,7 @@ interface Props
    otherValues?: Map<string, any>;
    variant: "standard" | "outlined";
    initiallyOpen: boolean;
+   useCase: "form" | "filter";
 }
 
 DynamicSelect.defaultProps = {
@@ -102,7 +103,7 @@ export const getAutocompleteOutlinedStyle = (isDisabled: boolean) =>
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, possibleValueSourceName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen}: Props)
+function DynamicSelect({tableName, processName, fieldName, possibleValueSourceName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen, useCase}: Props)
 {
    const [open, setOpen] = useState(initiallyOpen);
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
@@ -194,7 +195,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
+         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
 
          if (tableMetaData == null && tableName)
          {
@@ -227,7 +228,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             setLoading(true);
             setOptions([]);
             console.log("Refreshing possible values...");
-            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues);
+            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
             setLoading(false);
             setOptions([...results]);
             setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));

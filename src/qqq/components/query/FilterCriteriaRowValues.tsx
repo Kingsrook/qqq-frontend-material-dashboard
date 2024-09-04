@@ -377,6 +377,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                         inForm={false}
                         onChange={(value: any) => valueChangeHandler(null, 0, value)}
                         variant="standard"
+                        useCase="filter"
                      />
                   </Box>
                )
@@ -412,6 +413,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                inForm={false}
                onChange={(value: any) => valueChangeHandler(null, "all", value)}
                variant="standard"
+               useCase="filter"
             />
          </Box>;
    }
