@@ -33,8 +33,7 @@ import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QC
 import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
 import {QFilterOrderBy} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterOrderBy";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Collapse, Menu, Typography} from "@mui/material";
-import Box from "@mui/material/Box";
+import {Alert, Box, Collapse, Menu, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
@@ -92,6 +91,7 @@ interface Props
    launchProcess?: QProcessMetaData;
    usage?: QueryScreenUsage;
    isModal?: boolean;
+   isPreview?: boolean;
    initialQueryFilter?: QQueryFilter;
    initialColumns?: QQueryColumns;
    allowVariables?: boolean;
@@ -126,7 +126,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
+const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -881,6 +881,18 @@ const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQ
       }
 
       return (rs);
+   };
+
+
+   /*******************************************************************************
+    ** Opens a new query screen in a new window with the current filter
+    *******************************************************************************/
+   const openFilterInNewWindow = () =>
+   {
+      let filterForBackend = JSON.parse(JSON.stringify(view.queryFilter));
+      filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, filterForBackend);
+      const url = `${metaData?.getTablePathByName(tableName)}?filter=${encodeURIComponent(JSON.stringify(filterForBackend))}`;
+      window.open(url);
    };
 
 
@@ -2232,12 +2244,25 @@ const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQ
       return (
          <GridToolbarContainer>
             <div>
-               <Button id="refresh-button" onClick={() => updateTable("refresh button")} startIcon={<Icon>refresh</Icon>} sx={{pl: "1rem", pr: "0.5rem", minWidth: "unset"}}></Button>
+               <Tooltip title="Refresh Query">
+                  <Button id="refresh-button" onClick={() => updateTable("refresh button")} startIcon={<Icon>refresh</Icon>} sx={{pl: "1rem", pr: "0.5rem", minWidth: "unset"}}></Button>
+               </Tooltip>
             </div>
-            <div style={{position: "relative"}}>
-               {/* @ts-ignore */}
-               <GridToolbarDensitySelector nonce={undefined} />
-            </div>
+            {
+               !isPreview && (
+                  <div style={{position: "relative"}}>
+                     {/* @ts-ignore */}
+                     <GridToolbarDensitySelector nonce={undefined} />
+                  </div>
+               )
+            }
+            {
+               isPreview && (
+                  <Tooltip title="Open In New Window">
+                     <Button id="open-filter-in-new-window-button" onClick={() => openFilterInNewWindow()} startIcon={<Icon>launch</Icon>} sx={{pl: "1rem", pr: "0.5rem", minWidth: "unset"}}></Button>
+                  </Tooltip>
+               )
+            }
 
             {
                usage == "queryScreen" &&
@@ -2872,7 +2897,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, allowVariables, initialQ
                }
 
                {
-                  metaData && tableMetaData &&
+                  !isPreview && metaData && tableMetaData &&
                   <BasicAndAdvancedQueryControls
                      ref={basicAndAdvancedQueryControlsRef}
                      metaData={metaData}
