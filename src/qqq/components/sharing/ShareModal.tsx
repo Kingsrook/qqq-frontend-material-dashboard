@@ -397,6 +397,7 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                            initialDisplayValue={selectedAudienceOption?.label}
                            inForm={false}
                            onChange={handleAudienceChange}
+                           useCase="form"
                         />
                      </Box>
                      {/*

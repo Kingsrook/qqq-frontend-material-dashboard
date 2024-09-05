@@ -268,7 +268,15 @@ class ValueUtils
    {
       if (!(date instanceof Date))
       {
+         ////////////////////////////////////////////////////////////////////////////////////
+         // so, a new Date here will interpret the string as being at midnight UTC, but    //
+         // the data object will be in the user/browser timezone.                          //
+         // so "2024-08-22", for a user in US/Central, will be "2024-08-21T19:00:00-0500". //
+         // correct for that by adding the date's timezone offset (converted from minutes  //
+         // to millis) back to it                                                          //
+         ////////////////////////////////////////////////////////////////////////////////////
          date = new Date(date);
+         date.setTime(date.getTime() + date.getTimezoneOffset() * 60 * 1000)
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd")}`);

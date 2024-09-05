@@ -786,6 +786,7 @@ function InputPossibleValueSourceSingle(tableName: string, field: QFieldMetaData
             initialDisplayValue={selectedPossibleValue?.label}
             inForm={false}
             onChange={handleChange}
+            useCase="filter"
             // InputProps={applying ? {endAdornment: <Icon>sync</Icon>} : {}}
          />
       </Box>
@@ -854,6 +855,7 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
             initialValues={selectedPossibleValues}
             inForm={false}
             onChange={handleChange}
+            useCase="filter"
          />
       </Box>
    );

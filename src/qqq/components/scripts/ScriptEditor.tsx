@@ -440,10 +440,10 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
             <Box sx={{height: openTool ? "45%" : "100%"}}>
                <Grid container alignItems="flex-end">
                   <Box maxWidth={"50%"} minWidth={300}>
-                     <DynamicSelect fieldName={"apiName"} initialValue={apiName} initialDisplayValue={apiNameLabel} fieldLabel={"API Name *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiName} />
+                     <DynamicSelect fieldName={"apiName"} initialValue={apiName} initialDisplayValue={apiNameLabel} fieldLabel={"API Name *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiName} useCase="form" />
                   </Box>
                   <Box maxWidth={"50%"} minWidth={300} pl={2}>
-                     <DynamicSelect fieldName={"apiVersion"} initialValue={apiVersion} initialDisplayValue={apiVersionLabel} fieldLabel={"API Version *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiVersion} />
+                     <DynamicSelect fieldName={"apiVersion"} initialValue={apiVersion} initialDisplayValue={apiVersionLabel} fieldLabel={"API Version *"} tableName={"scriptRevision"} inForm={false} onChange={changeApiVersion} useCase="form" />
                   </Box>
                </Grid>
                <Box display="flex" sx={{height: "100%"}}>

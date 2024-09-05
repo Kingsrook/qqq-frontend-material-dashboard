@@ -87,6 +87,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
 {
    const [modalOpen, setModalOpen] = useState(false);
    const [hideColumns, setHideColumns] = useState(widgetData?.hideColumns);
+   const [hidePreview, setHidePreview] = useState(widgetData?.hidePreview);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    const [alertContent, setAlertContent] = useState(null as string);
@@ -272,7 +273,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /*******************************************************************************
     **
     *******************************************************************************/
-   function mayShowQueryPreview(): boolean
+   function mayShowQuery(): boolean
    {
       if (tableMetaData)
       {
@@ -288,7 +289,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /*******************************************************************************
     **
     *******************************************************************************/
-   function mayShowColumnsPreview(): boolean
+   function mayShowColumns(): boolean
    {
       if (tableMetaData)
       {
@@ -356,14 +357,14 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
                <h5>Query Filter</h5>
-               <Box fontSize="0.75rem" fontWeight="700">{mayShowQueryPreview() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
+               <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
             </Box>
             {
-               mayShowQueryPreview() &&
+               mayShowQuery() &&
                <AdvancedQueryPreview tableMetaData={tableMetaData} queryFilter={frontendQueryFilter} isEditable={false} isQueryTooComplex={frontendQueryFilter.subFilters?.length > 0} removeCriteriaByIndexCallback={null} />
             }
             {
-               !mayShowQueryPreview() &&
+               !mayShowQuery() &&
                <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.5rem"} p={"0.5rem"} pb={"0.125rem"} borderRadius="0.75rem" border={`1px solid ${colors.grayLines.main}`}>
                   {
                      isEditable &&
@@ -382,11 +383,11 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                <h5>Columns</h5>
                <Box display="flex" flexWrap="wrap" fontSize="1rem">
                   {
-                     mayShowColumnsPreview() &&
+                     mayShowColumns() && columns &&
                      columns.columns.map((column, i) => <React.Fragment key={`column-${i}`}>{renderColumn(column)}</React.Fragment>)
                   }
                   {
-                     !mayShowColumnsPreview() &&
+                     !mayShowColumns() &&
                      <Box width="100%" sx={{fontSize: "1rem", background: "#FFFFFF"}} minHeight={"2.375rem"} p={"0.5rem"} pb={"0.125rem"}>
                         {
                            isEditable &&
@@ -400,6 +401,21 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                      </Box>
                   }
                </Box>
+            </Box>
+         )}
+         {!hidePreview && !isEditable && frontendQueryFilter && tableMetaData && (
+            <Box pt="1rem">
+               <h5>Preview</h5>
+               <RecordQuery
+                  allowVariables={widgetData?.allowVariables}
+                  ref={recordQueryRef}
+                  table={tableMetaData}
+                  isPreview={true}
+                  usage="reportSetup"
+                  isModal={true}
+                  initialQueryFilter={frontendQueryFilter}
+                  initialColumns={columns}
+               />
             </Box>
          )}
          {

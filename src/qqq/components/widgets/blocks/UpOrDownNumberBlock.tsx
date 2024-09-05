@@ -58,7 +58,7 @@ export default function UpOrDownNumberBlock({widgetMetaData, data}: StandardBloc
 
    return (
       <>
-         <div style={{display: "flex", flexDirection: data.styles.isStacked ? "column" : "row", alignItems: data.styles.isStacked ? "flex-end" : "baseline"}}>
+         <div style={{display: "flex", flexDirection: data.styles.isStacked ? "column" : "row", alignItems: data.styles.isStacked ? "flex-end" : "baseline", marginLeft: "auto"}}>
 
             <div style={{display: "flex", alignItems: "baseline", fontWeight: 700, fontSize: ".875rem"}}>
                <BlockElementWrapper metaData={widgetMetaData} data={data} slot="number">
