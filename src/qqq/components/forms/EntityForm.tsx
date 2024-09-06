@@ -502,7 +502,7 @@ function EntityForm(props: Props): JSX.Element
             /////////////////////////////////////////////////
             const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData, [...tableMetaData.fields.keys()], (section: QTableSection) =>
             {
-               const widget = metaData?.widgets.get(section.widgetName);
+               const widget = metaData?.widgets?.get(section.widgetName);
                if (widget)
                {
                   if (widget.type == "childRecordList" && widget.defaultValues?.has("manageAssociationName"))
@@ -1152,11 +1152,11 @@ function EntityForm(props: Props): JSX.Element
             <Grid container spacing={3}>
                {
                   !props.isModal &&
-                  <Grid item xs={12} lg={3}>
+                  <Grid item xs={12} lg={3} className="recordSidebar">
                      <QRecordSidebar tableSections={tableSections} />
                   </Grid>
                }
-               <Grid item xs={12} lg={props.isModal ? 12 : 9}>
+               <Grid item xs={12} lg={props.isModal ? 12 : 9} className={props.isModal ? "" : "recordWithSidebar"}>
 
                   <Formik
                      initialValues={initialValues}
