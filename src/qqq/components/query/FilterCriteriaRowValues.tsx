@@ -367,13 +367,11 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                ) : (
                   <Box width={"100%"}>
                      <DynamicSelect
-                        tableName={table.name}
-                        fieldName={field.name}
+                        fieldPossibleValueProps={{tableName: table.name, fieldName: field.name, initialDisplayValue: selectedPossibleValue?.label}}
                         overrideId={field.name + "-single-" + criteria.id}
                         key={field.name + "-single-" + criteria.id}
                         fieldLabel="Value"
                         initialValue={selectedPossibleValue?.id}
-                        initialDisplayValue={selectedPossibleValue?.label}
                         inForm={false}
                         onChange={(value: any) => valueChangeHandler(null, 0, value)}
                         variant="standard"
@@ -402,8 +400,7 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
          }
          return <Box>
             <DynamicSelect
-               tableName={table.name}
-               fieldName={field.name}
+               fieldPossibleValueProps={{tableName: table.name, fieldName: field.name, initialDisplayValue: null}}
                overrideId={field.name + "-multi-" + criteria.id}
                key={field.name + "-multi-" + criteria.id}
                isMultiple
