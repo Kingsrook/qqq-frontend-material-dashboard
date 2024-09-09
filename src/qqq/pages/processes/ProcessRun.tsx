@@ -120,6 +120,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [activeStepIndex, setActiveStepIndex] = useState(0);
    const [activeStep, setActiveStep] = useState(null as QFrontendStepMetaData);
    const [newStep, setNewStep] = useState(null);
+   const [stepInstanceCounter, setStepInstanceCounter] = useState(0);
    const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [lastForcedReInit, setLastForcedReInit] = useState(null as number);
@@ -136,6 +137,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    );
    const [showErrorDetail, setShowErrorDetail] = useState(false);
    const [showFullHelpText, setShowFullHelpText] = useState(false);
+   const [previouslySeenUpdatedFieldMetaDataMap, setPreviouslySeenUpdatedFieldMetaDataMap] = useState(new Map<string, QFieldMetaData>);
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
 
@@ -994,7 +996,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setValidationFunction(() => true);
          }
       }
-   }, [newStep]);
+   }, [newStep, stepInstanceCounter]); // maybe we could just use stepInstanceCounter...
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // if there are records to load: build a record config, and set the needRecords state flag //
@@ -1088,6 +1090,47 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       }
    }, [needRecords]);
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function updateFieldsInProcess(steps: QFrontendStepMetaData[], updatedFields: Map<string, QFieldMetaData>)
+   {
+      if (updatedFields)
+      {
+         updatedFields.forEach((field) => previouslySeenUpdatedFieldMetaDataMap.set(field.name, field));
+         setPreviouslySeenUpdatedFieldMetaDataMap(previouslySeenUpdatedFieldMetaDataMap)
+      }
+
+      for (let step of steps)
+      {
+         if (step && step.formFields)
+         {
+            for (let i = 0; i < step.formFields.length; i++)
+            {
+               let field = step.formFields[i];
+               if (previouslySeenUpdatedFieldMetaDataMap.has(field.name))
+               {
+                  step.formFields[i] = previouslySeenUpdatedFieldMetaDataMap.get(field.name);
+               }
+            }
+         }
+      }
+
+      if (processValues.inputFieldList)
+      {
+         for (let i = 0; i < processValues.inputFieldList.length; i++)
+         {
+            let field = new QFieldMetaData(processValues.inputFieldList[i]);
+            if (previouslySeenUpdatedFieldMetaDataMap.has(field.name))
+            {
+               processValues.inputFieldList[i] = previouslySeenUpdatedFieldMetaDataMap.get(field.name); // todo - uh, not an object?
+            }
+         }
+      }
+   }
+
+
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle a response from the server - e.g., after starting a backend job, or getting its status/result //
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1112,12 +1155,18 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                // if the process step sent a new frontend-step-list, then refresh what we have in state (constructing new full model objects) //
                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                let frontendSteps = steps;
-               const updatedFrontendStepList = qJobComplete.updatedFrontendStepList;
+               const updatedFrontendStepList = qJobComplete.processMetaDataAdjustment?.updatedFrontendStepList;
                if (updatedFrontendStepList)
                {
-                  setSteps(updatedFrontendStepList);
                   frontendSteps = updatedFrontendStepList;
+                  setSteps(frontendSteps);
                }
+
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // always merge the new updatedFields map (if there is one) with existing updates and existing fields //
+               ////////////////////////////////////////////////////////////////////////////////////////////////////////
+               updateFieldsInProcess(frontendSteps, qJobComplete.processMetaDataAdjustment?.updatedFields);
+               setSteps(frontendSteps);
 
                ///////////////////////////////////////////////////////////////////////////////////
                // if the next screen has any PVS fields - look up their labels (display values) //
@@ -1159,6 +1208,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
                setJobUUID(null);
                setNewStep(nextStepName);
+               setStepInstanceCounter(1 + stepInstanceCounter);
                setProcessValues(newValues);
                setQJobRunning(null);
 
