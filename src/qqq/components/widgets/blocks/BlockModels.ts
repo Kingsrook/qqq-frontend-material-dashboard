@@ -35,6 +35,8 @@ export interface BlockData
 
    values: any;
    styles?: any;
+
+   conditional?: string;
 }
 
 
@@ -57,5 +59,6 @@ export interface StandardBlockComponentProps
 {
    widgetMetaData: QWidgetMetaData;
    data: BlockData;
+   actionCallback?: (blockData: BlockData, eventValues?: {[name: string]: any}) => boolean;
 }
 
