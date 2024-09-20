@@ -64,13 +64,14 @@ function Footer({company, links}: Props): JSX.Element
       <Box
          width="100%"
          display="flex"
-         flexDirection={{xs: "column", lg: "row"}}
+         flexDirection={{xs: "column", md: "row"}}
          justifyContent="space-between"
          alignItems="center"
          px={1.5}
          style={{
             position: "fixed", bottom: "0px", zIndex: -1, marginBottom: "10px",
          }}
+         left={{xs: "0", xl: "auto"}}
       >
          {
             href && name &&
