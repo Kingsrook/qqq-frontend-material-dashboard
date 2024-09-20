@@ -273,7 +273,7 @@ function ValidationReview({
    );
 
    return (
-      <Box m={3}>
+      <Box m={{xs: 0, md: 3}} mt={"3rem!important"}>
          <Grid container spacing={2}>
             <Grid item xs={12} lg={6}>
                <MDTypography color="body" variant="button">
