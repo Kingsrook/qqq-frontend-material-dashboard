@@ -42,13 +42,14 @@ interface CompositeWidgetProps
 {
    widgetMetaData: QWidgetMetaData;
    data: CompositeData;
+   actionCallback?: (blockData: BlockData) => boolean;
 }
 
 
 /*******************************************************************************
  ** Widget which is a list of Blocks.
  *******************************************************************************/
-export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetProps): JSX.Element
+export default function CompositeWidget({widgetMetaData, data, actionCallback}: CompositeWidgetProps): JSX.Element
 {
    if (!data || !data.blocks)
    {
@@ -80,6 +81,14 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
       boxStyle.flexDirection = "row";
       boxStyle.justifyContent = "space-between";
       boxStyle.gap = "0.25rem";
+   }
+   else if (layout == "FLEX_ROW_CENTER")
+   {
+      boxStyle.display = "flex";
+      boxStyle.flexDirection = "row";
+      boxStyle.justifyContent = "center";
+      boxStyle.gap = "0.25rem";
+      boxStyle.flexWrap = "wrap";
    }
    else if (layout == "TABLE_SUB_ROW_DETAILS")
    {
@@ -122,7 +131,7 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
             {
                data.blocks.map((block: BlockData, index) => (
                   <React.Fragment key={index}>
-                     <WidgetBlock widgetMetaData={widgetMetaData} block={block} />
+                     <WidgetBlock widgetMetaData={widgetMetaData} block={block} actionCallback={actionCallback} />
                   </React.Fragment>
                ))
             }
