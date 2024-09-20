@@ -29,6 +29,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
 import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
 import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
@@ -36,12 +37,14 @@ import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJob
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {Alert, Box, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
+import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
+import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
+import {Theme} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import {DataGridPro, GridColDef} from "@mui/x-data-grid-pro";
 import FormData from "form-data";
@@ -60,8 +63,11 @@ import QRecordSidebar from "qqq/components/misc/RecordSidebar";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
 import ValidationReview from "qqq/components/processes/ValidationReview";
+import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
+import CompositeWidget, {CompositeData} from "qqq/components/widgets/CompositeWidget";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
 import BaseLayout from "qqq/layouts/BaseLayout";
+import ProcessWidgetBlockUtils from "qqq/pages/processes/ProcessWidgetBlockUtils";
 import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
@@ -89,11 +95,15 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-////////////////////////////////////////////////////////////////////////////
-// define a function that we can make referenes to, which we'll overwrite //
-// with formik's setFieldValue function, once we're inside formik.        //
-////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// define some functions that we can make referene to, which we'll overwrite //
+// with functions from formik, once we're inside formik.                     //
+///////////////////////////////////////////////////////////////////////////////
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
+{
+};
+
+let formikSetTouched = ({}: any, touched: boolean): void =>
 {
 };
 
@@ -157,8 +167,30 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    const [overrideOnLastStep, setOverrideOnLastStep] = useState(null as boolean);
 
-   const onLastStep = activeStepIndex === steps.length - 2;
-   const noMoreSteps = activeStepIndex === steps.length - 1;
+   /////////////////////////////////////////////////////////////////////////////////////
+   // determine if we're on the last-step or not (e.g., to decide "Submit" vs "Next"( //
+   /////////////////////////////////////////////////////////////////////////////////////
+   let onLastStep = false;
+   if (processMetaData?.stepFlow == "LINEAR" && activeStepIndex === steps.length - 2)
+   {
+      onLastStep = true;
+   }
+
+   ////////////////////////////////////////////
+   // determine if any 'next' button appears //
+   ////////////////////////////////////////////
+   let noMoreSteps = false;
+   if (processMetaData?.stepFlow == "LINEAR" && activeStepIndex === steps.length - 1)
+   {
+      noMoreSteps = true;
+   }
+   if(processValues["noMoreSteps"])
+   {
+      //////////////////////////////////////////////////////////////////
+      // this, to allow a non-linear process to request this behavior //
+      //////////////////////////////////////////////////////////////////
+      noMoreSteps = true;
+   }
 
    ////////////////
    // form state //
@@ -326,6 +358,69 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       return renderedWidget;
    }
 
+
+   /***************************************************************************
+    ** callback used by widget blocks, e.g., for input-text-enter-on-submit,
+    ** and action buttons.
+    ***************************************************************************/
+   function blockWidgetActionCallback(blockData: BlockData, eventValues?: { [name: string]: any }): boolean
+   {
+      console.log(`in blockWidgetActionCallback, called by block: ${JSON.stringify(blockData)}`);
+
+      ///////////////////////////////////////////////////////////////////////////////
+      // if the eventValues included an actionCode - validate it before proceeding //
+      ///////////////////////////////////////////////////////////////////////////////
+      if (eventValues && eventValues.actionCode && !ProcessWidgetBlockUtils.isActionCodeValid(eventValues.actionCode, activeStep, processValues))
+      {
+         setFormError("Unrecognized action code: " + eventValues.actionCode);
+
+         if (eventValues["_fieldToClearIfError"])
+         {
+            /////////////////////////////////////////////////////////////////////////////
+            // if the eventValues included a _fieldToClearIfError, well, then do that. //
+            /////////////////////////////////////////////////////////////////////////////
+            formikSetFieldValueFunction(eventValues["_fieldToClearIfError"], "", false);
+         }
+
+         return (false);
+      }
+
+      //////////////////
+      // ok - submit! //
+      //////////////////
+      handleSubmit(eventValues);
+      return (true);
+   }
+
+
+   /***************************************************************************
+    ** in a memoized-fashion (YUNO useMemo?), render a component that is an
+    ** adHoc widget (e.g., composite)
+    ***************************************************************************/
+   function renderAdHocWidget(componentValues: any, componentIndex: number)
+   {
+      const key = activeStep.name + "-" + stepInstanceCounter + "-" + componentIndex;
+      if (renderedWidgets[key])
+      {
+         return renderedWidgets[key];
+      }
+
+      const widgetMetaData = new QWidgetMetaData({name: "adHoc"});
+      const compositeWidgetData = JSON.parse(JSON.stringify(componentValues)) as CompositeData;
+      compositeWidgetData.styleOverrides = {py: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem"};
+
+      ProcessWidgetBlockUtils.dynamicEvaluationOfCompositeWidgetData(compositeWidgetData, processValues);
+
+      renderedWidgets[key] = <Box key={key} pt={2}>
+         <CompositeWidget widgetMetaData={widgetMetaData} data={compositeWidgetData} actionCallback={blockWidgetActionCallback} />
+      </Box>;
+
+      setRenderedWidgets(renderedWidgets);
+
+      return (renderedWidgets[key]);
+   }
+
+
    ////////////////////////////////////////////////////
    // generate the main form body content for a step //
    ////////////////////////////////////////////////////
@@ -384,7 +479,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       if (qJobRunning || step === null)
       {
          return (
-            <Grid m={3} mt={9} container>
+            <Grid m={3} mt={9} container maxWidth="calc(100% - 3rem)">
                <Grid item xs={0} lg={3} />
                <Grid item xs={12} lg={6}>
                   <Card>
@@ -765,8 +860,29 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         }
                         {
                            component.type === QComponentType.WIDGET && (
-                              component.values?.widgetName &&
-                              renderWidget(component.values?.widgetName)
+                              <>
+                                 {
+                                    ///////////////////////////////////////////////////
+                                    // if a widget name is given, render that widget //
+                                    ///////////////////////////////////////////////////
+                                    component.values?.widgetName &&
+                                    renderWidget(component.values?.widgetName)
+                                 }
+                                 {
+                                    /////////////////////////////////////////////////////////
+                                    // if the widget is marked as adHoc, render it as such //
+                                    /////////////////////////////////////////////////////////
+                                    component.values?.isAdHocWidget &&
+                                    renderAdHocWidget(component.values, index)
+                                 }
+                                 {
+                                    ////////////////////////////////////////////////
+                                    // if neither of those, then programmer error //
+                                    ////////////////////////////////////////////////
+                                    !(component.values?.widgetName || component.values?.isAdHocWidget) &&
+                                    <Alert severity="error">Error:  Component is marked as WIDGET type, but does not specify a <u>widgetName</u>, nor the <u>isAdHocWidget</u> flag.</Alert>
+                                 }
+                              </>
                            )
                         }
                      </div>
@@ -866,6 +982,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       setActiveStepIndex(newIndex);
       setOverrideOnLastStep(null);
 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////
+      // reset formik touched data, so a field that's repeated doesn't immediately show a 'dirty' state //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////
+      formikSetTouched({}, false);
+
       if (steps)
       {
          const activeStep = steps[newIndex];
@@ -909,6 +1030,16 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             addField("googleDriveAccessToken", {type: "hidden", omitFromQDynamicForm: true}, "", null);
             addField("googleDriveFolderId", {type: "hidden", omitFromQDynamicForm: true}, "", null);
             addField("googleDriveFolderName", {type: "hidden", omitFromQDynamicForm: true}, "", null);
+         }
+
+         if (doesStepHaveComponent(activeStep, QComponentType.WIDGET))
+         {
+            ProcessWidgetBlockUtils.addFieldsForCompositeWidget(activeStep, (fieldMetaData) =>
+            {
+               const dynamicField = DynamicFormUtils.getDynamicField(fieldMetaData);
+               const validation = DynamicFormUtils.getValidationForField(fieldMetaData);
+               addField(fieldMetaData.name, dynamicField, processValues[fieldMetaData.name], validation)
+            });
          }
 
          ///////////////////////////////////////////////////
@@ -1099,7 +1230,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       if (updatedFields)
       {
          updatedFields.forEach((field) => previouslySeenUpdatedFieldMetaDataMap.set(field.name, field));
-         setPreviouslySeenUpdatedFieldMetaDataMap(previouslySeenUpdatedFieldMetaDataMap)
+         setPreviouslySeenUpdatedFieldMetaDataMap(previouslySeenUpdatedFieldMetaDataMap);
       }
 
       for (let step of steps)
@@ -1210,6 +1341,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                setNewStep(nextStepName);
                setStepInstanceCounter(1 + stepInstanceCounter);
                setProcessValues(newValues);
+               setRenderedWidgets({});
                setQJobRunning(null);
 
                if (formikSetFieldValueFunction)
@@ -1465,8 +1597,9 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    //////////////////////////////////////////////////////////////////////////////////////////
    // handle user submitting the form - which in qqq means moving forward from any screen. //
+   // caller can pass in a map of values to be added to the form data too                  //
    //////////////////////////////////////////////////////////////////////////////////////////
-   const handleSubmit = async (values: any, actions: any) =>
+   const handleSubmit = async (values: any) =>
    {
       setFormError(null);
 
@@ -1556,25 +1689,52 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    };
 
 
-   const mainCardStyles: any = {};
    const formStyles: any = {};
-   mainCardStyles.minHeight = `calc(100vh - ${isModal ? 150 : 400}px)`;
-   if (!processError && (qJobRunning || activeStep === null) && !isModal && !isWidget)
+   if(isWidget)
    {
-      mainCardStyles.background = "#FFFFFF";
-      mainCardStyles.boxShadow = "none";
-   }
-   if (isWidget)
-   {
-      mainCardStyles.background = "none";
-      mainCardStyles.boxShadow = "none";
-      mainCardStyles.border = "none";
-      mainCardStyles.minHeight = "";
-      mainCardStyles.alignItems = "stretch";
-      mainCardStyles.flexGrow = 1;
-      mainCardStyles.display = "flex";
       formStyles.display = "flex";
       formStyles.flexGrow = 1;
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function makeMainCardStyles(theme: Theme)
+   {
+      const mainCardStyles: any = {};
+
+      if(!isWidget && !isModal)
+      {
+         ////////////////////////////////////////////////////////////////
+         // remove margin around card for non-widget, non-modal, small //
+         ////////////////////////////////////////////////////////////////
+         mainCardStyles[theme.breakpoints.down("sm")] = {
+            marginLeft: "-1.5rem",
+            marginRight: "-1.5rem",
+            borderRadius: "0"
+         };
+      }
+
+      mainCardStyles.minHeight = `calc(100vh - ${isModal ? 150 : 400}px)`;
+      if (!processError && (qJobRunning || activeStep === null) && !isModal && !isWidget)
+      {
+         mainCardStyles.background = "#FFFFFF";
+         mainCardStyles.boxShadow = "none";
+      }
+
+      if (isWidget)
+      {
+         mainCardStyles.background = "none";
+         mainCardStyles.boxShadow = "none";
+         mainCardStyles.border = "none";
+         mainCardStyles.minHeight = "";
+         mainCardStyles.alignItems = "stretch";
+         mainCardStyles.flexGrow = 1;
+         mainCardStyles.display = "flex";
+      }
+
+      return mainCardStyles
    }
 
    let nextButtonLabel = "Next";
@@ -1602,20 +1762,21 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          onSubmit={handleSubmit}
       >
          {({
-            values, errors, touched, isSubmitting, setFieldValue,
+            values, errors, touched, isSubmitting, setFieldValue, setTouched
          }) =>
          {
-            ///////////////////////////////////////////////////////////////////
-            // once we're in the formik form, use its setFieldValue function //
-            // over top of the default one we created globally               //
-            ///////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////
+            // once we're in the formik form, capture some of its functions //
+            // over top of the default ones we created globally             //
+            //////////////////////////////////////////////////////////////////
             formikSetFieldValueFunction = setFieldValue;
+            formikSetTouched = setTouched;
 
             return (
                <Form style={formStyles} id={formId} autoComplete="off">
-                  <Card sx={mainCardStyles}>
+                  <Card sx={makeMainCardStyles}>
                      {
-                        !isWidget && (
+                        !isWidget && processMetaData?.stepFlow == "LINEAR" && (
                            <Box mx={2} mt={-3} sx={{"& .MuiStepper-horizontal": {minHeight: "5rem"}}}>
                               <Stepper activeStep={activeStepIndex} alternativeLabel>
                                  {steps.map((step) => (
@@ -1650,7 +1811,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                            {/********************************
                             ** back &| next/submit buttons **
                             ********************************/}
-                           <Box mt={6} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
+                           <Box mt={3} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
                               {true || activeStepIndex === 0 ? (
                                  <Box />
                               ) : (
@@ -1660,11 +1821,6 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                  <Box />
                               ) : (
                                  <>
-                                    {formError && (
-                                       <MDTypography component="div" variant="caption" color="error" fontWeight="regular" align="right" fullWidth>
-                                          {formError}
-                                       </MDTypography>
-                                    )}
                                     {
                                        noMoreSteps && <QCancelButton
                                           onClickHandler={() => handleCancelClicked(true)}
@@ -1700,9 +1856,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    const body = (
       <Box py={3} mb={20} className="processRun">
-         <Grid container justifyContent="center" alignItems="center" sx={{height: "100%", mt: 8}}>
+         <Grid container justifyContent="center" alignItems="center" mt={{xs: 0, md: 6}} sx={{height: "100%"}}>
             <Grid item xs={12} lg={10} xl={8}>
                {form}
+               {formError && <Alert severity="error" onClose={() => setFormError(null)} sx={{position: "fixed", top: "40px", left: "10vw", width: "calc(80vw)", zIndex: "99999"}}>{formError}</Alert>}
             </Grid>
          </Grid>
       </Box>
