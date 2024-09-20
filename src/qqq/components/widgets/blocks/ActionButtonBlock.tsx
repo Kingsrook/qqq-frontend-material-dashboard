@@ -20,64 +20,40 @@
  */
 
 import Box from "@mui/material/Box";
+import Icon from "@mui/material/Icon";
+import {standardWidth} from "qqq/components/buttons/DefaultButtons";
+import MDButton from "qqq/components/legacy/MDButton";
 import BlockElementWrapper from "qqq/components/widgets/blocks/BlockElementWrapper";
 import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
-import DumpJsonBox from "qqq/utils/DumpJsonBox";
+import React from "react";
+
 
 /*******************************************************************************
- ** Block that renders ... just some text.
+ ** Block that renders ... an action button...
  **
- ** ${text}
  *******************************************************************************/
-export default function TextBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
+export default function ActionButtonBlock({widgetMetaData, data, actionCallback}: StandardBlockComponentProps): JSX.Element
 {
-   let color = "rgba(0, 0, 0, 0.87)";
-   if (data.styles?.standardColor)
+   const icon = data.values.iconName ? <Icon>{data.values.iconName}</Icon> : null;
+
+   function onClick()
    {
-      switch (data.styles?.standardColor)
+      if(actionCallback)
       {
-         case "SUCCESS":
-            color = "#2BA83F";
-            break;
-         case "WARNING":
-            color = "#FBA132";
-            break;
-         case "ERROR":
-            color = "#FB4141";
-            break;
-         case "INFO":
-            color = "#458CFF";
-            break;
-         case "MUTED":
-            color = "#7b809a";
-            break;
+         actionCallback(data, {actionCode: data.values?.actionCode})
+      }
+      else
+      {
+         console.log("ActionButtonBlock onClick with no actionCallback present, so, noop");
       }
    }
 
-   let boxStyle = {};
-   if (data.styles?.isAlert)
-   {
-      boxStyle =
-         {
-            border: `1px solid ${color}`,
-            background: `${color}40`,
-            padding: "0.5rem",
-            borderRadius: "0.5rem",
-         };
-   }
-
-   const text = data.values.interpolatedText ?? data.values.text;
-   const lines = text.split("\n");
-
    return (
       <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
-         <Box display="inline-block" lineHeight="1.2" sx={boxStyle}>
-            <span style={{fontSize: "1rem", color: color}}>
-               {lines.map((line: string, index: number) =>
-                  (
-                     <div key={index}>{line}</div>
-                  ))
-               }</span>
+         <Box mx={1} my={1} minWidth={standardWidth}>
+            <MDButton type="button" variant="gradient" color="dark" size="small" fullWidth startIcon={icon} onClick={onClick}>
+               {data.values.label ?? "Action"}
+            </MDButton>
          </Box>
       </BlockElementWrapper>
    );

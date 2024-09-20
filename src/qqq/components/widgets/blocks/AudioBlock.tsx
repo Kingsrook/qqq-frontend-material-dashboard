@@ -23,62 +23,18 @@ import Box from "@mui/material/Box";
 import BlockElementWrapper from "qqq/components/widgets/blocks/BlockElementWrapper";
 import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
 import DumpJsonBox from "qqq/utils/DumpJsonBox";
+import React from "react";
 
 /*******************************************************************************
- ** Block that renders ... just some text.
+ ** Block that renders ... an audio tag
  **
- ** ${text}
+ ** <audio src=${path} ${autoPlay} ${showControls} />
  *******************************************************************************/
-export default function TextBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
+export default function AudioBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
-   let color = "rgba(0, 0, 0, 0.87)";
-   if (data.styles?.standardColor)
-   {
-      switch (data.styles?.standardColor)
-      {
-         case "SUCCESS":
-            color = "#2BA83F";
-            break;
-         case "WARNING":
-            color = "#FBA132";
-            break;
-         case "ERROR":
-            color = "#FB4141";
-            break;
-         case "INFO":
-            color = "#458CFF";
-            break;
-         case "MUTED":
-            color = "#7b809a";
-            break;
-      }
-   }
-
-   let boxStyle = {};
-   if (data.styles?.isAlert)
-   {
-      boxStyle =
-         {
-            border: `1px solid ${color}`,
-            background: `${color}40`,
-            padding: "0.5rem",
-            borderRadius: "0.5rem",
-         };
-   }
-
-   const text = data.values.interpolatedText ?? data.values.text;
-   const lines = text.split("\n");
-
    return (
       <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
-         <Box display="inline-block" lineHeight="1.2" sx={boxStyle}>
-            <span style={{fontSize: "1rem", color: color}}>
-               {lines.map((line: string, index: number) =>
-                  (
-                     <div key={index}>{line}</div>
-                  ))
-               }</span>
-         </Box>
+         <audio src={data.values?.path} autoPlay={data.values?.autoPlay} controls={data.values?.showControls} />
       </BlockElementWrapper>
    );
 }
