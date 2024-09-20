@@ -168,7 +168,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [overrideOnLastStep, setOverrideOnLastStep] = useState(null as boolean);
 
    /////////////////////////////////////////////////////////////////////////////////////
-   // determine if we're on the last-step or not (e.g., to decide "Submit" vs "Next"( //
+   // determine if we're on the last-step or not (e.g., to decide "Submit" vs "Next") //
    /////////////////////////////////////////////////////////////////////////////////////
    let onLastStep = false;
    if (processMetaData?.stepFlow == "LINEAR" && activeStepIndex === steps.length - 2)
@@ -1022,7 +1022,17 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          if (doesStepHaveComponent(activeStep, QComponentType.VALIDATION_REVIEW_SCREEN))
          {
             addField("doFullValidation", {type: "radio"}, "true", null);
-            setOverrideOnLastStep(false);
+
+            //////////////////////////////////////////////////////////////////////////////////////////////
+            // so - if we're on the validation screen, and we don't have a validationSummary right now, //
+            // and the process supports doing full validation - then the user will choose, via radio,   //
+            // if this is the last step or not - and by default that radio will be true, to make this   //
+            // NOT the last step - so set this value.                                                   //
+            //////////////////////////////////////////////////////////////////////////////////////////////
+            if(!processValues["validationSummary"] && processValues["supportsFullValidation"])
+            {
+               setOverrideOnLastStep(false);
+            }
          }
 
          if (doesStepHaveComponent(activeStep, QComponentType.GOOGLE_DRIVE_SELECT_FOLDER))
