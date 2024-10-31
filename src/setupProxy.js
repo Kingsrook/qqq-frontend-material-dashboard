@@ -57,4 +57,5 @@ module.exports = function (app)
    app.use("/images", getRequestHandler());
    app.use("/api*", getRequestHandler());
    app.use("/*api", getRequestHandler());
+   app.use("/qqq/*", getRequestHandler());
 };
