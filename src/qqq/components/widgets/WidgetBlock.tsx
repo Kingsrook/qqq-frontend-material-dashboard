@@ -25,7 +25,6 @@ import {Alert, Skeleton} from "@mui/material";
 import ButtonBlock from "qqq/components/widgets/blocks/ButtonBlock";
 import AudioBlock from "qqq/components/widgets/blocks/AudioBlock";
 import InputFieldBlock from "qqq/components/widgets/blocks/InputFieldBlock";
-import RevealBlock from "qqq/components/widgets/blocks/RevealBlock";
 import React from "react";
 import BigNumberBlock from "qqq/components/widgets/blocks/BigNumberBlock";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
@@ -98,8 +97,6 @@ export default function WidgetBlock({widgetMetaData, block, actionCallback, valu
          return (<AudioBlock widgetMetaData={widgetMetaData} data={block} />);
       case "IMAGE":
          return (<ImageBlock widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} />);
-      case "REVEAL":
-         return (<RevealBlock widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} />);
       default:
          return (<Alert sx={{m: "0.5rem"}} color="warning">Unsupported block type: {block.blockTypeName}</Alert>)
    }
