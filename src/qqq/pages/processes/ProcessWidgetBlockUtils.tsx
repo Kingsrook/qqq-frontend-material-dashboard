@@ -71,11 +71,11 @@ export default class ProcessWidgetBlockUtils
                }
                // else, continue...
             }
-            else if (block.blockTypeName == "ACTION_BUTTON")
+            else if (block.blockTypeName == "BUTTON")
             {
-               //////////////////////////////////////////////////////////
-               // actually look at actionCodes on action button blocks //
-               //////////////////////////////////////////////////////////
+               //////////////////////////////////////////
+               // look at actionCodes on button blocks //
+               //////////////////////////////////////////
                if (block.values?.actionCode == actionCode)
                {
                   return (true);
@@ -182,7 +182,7 @@ export default class ProcessWidgetBlockUtils
    /***************************************************************************
     **
     ***************************************************************************/
-   public static addFieldsForCompositeWidget(step: QFrontendStepMetaData, addFieldCallback: (fieldMetaData: QFieldMetaData) => void)
+   public static addFieldsForCompositeWidget(step: QFrontendStepMetaData, processValues: any, addFieldCallback: (fieldMetaData: QFieldMetaData) => void)
    {
       ///////////////////////////////////////////////////////////
       // private recursive function to walk the composite tree //
@@ -200,7 +200,7 @@ export default class ProcessWidgetBlockUtils
                else if (block.blockTypeName == "INPUT_FIELD")
                {
                   const fieldMetaData = new QFieldMetaData(block.values?.fieldMetaData);
-                  addFieldCallback(fieldMetaData)
+                  addFieldCallback(fieldMetaData);
                }
             }
          }
@@ -210,14 +210,57 @@ export default class ProcessWidgetBlockUtils
          }
       }
 
-      /////////////////////////////////////////////////////////////////////////////
-      // foreach component, if it's an adhoc widget, call recursive helper on it //
-      /////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // foreach component, if it's an adhoc widget or a widget w/ its data in the processValues, then, call recursive helper on it //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       for (let component of step.components)
       {
          if (component.type == QComponentType.WIDGET && component.values?.isAdHocWidget)
          {
-            recursiveHelper(component.values as unknown as CompositeData)
+            recursiveHelper(component.values as unknown as CompositeData);
+         }
+         else if (component.type == QComponentType.WIDGET && processValues[component.values?.widgetName])
+         {
+            recursiveHelper(processValues[component.values?.widgetName] as unknown as CompositeData);
+         }
+      }
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   public static processColorFromStyleMap(colorFromStyleMap?: string): string
+   {
+      if (colorFromStyleMap)
+      {
+         switch (colorFromStyleMap.toUpperCase())
+         {
+            case "SUCCESS":
+               return("#2BA83F");
+            case "WARNING":
+               return("#FBA132");
+            case "ERROR":
+               return("#FB4141");
+            case "INFO":
+               return("#458CFF");
+            case "MUTED":
+               return("#7b809a");
+            default:
+            {
+               if (colorFromStyleMap.match(/^[0-9A-F]{6}$/))
+               {
+                  return(`#${colorFromStyleMap}`);
+               }
+               else if (colorFromStyleMap.match(/^[0-9A-F]{8}$/))
+               {
+                  return(`#${colorFromStyleMap}`);
+               }
+               else
+               {
+                  return(colorFromStyleMap);
+               }
+            }
          }
       }
    }

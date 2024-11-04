@@ -29,6 +29,7 @@ import parse from "html-react-parser";
 import QContext from "QContext";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import TabPanel from "qqq/components/misc/TabPanel";
+import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
 import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLineChart";
@@ -71,6 +72,9 @@ interface Props
    childUrlParams?: string;
    parentWidgetMetaData?: QWidgetMetaData;
    wrapWidgetsInTabPanels: boolean;
+   actionCallback?: (blockData: BlockData) => boolean;
+   initialWidgetDataList: any[];
+   values?: {[key: string]: any};
 }
 
 DashboardWidgets.defaultProps = {
@@ -82,11 +86,14 @@ DashboardWidgets.defaultProps = {
    childUrlParams: "",
    parentWidgetMetaData: null,
    wrapWidgetsInTabPanels: false,
+   actionCallback: null,
+   initialWidgetDataList: null,
+   values: {}
 };
 
-function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, record, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels}: Props): JSX.Element
+function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, record, omitWrappingGridContainer, areChildren, childUrlParams, parentWidgetMetaData, wrapWidgetsInTabPanels, actionCallback, initialWidgetDataList, values}: Props): JSX.Element
 {
-   const [widgetData, setWidgetData] = useState([] as any[]);
+   const [widgetData, setWidgetData] = useState(initialWidgetDataList == null ? [] as any[] : initialWidgetDataList);
    const [widgetCounter, setWidgetCounter] = useState(0);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -114,7 +121,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
    useEffect(() =>
    {
+      if(initialWidgetDataList && initialWidgetDataList.length > 0)
+      {
+         // todo actually, should this check each element of the array, down in the loop?  yeah, when we need to, do it that way.
+         console.log("We already have initial widget data, so not fetching from backend.");
+         return
+      }
+
       setWidgetData([]);
+
       for (let i = 0; i < widgetMetaDataList.length; i++)
       {
          const widgetMetaData = widgetMetaDataList[i];
@@ -563,7 +578,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      labelAdditionalComponentsRight={labelAdditionalComponentsRight}
                      labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
-                     <CompositeWidget widgetMetaData={widgetMetaData} data={widgetData[i]} />
+                     <CompositeWidget widgetMetaData={widgetMetaData} data={widgetData[i]} actionCallback={actionCallback} values={values} />
                   </Widget>
                )
             }

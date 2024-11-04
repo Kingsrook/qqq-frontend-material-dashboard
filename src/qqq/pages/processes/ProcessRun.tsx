@@ -95,10 +95,10 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
-///////////////////////////////////////////////////////////////////////////////
-// define some functions that we can make referene to, which we'll overwrite //
-// with functions from formik, once we're inside formik.                     //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// define some functions that we can make reference to, which we'll overwrite //
+// with functions from formik, once we're inside formik.                      //
+////////////////////////////////////////////////////////////////////////////////
 let formikSetFieldValueFunction = (field: string, value: any, shouldValidate?: boolean): void =>
 {
 };
@@ -150,6 +150,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [previouslySeenUpdatedFieldMetaDataMap, setPreviouslySeenUpdatedFieldMetaDataMap] = useState(new Map<string, QFieldMetaData>);
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
+   const [controlCallbacks, setControlCallbacks] = useState({} as {[name: string]: () => void})
 
    const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
 
@@ -351,11 +352,65 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          queryStringParts.push(`${name}=${encodeURIComponent(processValues[name])}`);
       }
 
+      let initialWidgetDataList = null;
+      if(processValues[widgetName])
+      {
+         processValues[widgetName].hasPermission = true
+         initialWidgetDataList = [processValues[widgetName]]
+      }
+
       const renderedWidget = (<Box m={-2}>
-         <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} />
+         <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} initialWidgetDataList={initialWidgetDataList} values={processValues} actionCallback={blockWidgetActionCallback}  />
       </Box>);
       renderedWidgets[activeStep.name][widgetName] = renderedWidget;
       return renderedWidget;
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function handleControlCode(controlCode: string)
+   {
+      const split = controlCode.split(":", 2);
+      let controlCallbackName: string;
+      let controlCallbackValue: any
+      if(split.length == 2)
+      {
+         if(split[0] == "showModal")
+         {
+            processValues[split[1]] = true
+            controlCallbackName = split[1]
+            controlCallbackValue = true
+         }
+         else if(split[0] == "hideModal")
+         {
+            processValues[split[1]] = false
+            controlCallbackName = split[1]
+            controlCallbackValue = false
+         }
+         else if(split[0] == "toggleModal")
+         {
+            const currentValue = processValues[split[1]]
+            processValues[split[1]] = !!!currentValue;
+            controlCallbackName = split[1]
+            controlCallbackValue = processValues[split[1]]
+         }
+         else
+         {
+            console.log(`Unexpected part[0] (before colon) in controlCode: [${controlCode}]`)
+         }
+      }
+      else
+      {
+         console.log(`Expected controlCode to have 2 colon-delimited parts, but was: [${controlCode}]`)
+      }
+
+      if(controlCallbackName && controlCallbacks[controlCallbackName])
+      {
+         // @ts-ignore ... args are hard
+         controlCallbacks[controlCallbackName](controlCallbackValue)
+      }
    }
 
 
@@ -367,29 +422,58 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       console.log(`in blockWidgetActionCallback, called by block: ${JSON.stringify(blockData)}`);
 
-      ///////////////////////////////////////////////////////////////////////////////
-      // if the eventValues included an actionCode - validate it before proceeding //
-      ///////////////////////////////////////////////////////////////////////////////
-      if (eventValues && eventValues.actionCode && !ProcessWidgetBlockUtils.isActionCodeValid(eventValues.actionCode, activeStep, processValues))
+      if(eventValues?.registerControlCallbackName && eventValues?.registerControlCallbackFunction)
       {
-         setFormError("Unrecognized action code: " + eventValues.actionCode);
+         controlCallbacks[eventValues.registerControlCallbackName] = eventValues.registerControlCallbackFunction;
+         setControlCallbacks(controlCallbacks)
+         return (true)
+      }
 
-         if (eventValues["_fieldToClearIfError"])
-         {
-            /////////////////////////////////////////////////////////////////////////////
-            // if the eventValues included a _fieldToClearIfError, well, then do that. //
-            /////////////////////////////////////////////////////////////////////////////
-            formikSetFieldValueFunction(eventValues["_fieldToClearIfError"], "", false);
-         }
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // we don't validate these on the android frontend, and it seems fine - just let the app validate it? //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // ///////////////////////////////////////////////////////////////////////////////
+      // // if the eventValues included an actionCode - validate it before proceeding //
+      // ///////////////////////////////////////////////////////////////////////////////
+      // if (eventValues && eventValues.actionCode && !ProcessWidgetBlockUtils.isActionCodeValid(eventValues.actionCode, activeStep, processValues))
+      // {
+      //    setFormError("Unrecognized action code: " + eventValues.actionCode);
+      //    if (eventValues["_fieldToClearIfError"])
+      //    {
+      //       /////////////////////////////////////////////////////////////////////////////
+      //       // if the eventValues included a _fieldToClearIfError, well, then do that. //
+      //       /////////////////////////////////////////////////////////////////////////////
+      //       formikSetFieldValueFunction(eventValues["_fieldToClearIfError"], "", false);
+      //    }
+      //    return (false);
+      // }
 
-         return (false);
+      let doSubmit = false;
+      if(blockData?.blockTypeName == "BUTTON" && eventValues?.actionCode)
+      {
+         doSubmit = true
+      }
+      else if(blockData?.blockTypeName == "BUTTON" && eventValues?.controlCode)
+      {
+         handleControlCode(eventValues.controlCode);
+         doSubmit = false
+      }
+      else if(blockData?.blockTypeName == "INPUT_FIELD")
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         // if action callback was fired from an input field, assume that means we're good to submit. //
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         doSubmit = true
       }
 
       //////////////////
       // ok - submit! //
       //////////////////
-      handleSubmit(eventValues);
-      return (true);
+      if(doSubmit)
+      {
+         handleSubmit(eventValues);
+         return (true);
+      }
    }
 
 
@@ -412,7 +496,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ProcessWidgetBlockUtils.dynamicEvaluationOfCompositeWidgetData(compositeWidgetData, processValues);
 
       renderedWidgets[key] = <Box key={key} pt={2}>
-         <CompositeWidget widgetMetaData={widgetMetaData} data={compositeWidgetData} actionCallback={blockWidgetActionCallback} />
+         <CompositeWidget widgetMetaData={widgetMetaData} data={compositeWidgetData} actionCallback={blockWidgetActionCallback} values={processValues} />
       </Box>;
 
       setRenderedWidgets(renderedWidgets);
@@ -574,6 +658,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
       const showHelp = helpHelpActive || hasHelpContent(step.helpContents, helpRoles);
       const formattedHelpContent = <HelpContent helpContents={step.helpContents} roles={helpRoles} helpContentKey={`process:${processName};step:${step?.name}`} />;
+      const isFormatScanner = step?.format?.toLowerCase() == "scanner"
 
       return (
          <>
@@ -582,7 +667,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                // hide label on widgets - the Widget component itself provides the label                                    //
                // for modals, show the process label, but not for full-screen processes (for them, it is in the breadcrumb) //
                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               !isWidget &&
+               !isWidget && !isFormatScanner &&
                <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
                   {(isModal) ? `${overrideLabel ?? process.label}: ` : ""}
                   {step?.label}
@@ -1044,7 +1129,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          if (doesStepHaveComponent(activeStep, QComponentType.WIDGET))
          {
-            ProcessWidgetBlockUtils.addFieldsForCompositeWidget(activeStep, (fieldMetaData) =>
+            ProcessWidgetBlockUtils.addFieldsForCompositeWidget(activeStep, processValues, (fieldMetaData) =>
             {
                const dynamicField = DynamicFormUtils.getDynamicField(fieldMetaData);
                const validation = DynamicFormUtils.getValidationForField(fieldMetaData);
@@ -1827,7 +1912,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                               ) : (
                                  <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
                               )}
-                              {processError || qJobRunning || !activeStep ? (
+                              {processError || qJobRunning || !activeStep || activeStep?.format?.toLowerCase() == "scanner" ? (
                                  <Box />
                               ) : (
                                  <>

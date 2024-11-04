@@ -52,10 +52,10 @@ export default function InputFieldBlock({widgetMetaData, data, actionCallback}: 
    // so let us remove the default blur handler, for the first (auto) focus/blur //
    // cycle, and we seem to have a better time.                                  //
    ////////////////////////////////////////////////////////////////////////////////
-   let onBlurRest: {onBlur?: any} = {}
+   let dynamicFormFieldRest: {onBlur?: any, sx?: any} = {}
    if(autoFocus && blurCount == 0)
    {
-      onBlurRest.onBlur = (event: React.SyntheticEvent) =>
+      dynamicFormFieldRest.onBlur = (event: React.SyntheticEvent) =>
       {
          event.stopPropagation();
          event.preventDefault();
@@ -120,7 +120,18 @@ export default function InputFieldBlock({widgetMetaData, data, actionCallback}: 
          <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
             <>
                {labelElement}
-               <QDynamicFormField name={fieldMetaData.name} displayFormat={null} label="" formFieldObject={dynamicField} type={fieldMetaData.type} value={value} autoFocus={autoFocus} onKeyUp={eventHandler} {...onBlurRest} />
+               <QDynamicFormField
+                  name={fieldMetaData.name}
+                  displayFormat={null}
+                  label=""
+                  placeholder={data.values?.placeholder}
+                  backgroundColor="#FFFFFF"
+                  formFieldObject={dynamicField}
+                  type={fieldMetaData.type}
+                  value={value}
+                  autoFocus={autoFocus}
+                  onKeyUp={eventHandler}
+                  {...dynamicFormFieldRest} />
             </>
          </BlockElementWrapper>
       </Box>

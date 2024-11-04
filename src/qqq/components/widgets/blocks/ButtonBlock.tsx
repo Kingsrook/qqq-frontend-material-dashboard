@@ -29,30 +29,56 @@ import React from "react";
 
 
 /*******************************************************************************
- ** Block that renders ... an action button...
+ ** Block that renders ... a button...
  **
  *******************************************************************************/
-export default function ActionButtonBlock({widgetMetaData, data, actionCallback}: StandardBlockComponentProps): JSX.Element
+export default function ButtonBlock({widgetMetaData, data, actionCallback}: StandardBlockComponentProps): JSX.Element
 {
-   const icon = data.values.iconName ? <Icon>{data.values.iconName}</Icon> : null;
+   const startIcon = data.values.startIcon?.name ? <Icon>{data.values.startIcon.name}</Icon> : null;
+   const endIcon = data.values.endIcon?.name ? <Icon>{data.values.endIcon.name}</Icon> : null;
 
    function onClick()
    {
-      if(actionCallback)
+      if (actionCallback)
       {
-         actionCallback(data, {actionCode: data.values?.actionCode})
+         actionCallback(data, data.values);
       }
       else
       {
-         console.log("ActionButtonBlock onClick with no actionCallback present, so, noop");
+         console.log("ButtonBlock onClick with no actionCallback present, so, noop");
       }
    }
+
+   let buttonVariant: "gradient" | "outlined" | "text" = "gradient";
+   if (data.styles?.format == "outlined")
+   {
+      buttonVariant = "outlined";
+   }
+   else if (data.styles?.format == "text")
+   {
+      buttonVariant = "text";
+   }
+   else if (data.styles?.format == "filled")
+   {
+      buttonVariant = "gradient";
+   }
+
+   // todo - button colors... but to do RGB's, might need to move away from MDButton?
 
    return (
       <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
          <Box mx={1} my={1} minWidth={standardWidth}>
-            <MDButton type="button" variant="gradient" color="dark" size="small" fullWidth startIcon={icon} onClick={onClick}>
-               {data.values.label ?? "Action"}
+            <MDButton
+               type="button"
+               variant={buttonVariant}
+               color="dark"
+               size="small"
+               fullWidth
+               startIcon={startIcon}
+               endIcon={endIcon}
+               onClick={onClick}
+            >
+               {data.values.label ?? "Button"}
             </MDButton>
          </Box>
       </BlockElementWrapper>
