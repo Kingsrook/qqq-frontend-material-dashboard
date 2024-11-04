@@ -113,7 +113,7 @@ export default class DataGridUtils
       {
          console.log(`row-click mouse-up happened ${diff} x or y pixels away from the mouse-down - so not considering it a click.`);
       }
-   }
+   };
 
    /*******************************************************************************
     **
@@ -133,13 +133,13 @@ export default class DataGridUtils
             row[field.name] = ValueUtils.getDisplayValue(field, record, "query");
          });
 
-         if(tableMetaData.exposedJoins)
+         if (tableMetaData.exposedJoins)
          {
             for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
             {
                const join = tableMetaData.exposedJoins[i];
 
-               if(join?.joinTable?.fields?.values())
+               if (join?.joinTable?.fields?.values())
                {
                   const fields = [...join.joinTable.fields.values()];
                   fields.forEach((field) =>
@@ -151,15 +151,15 @@ export default class DataGridUtils
             }
          }
 
-         if(!row["id"])
+         if (!row["id"])
          {
             row["id"] = record.values.get(tableMetaData.primaryKeyField) ?? row[tableMetaData.primaryKeyField];
-            if(row["id"] === null || row["id"] === undefined)
+            if (row["id"] === null || row["id"] === undefined)
             {
                /////////////////////////////////////////////////////////////////////////////////////////
                // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
                /////////////////////////////////////////////////////////////////////////////////////////
-               if(!allowEmptyId)
+               if (!allowEmptyId)
                {
                   row["id"] = "--";
                }
@@ -170,7 +170,7 @@ export default class DataGridUtils
       });
 
       return (rows);
-   }
+   };
 
    /*******************************************************************************
     **
@@ -180,24 +180,24 @@ export default class DataGridUtils
       const columns = [] as GridColDef[];
       this.addColumnsForTable(tableMetaData, linkBase, columns, columnSort, null, null);
 
-      if(metaData)
+      if (metaData)
       {
-         if(tableMetaData.exposedJoins)
+         if (tableMetaData.exposedJoins)
          {
             for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
             {
                const join = tableMetaData.exposedJoins[i];
                let joinTableName = join.joinTable.name;
-               if(metaData.tables.has(joinTableName) && metaData.tables.get(joinTableName).readPermission)
+               if (metaData.tables.has(joinTableName) && metaData.tables.get(joinTableName).readPermission)
                {
                   let joinLinkBase = null;
                   joinLinkBase = metaData.getTablePath(join.joinTable);
-                  if(joinLinkBase)
+                  if (joinLinkBase)
                   {
                      joinLinkBase += joinLinkBase.endsWith("/") ? "" : "/";
                   }
 
-                  if(join?.joinTable?.fields?.values())
+                  if (join?.joinTable?.fields?.values())
                   {
                      this.addColumnsForTable(join.joinTable, joinLinkBase, columns, columnSort, joinTableName + ".", join.label + ": ");
                   }
@@ -220,7 +220,7 @@ export default class DataGridUtils
       ////////////////////////////////////////////////////////////////////////
       // this sorted by sections - e.g., manual sorting by the meta-data... //
       ////////////////////////////////////////////////////////////////////////
-      if(columnSort === "bySection")
+      if (columnSort === "bySection")
       {
          for (let i = 0; i < tableMetaData.sections.length; i++)
          {
@@ -241,19 +241,23 @@ export default class DataGridUtils
          ///////////////////////////
          // sort by labels... mmm //
          ///////////////////////////
-         sortedKeys.push(...tableMetaData.fields.keys())
+         sortedKeys.push(...tableMetaData.fields.keys());
          sortedKeys.sort((a: string, b: string): number =>
          {
-            return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label))
-         })
+            return (tableMetaData.fields.get(a).label.localeCompare(tableMetaData.fields.get(b).label));
+         });
       }
 
       sortedKeys.forEach((key) =>
       {
          const field = tableMetaData.fields.get(key);
-         if(field.isHeavy)
+         if (!field)
          {
-            if(field.type == QFieldType.BLOB)
+            return;
+         }
+         if (field.isHeavy)
+         {
+            if (field.type == QFieldType.BLOB)
             {
                ////////////////////////////////////////////////////////
                // assume we DO want heavy blobs - as download links. //
@@ -270,7 +274,7 @@ export default class DataGridUtils
 
          const column = this.makeColumnFromField(field, tableMetaData, namePrefix, labelPrefix);
 
-         if(key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
+         if (key === tableMetaData.primaryKeyField && linkBase && namePrefix == null)
          {
             columns.splice(0, 0, column);
          }
@@ -346,9 +350,9 @@ export default class DataGridUtils
          (cellValues.value)
       );
 
-      const helpRoles = ["QUERY_SCREEN", "READ_SCREENS", "ALL_SCREENS"]
+      const helpRoles = ["QUERY_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
       const showHelp = hasHelpContent(field.helpContents, helpRoles); // todo - maybe - take helpHelpActive from context all the way down to here?
-      if(showHelp)
+      if (showHelp)
       {
          const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={headerName} helpContentKey={`table:${tableMetaData.name};field:${fieldName}`} />;
          column.renderHeader = (params: GridColumnHeaderParams) => (
@@ -361,7 +365,7 @@ export default class DataGridUtils
       }
 
       return (column);
-   }
+   };
 
 
    /*******************************************************************************
@@ -390,7 +394,7 @@ export default class DataGridUtils
          }
       }
 
-      if(field.possibleValueSourceName)
+      if (field.possibleValueSourceName)
       {
          return (200);
       }
@@ -415,6 +419,6 @@ export default class DataGridUtils
       }
 
       return (200);
-   }
+   };
 }
 
