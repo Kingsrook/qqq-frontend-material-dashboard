@@ -602,7 +602,7 @@ function EntityForm(props: Props): JSX.Element
                      ///////////////////////////////////////////////////////////////////////////////////////////
                      if (fieldMetaData.possibleValueSourceName)
                      {
-                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]]);
+                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]], undefined, "form");
                         if (results && results.length > 0)
                         {
                            defaultDisplayValues.set(fieldName, results[0].label);
