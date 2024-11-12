@@ -779,11 +779,9 @@ function InputPossibleValueSourceSingle(tableName: string, field: QFieldMetaData
          }}
       >
          <DynamicSelect
-            tableName={tableName}
-            fieldName={field.name}
+            fieldPossibleValueProps={{tableName: tableName, fieldName: field.name, initialDisplayValue: selectedPossibleValue?.label}}
             fieldLabel="Value"
             initialValue={selectedPossibleValue?.id}
-            initialDisplayValue={selectedPossibleValue?.label}
             inForm={false}
             onChange={handleChange}
             useCase="filter"
@@ -848,11 +846,9 @@ function InputPossibleValueSourceMultiple(tableName: string, field: QFieldMetaDa
          }}
       >
          <DynamicSelect
-            tableName={tableName}
-            fieldName={field.name}
+            fieldPossibleValueProps={{tableName: tableName, fieldName: field.name, initialDisplayValue: null}}
             isMultiple={true}
             fieldLabel="Value"
-            initialValues={selectedPossibleValues}
             inForm={false}
             onChange={handleChange}
             useCase="filter"

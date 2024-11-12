@@ -19,46 +19,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {CompositeData} from "qqq/components/widgets/CompositeWidget";
+import Box from "@mui/material/Box";
+import BlockElementWrapper from "qqq/components/widgets/blocks/BlockElementWrapper";
+import {StandardBlockComponentProps} from "qqq/components/widgets/blocks/BlockModels";
+import DumpJsonBox from "qqq/utils/DumpJsonBox";
+import React from "react";
 
-
-export interface BlockData
+/*******************************************************************************
+ ** Block that renders ... an audio tag
+ **
+ ** <audio src=${path} ${autoPlay} ${showControls} />
+ *******************************************************************************/
+export default function AudioBlock({widgetMetaData, data}: StandardBlockComponentProps): JSX.Element
 {
-   blockId?: string;
-   blockTypeName: string;
-
-   tooltip?: BlockTooltip;
-   link?: BlockLink;
-   tooltipMap?: { [slot: string]: BlockTooltip };
-   linkMap?: { [slot: string]: BlockLink };
-
-   values: any;
-   styles?: any;
-
-   conditional?: string;
+   return (
+      <BlockElementWrapper metaData={widgetMetaData} data={data} slot="">
+         <audio src={data.values?.path} autoPlay={data.values?.autoPlay} controls={data.values?.showControls} />
+      </BlockElementWrapper>
+   );
 }
-
-
-export interface BlockTooltip
-{
-   blockData?: CompositeData;
-   title: string | JSX.Element;
-   placement: string;
-}
-
-
-export interface BlockLink
-{
-   href: string;
-   target: string;
-}
-
-
-export interface StandardBlockComponentProps
-{
-   widgetMetaData: QWidgetMetaData;
-   data: BlockData;
-   actionCallback?: (blockData: BlockData, eventValues?: {[name: string]: any}) => boolean;
-}
-

@@ -22,6 +22,7 @@
 import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {FieldPossibleValueProps} from "qqq/models/fields/FieldPossibleValueProps";
 import * as Yup from "yup";
 
 
@@ -129,18 +130,11 @@ class DynamicFormUtils
 
       if (effectivelyIsRequired)
       {
-         if (field.possibleValueSourceName)
-         {
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            // the "nullable(true)" here doesn't mean that you're allowed to set the field to null... //
-            // rather, it's more like "null is how empty will be treated" or some-such...             //
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            return (Yup.string().required(`${field.label} is required.`).nullable(true));
-         }
-         else
-         {
-            return (Yup.string().required(`${field.label} is required.`));
-         }
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         // the "nullable(true)" here doesn't mean that you're allowed to set the field to null... //
+         // rather, it's more like "null is how empty will be treated" or some-such...             //
+         ////////////////////////////////////////////////////////////////////////////////////////////
+         return (Yup.string().required(`${field.label ?? "This field"} is required.`).nullable(true));
       }
       return (null);
    }
@@ -155,47 +149,49 @@ class DynamicFormUtils
       {
          const field = qFields[i];
 
+         if(!dynamicFormFields[field.name])
+         {
+            continue;
+         }
+
          /////////////////////////////////////////
          // add props for possible value fields //
          /////////////////////////////////////////
-         if (field.possibleValueSourceName && dynamicFormFields[field.name])
+         if (field.possibleValueSourceName || field.inlinePossibleValueSource)
          {
-            let initialDisplayValue = null;
+            let props: FieldPossibleValueProps =
+               {
+                  isPossibleValue: true,
+                  fieldName: field.name,
+                  initialDisplayValue: null
+               }
+
             if (displayValues)
             {
-               initialDisplayValue = displayValues.get(field.name);
+               props.initialDisplayValue = displayValues.get(field.name);
             }
 
-            if (tableName)
+            if(field.inlinePossibleValueSource)
             {
-               dynamicFormFields[field.name].possibleValueProps =
-                  {
-                     isPossibleValue: true,
-                     tableName: tableName,
-                     fieldName: field.name,
-                     initialDisplayValue: initialDisplayValue,
-                  };
+               //////////////////////////////////////////////////////////////////////
+               // handle an inline PVS - which is a list of possible value objects //
+               //////////////////////////////////////////////////////////////////////
+               props.possibleValues = field.inlinePossibleValueSource;
+            }
+            else if (tableName)
+            {
+               props.tableName = tableName;
             }
             else if (processName)
             {
-               dynamicFormFields[field.name].possibleValueProps =
-                  {
-                     isPossibleValue: true,
-                     processName: processName,
-                     fieldName: field.name,
-                     initialDisplayValue: initialDisplayValue,
-                  };
+               props.processName = processName;
             }
             else
             {
-               dynamicFormFields[field.name].possibleValueProps =
-                  {
-                     isPossibleValue: true,
-                     initialDisplayValue: initialDisplayValue,
-                     fieldName: field.name,
-                     possibleValueSourceName: field.possibleValueSourceName
-                  };
+               props.possibleValueSourceName = field.possibleValueSourceName;
             }
+
+            dynamicFormFields[field.name].possibleValueProps = props;
          }
       }
    }

@@ -22,19 +22,25 @@
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Box, Skeleton} from "@mui/material";
+import Card from "@mui/material/Card";
+import Modal from "@mui/material/Modal";
 import parse from "html-react-parser";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import WidgetBlock from "qqq/components/widgets/WidgetBlock";
-import React from "react";
+import ProcessWidgetBlockUtils from "qqq/pages/processes/ProcessWidgetBlockUtils";
+import React, {useEffect, useState} from "react";
 
 
 export interface CompositeData
 {
+   blockId: string;
    blocks: BlockData[];
    styleOverrides?: any;
    layout?: string;
    overlayHtml?: string;
    overlayStyleOverrides?: any;
+   modalMode: string;
+   styles?: any;
 }
 
 
@@ -42,13 +48,15 @@ interface CompositeWidgetProps
 {
    widgetMetaData: QWidgetMetaData;
    data: CompositeData;
+   actionCallback?: (blockData: BlockData, eventValues?: { [name: string]: any }) => boolean;
+   values?: { [key: string]: any };
 }
 
 
 /*******************************************************************************
  ** Widget which is a list of Blocks.
  *******************************************************************************/
-export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetProps): JSX.Element
+export default function CompositeWidget({widgetMetaData, data, actionCallback, values}: CompositeWidgetProps): JSX.Element
 {
    if (!data || !data.blocks)
    {
@@ -74,12 +82,26 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
       boxStyle.flexWrap = "wrap";
       boxStyle.gap = "0.5rem";
    }
+   else if (layout == "FLEX_ROW")
+   {
+      boxStyle.display = "flex";
+      boxStyle.flexDirection = "row";
+      boxStyle.gap = "0.5rem";
+   }
    else if (layout == "FLEX_ROW_SPACE_BETWEEN")
    {
       boxStyle.display = "flex";
       boxStyle.flexDirection = "row";
       boxStyle.justifyContent = "space-between";
       boxStyle.gap = "0.25rem";
+   }
+   else if (layout == "FLEX_ROW_CENTER")
+   {
+      boxStyle.display = "flex";
+      boxStyle.flexDirection = "row";
+      boxStyle.justifyContent = "center";
+      boxStyle.gap = "0.25rem";
+      boxStyle.flexWrap = "wrap";
    }
    else if (layout == "TABLE_SUB_ROW_DETAILS")
    {
@@ -105,6 +127,19 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
       boxStyle = {...boxStyle, ...data.styleOverrides};
    }
 
+   if (data.styles?.backgroundColor)
+   {
+      boxStyle.backgroundColor = ProcessWidgetBlockUtils.processColorFromStyleMap(data.styles.backgroundColor);
+   }
+
+   if (data.styles?.padding)
+   {
+      boxStyle.paddingTop = data.styles?.padding.top + "px"
+      boxStyle.paddingBottom = data.styles?.padding.bottom + "px"
+      boxStyle.paddingLeft = data.styles?.padding.left + "px"
+      boxStyle.paddingRight = data.styles?.padding.right + "px"
+   }
+
    let overlayStyle: any = {};
 
    if (data?.overlayStyleOverrides)
@@ -112,7 +147,7 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
       overlayStyle = {...overlayStyle, ...data.overlayStyleOverrides};
    }
 
-   return (
+   const content = (
       <>
          {
             data?.overlayHtml &&
@@ -122,12 +157,61 @@ export default function CompositeWidget({widgetMetaData, data}: CompositeWidgetP
             {
                data.blocks.map((block: BlockData, index) => (
                   <React.Fragment key={index}>
-                     <WidgetBlock widgetMetaData={widgetMetaData} block={block} />
+                     <WidgetBlock widgetMetaData={widgetMetaData} block={block} actionCallback={actionCallback} values={values} />
                   </React.Fragment>
                ))
             }
          </Box>
       </>
    );
+
+   if (data.modalMode)
+   {
+      const [isModalOpen, setIsModalOpen] = useState(values && (values[data.blockId] == true));
+
+      /***************************************************************************
+       **
+       ***************************************************************************/
+      const controlCallback = (newValue: boolean) =>
+      {
+         setIsModalOpen(newValue);
+      };
+
+      /***************************************************************************
+       **
+       ***************************************************************************/
+      const modalOnClose = (event: object, reason: string) =>
+      {
+         values[data.blockId] = false;
+         setIsModalOpen(false);
+         actionCallback({blockTypeName: "BUTTON", values: {}}, {controlCode: `hideModal:${data.blockId}`});
+      };
+
+      //////////////////////////////////////////////////////////////////////////////////////////
+      // register the control-callback function - so when buttons are clicked, we can be told //
+      //////////////////////////////////////////////////////////////////////////////////////////
+      useEffect(() =>
+      {
+         if (actionCallback)
+         {
+            actionCallback(null, {
+               registerControlCallbackName: data.blockId,
+               registerControlCallbackFunction: controlCallback
+            });
+         }
+      }, []);
+
+      return (<Modal open={isModalOpen} onClose={modalOnClose}>
+         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+            <Card sx={{my: 5, mx: "auto", p: "1rem", maxWidth: "1024px"}}>
+               {content}
+            </Card>
+         </Box>
+      </Modal>);
+   }
+   else
+   {
+      return content;
+   }
 
 }

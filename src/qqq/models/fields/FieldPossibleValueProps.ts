@@ -19,46 +19,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {CompositeData} from "qqq/components/widgets/CompositeWidget";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 
-
-export interface BlockData
+/*******************************************************************************
+ ** Properties attached to a (formik?) form field, to denote how it behaves as
+ ** as related to a possible value source.
+ *******************************************************************************/
+export interface FieldPossibleValueProps
 {
-   blockId?: string;
-   blockTypeName: string;
-
-   tooltip?: BlockTooltip;
-   link?: BlockLink;
-   tooltipMap?: { [slot: string]: BlockTooltip };
-   linkMap?: { [slot: string]: BlockLink };
-
-   values: any;
-   styles?: any;
-
-   conditional?: string;
-}
-
-
-export interface BlockTooltip
-{
-   blockData?: CompositeData;
-   title: string | JSX.Element;
-   placement: string;
-}
-
-
-export interface BlockLink
-{
-   href: string;
-   target: string;
-}
-
-
-export interface StandardBlockComponentProps
-{
-   widgetMetaData: QWidgetMetaData;
-   data: BlockData;
-   actionCallback?: (blockData: BlockData, eventValues?: {[name: string]: any}) => boolean;
+   isPossibleValue?: boolean;
+   possibleValues?: QPossibleValue[];
+   initialDisplayValue: string | null;
+   fieldName?: string;
+   tableName?: string;
+   processName?: string;
+   possibleValueSourceName?: string;
 }
 

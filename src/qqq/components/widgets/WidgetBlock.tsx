@@ -22,6 +22,9 @@
 
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Alert, Skeleton} from "@mui/material";
+import ButtonBlock from "qqq/components/widgets/blocks/ButtonBlock";
+import AudioBlock from "qqq/components/widgets/blocks/AudioBlock";
+import InputFieldBlock from "qqq/components/widgets/blocks/InputFieldBlock";
 import React from "react";
 import BigNumberBlock from "qqq/components/widgets/blocks/BigNumberBlock";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
@@ -32,19 +35,22 @@ import TableSubRowDetailRowBlock from "qqq/components/widgets/blocks/TableSubRow
 import TextBlock from "qqq/components/widgets/blocks/TextBlock";
 import UpOrDownNumberBlock from "qqq/components/widgets/blocks/UpOrDownNumberBlock";
 import CompositeWidget from "qqq/components/widgets/CompositeWidget";
+import ImageBlock from "./blocks/ImageBlock";
 
 
 interface WidgetBlockProps
 {
    widgetMetaData: QWidgetMetaData;
    block: BlockData;
+   actionCallback?: (blockData: BlockData, eventValues?: {[name: string]: any}) => boolean;
+   values?: { [key: string]: any };
 }
 
 
 /*******************************************************************************
  ** Component to render a single Block in the widget framework!
  *******************************************************************************/
-export default function WidgetBlock({widgetMetaData, block}: WidgetBlockProps): JSX.Element
+export default function WidgetBlock({widgetMetaData, block, actionCallback, values}: WidgetBlockProps): JSX.Element
 {
    if(!block)
    {
@@ -64,7 +70,7 @@ export default function WidgetBlock({widgetMetaData, block}: WidgetBlockProps): 
    if(block.blockTypeName == "COMPOSITE")
    {
       // @ts-ignore - special case for composite type block...
-      return (<CompositeWidget widgetMetaData={widgetMetaData} data={block} />);
+      return (<CompositeWidget widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} values={values} />);
    }
 
    switch(block.blockTypeName)
@@ -83,6 +89,14 @@ export default function WidgetBlock({widgetMetaData, block}: WidgetBlockProps): 
          return (<DividerBlock widgetMetaData={widgetMetaData} data={block} />);
       case "BIG_NUMBER":
          return (<BigNumberBlock widgetMetaData={widgetMetaData} data={block} />);
+      case "INPUT_FIELD":
+         return (<InputFieldBlock widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} />);
+      case "BUTTON":
+         return (<ButtonBlock widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} />);
+      case "AUDIO":
+         return (<AudioBlock widgetMetaData={widgetMetaData} data={block} />);
+      case "IMAGE":
+         return (<ImageBlock widgetMetaData={widgetMetaData} data={block} actionCallback={actionCallback} />);
       default:
          return (<Alert sx={{m: "0.5rem"}} color="warning">Unsupported block type: {block.blockTypeName}</Alert>)
    }

@@ -172,14 +172,10 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                            <Grid item xs={12} sm={6} key={fieldName}>
                               {labelElement}
                               <DynamicSelect
-                                 tableName={field.possibleValueProps.tableName}
-                                 processName={field.possibleValueProps.processName}
-                                 possibleValueSourceName={field.possibleValueProps.possibleValueSourceName}
-                                 fieldName={field.possibleValueProps.fieldName}
+                                 fieldPossibleValueProps={field.possibleValueProps}
                                  isEditable={field.isEditable}
                                  fieldLabel=""
                                  initialValue={values[fieldName]}
-                                 initialDisplayValue={field.possibleValueProps.initialDisplayValue}
                                  bulkEditMode={bulkEditMode}
                                  bulkEditSwitchChangeHandler={bulkEditSwitchChanged}
                                  otherValues={otherValuesMap}
