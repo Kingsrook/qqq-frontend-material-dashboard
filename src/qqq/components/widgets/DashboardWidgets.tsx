@@ -18,18 +18,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
+import Modal from "@mui/material/Modal";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import parse from "html-react-parser";
 import QContext from "QContext";
+import EntityForm from "qqq/components/forms/EntityForm";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import TabPanel from "qqq/components/misc/TabPanel";
-import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import BarChart from "qqq/components/widgets/charts/barchart/BarChart";
 import HorizontalBarChart from "qqq/components/widgets/charts/barchart/HorizontalBarChart";
 import DefaultLineChart from "qqq/components/widgets/charts/linechart/DefaultLineChart";
@@ -44,7 +46,7 @@ import FieldValueListWidget from "qqq/components/widgets/misc/FieldValueListWidg
 import FilterAndColumnsSetupWidget from "qqq/components/widgets/misc/FilterAndColumnsSetupWidget";
 import PivotTableSetupWidget from "qqq/components/widgets/misc/PivotTableSetupWidget";
 import QuickSightChart from "qqq/components/widgets/misc/QuickSightChart";
-import RecordGridWidget from "qqq/components/widgets/misc/RecordGridWidget";
+import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
 import ScriptViewer from "qqq/components/widgets/misc/ScriptViewer";
 import StepperCard from "qqq/components/widgets/misc/StepperCard";
 import USMapWidget from "qqq/components/widgets/misc/USMapWidget";
@@ -72,9 +74,9 @@ interface Props
    childUrlParams?: string;
    parentWidgetMetaData?: QWidgetMetaData;
    wrapWidgetsInTabPanels: boolean;
-   actionCallback?: (blockData: BlockData) => boolean;
+   actionCallback?: (data: any, eventValues?: { [name: string]: any }) => boolean;
    initialWidgetDataList: any[];
-   values?: {[key: string]: any};
+   values?: { [key: string]: any };
 }
 
 DashboardWidgets.defaultProps = {
@@ -101,6 +103,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
    const [haveLoadedParams, setHaveLoadedParams] = useState(false);
    const {accentColor} = useContext(QContext);
 
+   /////////////////////////
+   // modal form controls //
+   /////////////////////////
+   const [showEditChildForm, setShowEditChildForm] = useState(null as any);
+   const [modalTable, setModalTable] = useState(null as QTableMetaData);
+
    let initialSelectedTab = 0;
    let selectedTabKey: string = null;
    if (parentWidgetMetaData && wrapWidgetsInTabPanels)
@@ -121,11 +129,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
    useEffect(() =>
    {
-      if(initialWidgetDataList && initialWidgetDataList.length > 0)
+      if (initialWidgetDataList && initialWidgetDataList.length > 0)
       {
          // todo actually, should this check each element of the array, down in the loop?  yeah, when we need to, do it that way.
          console.log("We already have initial widget data, so not fetching from backend.");
-         return
+         return;
       }
 
       setWidgetData([]);
@@ -166,7 +174,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
    const reloadWidget = async (index: number, data: string) =>
    {
-      (async () =>
+      await (async () =>
       {
          const urlParams = getQueryParams(widgetMetaDataList[index], data);
          setCurrentUrlParams(urlParams);
@@ -285,6 +293,132 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
       return (rs);
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const closeEditChildForm = (event: object, reason: string) =>
+   {
+      if (reason === "backdropClick" || reason === "escapeKeyDown")
+      {
+         return;
+      }
+
+      setShowEditChildForm(null);
+   };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function deleteChildRecord(name: string, widgetIndex: number, rowIndex: number)
+   {
+      updateChildRecordList(name, "delete", rowIndex);
+      actionCallback(widgetData[widgetIndex]);
+   };
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function openEditChildRecord(name: string, widgetData: any, rowIndex: number)
+   {
+      let defaultValues = widgetData.queryOutput.records[rowIndex].values;
+
+      let disabledFields = widgetData.disabledFieldsForNewChildRecords;
+      if (!disabledFields)
+      {
+         disabledFields = widgetData.defaultValuesForNewChildRecords;
+      }
+
+      doOpenEditChildForm(name, widgetData.childTableMetaData, rowIndex, defaultValues, disabledFields);
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function doOpenEditChildForm(widgetName: string, table: QTableMetaData, rowIndex: number, defaultValues: any, disabledFields: any)
+   {
+      const showEditChildForm: any = {};
+      showEditChildForm.widgetName = widgetName;
+      showEditChildForm.table = table;
+      showEditChildForm.rowIndex = rowIndex;
+      showEditChildForm.defaultValues = defaultValues;
+      showEditChildForm.disabledFields = disabledFields;
+      setShowEditChildForm(showEditChildForm);
+   }
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function submitEditChildForm(values: any)
+   {
+      updateChildRecordList(showEditChildForm.widgetName, showEditChildForm.rowIndex == null ? "insert" : "edit", showEditChildForm.rowIndex, values);
+      let widgetIndex = determineChildRecordListIndex(showEditChildForm.widgetName);
+      actionCallback(widgetData[widgetIndex]);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function determineChildRecordListIndex(widgetName: string): number
+   {
+      let widgetIndex = -1;
+      for (var i = 0; i < widgetMetaDataList.length; i++)
+      {
+         const widgetMetaData = widgetMetaDataList[i];
+         if (widgetMetaData.name == widgetName)
+         {
+            widgetIndex = i;
+            break;
+         }
+      }
+      return (widgetIndex);
+   }
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function updateChildRecordList(widgetName: string, action: "insert" | "edit" | "delete", rowIndex?: number, values?: any)
+   {
+      ////////////////////////////////////////////////
+      // find the correct child record widget index //
+      ////////////////////////////////////////////////
+      let widgetIndex = determineChildRecordListIndex(widgetName);
+
+      if (!widgetData[widgetIndex].queryOutput.records)
+      {
+         widgetData[widgetIndex].queryOutput.records = [];
+      }
+
+      const newChildListWidgetData: ChildRecordListData = widgetData[widgetIndex];
+      if (!newChildListWidgetData.queryOutput.records)
+      {
+         newChildListWidgetData.queryOutput.records = [];
+      }
+
+      switch (action)
+      {
+         case "insert":
+            newChildListWidgetData.queryOutput.records.push({values: values});
+            break;
+         case "edit":
+            newChildListWidgetData.queryOutput.records[rowIndex] = {values: values};
+            break;
+         case "delete":
+            newChildListWidgetData.queryOutput.records.splice(rowIndex, 1);
+            break;
+      }
+      newChildListWidgetData.totalRows = newChildListWidgetData.queryOutput.records.length;
+      widgetData[widgetIndex] = newChildListWidgetData;
+      setWidgetData(widgetData);
+
+      setShowEditChildForm(null);
+   }
+
+
    const renderWidget = (widgetMetaData: QWidgetMetaData, i: number): JSX.Element =>
    {
       const labelAdditionalComponentsRight: LabelComponent[] = [];
@@ -324,7 +458,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                )
             }
             {
-               widgetMetaData.type === "alert" && widgetData[i]?.html && (
+               widgetMetaData.type === "alert" && widgetData[i]?.html && !widgetData[i]?.hideWidget && (
                   <Widget
                      omitPadding={true}
                      widgetMetaData={widgetMetaData}
@@ -334,7 +468,16 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      labelAdditionalComponentsRight={labelAdditionalComponentsRight}
                      labelAdditionalComponentsLeft={labelAdditionalComponentsLeft}
                   >
-                     <Alert severity={widgetData[i]?.alertType?.toLowerCase()}>{parse(widgetData[i]?.html)}</Alert>
+                     <Alert severity={widgetData[i]?.alertType?.toLowerCase()}>
+                        {parse(widgetData[i]?.html)}
+                        {widgetData[i]?.bulletList && (
+                           <div style={{fontSize: "14px"}}>
+                              {widgetData[i].bulletList.map((bullet: string, index: number) =>
+                                 <li key={`widget-${i}-${index}`}>{parse(bullet)}</li>
+                              )}
+                           </div>
+                        )}
+                     </Alert>
                   </Widget>
                )
             }
@@ -516,9 +659,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
             }
             {
                widgetMetaData.type === "divider" && (
-                  <Box>
-                     <DividerWidget />
-                  </Box>
+                  <DividerWidget />
                )
             }
             {
@@ -552,6 +693,11 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                widgetMetaData.type === "childRecordList" && (
                   widgetData && widgetData[i] &&
                   <RecordGridWidget
+                     disableRowClick={true}
+                     allowRecordEdit={true}
+                     deleteRecordCallback={(rowIndex) => deleteChildRecord(widgetMetaData.name, i, rowIndex)}
+                     editRecordCallback={(rowIndex) => openEditChildRecord(widgetMetaData.name, widgetData[i], rowIndex)}
+                     allowRecordDelete={true}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
                   />
@@ -653,23 +799,23 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
 
                   if (!omitWrappingGridContainer)
                   {
-                     const gridProps: {[key: string]: any} = {};
+                     const gridProps: { [key: string]: any } = {};
 
-                     for(let size of ["xs", "sm", "md", "lg", "xl", "xxl"])
+                     for (let size of ["xs", "sm", "md", "lg", "xl", "xxl"])
                      {
-                        const key = `gridCols:sizeClass:${size}`
-                        if(widgetMetaData?.defaultValues?.has(key))
+                        const key = `gridCols:sizeClass:${size}`;
+                        if (widgetMetaData?.defaultValues?.has(key))
                         {
                            gridProps[size] = widgetMetaData?.defaultValues.get(key);
                         }
                      }
 
-                     if(!gridProps["xxl"])
+                     if (!gridProps["xxl"])
                      {
                         gridProps["xxl"] = widgetMetaData.gridColumns ? widgetMetaData.gridColumns : 12;
                      }
 
-                     if(!gridProps["xs"])
+                     if (!gridProps["xs"])
                      {
                         gridProps["xs"] = 12;
                      }
@@ -724,6 +870,22 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      {body}
                   </Grid>
                )
+            }
+            {
+               showEditChildForm &&
+               <Modal open={showEditChildForm as boolean} onClose={(event, reason) => closeEditChildForm(event, reason)}>
+                  <div className="modalEditForm">
+                     <EntityForm
+                        isModal={true}
+                        closeModalHandler={closeEditChildForm}
+                        table={showEditChildForm.table}
+                        defaultValues={showEditChildForm.defaultValues}
+                        disabledFields={showEditChildForm.disabledFields}
+                        onSubmitCallback={submitEditChildForm}
+                        overrideHeading={`${showEditChildForm.rowIndex != null ? "Editing" : "Creating New"} ${showEditChildForm.table.label}`}
+                     />
+                  </div>
+               </Modal>
             }
          </>
       ) : null

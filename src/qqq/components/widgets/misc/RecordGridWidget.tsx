@@ -39,15 +39,15 @@ import {Link, useNavigate} from "react-router-dom";
 
 export interface ChildRecordListData extends WidgetData
 {
-   title: string;
-   queryOutput: { records: { values: any }[] };
-   childTableMetaData: QTableMetaData;
-   tablePath: string;
-   viewAllLink: string;
-   totalRows: number;
-   canAddChildRecord: boolean;
-   defaultValuesForNewChildRecords: { [fieldName: string]: any };
-   disabledFieldsForNewChildRecords: { [fieldName: string]: any };
+   title?: string;
+   queryOutput?: { records: { values: any }[] };
+   childTableMetaData?: QTableMetaData;
+   tablePath?: string;
+   viewAllLink?: string;
+   totalRows?: number;
+   canAddChildRecord?: boolean;
+   defaultValuesForNewChildRecords?: { [fieldName: string]: any };
+   disabledFieldsForNewChildRecords?: { [fieldName: string]: any };
 }
 
 interface Props
@@ -176,7 +176,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          setCsv(csv);
          setFileName(fileName);
       }
-   }, [data]);
+   }, [JSON.stringify(data?.queryOutput)]);
 
    ///////////////////
    // view all link //
@@ -304,7 +304,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
          labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
-         <Box mx={-3} mb={-3}>
+         <Box>
             <Box>
                <DataGridPro
                   autoHeight
