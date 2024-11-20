@@ -334,6 +334,22 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
       doOpenEditChildForm(name, widgetData.childTableMetaData, rowIndex, defaultValues, disabledFields);
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   function openAddChildRecord(name: string, widgetData: any)
+   {
+      let disabledFields = widgetData.disabledFieldsForNewChildRecords;
+      if (!disabledFields)
+      {
+         disabledFields = widgetData.defaultValuesForNewChildRecords;
+      }
+
+      doOpenEditChildForm(name, widgetData.childTableMetaData, null, null, disabledFields);
+   }
+
+
    /*******************************************************************************
     **
     *******************************************************************************/
@@ -693,11 +709,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                widgetMetaData.type === "childRecordList" && (
                   widgetData && widgetData[i] &&
                   <RecordGridWidget
-                     disableRowClick={true}
-                     allowRecordEdit={true}
+                     disableRowClick={widgetData[i]?.disableRowClick}
+                     allowRecordEdit={widgetData[i]?.allowRecordEdit}
+                     allowRecordDelete={widgetData[i]?.allowRecordDelete}
                      deleteRecordCallback={(rowIndex) => deleteChildRecord(widgetMetaData.name, i, rowIndex)}
                      editRecordCallback={(rowIndex) => openEditChildRecord(widgetMetaData.name, widgetData[i], rowIndex)}
-                     allowRecordDelete={true}
+                     addNewRecordCallback={() => openAddChildRecord(widgetMetaData.name, widgetData[i])}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
                   />
