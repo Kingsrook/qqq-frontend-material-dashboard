@@ -40,16 +40,17 @@ import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import FormData from "form-data";
-import React, {useEffect, useReducer, useRef, useState} from "react";
-import AceEditor from "react-ace";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import ScriptDocsForm from "qqq/components/scripts/ScriptDocsForm";
 import ScriptTestForm from "qqq/components/scripts/ScriptTestForm";
 import Client from "qqq/utils/qqq/Client";
 
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/theme-github";
+import React, {useEffect, useReducer, useRef, useState} from "react";
+import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 export interface ScriptEditorProps
@@ -69,15 +70,15 @@ const qController = Client.getInstance();
 
 function buildInitialFileContentsMap(scriptRevisionRecord: QRecord, scriptTypeFileSchemaList: QRecord[]): { [name: string]: string }
 {
-   const rs: {[name: string]: string} = {};
+   const rs: { [name: string]: string } = {};
 
-   if(!scriptTypeFileSchemaList)
+   if (!scriptTypeFileSchemaList)
    {
       console.log("Missing scriptTypeFileSchemaList");
    }
    else
    {
-      let files = scriptRevisionRecord?.associatedRecords?.get("files")
+      let files = scriptRevisionRecord?.associatedRecords?.get("files");
 
       for (let i = 0; i < scriptTypeFileSchemaList.length; i++)
       {
@@ -88,7 +89,7 @@ function buildInitialFileContentsMap(scriptRevisionRecord: QRecord, scriptTypeFi
          for (let j = 0; j < files?.length; j++)
          {
             let file = files[j];
-            if(file.values.get("fileName") == name)
+            if (file.values.get("fileName") == name)
             {
                contents = file.values.get("contents");
             }
@@ -103,9 +104,9 @@ function buildInitialFileContentsMap(scriptRevisionRecord: QRecord, scriptTypeFi
 
 function buildFileTypeMap(scriptTypeFileSchemaList: QRecord[]): { [name: string]: string }
 {
-   const rs: {[name: string]: string} = {};
+   const rs: { [name: string]: string } = {};
 
-   if(!scriptTypeFileSchemaList)
+   if (!scriptTypeFileSchemaList)
    {
       console.log("Missing scriptTypeFileSchemaList");
    }
@@ -125,21 +126,21 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
 {
    const [closing, setClosing] = useState(false);
 
-   const [apiName, setApiName] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiName") : null)
-   const [apiNameLabel, setApiNameLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiName") : null)
-   const [apiVersion, setApiVersion] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiVersion") : null)
-   const [apiVersionLabel, setApiVersionLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiVersion") : null)
+   const [apiName, setApiName] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiName") : null);
+   const [apiNameLabel, setApiNameLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiName") : null);
+   const [apiVersion, setApiVersion] = useState(scriptRevisionRecord ? scriptRevisionRecord.values.get("apiVersion") : null);
+   const [apiVersionLabel, setApiVersionLabel] = useState(scriptRevisionRecord ? scriptRevisionRecord.displayValues.get("apiVersion") : null);
 
-   const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"))
+   const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"));
    const [availableFileNames, setAvailableFileNames] = useState(fileNamesFromSchema);
-   const [openEditorFileNames, setOpenEditorFileNames] = useState([fileNamesFromSchema[0]])
-   const [fileContents, setFileContents] = useState(buildInitialFileContentsMap(scriptRevisionRecord, scriptTypeFileSchemaList))
-   const [fileTypes, setFileTypes] = useState(buildFileTypeMap(scriptTypeFileSchemaList))
+   const [openEditorFileNames, setOpenEditorFileNames] = useState([fileNamesFromSchema[0]]);
+   const [fileContents, setFileContents] = useState(buildInitialFileContentsMap(scriptRevisionRecord, scriptTypeFileSchemaList));
+   const [fileTypes, setFileTypes] = useState(buildFileTypeMap(scriptTypeFileSchemaList));
    console.log(`file types: ${JSON.stringify(fileTypes)}`);
 
-   const [commitMessage, setCommitMessage] = useState("")
+   const [commitMessage, setCommitMessage] = useState("");
    const [openTool, setOpenTool] = useState(null);
-   const [errorAlert, setErrorAlert] = useState("")
+   const [errorAlert, setErrorAlert] = useState("");
    const [promptForCommitMessageOpen, setPromptForCommitMessageOpen] = useState(false);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
    const ref = useRef();
@@ -241,19 +242,19 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       // need this to make Ace recognize new height.
       setTimeout(() =>
       {
-         window.dispatchEvent(new Event("resize"))
+         window.dispatchEvent(new Event("resize"));
       }, 100);
    };
 
    const saveClicked = (overrideCommitMessage?: string) =>
    {
-      if(!apiName || !apiVersion)
+      if (!apiName || !apiVersion)
       {
-         setErrorAlert("You must select a value for both API Name and API Version.")
+         setErrorAlert("You must select a value for both API Name and API Version.");
          return;
       }
 
-      if(!commitMessage && !overrideCommitMessage)
+      if (!commitMessage && !overrideCommitMessage)
       {
          setPromptForCommitMessageOpen(true);
          return;
@@ -267,18 +268,18 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
          formData.append("scriptId", scriptId);
          formData.append("commitMessage", overrideCommitMessage ?? commitMessage);
 
-         if(apiName)
+         if (apiName)
          {
             formData.append("apiName", apiName);
          }
 
-         if(apiVersion)
+         if (apiVersion)
          {
             formData.append("apiVersion", apiVersion);
          }
 
 
-         const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"))
+         const fileNamesFromSchema = scriptTypeFileSchemaList.map((schemaRecord) => schemaRecord.values.get("name"));
          formData.append("fileNames", fileNamesFromSchema.join(","));
 
          for (let fileName in fileContents)
@@ -299,58 +300,58 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
 
             if (processResult instanceof QJobError)
             {
-               const jobError = processResult as QJobError
-               setErrorAlert(jobError.userFacingError ?? jobError.error)
+               const jobError = processResult as QJobError;
+               setErrorAlert(jobError.userFacingError ?? jobError.error);
                setClosing(false);
                return;
             }
 
             closeCallback(null, "saved", "Saved New Script Version");
          }
-         catch(e)
+         catch (e)
          {
             // @ts-ignore
-            setErrorAlert(e.message ?? "Unexpected error saving script")
+            setErrorAlert(e.message ?? "Unexpected error saving script");
             setClosing(false);
          }
       })();
-   }
+   };
 
    const cancelClicked = () =>
    {
       setClosing(true);
       closeCallback(null, "cancelled");
-   }
+   };
 
    const updateCode = (value: string, event: any, index: number) =>
    {
       fileContents[openEditorFileNames[index]] = value;
       forceUpdate();
-   }
+   };
 
    const updateCommitMessage = (event: React.ChangeEvent<HTMLInputElement>) =>
    {
       setCommitMessage(event.target.value);
-   }
+   };
 
    const closePromptForCommitMessage = (wasSaveClicked: boolean, message?: string) =>
    {
       setPromptForCommitMessageOpen(false);
 
-      if(wasSaveClicked)
+      if (wasSaveClicked)
       {
-         setCommitMessage(message)
+         setCommitMessage(message);
          saveClicked(message);
       }
       else
       {
          setClosing(false);
       }
-   }
+   };
 
    const changeApiName = (apiNamePossibleValue?: QPossibleValue) =>
    {
-      if(apiNamePossibleValue)
+      if (apiNamePossibleValue)
       {
          setApiName(apiNamePossibleValue.id);
       }
@@ -358,11 +359,11 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       {
          setApiName(null);
       }
-   }
+   };
 
    const changeApiVersion = (apiVersionPossibleValue?: QPossibleValue) =>
    {
-      if(apiVersionPossibleValue)
+      if (apiVersionPossibleValue)
       {
          setApiVersion(apiVersionPossibleValue.id);
       }
@@ -370,33 +371,33 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
       {
          setApiVersion(null);
       }
-   }
+   };
 
    const handleSelectingFile = (event: SelectChangeEvent, index: number) =>
    {
-      openEditorFileNames[index] = event.target.value
+      openEditorFileNames[index] = event.target.value;
       setOpenEditorFileNames(openEditorFileNames);
       forceUpdate();
-   }
+   };
 
    const splitEditorClicked = () =>
    {
-      openEditorFileNames.push(availableFileNames[0])
+      openEditorFileNames.push(availableFileNames[0]);
       setOpenEditorFileNames(openEditorFileNames);
       forceUpdate();
-   }
+   };
 
    const closeEditorClicked = (index: number) =>
    {
-      openEditorFileNames.splice(index, 1)
+      openEditorFileNames.splice(index, 1);
       setOpenEditorFileNames(openEditorFileNames);
       forceUpdate();
-   }
+   };
 
    const computeEditorWidth = (): string =>
    {
-      return (100 / openEditorFileNames.length) + "%"
-   }
+      return (100 / openEditorFileNames.length) + "%";
+   };
 
    return (
       <Box className="scriptEditor" sx={{position: "absolute", overflowY: "auto", height: "100%", width: "100%"}} p={6}>
@@ -408,7 +409,7 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                {
                   return;
                }
-               setErrorAlert("")
+               setErrorAlert("");
             }} anchorOrigin={{vertical: "top", horizontal: "center"}}>
                <Alert color="error" onClose={() => setErrorAlert("")}>
                   {errorAlert}
@@ -464,19 +465,19 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                               <Box>
                                  {
                                     openEditorFileNames.length > 1 &&
-                                       <Tooltip title="Close this editor split" enterDelay={500}>
-                                          <IconButton size="small" onClick={() => closeEditorClicked(index)}>
-                                             <Icon>close</Icon>
-                                          </IconButton>
-                                       </Tooltip>
+                                    <Tooltip title="Close this editor split" enterDelay={500}>
+                                       <IconButton size="small" onClick={() => closeEditorClicked(index)}>
+                                          <Icon>close</Icon>
+                                       </IconButton>
+                                    </Tooltip>
                                  }
                                  {
                                     index == openEditorFileNames.length - 1 &&
-                                       <Tooltip title="Open a new editor split" enterDelay={500}>
-                                          <IconButton size="small" onClick={splitEditorClicked}>
-                                             <Icon>vertical_split</Icon>
-                                          </IconButton>
-                                       </Tooltip>
+                                    <Tooltip title="Open a new editor split" enterDelay={500}>
+                                       <IconButton size="small" onClick={splitEditorClicked}>
+                                          <Icon>vertical_split</Icon>
+                                       </IconButton>
+                                    </Tooltip>
                                  }
                               </Box>
                            </Box>
@@ -526,29 +527,29 @@ function ScriptEditor({title, scriptId, scriptRevisionRecord, closeCallback, tab
                </Grid>
             </Box>
 
-            <CommitMessagePrompt isOpen={promptForCommitMessageOpen} closeHandler={closePromptForCommitMessage}/>
+            <CommitMessagePrompt isOpen={promptForCommitMessageOpen} closeHandler={closePromptForCommitMessage} />
          </Card>
       </Box>
 
    );
 }
 
-function CommitMessagePrompt(props: {isOpen: boolean, closeHandler: (wasSaveClicked: boolean, message?: string) => void})
+function CommitMessagePrompt(props: { isOpen: boolean, closeHandler: (wasSaveClicked: boolean, message?: string) => void })
 {
-   const [commitMessage, setCommitMessage] = useState("No commit message given")
+   const [commitMessage, setCommitMessage] = useState("No commit message given");
 
    const updateCommitMessage = (event: React.ChangeEvent<HTMLInputElement>) =>
    {
       setCommitMessage(event.target.value);
-   }
+   };
 
    const keyPressHandler = (e: React.KeyboardEvent<HTMLDivElement>) =>
    {
-      if(e.key === "Enter")
+      if (e.key === "Enter")
       {
          props.closeHandler(true, commitMessage);
       }
-   }
+   };
 
    return (
       <Dialog
@@ -579,10 +580,10 @@ function CommitMessagePrompt(props: {isOpen: boolean, closeHandler: (wasSaveClic
          </DialogContent>
          <DialogActions>
             <QCancelButton onClickHandler={() => props.closeHandler(false)} disabled={false} />
-            <QSaveButton label="Save" onClickHandler={() => props.closeHandler(true, commitMessage)} disabled={false}/>
+            <QSaveButton label="Save" onClickHandler={() => props.closeHandler(true, commitMessage)} disabled={false} />
          </DialogActions>
       </Dialog>
-   )
+   );
 }
 
 export default ScriptEditor;
