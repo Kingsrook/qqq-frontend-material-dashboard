@@ -75,7 +75,8 @@ export default class HtmlUtils
       {
          if (url.startsWith("http"))
          {
-            url += encodeURIComponent(`?response-content-disposition=attachment; ${filename}`);
+            const separator = url.includes("?") ? "&" : "?";
+            url += encodeURIComponent(`${separator}response-content-disposition=attachment; ${filename}`);
          }
 
          const link = document.createElement("a");

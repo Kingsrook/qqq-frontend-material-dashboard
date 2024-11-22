@@ -295,6 +295,12 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       return (<GridToolbarContainer />);
    }
 
+   let containerPadding = -3;
+   if (data?.isInProcess)
+   {
+      containerPadding = 0;
+   }
+
 
    return (
       <Widget
@@ -304,7 +310,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
          labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
-         <Box>
+         <Box mx={containerPadding} mb={containerPadding}>
             <Box>
                <DataGridPro
                   autoHeight

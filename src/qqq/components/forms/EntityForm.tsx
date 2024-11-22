@@ -818,9 +818,9 @@ function EntityForm(props: Props): JSX.Element
    {
       actions.setSubmitting(true);
 
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // if there's a callback (e.g., for a modal nested on another create/edit screen), then just pass our data back there anre return. //
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // if there's a callback (e.g., for a modal nested on another create/edit screen), then just pass our data back there and return. //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       if (props.onSubmitCallback)
       {
          props.onSubmitCallback(values);
@@ -1290,7 +1290,7 @@ function EntityForm(props: Props): JSX.Element
                               table={showEditChildForm.table}
                               defaultValues={showEditChildForm.defaultValues}
                               disabledFields={showEditChildForm.disabledFields}
-                              onSubmitCallback={submitEditChildForm}
+                              onSubmitCallback={props.onSubmitCallback ? props.onSubmitCallback : submitEditChildForm}
                               overrideHeading={`${showEditChildForm.rowIndex != null ? "Editing" : "Creating New"} ${showEditChildForm.table.label}`}
                            />
                         </div>

@@ -107,7 +107,6 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
    // modal form controls //
    /////////////////////////
    const [showEditChildForm, setShowEditChildForm] = useState(null as any);
-   const [modalTable, setModalTable] = useState(null as QTableMetaData);
 
    let initialSelectedTab = 0;
    let selectedTabKey: string = null;
@@ -340,13 +339,15 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
     *******************************************************************************/
    function openAddChildRecord(name: string, widgetData: any)
    {
+      let defaultValues = widgetData.defaultValuesForNewChildRecords;
+
       let disabledFields = widgetData.disabledFieldsForNewChildRecords;
       if (!disabledFields)
       {
          disabledFields = widgetData.defaultValuesForNewChildRecords;
       }
 
-      doOpenEditChildForm(name, widgetData.childTableMetaData, null, null, disabledFields);
+      doOpenEditChildForm(name, widgetData.childTableMetaData, null, defaultValues, disabledFields);
    }
 
 
@@ -714,7 +715,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      allowRecordDelete={widgetData[i]?.allowRecordDelete}
                      deleteRecordCallback={(rowIndex) => deleteChildRecord(widgetMetaData.name, i, rowIndex)}
                      editRecordCallback={(rowIndex) => openEditChildRecord(widgetMetaData.name, widgetData[i], rowIndex)}
-                     addNewRecordCallback={() => openAddChildRecord(widgetMetaData.name, widgetData[i])}
+                     addNewRecordCallback={widgetData[i]?.isInProcess ? () => openAddChildRecord(widgetMetaData.name, widgetData[i]) : null}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
                   />
