@@ -30,20 +30,17 @@ import TextField from "@mui/material/TextField";
 import {ErrorMessage, useFormikContext} from "formik";
 import colors from "qqq/assets/theme/base/colors";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {FieldPossibleValueProps} from "qqq/models/fields/FieldPossibleValueProps";
 import Client from "qqq/utils/qqq/Client";
 import React, {useEffect, useState} from "react";
 
 interface Props
 {
-   tableName?: string;
-   processName?: string;
-   fieldName?: string;
-   possibleValueSourceName?: string;
+   fieldPossibleValueProps: FieldPossibleValueProps;
    overrideId?: string;
    fieldLabel: string;
    inForm: boolean;
    initialValue?: any;
-   initialDisplayValue?: string;
    initialValues?: QPossibleValue[];
    onChange?: any;
    isEditable?: boolean;
@@ -57,13 +54,8 @@ interface Props
 }
 
 DynamicSelect.defaultProps = {
-   tableName: null,
-   processName: null,
-   fieldName: null,
-   possibleValueSourceName: null,
    inForm: true,
    initialValue: null,
-   initialDisplayValue: null,
    initialValues: undefined,
    onChange: null,
    isEditable: true,
@@ -103,8 +95,10 @@ export const getAutocompleteOutlinedStyle = (isDisabled: boolean) =>
 
 const qController = Client.getInstance();
 
-function DynamicSelect({tableName, processName, fieldName, possibleValueSourceName, overrideId, fieldLabel, inForm, initialValue, initialDisplayValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen, useCase}: Props)
+function DynamicSelect({fieldPossibleValueProps, overrideId, fieldLabel, inForm, initialValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen, useCase}: Props)
 {
+   const {fieldName, initialDisplayValue, possibleValueSourceName, possibleValues, processName, tableName} = fieldPossibleValueProps;
+
    const [open, setOpen] = useState(initiallyOpen);
    const [options, setOptions] = useState<readonly QPossibleValue[]>([]);
    const [searchTerm, setSearchTerm] = useState(null);
@@ -172,6 +166,35 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       setFieldValueRef = setFieldValue;
    }
 
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   const filterInlinePossibleValues = (searchTerm: string, possibleValues: QPossibleValue[]): QPossibleValue[] =>
+   {
+      return possibleValues.filter(pv => pv.label?.toLowerCase().startsWith(searchTerm));
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   const loadResults = async (): Promise<QPossibleValue[]> =>
+   {
+      if(possibleValues)
+      {
+         return filterInlinePossibleValues(searchTerm, possibleValues)
+      }
+      else
+      {
+         return await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
+      }
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    useEffect(() =>
    {
       if (firstRender)
@@ -195,7 +218,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       (async () =>
       {
          // console.log(`doing a search with ${searchTerm}`);
-         const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
+         const results: QPossibleValue[] = await loadResults();
 
          if (tableMetaData == null && tableName)
          {
@@ -218,7 +241,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       };
    }, [searchTerm]);
 
-   // todo - finish... call it in onOpen?
+
+   /***************************************************************************
+    ** todo - finish... call it in onOpen?
+    ***************************************************************************/
    const reloadIfOtherValuesAreChanged = () =>
    {
       if (JSON.stringify(Object.fromEntries(otherValues)) != otherValuesWhenResultsWereLoaded)
@@ -227,8 +253,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
          {
             setLoading(true);
             setOptions([]);
+
             console.log("Refreshing possible values...");
-            const results: QPossibleValue[] = await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
+            const results: QPossibleValue[] = await loadResults();
+
             setLoading(false);
             setOptions([...results]);
             setOtherValuesWhenResultsWereLoaded(JSON.stringify(Object.fromEntries(otherValues)));
@@ -236,6 +264,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       }
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const inputChanged = (event: React.SyntheticEvent, value: string, reason: string) =>
    {
       // console.log(`input changed.  Reason: ${reason}, setting search term to ${value}`);
@@ -246,11 +278,19 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       }
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const handleBlur = (x: any) =>
    {
       setSearchTerm(null);
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const handleChanged = (event: React.SyntheticEvent, value: any | any[], reason: string, details?: string) =>
    {
       // console.log("handleChanged.  value is:");
@@ -274,6 +314,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       }
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const filterOptions = (options: { id: any; label: string; }[], state: FilterOptionsState<{ id: any; label: string; }>): { id: any; label: string; }[] =>
    {
       /////////////////////////////////////////////////////////////////////////////////
@@ -283,6 +327,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       return (options);
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    // @ts-ignore
    const renderOption = (props: Object, option: any, {selected}) =>
    {
@@ -331,6 +379,10 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
       );
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const bulkEditSwitchChanged = () =>
    {
       const newSwitchValue = !switchChecked;
@@ -351,7 +403,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
    const autocomplete = (
       <Box>
          <Autocomplete
-            id={overrideId ?? fieldName ?? possibleValueSourceName}
+            id={overrideId ?? fieldName ?? possibleValueSourceName ?? "anonymous"}
             sx={autocompleteSX}
             open={open}
             fullWidth
@@ -431,7 +483,7 @@ function DynamicSelect({tableName, processName, fieldName, possibleValueSourceNa
             inForm &&
             <Box mt={0.75}>
                <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={fieldName ?? possibleValueSourceName} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
+                  {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={overrideId ?? fieldName ?? possibleValueSourceName ?? "anonymous"} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
                </MDTypography>
             </Box>
          }

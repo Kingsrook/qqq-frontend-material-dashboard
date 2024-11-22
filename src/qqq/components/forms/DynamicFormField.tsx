@@ -40,6 +40,8 @@ interface Props
    value: any;
    type: string;
    isEditable?: boolean;
+   placeholder?: string;
+   backgroundColor?: string;
 
    [key: string]: any;
 
@@ -49,7 +51,7 @@ interface Props
 }
 
 function QDynamicFormField({
-   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, formFieldObject, ...rest
+   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, placeholder, backgroundColor, formFieldObject, ...rest
 }: Props): JSX.Element
 {
    const [switchChecked, setSwitchChecked] = useState(false);
@@ -65,16 +67,28 @@ function QDynamicFormField({
       inputLabelProps.shrink = true;
    }
 
-   const inputProps = {};
+   const inputProps: any = {};
    if (displayFormat && displayFormat.startsWith("$"))
    {
-      // @ts-ignore
       inputProps.startAdornment = <InputAdornment position="start">$</InputAdornment>;
    }
    if (displayFormat && displayFormat.endsWith("%%"))
    {
-      // @ts-ignore
       inputProps.endAdornment = <InputAdornment position="end">%</InputAdornment>;
+   }
+
+   if (placeholder)
+   {
+      inputProps.placeholder = placeholder
+   }
+
+   if(backgroundColor)
+   {
+      inputProps.sx = {
+         "&.MuiInputBase-root": {
+            backgroundColor: backgroundColor
+         }
+      };
    }
 
    // @ts-ignore

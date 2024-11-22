@@ -391,10 +391,9 @@ export default function ShareModal({open, onClose, tableMetaData, record}: Share
                   <Box display="flex" flexDirection="row" alignItems="center">
                      <Box width="550px" pr={2} mb={-1.5}>
                         <DynamicSelect
-                           possibleValueSourceName={shareableTableMetaData.audiencePossibleValueSourceName}
+                           fieldPossibleValueProps={{possibleValueSourceName: shareableTableMetaData.audiencePossibleValueSourceName, initialDisplayValue: selectedAudienceOption?.label}}
                            fieldLabel="User or Group" // todo should come from shareableTableMetaData
                            initialValue={selectedAudienceOption?.id}
-                           initialDisplayValue={selectedAudienceOption?.label}
                            inForm={false}
                            onChange={handleAudienceChange}
                            useCase="form"

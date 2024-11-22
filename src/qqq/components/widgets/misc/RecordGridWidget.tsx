@@ -39,15 +39,15 @@ import {Link, useNavigate} from "react-router-dom";
 
 export interface ChildRecordListData extends WidgetData
 {
-   title: string;
-   queryOutput: { records: { values: any }[] };
-   childTableMetaData: QTableMetaData;
-   tablePath: string;
-   viewAllLink: string;
-   totalRows: number;
-   canAddChildRecord: boolean;
-   defaultValuesForNewChildRecords: { [fieldName: string]: any };
-   disabledFieldsForNewChildRecords: { [fieldName: string]: any };
+   title?: string;
+   queryOutput?: { records: { values: any }[] };
+   childTableMetaData?: QTableMetaData;
+   tablePath?: string;
+   viewAllLink?: string;
+   totalRows?: number;
+   canAddChildRecord?: boolean;
+   defaultValuesForNewChildRecords?: { [fieldName: string]: any };
+   disabledFieldsForNewChildRecords?: { [fieldName: string]: any };
 }
 
 interface Props
@@ -176,7 +176,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          setCsv(csv);
          setFileName(fileName);
       }
-   }, [data]);
+   }, [JSON.stringify(data?.queryOutput)]);
 
    ///////////////////
    // view all link //
@@ -295,6 +295,12 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       return (<GridToolbarContainer />);
    }
 
+   let containerPadding = -3;
+   if (data?.isInProcess)
+   {
+      containerPadding = 0;
+   }
+
 
    return (
       <Widget
@@ -304,7 +310,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          labelAdditionalComponentsRight={labelAdditionalComponentsRight}
          labelBoxAdditionalSx={{position: "relative", top: "-0.375rem"}}
       >
-         <Box mx={-3} mb={-3}>
+         <Box mx={containerPadding} mb={containerPadding}>
             <Box>
                <DataGridPro
                   autoHeight

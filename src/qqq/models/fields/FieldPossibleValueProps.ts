@@ -1,6 +1,6 @@
 /*
  * QQQ - Low-code Application Framework for Engineers.
- * Copyright (C) 2021-2022.  Kingsrook, LLC
+ * Copyright (C) 2021-2024.  Kingsrook, LLC
  * 651 N Broad St Ste 205 # 6917 | Middletown DE 19709 | United States
  * contact@kingsrook.com
  * https://github.com/Kingsrook/
@@ -19,17 +19,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 
-
-function DividerWidget(): JSX.Element
+/*******************************************************************************
+ ** Properties attached to a (formik?) form field, to denote how it behaves as
+ ** as related to a possible value source.
+ *******************************************************************************/
+export interface FieldPossibleValueProps
 {
-   return (
-      <Box pl={3} pt={3} pb={3} width="100%">
-         <Divider sx={{width: "100%", height: "1px", background: "grey"}} />
-      </Box>
-   );
+   isPossibleValue?: boolean;
+   possibleValues?: QPossibleValue[];
+   initialDisplayValue: string | null;
+   fieldName?: string;
+   tableName?: string;
+   processName?: string;
+   possibleValueSourceName?: string;
 }
 
-export default DividerWidget;

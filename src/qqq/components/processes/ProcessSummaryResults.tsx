@@ -84,7 +84,7 @@ function ProcessSummaryResults({
    );
 
    return (
-      <Box m={3} mt={6}>
+      <Box m={{xs: 0, md: 3}} mt={"3rem!important"}>
          <Grid container>
             <Grid item xs={0} lg={2} />
             <Grid item xs={12} lg={8}>
