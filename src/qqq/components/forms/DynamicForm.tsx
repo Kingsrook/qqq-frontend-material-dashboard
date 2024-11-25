@@ -22,18 +22,18 @@
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {colors, Icon, InputLabel} from "@mui/material";
+import {colors, Icon} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import {useFormikContext} from "formik";
-import React, {useState} from "react";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useState} from "react";
 
 interface Props
 {
@@ -105,15 +105,13 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         values[fieldName] = "";
                      }
 
-                     let formattedHelpContent = <HelpContent helpContents={field.fieldMetaData.helpContents} roles={helpRoles} helpContentKey={`${helpContentKeyPrefix ?? ""}field:${fieldName}`} />;
+                     let formattedHelpContent = <HelpContent helpContents={field?.fieldMetaData?.helpContents} roles={helpRoles} helpContentKey={`${helpContentKeyPrefix ?? ""}field:${fieldName}`} />;
                      if(formattedHelpContent)
                      {
                         formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.25rem">{formattedHelpContent}</Box>
                      }
 
-                     const labelElement = <Box fontSize="1rem" fontWeight="500" marginBottom="0.25rem">
-                        <label htmlFor={field.name}>{field.label}</label>
-                     </Box>
+                     const labelElement = <DynamicFormFieldLabel name={field.name} label={field.label} />;
 
                      if (field.type === "file")
                      {
@@ -223,5 +221,20 @@ QDynamicForm.defaultProps = {
    {
    },
 };
+
+
+interface DynamicFormFieldLabelProps
+{
+   name: string;
+   label: string;
+}
+
+export function DynamicFormFieldLabel({name, label}: DynamicFormFieldLabelProps): JSX.Element
+{
+   return (<Box fontSize="1rem" fontWeight="500" marginBottom="0.25rem">
+      <label htmlFor={name}>{label}</label>
+   </Box>);
+}
+
 
 export default QDynamicForm;
