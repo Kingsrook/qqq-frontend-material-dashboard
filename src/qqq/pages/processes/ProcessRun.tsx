@@ -20,7 +20,6 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
@@ -65,6 +64,7 @@ import BulkLoadProfileForm from "qqq/components/processes/BulkLoadProfileForm";
 import BulkLoadValueMappingForm from "qqq/components/processes/BulkLoadValueMappingForm";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
+import ProcessViewForm from "qqq/components/processes/ProcessViewForm";
 import ValidationReview from "qqq/components/processes/ValidationReview";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import CompositeWidget, {CompositeData} from "qqq/components/widgets/CompositeWidget";
@@ -874,29 +874,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         }
                         {
                            component.type === QComponentType.VIEW_FORM && step.viewFields && (
-                              <div>
-                                 {step.viewFields.map((field: QFieldMetaData) => (
-                                    field.hasAdornment(AdornmentType.ERROR) ? (
-                                       processValues[field.name] && (
-                                          <Box key={field.name} display="flex" py={1} pr={2}>
-                                             <MDTypography variant="button" fontWeight="regular">
-                                                {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
-                                             </MDTypography>
-                                          </Box>
-                                       )
-                                    ) : (
-                                       <Box key={field.name} display="flex" py={1} pr={2}>
-                                          <MDTypography variant="button" fontWeight="bold">
-                                             {field.label}
-                                             : &nbsp;
-                                          </MDTypography>
-                                          <MDTypography variant="button" fontWeight="regular" color="text">
-                                             {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
-                                          </MDTypography>
-                                       </Box>
-                                    )))
-                                 }
-                              </div>
+                              <ProcessViewForm fields={step.viewFields} values={processValues} columns={1} />
                            )
                         }
                         {
@@ -1906,7 +1884,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // clear out the active step now, to avoid a flash of the old one after the job completes, but before the new one is all set //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      setActiveStep(null);
+      // setActiveStep(null);
 
       setTimeout(async () =>
       {
