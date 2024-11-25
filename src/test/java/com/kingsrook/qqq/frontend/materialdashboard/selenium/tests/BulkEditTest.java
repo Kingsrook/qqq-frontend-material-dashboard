@@ -22,6 +22,7 @@
 package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests;
 
 
+import com.kingsrook.qqq.backend.core.logging.QLogger;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ import org.junit.jupiter.api.Test;
  *******************************************************************************/
 public class BulkEditTest extends QBaseSeleniumTest
 {
+   private static final QLogger LOG = QLogger.getLogger(BulkEditTest.class);
+
+
 
    /*******************************************************************************
     **
@@ -75,6 +79,13 @@ public class BulkEditTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("button", "selection").click();
       qSeleniumLib.waitForSelectorContaining("li", "This page").click();
       qSeleniumLib.waitForSelectorContaining("div", "records on this page are selected");
+
+      /////////////////////////////////////////////////////////////////////////////////
+      // locally, passing fine, but in CI, failing around here ... trying a sleep... //
+      /////////////////////////////////////////////////////////////////////////////////
+      LOG.debug("Trying a sleep...");
+      qSeleniumLib.waitForMillis(1000);
+      LOG.debug("Proceeding post-sleep");
 
       qSeleniumLib.waitForSelectorContaining("button", "action").click();
       qSeleniumLib.waitForSelectorContaining("li", "bulk edit").click();
