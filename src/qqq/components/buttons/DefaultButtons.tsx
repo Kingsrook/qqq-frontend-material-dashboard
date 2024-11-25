@@ -145,7 +145,7 @@ export function QCancelButton({
 }: QCancelButtonProps): JSX.Element
 {
    return (
-      <Box ml={standardML} mb={2} width={standardWidth}>
+      <Box ml={standardML} width={standardWidth}>
          <MDButton type="button" variant="outlined" color="dark" size="small" fullWidth startIcon={<Icon>{iconName}</Icon>} onClick={onClickHandler} disabled={disabled}>
             {label}
          </MDButton>
