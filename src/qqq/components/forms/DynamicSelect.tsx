@@ -38,6 +38,7 @@ interface Props
 {
    fieldPossibleValueProps: FieldPossibleValueProps;
    overrideId?: string;
+   name?: string;
    fieldLabel: string;
    inForm: boolean;
    initialValue?: any;
@@ -95,7 +96,7 @@ export const getAutocompleteOutlinedStyle = (isDisabled: boolean) =>
 
 const qController = Client.getInstance();
 
-function DynamicSelect({fieldPossibleValueProps, overrideId, fieldLabel, inForm, initialValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen, useCase}: Props)
+function DynamicSelect({fieldPossibleValueProps, overrideId, name, fieldLabel, inForm, initialValue, initialValues, onChange, isEditable, isMultiple, bulkEditMode, bulkEditSwitchChangeHandler, otherValues, variant, initiallyOpen, useCase}: Props)
 {
    const {fieldName, initialDisplayValue, possibleValueSourceName, possibleValues, processName, tableName} = fieldPossibleValueProps;
 
@@ -404,6 +405,7 @@ function DynamicSelect({fieldPossibleValueProps, overrideId, fieldLabel, inForm,
       <Box>
          <Autocomplete
             id={overrideId ?? fieldName ?? possibleValueSourceName ?? "anonymous"}
+            name={name}
             sx={autocompleteSX}
             open={open}
             fullWidth
