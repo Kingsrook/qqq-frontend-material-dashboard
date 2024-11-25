@@ -80,11 +80,12 @@ interface Props
    label: string;
    value: boolean;
    isDisabled: boolean;
+   onChangeCallback?: (newValue: any) => void;
 }
 
 
 
-function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Element
+function BooleanFieldSwitch({name, label, value, isDisabled, onChangeCallback}: Props) : JSX.Element
 {
    const {setFieldValue} = useFormikContext();
 
@@ -93,6 +94,10 @@ function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Eleme
       if(!isDisabled)
       {
          setFieldValue(name, newValue);
+         if(onChangeCallback)
+         {
+            onChangeCallback(newValue);
+         }
          event.stopPropagation();
       }
    }
@@ -100,6 +105,10 @@ function BooleanFieldSwitch({name, label, value, isDisabled}: Props) : JSX.Eleme
    const toggleSwitch = () =>
    {
       setFieldValue(name, !value);
+      if(onChangeCallback)
+      {
+         onChangeCallback(!value);
+      }
    }
 
    const classNullSwitch = (value === null || value == undefined || `${value}` == "") ? "nullSwitch" : "";
