@@ -51,10 +51,9 @@ import {Form, Formik} from "formik";
 import parse from "html-react-parser";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
-import {QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
+import {QAlternateButton, QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
-import MDButton from "qqq/components/legacy/MDButton";
 import MDProgress from "qqq/components/legacy/MDProgress";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
@@ -98,6 +97,8 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
+const qController = Client.getInstance();
+
 ////////////////////////////////////////////////////////////////////////////////
 // define some functions that we can make reference to, which we'll overwrite //
 // with functions from formik, once we're inside formik.                      //
@@ -140,6 +141,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [newStep, setNewStep] = useState(null);
    const [stepInstanceCounter, setStepInstanceCounter] = useState(0);
    const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
+   const [backStepName, setBackStepName] = useState(null as string);
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [lastForcedReInit, setLastForcedReInit] = useState(null as number);
    const [processMetaData, setProcessMetaData] = useState(null);
@@ -216,6 +218,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    // record list state //
    ///////////////////////
    const [needRecords, setNeedRecords] = useState(false);
+   const [loadingRecords, setLoadingRecords] = useState(false);
    const [recordConfig, setRecordConfig] = useState({} as any);
    const [pageNumber, setPageNumber] = useState(0);
    const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -905,6 +908,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                  processValues={processValues}
                                  step={step}
                                  previewRecords={records}
+                                 loadingRecords={loadingRecords}
                                  formValues={formData.values}
                                  doFullValidationRadioChangedHandler={(event: any) =>
                                  {
@@ -1384,7 +1388,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          setNeedRecords(false);
          (async () =>
          {
-            const response = await Client.getInstance().processRecords(
+            const response = await qController.processRecords(
                processName,
                processUUID,
                recordConfig.rowsPerPage * recordConfig.pageNo,
@@ -1393,6 +1397,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
             const {records} = response;
             setRecords(records);
+            setLoadingRecords(false);
 
             /////////////////////////////////////////////////////////////////////////////////////////
             // re-construct the recordConfig object, so the setState call triggers a new rendering //
@@ -1535,7 +1540,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         const fieldName = field.name;
                         if (field.possibleValueSourceName && newValues && newValues[fieldName])
                         {
-                           const results: QPossibleValue[] = await Client.getInstance().possibleValues(null, processName, fieldName, null, [newValues[fieldName]]);
+                           const results: QPossibleValue[] = await qController.possibleValues(null, processName, fieldName, null, [newValues[fieldName]]);
                            if (results && results.length > 0)
                            {
                               if (!cachedPossibleValueLabels[fieldName])
@@ -1549,6 +1554,9 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                   }
                }
 
+               //////////////////////////////////////
+               // reset some state between screens //
+               //////////////////////////////////////
                setJobUUID(null);
                setNewStep(nextStepName);
                setStepInstanceCounter(1 + stepInstanceCounter);
@@ -1556,6 +1564,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                setRenderedWidgets({});
                setSubFormPreSubmitCallbacks([]);
                setQJobRunning(null);
+               setBackStepName(qJobComplete.backStep)
 
                if (formikSetFieldValueFunction)
                {
@@ -1633,7 +1642,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                try
                {
-                  const processResponse = await Client.getInstance().processJobStatus(
+                  const processResponse = await qController.processJobStatus(
                      processName,
                      processUUID,
                      jobUUID,
@@ -1734,7 +1743,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const qInstance = await Client.getInstance().loadMetaData();
+            const qInstance = await qController.loadMetaData();
             ValueUtils.qInstance = qInstance;
             setQInstance(qInstance);
          }
@@ -1746,7 +1755,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const processMetaData = await Client.getInstance().loadProcessMetaData(processName);
+            const processMetaData = await qController.loadProcessMetaData(processName);
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
 
@@ -1757,7 +1766,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                try
                {
-                  const tableMetaData = await Client.getInstance().loadTableMetaData(processMetaData.tableName);
+                  const tableMetaData = await qController.loadTableMetaData(processMetaData.tableName);
                   setTableMetaData(tableMetaData);
                }
                catch (e)
@@ -1788,7 +1797,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const processResponse = await Client.getInstance().processInit(processName, queryStringPairsForInit.join("&"));
+            const processResponse = await qController.processInit(processName, queryStringPairsForInit.join("&"));
             setProcessUUID(processResponse.processUUID);
             setLastProcessResponse(processResponse);
          }
@@ -1805,7 +1814,27 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    const handleBack = () =>
    {
-      setNewStep(activeStepIndex - 1);
+      //////////////////////////////////////////////////////////////////////////////////////////////////
+      // note, this is kept out of clearStatesBeforeHittingBackend, because in handleSubmit, the form //
+      // might become invalidated, in which case we'd want a form error, i guess.                     //
+      //////////////////////////////////////////////////////////////////////////////////////////////////
+      setFormError(null);
+
+      clearStatesBeforeHittingBackend();
+
+      setTimeout(async () =>
+      {
+         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+
+         const processResponse = await qController.processStep(
+            processName,
+            processUUID,
+            backStepName,
+            "isStepBack=true",
+            qController.defaultMultipartFormDataHeaders(),
+         );
+         setLastProcessResponse(processResponse);
+      });
    };
 
    //////////////////////////////////////////////////////////////////////////////////////////
@@ -1872,10 +1901,29 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          formData.append("bulkEditEnabledFields", bulkEditEnabledFields.join(","));
       }
 
-      const formDataHeaders = {
-         "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-      };
+      clearStatesBeforeHittingBackend();
 
+      setTimeout(async () =>
+      {
+         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+
+         const processResponse = await qController.processStep(
+            processName,
+            processUUID,
+            activeStep.name,
+            formData,
+            qController.defaultMultipartFormDataHeaders(),
+         );
+         setLastProcessResponse(processResponse);
+      });
+   };
+
+
+   /*******************************************************************************
+    ** common code shared by 'back' and 'submit' (next) - to clear some state values.
+    *******************************************************************************/
+   const clearStatesBeforeHittingBackend = () =>
+   {
       setProcessValues({});
       setRecords([]);
       setOverrideOnLastStep(null);
@@ -1884,22 +1932,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // clear out the active step now, to avoid a flash of the old one after the job completes, but before the new one is all set //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // setActiveStep(null);
+      setActiveStep(null);
 
-      setTimeout(async () =>
-      {
-         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // setting this flag here (initially, for use in ValidationReview) will ensure that the initial render of //
+      // such a component will show as "loading", rather than a flash of "no records" before going into loading //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      setLoadingRecords(true);
 
-         const processResponse = await Client.getInstance().processStep(
-            processName,
-            processUUID,
-            activeStep.name,
-            formData,
-            formDataHeaders,
-         );
-         setLastProcessResponse(processResponse);
-      });
-   };
+   }
 
 
    /*******************************************************************************
@@ -1912,7 +1953,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       //////////////////////////////////////////////////////////////////
       if (!isClose)
       {
-         Client.getInstance().processCancel(processName, processUUID);
+         qController.processCancel(processName, processUUID);
       }
 
       if (isModal && closeModalHandler)
@@ -2050,12 +2091,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                            {/********************************
                             ** back &| next/submit buttons **
                             ********************************/}
-                           <Box mt={3} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
-                              {true || activeStepIndex === 0 ? (
-                                 <Box />
-                              ) : (
-                                 <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
-                              )}
+                           <Box mt={3} width="100%" display="flex" justifyContent="flex-end" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
                               {processError || qJobRunning || !activeStep || activeStep?.format?.toLowerCase() == "scanner" ? (
                                  <Box />
                               ) : (
@@ -2076,6 +2112,13 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                                       <QCancelButton onClickHandler={() => handleCancelClicked(false)} disabled={isSubmitting} />
                                                    )
                                                 }
+
+                                                {backStepName ? (
+                                                   <QAlternateButton label="Back" onClick={handleBack} disabled={isSubmitting} iconName="arrow_back" />
+                                                ) : (
+                                                   <Box />
+                                                )}
+
                                                 <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
                                              </Grid>
                                           </Box>
