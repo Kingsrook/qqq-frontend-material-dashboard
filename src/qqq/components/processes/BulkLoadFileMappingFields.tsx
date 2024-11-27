@@ -231,18 +231,6 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
    }
 
 
-   /***************************************************************************
-    **
-    ***************************************************************************/
-   function copyWideField(bulkLoadField: BulkLoadField)
-   {
-      bulkLoadMapping.addField(bulkLoadField);
-      forceUpdate();
-      //? //? forceParentUpdate();
-      //? setForceRerender(forceRerender + 1);
-   }
-
-
    let buttonBackground = "none";
    let buttonBorder = colors.grayLines.main;
    let buttonColor = colors.gray.main;
