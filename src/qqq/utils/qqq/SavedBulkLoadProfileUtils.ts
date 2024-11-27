@@ -41,6 +41,10 @@ export class SavedBulkLoadProfileUtils
          const fieldName = bulkLoadField.field.name;
          const compareField = compareFieldsMap[fieldName];
          const baseField = baseFieldsMap[fieldName];
+         if(!compareField)
+         {
+            continue;
+         }
 
          if (baseField)
          {
@@ -119,6 +123,10 @@ export class SavedBulkLoadProfileUtils
       {
          const fieldName = bulkLoadField.field.name;
          const compareField = compareFieldsMap[fieldName];
+         if(!compareField)
+         {
+            continue;
+         }
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // else - we're not checking for changes to individual fields - rather - we're just checking if fields were added or removed. //
