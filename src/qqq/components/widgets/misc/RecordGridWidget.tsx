@@ -28,7 +28,7 @@ import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridEventListener, GridRenderCellParams, GridRowParams, GridToolbarContainer, MuiEvent, useGridApiContext, useGridApiEventHandler} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridDensity, GridEventListener, GridRenderCellParams, GridRowParams, GridToolbarContainer, MuiEvent, useGridApiContext, useGridApiEventHandler} from "@mui/x-data-grid-pro";
 import Widget, {AddNewRecordButton, LabelComponent, WidgetData} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
@@ -60,18 +60,21 @@ interface Props
    editRecordCallback?: (rowIndex: number) => void;
    allowRecordDelete: boolean;
    deleteRecordCallback?: (rowIndex: number) => void;
+   gridOnly?: boolean;
+   gridDensity?: GridDensity;
 }
 
 RecordGridWidget.defaultProps =
    {
       disableRowClick: false,
       allowRecordEdit: false,
-      allowRecordDelete: false
+      allowRecordDelete: false,
+      gridOnly: false,
    };
 
 const qController = Client.getInstance();
 
-function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback}: Props): JSX.Element
+function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback, gridOnly, gridDensity}: Props): JSX.Element
 {
    const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
@@ -94,11 +97,18 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          {
             for (let i = 0; i < queryOutputRecords.length; i++)
             {
-               records.push(new QRecord(queryOutputRecords[i]));
+               if(queryOutputRecords[i] instanceof QRecord)
+               {
+                  records.push(queryOutputRecords[i] as QRecord);
+               }
+               else
+               {
+                  records.push(new QRecord(queryOutputRecords[i]));
+               }
             }
          }
 
-         const tableMetaData = new QTableMetaData(data.childTableMetaData);
+         const tableMetaData = data.childTableMetaData instanceof QTableMetaData ? data.childTableMetaData as QTableMetaData : new QTableMetaData(data.childTableMetaData);
          const rows = DataGridUtils.makeRows(records, tableMetaData, true);
 
          /////////////////////////////////////////////////////////////////////////////////
@@ -296,6 +306,56 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    }
 
 
+   const grid = (
+      <DataGridPro
+         autoHeight
+         sx={{
+            borderBottom: "none",
+            borderLeft: "none",
+            borderRight: "none"
+         }}
+         rows={rows}
+         disableSelectionOnClick
+         columns={columns}
+         rowBuffer={10}
+         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+         onRowClick={handleRowClick}
+         getRowId={(row) => row.__rowIndex}
+         // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
+         components={{
+            Toolbar: CustomToolbar
+         }}
+         // pinnedColumns={pinnedColumns}
+         // onPinnedColumnsChange={handlePinnedColumnsChange}
+         // pagination
+         // paginationMode="server"
+         // rowsPerPageOptions={[20]}
+         // sortingMode="server"
+         // filterMode="server"
+         // page={pageNumber}
+         // checkboxSelection
+         rowCount={data && data.totalRows}
+         // onPageSizeChange={handleRowsPerPageChange}
+         // onStateChange={handleStateChange}
+         density={gridDensity ?? "standard"}
+         // loading={loading}
+         // filterModel={filterModel}
+         // onFilterModelChange={handleFilterChange}
+         // columnVisibilityModel={columnVisibilityModel}
+         // onColumnVisibilityModelChange={handleColumnVisibilityChange}
+         // onColumnOrderChange={handleColumnOrderChange}
+         // onSelectionModelChange={selectionChanged}
+         // onSortModelChange={handleSortChange}
+         // sortingOrder={[ "asc", "desc" ]}
+         // sortModel={columnSortModel}
+      />
+   );
+
+   if(gridOnly)
+   {
+      return (grid);
+   }
+
    return (
       <Widget
          widgetMetaData={widgetMetaData}
@@ -306,48 +366,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       >
          <Box mx={-3} mb={-3}>
             <Box>
-               <DataGridPro
-                  autoHeight
-                  sx={{
-                     borderBottom: "none",
-                     borderLeft: "none",
-                     borderRight: "none"
-                  }}
-                  rows={rows}
-                  disableSelectionOnClick
-                  columns={columns}
-                  rowBuffer={10}
-                  getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-                  onRowClick={handleRowClick}
-                  getRowId={(row) => row.__rowIndex}
-                  // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-                  components={{
-                     Toolbar: CustomToolbar
-                  }}
-                  // pinnedColumns={pinnedColumns}
-                  // onPinnedColumnsChange={handlePinnedColumnsChange}
-                  // pagination
-                  // paginationMode="server"
-                  // rowsPerPageOptions={[20]}
-                  // sortingMode="server"
-                  // filterMode="server"
-                  // page={pageNumber}
-                  // checkboxSelection
-                  rowCount={data && data.totalRows}
-                  // onPageSizeChange={handleRowsPerPageChange}
-                  // onStateChange={handleStateChange}
-                  // density={density}
-                  // loading={loading}
-                  // filterModel={filterModel}
-                  // onFilterModelChange={handleFilterChange}
-                  // columnVisibilityModel={columnVisibilityModel}
-                  // onColumnVisibilityModelChange={handleColumnVisibilityChange}
-                  // onColumnOrderChange={handleColumnOrderChange}
-                  // onSelectionModelChange={selectionChanged}
-                  // onSortModelChange={handleSortChange}
-                  // sortingOrder={[ "asc", "desc" ]}
-                  // sortModel={columnSortModel}
-               />
+               {grid}
             </Box>
          </Box>
       </Widget>
