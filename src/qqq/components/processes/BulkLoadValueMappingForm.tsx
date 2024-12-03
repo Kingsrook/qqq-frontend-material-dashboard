@@ -30,7 +30,7 @@ import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import SavedBulkLoadProfiles from "qqq/components/misc/SavedBulkLoadProfiles";
 import {BulkLoadMapping, BulkLoadProfile, BulkLoadTableStructure, FileDescription, Wrapper} from "qqq/models/processes/BulkLoadModels";
 import {SubFormPreSubmitCallbackResultType} from "qqq/pages/processes/ProcessRun";
-import React, {forwardRef, useEffect, useImperativeHandle, useState} from "react";
+import React, {forwardRef, useEffect, useImperativeHandle, useReducer, useState} from "react";
 
 interface BulkLoadValueMappingFormProps
 {
@@ -66,6 +66,9 @@ const BulkLoadValueMappingForm = forwardRef(({processValues, setActiveStepLabel,
 
    const [fileDescription] = useState(new FileDescription(processValues.headerValues, processValues.headerLetters, processValues.bodyValuesPreview));
    fileDescription.setHasHeaderRow(currentMapping.hasHeaderRow);
+
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
 
    /*******************************************************************************
     **
@@ -152,7 +155,15 @@ const BulkLoadValueMappingForm = forwardRef(({processValues, setActiveStepLabel,
    function mappedValueChanged(fileValue: string, newValue: any)
    {
       valueErrors[fileValue] = null;
-      currentMapping.valueMappings[fieldFullName][fileValue] = newValue;
+      if(newValue == null)
+      {
+         delete currentMapping.valueMappings[fieldFullName][fileValue];
+      }
+      else
+      {
+         currentMapping.valueMappings[fieldFullName][fileValue] = newValue;
+      }
+      forceUpdate();
    }
 
 

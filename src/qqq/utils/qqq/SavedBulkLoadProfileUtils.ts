@@ -28,7 +28,6 @@ type FieldMapping = { [name: string]: BulkLoadField }
  ***************************************************************************/
 export class SavedBulkLoadProfileUtils
 {
-
    /***************************************************************************
     **
     ***************************************************************************/
@@ -175,6 +174,88 @@ export class SavedBulkLoadProfileUtils
    /***************************************************************************
     **
     ***************************************************************************/
+   private static joinUpToN(values: string[], n: number)
+   {
+      if(values.length <= n)
+      {
+         return (values.join(", "));
+      }
+
+      const others = values.length - n;
+      return (values.slice(0, n-1).join(", ") + ` and ${others} other${others == 1 ? "" : "s"}`);
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   private static diffFieldValueMappings(bulkLoadField: BulkLoadField, baseMapping: { [p: string]: any }, activeMapping: { [p: string]: any }): string
+   {
+      const addedMappings: string[] = [];
+      const removedMappings: string[] = [];
+      const changedMappings: string[] = [];
+
+      /////////////////////////////
+      // look for added mappings //
+      /////////////////////////////
+      for (let value of Object.keys(activeMapping))
+      {
+         if(!baseMapping[value])
+         {
+            addedMappings.push(value);
+         }
+      }
+
+      ///////////////////////////////
+      // look for removed mappings //
+      ///////////////////////////////
+      for (let value of Object.keys(baseMapping))
+      {
+         if(!activeMapping[value])
+         {
+            removedMappings.push(value);
+         }
+      }
+
+      ///////////////////////////////
+      // look for changed mappings //
+      ///////////////////////////////
+      for (let value of Object.keys(activeMapping))
+      {
+         if(baseMapping[value] && activeMapping[value] != baseMapping[value])
+         {
+            changedMappings.push(value);
+         }
+      }
+
+      if(addedMappings.length || removedMappings.length || changedMappings.length)
+      {
+         let rs = `Updated value mapping for ${bulkLoadField.getQualifiedLabel()}: `
+         const parts: string[] = [];
+
+         if(addedMappings.length)
+         {
+            parts.push(`Added value${addedMappings.length == 1 ? "" : "s"} for: ${this.joinUpToN(addedMappings, 5)}`);
+         }
+         if(removedMappings.length)
+         {
+            parts.push(`Removed value${removedMappings.length == 1 ? "" : "s"} for: ${this.joinUpToN(removedMappings, 5)}`);
+         }
+         if(changedMappings.length)
+         {
+            parts.push(`Changed value${changedMappings.length == 1 ? "" : "s"} for: ${this.joinUpToN(changedMappings, 5)}`);
+         }
+
+         return rs + parts.join("; ");
+      }
+
+      return null;
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    public static diffBulkLoadMappings = (tableStructure: BulkLoadTableStructure, fileDescription: FileDescription, baseMapping: BulkLoadMapping, activeMapping: BulkLoadMapping): string[] =>
    {
       const diffs: string[] = [];
@@ -213,14 +294,10 @@ export class SavedBulkLoadProfileUtils
          {
             const fieldName = bulkLoadField.field.name;
 
-            if (JSON.stringify(baseMapping.valueMappings[fieldName] ?? []) != JSON.stringify(activeMapping.valueMappings[fieldName] ?? []))
+            const valueMappingDiff = this.diffFieldValueMappings(bulkLoadField, baseMapping.valueMappings[fieldName] ?? {}, activeMapping.valueMappings[fieldName] ?? {});
+            if(valueMappingDiff)
             {
-               diffs.push(`Changed value mapping for ${bulkLoadField.getQualifiedLabel()}`)
-            }
-
-            if (baseMapping.valueMappings[fieldName] && activeMapping.valueMappings[fieldName])
-            {
-               // todo - finish this - better version than just the JSON diff!
+               diffs.push(valueMappingDiff);
             }
          }
          catch(e)
