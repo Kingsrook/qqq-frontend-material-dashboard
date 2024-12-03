@@ -266,76 +266,6 @@ function ValidationReview({
       </List>
    );
 
-   /***************************************************************************
-    **
-    ***************************************************************************/
-   function previewRecordUsingTableLayout(record: QRecord)
-   {
-      if (!previewTableMetaData)
-      {
-         return (<Box>Loading...</Box>);
-      }
-
-      const renderedSections: JSX.Element[] = [];
-      const tableSections = TableUtils.getSectionsForRecordSidebar(previewTableMetaData);
-      const previewRecord = previewRecords[previewRecordIndex];
-
-      for (let i = 0; i < tableSections.length; i++)
-      {
-         const section = tableSections[i];
-         if (section.isHidden)
-         {
-            continue;
-         }
-
-         if (section.fieldNames)
-         {
-            renderedSections.push(<Box mb="1rem">
-               <Box><h4>{section.label}</h4></Box>
-               <Box ml="1rem">
-                  {renderSectionOfFields(section.name, section.fieldNames, previewTableMetaData, false, previewRecord, undefined, {label: {fontWeight: "500"}})}
-               </Box>
-            </Box>);
-         }
-         else if (section.widgetName)
-         {
-            const widget = qInstance.widgets.get(section.widgetName);
-            if (widget)
-            {
-               let data: ChildRecordListData = null;
-               if (associationPreviewsByWidgetName[section.widgetName])
-               {
-                  const associationPreview = associationPreviewsByWidgetName[section.widgetName];
-                  const associationRecords = previewRecord.associatedRecords.get(associationPreview.associationName) ?? [];
-                  data = {
-                     canAddChildRecord: false,
-                     childTableMetaData: childTableMetaData[associationPreview.tableName],
-                     defaultValuesForNewChildRecords: {},
-                     disabledFieldsForNewChildRecords: {},
-                     queryOutput: {records: associationRecords},
-                     totalRows: associationRecords.length,
-                     tablePath: "",
-                     title: "",
-                     viewAllLink: "",
-                  };
-
-                  renderedSections.push(<Box mb="1rem">
-                     {
-                        data && <Box>
-                           <Box mb="0.5rem"><h4>{section.label}</h4></Box>
-                           <Box pl="1rem">
-                              <RecordGridWidget data={data} widgetMetaData={widget} disableRowClick gridOnly={true} gridDensity={"compact"} />
-                           </Box>
-                        </Box>
-                     }
-                  </Box>);
-               }
-            }
-         }
-      }
-
-      return renderedSections;
-   }
 
    const recordPreviewWidget = step.recordListFields && (
       <Box border="1px solid rgb(70%, 70%, 70%)" borderRadius="10px" p={2} mt={2}>
@@ -370,11 +300,11 @@ function ValidationReview({
                                           {
                                              processValues.validationSummary ? (
                                                 <>
-                                                It appears as though this process does not contain any valid records.
+                                                   It appears as though this process does not contain any valid records.
                                                 </>
                                              ) : (
                                                 <>
-                                                If you choose to Perform Validation, and there are any valid records, then you will see a preview here.
+                                                   If you choose to Perform Validation, and there are any valid records, then you will see a preview here.
                                                 </>
                                              )
                                           }
@@ -405,7 +335,15 @@ function ValidationReview({
                         ))
                      }
                      {
-                        previewRecords && processValues.formatPreviewRecordUsingTableLayout && previewRecords[previewRecordIndex] && previewRecordUsingTableLayout(previewRecords[previewRecordIndex])
+                        previewRecords && processValues.formatPreviewRecordUsingTableLayout && previewRecords[previewRecordIndex] &&
+                        <PreviewRecordUsingTableLayout
+                           index={previewRecordIndex}
+                           record={previewRecords[previewRecordIndex]}
+                           tableMetaData={previewTableMetaData}
+                           qInstance={qInstance}
+                           associationPreviewsByWidgetName={associationPreviewsByWidgetName}
+                           childTableMetaData={childTableMetaData}
+                        />
                      }
                   </Box>
                </Box>
@@ -440,5 +378,85 @@ function ValidationReview({
       </Box>
    );
 }
+
+
+
+interface PreviewRecordUsingTableLayoutProps
+{
+   index: number
+   record: QRecord,
+   tableMetaData: QTableMetaData,
+   qInstance: QInstance,
+   associationPreviewsByWidgetName: { [widgetName: string]: AssociationPreview },
+   childTableMetaData: { [name: string]: QTableMetaData },
+}
+
+function PreviewRecordUsingTableLayout({record, tableMetaData, qInstance, associationPreviewsByWidgetName, childTableMetaData, index}: PreviewRecordUsingTableLayoutProps): JSX.Element
+{
+   if (!tableMetaData)
+   {
+      return (<i>Loading...</i>);
+   }
+
+   const renderedSections: JSX.Element[] = [];
+   const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData);
+
+   for (let i = 0; i < tableSections.length; i++)
+   {
+      const section = tableSections[i];
+      if (section.isHidden)
+      {
+         continue;
+      }
+
+      if (section.fieldNames)
+      {
+         renderedSections.push(<Box mb="1rem">
+            <Box><h4>{section.label}</h4></Box>
+            <Box ml="1rem">
+               {renderSectionOfFields(section.name, section.fieldNames, tableMetaData, false, record, undefined, {label: {fontWeight: "500"}})}
+            </Box>
+         </Box>);
+      }
+      else if (section.widgetName)
+      {
+         const widget = qInstance.widgets.get(section.widgetName);
+         if (widget)
+         {
+            let data: ChildRecordListData = null;
+            if (associationPreviewsByWidgetName[section.widgetName])
+            {
+               const associationPreview = associationPreviewsByWidgetName[section.widgetName];
+               const associationRecords = record.associatedRecords.get(associationPreview.associationName) ?? [];
+               data = {
+                  canAddChildRecord: false,
+                  childTableMetaData: childTableMetaData[associationPreview.tableName],
+                  defaultValuesForNewChildRecords: {},
+                  disabledFieldsForNewChildRecords: {},
+                  queryOutput: {records: associationRecords},
+                  totalRows: associationRecords.length,
+                  tablePath: "",
+                  title: "",
+                  viewAllLink: "",
+               };
+
+               renderedSections.push(<Box mb="1rem">
+                  {
+                     data && <Box>
+                        <Box mb="0.5rem"><h4>{section.label}</h4></Box>
+                        <Box pl="1rem">
+                           <RecordGridWidget key={index} data={data} widgetMetaData={widget} disableRowClick gridOnly={true} gridDensity={"compact"} />
+                        </Box>
+                     </Box>
+                  }
+               </Box>);
+            }
+         }
+      }
+   }
+
+   return <>{renderedSections}</>;
+}
+
 
 export default ValidationReview;
