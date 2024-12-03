@@ -19,21 +19,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {colors, Icon} from "@mui/material";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
-import Tooltip from "@mui/material/Tooltip";
-import {useFormikContext} from "formik";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
+import FileInputField from "qqq/components/forms/FileInputField";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
-import ValueUtils from "qqq/utils/qqq/ValueUtils";
-import React, {useState} from "react";
+import React from "react";
 
 interface Props
 {
@@ -50,28 +45,6 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
 {
    const {formFields, values, errors, touched} = formData;
 
-   const formikProps = useFormikContext();
-   const [fileName, setFileName] = useState(null as string);
-
-   const fileChanged = (event: React.FormEvent<HTMLInputElement>, field: any) =>
-   {
-      setFileName(null);
-      if (event.currentTarget.files && event.currentTarget.files[0])
-      {
-         setFileName(event.currentTarget.files[0].name);
-      }
-
-      formikProps.setFieldValue(field.name, event.currentTarget.files[0]);
-   };
-
-   const removeFile = (fieldName: string) =>
-   {
-      setFileName(null);
-      formikProps.setFieldValue(fieldName, null);
-      record?.values.delete(fieldName)
-      record?.displayValues.delete(fieldName)
-   };
-
    const bulkEditSwitchChanged = (name: string, value: boolean) =>
    {
       bulkEditSwitchChangeHandler(name, value);
@@ -82,11 +55,6 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       <Box>
          <Box lineHeight={0}>
             <MDTypography variant="h5">{formLabel}</MDTypography>
-            {/* TODO - help text
-        <MDTypography variant="button" color="text">
-          Mandatory information
-        </MDTypography>
-        */}
          </Box>
          <Box mt={1.625}>
             <Grid container spacing={3}>
@@ -113,52 +81,34 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
 
                      const labelElement = <DynamicFormFieldLabel name={field.name} label={field.label} />;
 
+                     let itemXS = 12;
+                     let itemSM = 6;
+
+                     /////////////
+                     // files!! //
+                     /////////////
                      if (field.type === "file")
                      {
-                        const pseudoField = new QFieldMetaData({name: fieldName, type: QFieldType.BLOB});
-                        return (
-                           <Grid item xs={12} sm={6} key={fieldName}>
-                              <Box mb={1.5}>
-                                 {labelElement}
-                                 {
-                                    record && record.values.get(fieldName) && <Box fontSize="0.875rem" pb={1}>
-                                       Current File:
-                                       <Box display="inline-flex" pl={1}>
-                                          {ValueUtils.getDisplayValue(pseudoField, record, "view")}
-                                          <Tooltip placement="bottom" title="Remove current file">
-                                             <Icon className="blobIcon" fontSize="small" onClick={(e) => removeFile(fieldName)}>delete</Icon>
-                                          </Tooltip>
-                                       </Box>
-                                    </Box>
-                                 }
-                                 <Box display="flex" alignItems="center">
-                                    <Button variant="outlined" component="label">
-                                       <span style={{color: colors.lightBlue[500]}}>Choose file to upload</span>
-                                       <input
-                                          id={fieldName}
-                                          name={fieldName}
-                                          type="file"
-                                          hidden
-                                          onChange={(event: React.FormEvent<HTMLInputElement>) => fileChanged(event, field)}
-                                       />
-                                    </Button>
-                                    <Box ml={1} fontSize={"1rem"}>
-                                       {fileName}
-                                    </Box>
-                                 </Box>
+                        const fileUploadAdornment = field.fieldMetaData?.getAdornment(AdornmentType.FILE_UPLOAD);
+                        const width = fileUploadAdornment?.values?.get("width") ?? "half";
 
-                                 <Box mt={0.75}>
-                                    <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
-                                       {errors[fieldName] && <span>You must select a file to proceed</span>}
-                                    </MDTypography>
-                                 </Box>
-                              </Box>
+                        if(width == "full")
+                        {
+                           itemSM = 12;
+                        }
+
+                        return (
+                           <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
+                              {labelElement}
+                              <FileInputField field={field} record={record} errorMessage={errors[fieldName]} />
                            </Grid>
                         );
                      }
 
-                     // possible values!!
-                     if (field.possibleValueProps)
+                     ///////////////////////
+                     // possible values!! //
+                     ///////////////////////
+                     else if (field.possibleValueProps)
                      {
                         const otherValuesMap = field.possibleValueProps.otherValues ?? new Map<string, any>();
                         Object.keys(values).forEach((key) =>
@@ -167,7 +117,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         })
 
                         return (
-                           <Grid item xs={12} sm={6} key={fieldName}>
+                           <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
                               {labelElement}
                               <DynamicSelect
                                  fieldPossibleValueProps={field.possibleValueProps}
@@ -184,10 +134,11 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         );
                      }
 
-                     // todo? inputProps={{ autoComplete: "" }}
-                     // todo? placeholder={password.placeholder}
+                     ///////////////////////
+                     // everything else!! //
+                     ///////////////////////
                      return (
-                        <Grid item xs={12} sm={6} key={fieldName}>
+                        <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
                            {labelElement}
                            <QDynamicFormField
                               id={field.name}
