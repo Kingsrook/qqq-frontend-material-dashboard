@@ -50,6 +50,7 @@ import DeveloperModeUtils from "qqq/utils/DeveloperModeUtils";
 import Client from "qqq/utils/qqq/Client";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";

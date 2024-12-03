@@ -19,7 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import Client from "qqq/utils/qqq/Client";
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 
 /*******************************************************************************
  ** Utility functions for basic html/webpage/browser things.
@@ -68,10 +69,16 @@ export default class HtmlUtils
     ** it was originally built like this when we had to submit full access token to backend...
     **
     *******************************************************************************/
-   static downloadUrlViaIFrame = (url: string, filename: string) =>
+   static downloadUrlViaIFrame = (field: QFieldMetaData, url: string, filename: string) =>
    {
-      if(url.startsWith("data:"))
+      if (url.startsWith("data:") || url.startsWith("http"))
       {
+         if (url.startsWith("http"))
+         {
+            const separator = url.includes("?") ? "&" : "?";
+            url += encodeURIComponent(`${separator}response-content-disposition=attachment; ${filename}`);
+         }
+
          const link = document.createElement("a");
          link.download = filename;
          link.href = url;
@@ -93,8 +100,14 @@ export default class HtmlUtils
       // todo - onload event handler to let us know when done?
       document.body.appendChild(iframe);
 
+      var method = "get";
+      if (QFieldType.BLOB == field.type)
+      {
+         method = "post";
+      }
+
       const form = document.createElement("form");
-      form.setAttribute("method", "post");
+      form.setAttribute("method", method);
       form.setAttribute("action", url);
       form.setAttribute("target", "downloadIframe");
       iframe.appendChild(form);
@@ -117,7 +130,7 @@ export default class HtmlUtils
     *******************************************************************************/
    static openInNewWindow = (url: string, filename: string) =>
    {
-      if(url.startsWith("data:"))
+      if (url.startsWith("data:"))
       {
          /////////////////////////////////////////////////////////////////////////////////////////////
          /////////////////////////////////////////////////////////////////////////////////////////////

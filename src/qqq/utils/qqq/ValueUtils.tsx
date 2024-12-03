@@ -28,18 +28,17 @@ import "datejs"; // https://github.com/datejs/Datejs
 import {Chip, ClickAwayListener, Icon} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import {makeStyles} from "@mui/styles";
 import parse from "html-react-parser";
-import React, {Fragment, useReducer, useState} from "react";
-import AceEditor from "react-ace";
-import {Link} from "react-router-dom";
 import HtmlUtils from "qqq/utils/HtmlUtils";
 import Client from "qqq/utils/qqq/Client";
 
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/mode-sql";
+import React, {Fragment, useReducer, useState} from "react";
+import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-velocity";
+import {Link} from "react-router-dom";
 
 /*******************************************************************************
  ** Utility class for working with QQQ Values
@@ -198,7 +197,7 @@ class ValueUtils
          );
       }
 
-      if (field.type == QFieldType.BLOB)
+      if (field.type == QFieldType.BLOB || field.hasAdornment(AdornmentType.FILE_DOWNLOAD))
       {
          return (<BlobComponent field={field} url={rawValue} filename={displayValue} usage={usage} />);
       }
@@ -219,7 +218,7 @@ class ValueUtils
 
       if (field.type === QFieldType.DATE_TIME)
       {
-         if(displayValue && displayValue != rawValue)
+         if (displayValue && displayValue != rawValue)
          {
             //////////////////////////////////////////////////////////////////////////////
             // if the date-time actually has a displayValue set, and it isn't just the  //
@@ -276,7 +275,7 @@ class ValueUtils
          // to millis) back to it                                                          //
          ////////////////////////////////////////////////////////////////////////////////////
          date = new Date(date);
-         date.setTime(date.getTime() + date.getTimezoneOffset() * 60 * 1000)
+         date.setTime(date.getTime() + date.getTimezoneOffset() * 60 * 1000);
       }
       // @ts-ignore
       return (`${date.toString("yyyy-MM-dd")}`);
@@ -474,7 +473,7 @@ class ValueUtils
     *******************************************************************************/
    public static cleanForCsv(param: any): string
    {
-      if(param === undefined || param === null)
+      if (param === undefined || param === null)
       {
          return ("");
       }
@@ -499,7 +498,7 @@ class ValueUtils
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // little private component here, for rendering an AceEditor with some buttons/controls/state //
 ////////////////////////////////////////////////////////////////////////////////////////////////
-function CodeViewer({name, mode, code}: {name: string; mode: string; code: string;}): JSX.Element
+function CodeViewer({name, mode, code}: { name: string; mode: string; code: string; }): JSX.Element
 {
    const [activeCode, setActiveCode] = useState(code);
    const [isFormatted, setIsFormatted] = useState(false);
@@ -596,7 +595,7 @@ function CodeViewer({name, mode, code}: {name: string; mode: string; code: strin
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // little private component here, for rendering "secret-ish" values, that you can click to reveal or copy //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function RevealComponent({fieldName, value, usage}: {fieldName: string, value: string, usage: string;}): JSX.Element
+function RevealComponent({fieldName, value, usage}: { fieldName: string, value: string, usage: string; }): JSX.Element
 {
    const [adornmentFieldsMap, setAdornmentFieldsMap] = useState(new Map<string, boolean>);
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -653,7 +652,7 @@ function RevealComponent({fieldName, value, usage}: {fieldName: string, value: s
                         </Tooltip>
                      </ClickAwayListener>
                   </Box>
-               ):(
+               ) : (
                   <Box display="inline"><Icon onClick={(e) => handleRevealIconClick(e, fieldName)} sx={{cursor: "pointer", fontSize: "15px !important", position: "relative", top: "3px", marginRight: "5px"}}>visibility_off</Icon>{displayValue}</Box>
                )
             )
@@ -680,7 +679,7 @@ function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.E
    const download = (event: React.MouseEvent<HTMLSpanElement>) =>
    {
       event.stopPropagation();
-      HtmlUtils.downloadUrlViaIFrame(url, filename);
+      HtmlUtils.downloadUrlViaIFrame(field, url, filename);
    };
 
    const open = (event: React.MouseEvent<HTMLSpanElement>) =>
@@ -689,7 +688,7 @@ function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.E
       HtmlUtils.openInNewWindow(url, filename);
    };
 
-   if(!filename || !url)
+   if (!filename || !url)
    {
       return (<React.Fragment />);
    }
@@ -704,10 +703,22 @@ function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.E
             usage == "view" && filename
          }
          <Tooltip placement={tooltipPlacement} title="Open file">
-            <Icon className={"blobIcon"} fontSize="small" onClick={(e) => open(e)}>open_in_new</Icon>
+            {
+               field.type == QFieldType.BLOB ? (
+                  <Icon className={"blobIcon"} fontSize="small" onClick={(e) => open(e)}>open_in_new</Icon>
+               ) : (
+                  <a style={{color: "inherit"}} rel="noopener noreferrer" href={url} target="_blank"><Icon className={"blobIcon"} fontSize="small">open_in_new</Icon></a>
+               )
+            }
          </Tooltip>
          <Tooltip placement={tooltipPlacement} title="Download file">
-            <Icon className={"blobIcon"} fontSize="small" onClick={(e) => download(e)}>save_alt</Icon>
+            {
+               field.type == QFieldType.BLOB ? (
+                  <Icon className={"blobIcon"} fontSize="small" onClick={(e) => download(e)}>save_alt</Icon>
+               ) : (
+                  <a style={{color: "inherit"}} href={url} download="test.pdf"><Icon className={"blobIcon"} fontSize="small">save_alt</Icon></a>
+               )
+            }
          </Tooltip>
          {
             usage == "query" && filename
@@ -715,7 +726,6 @@ function BlobComponent({field, url, filename, usage}: BlobComponentProps): JSX.E
       </Box>
    );
 }
-
 
 
 export default ValueUtils;

@@ -19,13 +19,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 
 
 function DividerWidget(): JSX.Element
 {
    return (
-      <Divider sx={{padding: "1px", background: "red"}}/>
+      <Box pl={3} pt={3} pb={3} width="100%">
+         <Divider sx={{width: "100%", height: "1px", background: "grey"}} />
+      </Box>
    );
 }
 

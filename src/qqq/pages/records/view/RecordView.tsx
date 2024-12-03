@@ -92,7 +92,7 @@ const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 /*******************************************************************************
  **
  *******************************************************************************/
-export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: {[name: string]: QFieldMetaData}, styleOverrides?: {label?: SxProps, value?: SxProps})
+export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: {label?: SxProps, value?: SxProps})
 {
    return <Box key={key} display="flex" flexDirection="column" py={1} pr={2}>
       {
@@ -131,8 +131,8 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
 
 
 /***************************************************************************
-**
-***************************************************************************/
+ **
+ ***************************************************************************/
 export function getVisibleJoinTables(tableMetaData: QTableMetaData): Set<string>
 {
    const visibleJoinTables = new Set<string>();
@@ -205,6 +205,8 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
    const closeActionsMenu = () => setActionsMenu(null);
 
    const {accentColor, setPageHeader, tableMetaData, setTableMetaData, tableProcesses, setTableProcesses, dotMenuOpen, keyboardHelpOpen, helpHelpActive, recordAnalytics, userId: currentUserId} = useContext(QContext);
+
+   const CREATE_CHILD_KEY = "createChild";
 
    if (localStorage.getItem(tableVariantLocalStorageKey))
    {
@@ -308,12 +310,19 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
          ///////////////////////////////////////////////////////////////////////////////////////////////
          // the path for a process looks like: .../table/id/process                                   //
          // the path for creating a child record looks like: .../table/id/createChild/:childTableName //
+         // the path for creating a child record in a process looks like:                             //
+         // .../table/id/processName#/createChild=...                                                 //
          ///////////////////////////////////////////////////////////////////////////////////////////////
+         let hasChildRecordKey = pathParts.some(p => p.includes(CREATE_CHILD_KEY));
+         if (!hasChildRecordKey)
+         {
+            hasChildRecordKey = hashParts.some(h => h.includes(CREATE_CHILD_KEY));
+         }
 
-         //////////////////////////////////////////////////////////////
-         // if our tableName is in the -3 index, try to open process //
-         //////////////////////////////////////////////////////////////
-         if (pathParts[pathParts.length - 3] === tableName)
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if our tableName is in the -3 index, and there is no token for updating child records, try to open process //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (!hasChildRecordKey && pathParts[pathParts.length - 3] === tableName)
          {
             const processName = pathParts[pathParts.length - 1];
             const processList = allTableProcesses.filter(p => p.name.endsWith(processName));
@@ -350,7 +359,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
          // if our table is in the -4 index, and there's `createChild` in the -2 index, try to open a createChild form //
          // e.g., person/42/createChild/address (to create an address under person 42)                                 //
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         if (pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == "createChild")
+         if (pathParts[pathParts.length - 4] === tableName && pathParts[pathParts.length - 2] == CREATE_CHILD_KEY)
          {
             (async () =>
             {
@@ -369,7 +378,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
          for (let i = 0; i < hashParts.length; i++)
          {
             const parts = hashParts[i].split("=");
-            if (parts.length > 1 && parts[0] == "createChild")
+            if (parts.length > 1 && parts[0] == CREATE_CHILD_KEY)
             {
                (async () =>
                {
@@ -491,7 +500,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
             ////////////////////////////////////////////////////////////////////////////
             // if the component took in a record object, then we don't need to GET it //
             ////////////////////////////////////////////////////////////////////////////
-            if(overrideRecord)
+            if (overrideRecord)
             {
                record = overrideRecord;
             }
@@ -827,12 +836,12 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
       {
          let shareDisabled = true;
          let disabledTooltipText = "";
-         if(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName && record)
+         if (tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName && record)
          {
             const ownerId = record.values.get(tableMetaData.shareableTableMetaData.thisTableOwnerIdFieldName);
-            if(ownerId != currentUserId)
+            if (ownerId != currentUserId)
             {
-               disabledTooltipText = `Only the owner of a ${tableMetaData.label} may share it.`
+               disabledTooltipText = `Only the owner of a ${tableMetaData.label} may share it.`;
                shareDisabled = true;
             }
             else

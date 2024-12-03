@@ -68,6 +68,7 @@ import ValidationReview from "qqq/components/processes/ValidationReview";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import CompositeWidget, {CompositeData} from "qqq/components/widgets/CompositeWidget";
 import DashboardWidgets from "qqq/components/widgets/DashboardWidgets";
+import {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessWidgetBlockUtils from "qqq/pages/processes/ProcessWidgetBlockUtils";
 import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/RecordQuery";
@@ -160,8 +161,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [previouslySeenUpdatedFieldMetaDataMap, setPreviouslySeenUpdatedFieldMetaDataMap] = useState(new Map<string, QFieldMetaData>);
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
-   const [controlCallbacks, setControlCallbacks] = useState({} as {[name: string]: () => void})
-   const [subFormPreSubmitCallbacks, setSubFormPreSubmitCallbacks] = useState([] as SubFormPreSubmitCallbackWithName[])
+   const [controlCallbacks, setControlCallbacks] = useState({} as {[name: string]: () => void});
+   const [subFormPreSubmitCallbacks, setSubFormPreSubmitCallbacks] = useState([] as SubFormPreSubmitCallbackWithName[]);
 
    const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
 
@@ -196,7 +197,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       noMoreSteps = true;
    }
-   if(processValues["noMoreSteps"])
+   if (processValues["noMoreSteps"])
    {
       //////////////////////////////////////////////////////////////////
       // this, to allow a non-linear process to request this behavior //
@@ -222,7 +223,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [recordConfig, setRecordConfig] = useState({} as any);
    const [pageNumber, setPageNumber] = useState(0);
    const [rowsPerPage, setRowsPerPage] = useState(10);
-   const [records, setRecords] = useState([] as QRecord[]);
+   const [records, setRecords] = useState([] as any);
+   const [childRecordData, setChildRecordData] = useState(null as ChildRecordListData);
 
    //////////////////////////////
    // state for bulk edit form //
@@ -346,21 +348,22 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
     *******************************************************************************/
    function renderWidget(widgetName: string)
    {
+      const widgetMetaData = qInstance.widgets.get(widgetName);
+      if (!widgetMetaData)
+      {
+         return (<Alert color="error">Unrecognized widget name: {widgetName}</Alert>);
+      }
+
       if (!renderedWidgets[activeStep.name])
       {
          renderedWidgets[activeStep.name] = {};
          setRenderedWidgets(renderedWidgets);
       }
 
-      if (renderedWidgets[activeStep.name][widgetName])
+      let isChildRecordWidget = widgetMetaData.type == "childRecordList";
+      if (!isChildRecordWidget && renderedWidgets[activeStep.name][widgetName])
       {
          return renderedWidgets[activeStep.name][widgetName];
-      }
-
-      const widgetMetaData = qInstance.widgets.get(widgetName);
-      if (!widgetMetaData)
-      {
-         return (<Alert color="error">Unrecognized widget name: {widgetName}</Alert>);
       }
 
       const queryStringParts: string[] = [];
@@ -370,14 +373,25 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       }
 
       let initialWidgetDataList = null;
-      if(processValues[widgetName])
+      if (processValues[widgetName])
       {
-         processValues[widgetName].hasPermission = true
-         initialWidgetDataList = [processValues[widgetName]]
+         processValues[widgetName].hasPermission = true;
+         initialWidgetDataList = [processValues[widgetName]];
+      }
+
+      let actionCallback = blockWidgetActionCallback;
+      if (isChildRecordWidget)
+      {
+         actionCallback = childRecordListWidgetActionCallBack;
+
+         if (childRecordData)
+         {
+            initialWidgetDataList = [childRecordData];
+         }
       }
 
       const renderedWidget = (<Box m={-2}>
-         <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} initialWidgetDataList={initialWidgetDataList} values={processValues} actionCallback={blockWidgetActionCallback}  />
+         <DashboardWidgets widgetMetaDataList={[widgetMetaData]} omitWrappingGridContainer={true} childUrlParams={queryStringParts.join("&")} initialWidgetDataList={initialWidgetDataList} values={processValues} actionCallback={actionCallback} />
       </Box>);
       renderedWidgets[activeStep.name][widgetName] = renderedWidget;
       return renderedWidget;
@@ -391,43 +405,54 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       const split = controlCode.split(":", 2);
       let controlCallbackName: string;
-      let controlCallbackValue: any
-      if(split.length == 2)
+      let controlCallbackValue: any;
+      if (split.length == 2)
       {
-         if(split[0] == "showModal")
+         if (split[0] == "showModal")
          {
-            processValues[split[1]] = true
-            controlCallbackName = split[1]
-            controlCallbackValue = true
+            processValues[split[1]] = true;
+            controlCallbackName = split[1];
+            controlCallbackValue = true;
          }
-         else if(split[0] == "hideModal")
+         else if (split[0] == "hideModal")
          {
-            processValues[split[1]] = false
-            controlCallbackName = split[1]
-            controlCallbackValue = false
+            processValues[split[1]] = false;
+            controlCallbackName = split[1];
+            controlCallbackValue = false;
          }
-         else if(split[0] == "toggleModal")
+         else if (split[0] == "toggleModal")
          {
-            const currentValue = processValues[split[1]]
+            const currentValue = processValues[split[1]];
             processValues[split[1]] = !!!currentValue;
-            controlCallbackName = split[1]
-            controlCallbackValue = processValues[split[1]]
+            controlCallbackName = split[1];
+            controlCallbackValue = processValues[split[1]];
          }
          else
          {
-            console.log(`Unexpected part[0] (before colon) in controlCode: [${controlCode}]`)
+            console.log(`Unexpected part[0] (before colon) in controlCode: [${controlCode}]`);
          }
       }
       else
       {
-         console.log(`Expected controlCode to have 2 colon-delimited parts, but was: [${controlCode}]`)
+         console.log(`Expected controlCode to have 2 colon-delimited parts, but was: [${controlCode}]`);
       }
 
-      if(controlCallbackName && controlCallbacks[controlCallbackName])
+      if (controlCallbackName && controlCallbacks[controlCallbackName])
       {
          // @ts-ignore ... args are hard
-         controlCallbacks[controlCallbackName](controlCallbackValue)
+         controlCallbacks[controlCallbackName](controlCallbackValue);
       }
+   }
+
+
+   /***************************************************************************
+    ** callback used by child list widget
+    ***************************************************************************/
+   function childRecordListWidgetActionCallBack(data: any): boolean
+   {
+      console.log(`in childRecordListWidgetActionCallBack: ${JSON.stringify(data)}`);
+      setChildRecordData(data as ChildRecordListData);
+      return (true);
    }
 
 
@@ -439,11 +464,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       console.log(`in blockWidgetActionCallback, called by block: ${JSON.stringify(blockData)}`);
 
-      if(eventValues?.registerControlCallbackName && eventValues?.registerControlCallbackFunction)
+      if (eventValues?.registerControlCallbackName && eventValues?.registerControlCallbackFunction)
       {
          controlCallbacks[eventValues.registerControlCallbackName] = eventValues.registerControlCallbackFunction;
-         setControlCallbacks(controlCallbacks)
-         return (true)
+         setControlCallbacks(controlCallbacks);
+         return (true);
       }
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -466,29 +491,29 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       // }
 
       let doSubmit = false;
-      if(blockData?.blockTypeName == "BUTTON" && eventValues?.actionCode)
+      if (blockData?.blockTypeName == "BUTTON" && eventValues?.actionCode)
       {
-         doSubmit = true
+         doSubmit = true;
       }
-      else if(blockData?.blockTypeName == "BUTTON" && eventValues?.controlCode)
+      else if (blockData?.blockTypeName == "BUTTON" && eventValues?.controlCode)
       {
          handleControlCode(eventValues.controlCode);
-         doSubmit = false
+         doSubmit = false;
       }
-      else if(blockData?.blockTypeName == "INPUT_FIELD")
+      else if (blockData?.blockTypeName == "INPUT_FIELD")
       {
          ///////////////////////////////////////////////////////////////////////////////////////////////
          // if action callback was fired from an input field, assume that means we're good to submit. //
          ///////////////////////////////////////////////////////////////////////////////////////////////
-         doSubmit = true
+         doSubmit = true;
       }
 
       //////////////////
       // ok - submit! //
       //////////////////
-      if(doSubmit)
+      if (doSubmit)
       {
-         handleSubmit(eventValues);
+         handleFormSubmit(eventValues);
          return (true);
       }
    }
@@ -711,7 +736,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
       const showHelp = helpHelpActive || hasHelpContent(step.helpContents, helpRoles);
       const formattedHelpContent = <HelpContent helpContents={step.helpContents} roles={helpRoles} helpContentKey={`process:${processName};step:${step?.name}`} />;
-      const isFormatScanner = step?.format?.toLowerCase() == "scanner"
+      const isFormatScanner = step?.format?.toLowerCase() == "scanner";
 
       return (
          <>
@@ -997,7 +1022,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                     // if neither of those, then programmer error //
                                     ////////////////////////////////////////////////
                                     !(component.values?.widgetName || component.values?.isAdHocWidget) &&
-                                    <Alert severity="error">Error:  Component is marked as WIDGET type, but does not specify a <u>widgetName</u>, nor the <u>isAdHocWidget</u> flag.</Alert>
+                                    <Alert severity="error">Error: Component is marked as WIDGET type, but does not specify a <u>widgetName</u>, nor the <u>isAdHocWidget</u> flag.</Alert>
                                  }
                               </>
                            )
@@ -1180,7 +1205,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             // if this is the last step or not - and by default that radio will be true, to make this   //
             // NOT the last step - so set this value.                                                   //
             //////////////////////////////////////////////////////////////////////////////////////////////
-            if(!processValues["validationSummary"] && processValues["supportsFullValidation"])
+            if (!processValues["validationSummary"] && processValues["supportsFullValidation"])
             {
                setOverrideOnLastStep(false);
             }
@@ -1199,7 +1224,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                const dynamicField = DynamicFormUtils.getDynamicField(fieldMetaData);
                const validation = DynamicFormUtils.getValidationForField(fieldMetaData);
-               addField(fieldMetaData.name, dynamicField, processValues[fieldMetaData.name], validation)
+               addField(fieldMetaData.name, dynamicField, processValues[fieldMetaData.name], validation);
             });
          }
 
@@ -1399,6 +1424,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setRecords(records);
             setLoadingRecords(false);
 
+            if (!childRecordData || childRecordData.length == 0)
+            {
+               setChildRecordData(convertRecordsToChildRecordData(records));
+            }
+
             /////////////////////////////////////////////////////////////////////////////////////////
             // re-construct the recordConfig object, so the setState call triggers a new rendering //
             /////////////////////////////////////////////////////////////////////////////////////////
@@ -1419,6 +1449,30 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          })();
       }
    }, [needRecords]);
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function convertRecordsToChildRecordData(records: QRecord[])
+   {
+      const frontendRecords = [] as any[];
+      records.forEach((record: QRecord) =>
+      {
+         const object = {
+            "tableName": record.tableName,
+            "recordLabel": record.recordLabel,
+            "errors": record.errors,
+            "warnings": record.warnings,
+            "values": Object.fromEntries(record.values),
+            "displayValues": Object.fromEntries(record.displayValues),
+         };
+         frontendRecords.push(object);
+      });
+      const newChildListData = {} as ChildRecordListData;
+      newChildListData.queryOutput = {records: frontendRecords};
+      return (newChildListData);
+   }
 
 
    /***************************************************************************
@@ -1837,11 +1891,31 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       });
    };
 
+   ////////////////////////////////////////////
+   // handle user submitting changed records //
+   ////////////////////////////////////////////
+   const doSubmit = async (formData: FormData) =>
+   {
+      setTimeout(async () =>
+      {
+         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+
+         const processResponse = await Client.getInstance().processStep(
+            processName,
+            processUUID,
+            activeStep.name,
+            formData,
+            qController.defaultMultipartFormDataHeaders()
+         );
+         setLastProcessResponse(processResponse);
+      });
+   };
+
    //////////////////////////////////////////////////////////////////////////////////////////
    // handle user submitting the form - which in qqq means moving forward from any screen. //
    // caller can pass in a map of values to be added to the form data too                  //
    //////////////////////////////////////////////////////////////////////////////////////////
-   const handleSubmit = async (values: any) =>
+   const handleFormSubmit = async (values: any) =>
    {
       setFormError(null);
 
@@ -1903,19 +1977,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
       clearStatesBeforeHittingBackend();
 
-      setTimeout(async () =>
+      /////////////////////////////////////////////////////////////
+      // convert to regular objects so that they can be jsonized //
+      /////////////////////////////////////////////////////////////
+      if (childRecordData)
       {
-         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+         formData.append("frontendRecords", JSON.stringify(childRecordData.queryOutput.records));
+      }
 
-         const processResponse = await qController.processStep(
-            processName,
-            processUUID,
-            activeStep.name,
-            formData,
-            qController.defaultMultipartFormDataHeaders(),
-         );
-         setLastProcessResponse(processResponse);
-      });
+      doSubmit(formData);
    };
 
 
@@ -1970,7 +2040,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
 
    const formStyles: any = {};
-   if(isWidget)
+   if (isWidget)
    {
       formStyles.display = "flex";
       formStyles.flexGrow = 1;
@@ -1984,7 +2054,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       const mainCardStyles: any = {};
 
-      if(!isWidget && !isModal)
+      if (!isWidget && !isModal)
       {
          ////////////////////////////////////////////////////////////////
          // remove margin around card for non-widget, non-modal, small //
@@ -2014,7 +2084,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          mainCardStyles.display = "flex";
       }
 
-      return mainCardStyles
+      return mainCardStyles;
    }
 
    let nextButtonLabel = "Next";
@@ -2039,7 +2109,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          initialValues={initialValues}
          validationSchema={validationScheme}
          validation={validationFunction}
-         onSubmit={handleSubmit}
+         onSubmit={handleFormSubmit}
       >
          {({
             values, errors, touched, isSubmitting, setFieldValue, setTouched
