@@ -125,12 +125,6 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
    });
 
 
-   useEffect(() =>
-   {
-      console.log("@dk has header row changed!");
-   }, [bulkLoadMapping.hasHeaderRow]);
-
-
    /***************************************************************************
     **
     ***************************************************************************/
