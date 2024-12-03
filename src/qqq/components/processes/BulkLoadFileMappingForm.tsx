@@ -60,9 +60,9 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
 
    const [fieldErrors, setFieldErrors] = useState({} as { [fieldName: string]: string });
 
-   const [suggestedBulkLoadProfile] = useState(processValues.bulkLoadProfile as BulkLoadProfile);
+   const [suggestedBulkLoadProfile] = useState(processValues.suggestedBulkLoadProfile as BulkLoadProfile);
    const [tableStructure] = useState(processValues.tableStructure as BulkLoadTableStructure);
-   const [bulkLoadMapping, setBulkLoadMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, suggestedBulkLoadProfile));
+   const [bulkLoadMapping, setBulkLoadMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, processValues.bulkLoadProfile));
    const [wrappedBulkLoadMapping] = useState(new Wrapper<BulkLoadMapping>(bulkLoadMapping));
 
    const [fileDescription] = useState(new FileDescription(processValues.headerValues, processValues.headerLetters, processValues.bodyValuesPreview));

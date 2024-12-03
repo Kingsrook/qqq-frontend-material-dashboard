@@ -435,7 +435,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
             <MenuItem sx={{width: menuWidth}} disabled style={{opacity: "initial", whiteSpace: "wrap", display: "block"}}>
                {
                   currentSavedBulkLoadProfileRecord ?
-                     <span>You are using the bulk load profile:<br /><b style={{paddingLeft: "1rem"}}>{currentSavedBulkLoadProfileRecord.values.get("label")}</b>.<br /><br />You can manage this profile on this screen.</span>
+                     <span>You are using the bulk load profile:<br /><b style={{paddingLeft: "1rem"}}>{currentSavedBulkLoadProfileRecord.values.get("label")}</b><br /><br />You can manage this profile on this screen.</span>
                      : <span>You are not using a saved bulk load profile.<br /><br />You can save your profile on this screen.</span>
                }
             </MenuItem>
