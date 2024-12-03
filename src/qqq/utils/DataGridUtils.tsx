@@ -26,61 +26,13 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
-import {GridColDef, GridFilterItem, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
-import {GridFilterOperator} from "@mui/x-data-grid/models/gridFilterOperator";
+import {GridColDef, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
 import {GridColumnHeaderParams} from "@mui/x-data-grid/models/params/gridColumnHeaderParams";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
-import {buildQGridPvsOperators, QGridBlobOperators, QGridBooleanOperators, QGridNumericOperators, QGridStringOperators} from "qqq/pages/records/query/GridFilterOperators";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
 import React from "react";
 import {Link, NavigateFunction} from "react-router-dom";
 
-
-const emptyApplyFilterFn = (filterItem: GridFilterItem, column: GridColDef): null => null;
-
-function NullInputComponent()
-{
-   return (<React.Fragment />);
-}
-
-const makeGridFilterOperator = (value: string, label: string, takesValues: boolean = false): GridFilterOperator =>
-{
-   const rs: GridFilterOperator = {value: value, label: label, getApplyFilterFn: emptyApplyFilterFn};
-   if (takesValues)
-   {
-      rs.InputComponent = NullInputComponent;
-   }
-   return (rs);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////
-// at this point, these may only be used to drive the toolitp on the FILTER button... //
-////////////////////////////////////////////////////////////////////////////////////////
-const QGridDateOperators = [
-   makeGridFilterOperator("equals", "equals", true),
-   makeGridFilterOperator("isNot", "does not equal", true),
-   makeGridFilterOperator("after", "is after", true),
-   makeGridFilterOperator("onOrAfter", "is on or after", true),
-   makeGridFilterOperator("before", "is before", true),
-   makeGridFilterOperator("onOrBefore", "is on or before", true),
-   makeGridFilterOperator("isEmpty", "is empty"),
-   makeGridFilterOperator("isNotEmpty", "is not empty"),
-   makeGridFilterOperator("between", "is between", true),
-   makeGridFilterOperator("notBetween", "is not between", true),
-];
-
-const QGridDateTimeOperators = [
-   makeGridFilterOperator("equals", "equals", true),
-   makeGridFilterOperator("isNot", "does not equal", true),
-   makeGridFilterOperator("after", "is after", true),
-   makeGridFilterOperator("onOrAfter", "is at or after", true),
-   makeGridFilterOperator("before", "is before", true),
-   makeGridFilterOperator("onOrBefore", "is at or before", true),
-   makeGridFilterOperator("isEmpty", "is empty"),
-   makeGridFilterOperator("isNotEmpty", "is not empty"),
-   makeGridFilterOperator("between", "is between", true),
-   makeGridFilterOperator("notBetween", "is not between", true),
-];
 
 export default class DataGridUtils
 {
@@ -295,11 +247,10 @@ export default class DataGridUtils
    public static makeColumnFromField = (field: QFieldMetaData, tableMetaData: QTableMetaData, namePrefix?: string, labelPrefix?: string): GridColDef =>
    {
       let columnType = "string";
-      let filterOperators: GridFilterOperator<any>[] = QGridStringOperators;
 
       if (field.possibleValueSourceName)
       {
-         filterOperators = buildQGridPvsOperators(tableMetaData.name, field);
+         // noop here
       }
       else
       {
@@ -308,22 +259,17 @@ export default class DataGridUtils
             case QFieldType.DECIMAL:
             case QFieldType.INTEGER:
                columnType = "number";
-               filterOperators = QGridNumericOperators;
                break;
             case QFieldType.DATE:
                columnType = "date";
-               filterOperators = QGridDateOperators;
                break;
             case QFieldType.DATE_TIME:
                columnType = "dateTime";
-               filterOperators = QGridDateTimeOperators;
                break;
             case QFieldType.BOOLEAN:
                columnType = "string"; // using boolean gives an odd 'no' for nulls.
-               filterOperators = QGridBooleanOperators;
                break;
             case QFieldType.BLOB:
-               filterOperators = QGridBlobOperators;
                break;
             default:
             // noop - leave as string
@@ -339,7 +285,6 @@ export default class DataGridUtils
          headerName: headerName,
          width: DataGridUtils.getColumnWidthForField(field, tableMetaData),
          renderCell: null as any,
-         filterOperators: filterOperators,
       };
 
       column.renderCell = (cellValues: any) => (
