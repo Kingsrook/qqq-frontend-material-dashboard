@@ -24,7 +24,6 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {Checkbox, FormControlLabel, Radio} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -34,6 +33,7 @@ import colors from "qqq/assets/theme/base/colors";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import {BulkLoadField, FileDescription} from "qqq/models/processes/BulkLoadModels";
+import Client from "qqq/utils/qqq/Client";
 import React, {useEffect, useState} from "react";
 
 interface BulkLoadMappingFieldProps
@@ -45,6 +45,8 @@ interface BulkLoadMappingFieldProps
    forceParentUpdate?: () => void,
 }
 
+const qController = Client.getInstance();
+
 /***************************************************************************
  ** row for a single field on the bulk load mapping screen.
  ***************************************************************************/
@@ -55,12 +57,58 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    const [valueType, setValueType] = useState(bulkLoadField.valueType);
    const [selectedColumn, setSelectedColumn] = useState({label: columnNames[bulkLoadField.columnIndex], value: bulkLoadField.columnIndex});
 
+   const [doingInitialLoadOfPossibleValue, setDoingInitialLoadOfPossibleValue] = useState(false);
+   const [everDidInitialLoadOfPossibleValue, setEverDidInitialLoadOfPossibleValue] = useState(false);
+   const [possibleValueInitialDisplayValue, setPossibleValueInitialDisplayValue] = useState(null as string);
+
    const fieldMetaData = new QFieldMetaData(bulkLoadField.field);
    const dynamicField = DynamicFormUtils.getDynamicField(fieldMetaData);
    const dynamicFieldInObject: any = {};
    dynamicFieldInObject[fieldMetaData["name"]] = dynamicField;
    DynamicFormUtils.addPossibleValueProps(dynamicFieldInObject, [fieldMetaData], bulkLoadField.tableStructure.tableName, null, null);
 
+   /////////////////////////////////////////////////////////////////////////////////////
+   // deal with dynamically loading the initial default value for a possible value... //
+   /////////////////////////////////////////////////////////////////////////////////////
+   let actuallyDoingInitialLoadOfPossibleValue = doingInitialLoadOfPossibleValue;
+   if(dynamicField.possibleValueProps && bulkLoadField.defaultValue && !doingInitialLoadOfPossibleValue && !everDidInitialLoadOfPossibleValue)
+   {
+      actuallyDoingInitialLoadOfPossibleValue = true;
+      setDoingInitialLoadOfPossibleValue(true);
+      setEverDidInitialLoadOfPossibleValue(true);
+
+      (async () =>
+      {
+         try
+         {
+            const possibleValues = await qController.possibleValues(bulkLoadField.tableStructure.tableName, null, fieldMetaData.name, null, [bulkLoadField.defaultValue], undefined, "filter");
+            if (possibleValues && possibleValues.length > 0)
+            {
+               setPossibleValueInitialDisplayValue(possibleValues[0].label);
+            }
+            else
+            {
+               setPossibleValueInitialDisplayValue(null);
+            }
+         }
+         catch(e)
+         {
+            console.log(`Error loading possible value: ${e}`)
+         }
+
+         actuallyDoingInitialLoadOfPossibleValue = false;
+         setDoingInitialLoadOfPossibleValue(false);
+      })();
+   }
+
+   if(dynamicField.possibleValueProps && possibleValueInitialDisplayValue)
+   {
+      dynamicField.possibleValueProps.initialDisplayValue = possibleValueInitialDisplayValue;
+   }
+
+   //////////////////////////////////////////////////////
+   // build array of options for the columns drop down //
+   //////////////////////////////////////////////////////
    const columnOptions: { value: number, label: string }[] = [];
    for (let i = 0; i < columnNames.length; i++)
    {
@@ -186,7 +234,10 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
                <Box display="flex" alignItems="center" sx={{height: "45px"}}>
                   <FormControlLabel value="defaultValue" control={<Radio size="small" onChange={(event, checked) => valueTypeChanged(!checked)} />} label={"Default value"} sx={{minWidth: "140px", whiteSpace: "nowrap"}} />
                   {
-                     valueType == "defaultValue" && <Box width="100%">
+                     valueType == "defaultValue" && actuallyDoingInitialLoadOfPossibleValue && <Box width="100%">Loading...</Box>
+                  }
+                  {
+                     valueType == "defaultValue" && !actuallyDoingInitialLoadOfPossibleValue && <Box width="100%">
                         <QDynamicFormField
                            name={`${bulkLoadField.field.name}.defaultValue`}
                            displayFormat={""}
