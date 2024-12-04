@@ -427,7 +427,7 @@ function PreviewRecordUsingTableLayout({record, tableMetaData, qInstance, associ
             if (associationPreviewsByWidgetName[section.widgetName])
             {
                const associationPreview = associationPreviewsByWidgetName[section.widgetName];
-               const associationRecords = record.associatedRecords.get(associationPreview.associationName) ?? [];
+               const associationRecords = record.associatedRecords?.get(associationPreview.associationName) ?? [];
                data = {
                   canAddChildRecord: false,
                   childTableMetaData: childTableMetaData[associationPreview.tableName],
