@@ -61,7 +61,8 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
 {
    const {setFieldValue} = useFormikContext();
 
-   const [currentSavedBulkLoadProfile, setCurrentSavedBulkLoadProfile] = useState(null as QRecord);
+   const savedBulkLoadProfileRecordProcessValue = processValues.savedBulkLoadProfileRecord;
+   const [currentSavedBulkLoadProfile, setCurrentSavedBulkLoadProfile] = useState(savedBulkLoadProfileRecordProcessValue == null ? null : new QRecord(savedBulkLoadProfileRecordProcessValue));
    const [wrappedCurrentSavedBulkLoadProfile] = useState(new Wrapper<QRecord>(currentSavedBulkLoadProfile));
 
    const [fieldErrors, setFieldErrors] = useState({} as { [fieldName: string]: string });
