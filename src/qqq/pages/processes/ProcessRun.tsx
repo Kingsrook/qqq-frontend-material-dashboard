@@ -1032,9 +1032,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                               <BulkLoadFileMappingForm
                                  processValues={processValues}
                                  tableMetaData={tableMetaData}
+                                 processMetaData={processMetaData}
                                  metaData={qInstance}
                                  ref={bulkLoadFileMappingFormRef}
                                  setActiveStepLabel={setActiveStepLabel}
+                                 frontendStep={activeStep}
                               />
                            )
                         }
@@ -2220,7 +2222,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    if (isModal)
    {
       return (
-         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}} id="modalProcessScrollContainer">
             {body}
          </Box>
       );

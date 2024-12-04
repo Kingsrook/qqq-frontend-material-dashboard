@@ -20,7 +20,10 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -31,27 +34,30 @@ import {useFormikContext} from "formik";
 import {DynamicFormFieldLabel} from "qqq/components/forms/DynamicForm";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import HelpContent from "qqq/components/misc/HelpContent";
 import SavedBulkLoadProfiles from "qqq/components/misc/SavedBulkLoadProfiles";
 import BulkLoadFileMappingFields from "qqq/components/processes/BulkLoadFileMappingFields";
 import {BulkLoadField, BulkLoadMapping, BulkLoadProfile, BulkLoadTableStructure, FileDescription, Wrapper} from "qqq/models/processes/BulkLoadModels";
 import {SubFormPreSubmitCallbackResultType} from "qqq/pages/processes/ProcessRun";
-import React, {forwardRef, useEffect, useImperativeHandle, useReducer, useState} from "react";
+import React, {forwardRef, useImperativeHandle, useReducer, useState} from "react";
 import ProcessViewForm from "./ProcessViewForm";
 
 
 interface BulkLoadMappingFormProps
 {
-   processValues: any;
-   tableMetaData: QTableMetaData;
-   metaData: QInstance;
-   setActiveStepLabel: (label: string) => void;
+   processValues: any,
+   tableMetaData: QTableMetaData,
+   metaData: QInstance,
+   setActiveStepLabel: (label: string) => void,
+   frontendStep: QFrontendStepMetaData,
+   processMetaData: QProcessMetaData,
 }
 
 
 /***************************************************************************
  ** process component - screen where user does a bulk-load file mapping.
  ***************************************************************************/
-const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaData, setActiveStepLabel}: BulkLoadMappingFormProps, ref) =>
+const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaData, setActiveStepLabel, frontendStep, processMetaData}: BulkLoadMappingFormProps, ref) =>
 {
    const {setFieldValue} = useFormikContext();
 
@@ -208,6 +214,8 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
          tableStructure={tableStructure}
          fileName={processValues.fileBaseName}
          fieldErrors={fieldErrors}
+         frontendStep={frontendStep}
+         processMetaData={processMetaData}
          forceParentUpdate={() => forceUpdate()}
       />
 
@@ -226,8 +234,6 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
 export default BulkLoadFileMappingForm;
 
 
-
-
 interface BulkLoadMappingHeaderProps
 {
    fileDescription: FileDescription,
@@ -235,13 +241,15 @@ interface BulkLoadMappingHeaderProps
    bulkLoadMapping?: BulkLoadMapping,
    fieldErrors: { [fieldName: string]: string },
    tableStructure: BulkLoadTableStructure,
-   forceParentUpdate?: () => void
+   forceParentUpdate?: () => void,
+   frontendStep: QFrontendStepMetaData,
+   processMetaData: QProcessMetaData,
 }
 
 /***************************************************************************
  ** private subcomponent - the header section of the bulk load file mapping screen.
  ***************************************************************************/
-function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fieldErrors, tableStructure, forceParentUpdate}: BulkLoadMappingHeaderProps): JSX.Element
+function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fieldErrors, tableStructure, forceParentUpdate, frontendStep, processMetaData}: BulkLoadMappingHeaderProps): JSX.Element
 {
    const viewFields = [
       new QFieldMetaData({name: "fileName", label: "File Name", type: "STRING"}),
@@ -254,8 +262,6 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
    };
 
    const hasHeaderRowFormField = {name: "hasHeaderRow", label: "Does the file have a header row?", type: "checkbox", isRequired: true, isEditable: true};
-
-   let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
 
    const layoutOptions = [
       {label: "Flat", id: "FLAT"},
@@ -270,6 +276,9 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
 
    const selectedLayout = layoutOptions.filter(o => o.id == bulkLoadMapping.layout)[0] ?? null;
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
    function hasHeaderRowChanged(newValue: any)
    {
       bulkLoadMapping.hasHeaderRow = newValue;
@@ -278,11 +287,33 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
       forceParentUpdate();
    }
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
    function layoutChanged(event: any, newValue: any)
    {
       bulkLoadMapping.layout = newValue ? newValue.id : null;
       fieldErrors.layout = null;
       forceParentUpdate();
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getFormattedHelpContent(fieldName: string): JSX.Element
+   {
+      const field = frontendStep?.formFields?.find(f => f.name == fieldName);
+      let helpRoles = ["PROCESS_SCREEN", "ALL_SCREENS"];
+
+      let formattedHelpContent = <HelpContent helpContents={field?.helpContents} roles={helpRoles} helpContentKey={`process:${processMetaData?.name};field:${fieldName}`} />;
+      if (formattedHelpContent)
+      {
+         const mt = field && field.type == QFieldType.BOOLEAN ? "-0.5rem" : "0.5rem";
+
+         return <Box color="#757575" fontSize="0.875rem" mt={mt}>{formattedHelpContent}</Box>;
+      }
+
+      return null;
    }
 
    return (
@@ -301,6 +332,7 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
                         {<div className="fieldErrorMessage">{fieldErrors.hasHeaderRow}</div>}
                      </MDTypography>
                   }
+                  {getFormattedHelpContent("hasHeaderRow")}
                </Grid>
                <Grid item xs={12} md={6}>
                   <DynamicFormFieldLabel name={"layout"} label={"File Layout *"} />
@@ -322,13 +354,13 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
                         {<div className="fieldErrorMessage">{fieldErrors.layout}</div>}
                      </MDTypography>
                   }
+                  {getFormattedHelpContent("layout")}
                </Grid>
             </Grid>
          </Box>
       </Box>
    );
 }
-
 
 
 interface BulkLoadMappingFilePreviewProps
