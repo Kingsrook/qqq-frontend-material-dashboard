@@ -37,7 +37,7 @@ export class SavedBulkLoadProfileUtils
 
       for (let bulkLoadField of orderedFieldArray)
       {
-         const fieldName = bulkLoadField.field.name;
+         const fieldName = bulkLoadField.getQualifiedName()
          const compareField = compareFieldsMap[fieldName];
          const baseField = baseFieldsMap[fieldName];
          if(!compareField)
@@ -55,12 +55,13 @@ export class SavedBulkLoadProfileUtils
                if (compareField.valueType == "column")
                {
                   const column = fileDescription.getColumnNames()[compareField.columnIndex];
-                  rs.push(`Changed ${compareField.getQualifiedLabel()} from using a default value (${baseField.defaultValue}) to using a file column (${column})`);
+                  rs.push(`Changed ${compareField.getQualifiedLabel()} from using a default value (${baseField.defaultValue}) to using a file column ${column ? `(${column})` : ""}`);
                }
                else if (compareField.valueType == "defaultValue")
                {
                   const column = fileDescription.getColumnNames()[baseField.columnIndex];
-                  rs.push(`Changed ${compareField.getQualifiedLabel()} from using a file column (${column}) to using a default value (${compareField.defaultValue})`);
+                  const value = compareField.defaultValue;
+                  rs.push(`Changed ${compareField.getQualifiedLabel()} from using a file column (${column}) to using a default value ${value === undefined ? "" : `(${value})`}`);
                }
             }
             else if (baseField.valueType == compareField.valueType && baseField.valueType == "defaultValue")
@@ -70,7 +71,8 @@ export class SavedBulkLoadProfileUtils
                //////////////////////////////////////////////////
                if (baseField.defaultValue != compareField.defaultValue)
                {
-                  rs.push(`Changed ${compareField.getQualifiedLabel()} default value from (${baseField.defaultValue}) to (${compareField.defaultValue})`);
+                  const value = compareField.defaultValue;
+                  rs.push(`Changed ${compareField.getQualifiedLabel()} default value from (${baseField.defaultValue}) to ${value === undefined ? "" : `(${value})`}`);
                }
             }
             else if (baseField.valueType == compareField.valueType && baseField.valueType == "column")
@@ -78,23 +80,27 @@ export class SavedBulkLoadProfileUtils
                ///////////////////////////////////////////
                // if we changed the column, report that //
                ///////////////////////////////////////////
+               let isDiff = false;
                if (fileDescription.hasHeaderRow)
                {
                   if (baseField.headerName != compareField.headerName)
                   {
-                     const baseColumn = fileDescription.getColumnNames()[baseField.columnIndex];
-                     const compareColumn = fileDescription.getColumnNames()[compareField.columnIndex];
-                     rs.push(`Changed ${compareField.getQualifiedLabel()} file column from (${baseColumn}) to (${compareColumn})`);
+                     isDiff = true;
                   }
                }
                else
                {
                   if (baseField.columnIndex != compareField.columnIndex)
                   {
-                     const baseColumn = fileDescription.getColumnNames()[baseField.columnIndex];
-                     const compareColumn = fileDescription.getColumnNames()[compareField.columnIndex];
-                     rs.push(`Changed ${compareField.getQualifiedLabel()} file column from (${baseColumn}) to (${compareColumn})`);
+                     isDiff = true;
                   }
+               }
+
+               if(isDiff)
+               {
+                  const baseColumn = fileDescription.getColumnNames()[baseField.columnIndex];
+                  const compareColumn = fileDescription.getColumnNames()[compareField.columnIndex];
+                  rs.push(`Changed ${compareField.getQualifiedLabel()} file column from ${baseColumn ? `(${baseColumn})` : "--"} to ${compareColumn ? `(${compareColumn})` : "--"}`);
                }
 
                /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +126,7 @@ export class SavedBulkLoadProfileUtils
 
       for (let bulkLoadField of orderedFieldArray)
       {
-         const fieldName = bulkLoadField.field.name;
+         const fieldName = bulkLoadField.getQualifiedName()
          const compareField = compareFieldsMap[fieldName];
          if(!compareField)
          {
@@ -292,7 +298,7 @@ export class SavedBulkLoadProfileUtils
       {
          try
          {
-            const fieldName = bulkLoadField.field.name;
+            const fieldName = bulkLoadField.getQualifiedName() // todo - does this (and the others calls to this) need suffix?
 
             const valueMappingDiff = this.diffFieldValueMappings(bulkLoadField, baseMapping.valueMappings[fieldName] ?? {}, activeMapping.valueMappings[fieldName] ?? {});
             if(valueMappingDiff)
