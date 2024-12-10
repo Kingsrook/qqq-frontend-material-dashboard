@@ -118,7 +118,7 @@ const doesOperatorOptionEqualCriteria = (operatorOption: OperatorOption, criteri
  ** autocomplete), given an array of options, the query's active criteria in this
  ** field, and the default operator to use for this field
  *******************************************************************************/
-const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: QFilterCriteriaWithId, defaultOperator: QCriteriaOperator): OperatorOption =>
+const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: QFilterCriteriaWithId, defaultOperator: QCriteriaOperator, return0thOptionInsteadOfNull: boolean = false): OperatorOption =>
 {
    if (criteria)
    {
@@ -133,6 +133,23 @@ const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: Q
    if (filteredOptions.length > 0)
    {
       return (filteredOptions[0]);
+   }
+
+   if(return0thOptionInsteadOfNull)
+   {
+      console.log("Returning 0th operator instead of null - this isn't expected, but has been seen to happen - so here's some additional debugging:");
+      try
+      {
+         console.log("Operator options:   " + JSON.stringify(operatorOptions));
+         console.log("Criteria: " + JSON.stringify(criteria));
+         console.log("Default Operator:   " + JSON.stringify(defaultOperator));
+      }
+      catch(e)
+      {
+         console.log(`Error in debug output: ${e}`);
+      }
+
+      return operatorOptions[0];
    }
 
    return (null);
@@ -157,7 +174,7 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    const [criteria, setCriteria] = useState(criteriaParamIsCriteria(criteriaParam) ? Object.assign({}, criteriaParam) as QFilterCriteriaWithId : null);
    const [id, setId] = useState(criteriaParamIsCriteria(criteriaParam) ? (criteriaParam as QFilterCriteriaWithId).id : ++seedId);
 
-   const [operatorSelectedValue, setOperatorSelectedValue] = useState(getOperatorSelectedValue(operatorOptions, criteria, defaultOperator));
+   const [operatorSelectedValue, setOperatorSelectedValue] = useState(getOperatorSelectedValue(operatorOptions, criteria, defaultOperator, true));
    const [operatorInputValue, setOperatorInputValue] = useState(operatorSelectedValue?.label);
 
    const {criteriaIsValid, criteriaStatusTooltip} = validateCriteria(criteria, operatorSelectedValue);
