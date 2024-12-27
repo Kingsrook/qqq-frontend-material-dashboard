@@ -21,9 +21,10 @@
 
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {Checkbox, FormControlLabel, Radio} from "@mui/material";
+import {Checkbox, FormControlLabel, Radio, Tooltip} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -44,6 +45,27 @@ interface BulkLoadMappingFieldProps
    fileDescription: FileDescription,
    forceParentUpdate?: () => void,
 }
+
+const xIconButtonSX =
+   {
+      border: `1px solid ${colors.grayLines.main} !important`,
+      borderRadius: "0.5rem",
+      textTransform: "none",
+      fontSize: "1rem",
+      fontWeight: "400",
+      width: "30px",
+      minWidth: "30px",
+      height: "2rem",
+      minHeight: "2rem",
+      paddingLeft: 0,
+      paddingRight: 0,
+      marginRight: "0.5rem",
+      marginTop: "0.5rem",
+      color: colors.error.main,
+      "&:hover": {color: colors.error.main},
+      "&:focus": {color: colors.error.main},
+      "&:focus:not(:hover)": {color: colors.error.main},
+   };
 
 const qController = Client.getInstance();
 
@@ -212,7 +234,9 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
 
          <Box display="flex" alignItems="flex-start">
             {
-               (!isRequired) && <IconButton onClick={() => removeFieldCallback()} sx={{pt: "0.75rem"}}><Icon fontSize="small">remove_circle</Icon></IconButton>
+               (!isRequired) && <Tooltip placement="bottom" title="Remove this field from your mapping.">
+                  <Button sx={xIconButtonSX} onClick={() => removeFieldCallback()}><Icon>clear</Icon></Button>
+               </Tooltip>
             }
             <Box pt="0.625rem">
                {bulkLoadField.getQualifiedLabel()}
@@ -265,7 +289,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
             </Box>
             {
                bulkLoadField.error &&
-               <Box fontSize={smallerFontSize} color={colors.error.main} ml="145px">
+               <Box fontSize={smallerFontSize} color={colors.error.main} ml="145px" className="bulkLoadFieldError">
                   {bulkLoadField.error}
                </Box>
             }

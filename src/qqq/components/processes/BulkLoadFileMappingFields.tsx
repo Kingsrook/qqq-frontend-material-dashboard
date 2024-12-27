@@ -47,7 +47,7 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
 {
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-   const [forceRerender, setForceRerender] = useState(0);
+   const [forceHierarchyAutoCompleteRerender, setForceHierarchyAutoCompleteRerender] = useState(0);
 
    ////////////////////////////////////////////
    // build list of fields that can be added //
@@ -98,8 +98,9 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
 
       setAddFieldsDisableStates(newDisableStates);
       setTooltips(newTooltips);
+      setForceHierarchyAutoCompleteRerender(forceHierarchyAutoCompleteRerender + 1);
 
-   }, [bulkLoadMapping]);
+   }, [bulkLoadMapping, bulkLoadMapping.layout]);
 
 
    ///////////////////////////////////////////////
@@ -140,9 +141,6 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
     ***************************************************************************/
    function removeField(bulkLoadField: BulkLoadField)
    {
-      // addFieldsToggleStates[bulkLoadField.getQualifiedName()] = false;
-      // setAddFieldsToggleStates(Object.assign({}, addFieldsToggleStates));
-
       addFieldsDisableStates[bulkLoadField.getQualifiedName()] = false;
       setAddFieldsDisableStates(Object.assign({}, addFieldsDisableStates));
 
@@ -160,7 +158,7 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
       bulkLoadMapping.removeField(bulkLoadField);
       forceUpdate();
       forceParentUpdate();
-      setForceRerender(forceRerender + 1);
+      setForceHierarchyAutoCompleteRerender(forceHierarchyAutoCompleteRerender + 1);
    }
 
    /***************************************************************************
@@ -297,7 +295,7 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
                      isModeSelectOne
                      keepOpenAfterSelectOne
                      handleSelectedOption={handleAddField}
-                     forceRerender={forceRerender}
+                     forceRerender={forceHierarchyAutoCompleteRerender}
                      disabledStates={addFieldsDisableStates}
                      tooltips={tooltips}
                   />

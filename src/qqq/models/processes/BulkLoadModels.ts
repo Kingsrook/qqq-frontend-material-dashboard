@@ -21,6 +21,7 @@
 
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 
 export type ValueType = "defaultValue" | "column";
@@ -422,17 +423,22 @@ export class BulkLoadMapping
          }
          else
          {
-            index = 0;
-            ///////////////////////////////////////////////////////////
-            // count how many copies of this field there are already //
-            ///////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////
+            // find the max index for this field already //
+            ///////////////////////////////////////////////
+            let maxIndex = -1;
             for (let existingField of [...this.requiredFields, ...this.additionalFields])
             {
                if (existingField.getQualifiedName() == bulkLoadField.getQualifiedName())
                {
-                  index++;
+                  const thisIndex = existingField.wideLayoutIndexPath[0]
+                  if (thisIndex != null && thisIndex != undefined && thisIndex > maxIndex)
+                  {
+                     maxIndex = thisIndex;
+                  }
                }
             }
+            index = maxIndex + 1;
          }
 
          const cloneField = BulkLoadField.clone(bulkLoadField);
@@ -455,13 +461,114 @@ export class BulkLoadMapping
       const newAdditionalFields: BulkLoadField[] = [];
       for (let bulkLoadField of this.additionalFields)
       {
-         if (bulkLoadField.getQualifiedName() != toRemove.getQualifiedName())
+         if (bulkLoadField.getQualifiedNameWithWideSuffix() != toRemove.getQualifiedNameWithWideSuffix())
          {
             newAdditionalFields.push(bulkLoadField);
          }
       }
 
       this.additionalFields = newAdditionalFields;
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   public switchLayout(newLayout: string): void
+   {
+      const newAdditionalFields: BulkLoadField[] = [];
+      let anyChanges = false;
+
+      if ("WIDE" != newLayout)
+      {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if going to a layout other than WIDE, make sure there aren't any fields with a wideLayoutIndexPath //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const namesWhereOneWideLayoutIndexHasBeenFound: { [name: string]: boolean } = {};
+         for (let existingField of this.additionalFields)
+         {
+            if (existingField.wideLayoutIndexPath.length > 0)
+            {
+               const name = existingField.getQualifiedName();
+               if (namesWhereOneWideLayoutIndexHasBeenFound[name])
+               {
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // in this case, we're on like the 2nd or 3rd instance of, say, Line Item: SKU - so - just discard it. //
+                  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  anyChanges = true;
+               }
+               else
+               {
+                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // else, this is the 1st instance of, say, Line Item: SKU - so mark that we've found it - and keep this field //
+                  // (that is, put it in the new array), but with no index path                                                 //
+                  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  namesWhereOneWideLayoutIndexHasBeenFound[name] = true;
+                  const newField = BulkLoadField.clone(existingField);
+                  newField.wideLayoutIndexPath = [];
+                  newAdditionalFields.push(newField)
+                  anyChanges = true;
+               }
+            }
+            else
+            {
+               //////////////////////////////////////////////////////
+               // else, non-wide-path fields, just get added as-is //
+               //////////////////////////////////////////////////////
+               newAdditionalFields.push(existingField)
+            }
+         }
+      }
+      else
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         // if going to WIDE layout, then any field from a child table needs a wide-layout-index-path //
+         ///////////////////////////////////////////////////////////////////////////////////////////////
+         for (let existingField of this.additionalFields)
+         {
+            if (existingField.tableStructure.isMain)
+            {
+               ////////////////////////////////////////////
+               // fields from main table come over as-is //
+               ////////////////////////////////////////////
+               newAdditionalFields.push(existingField)
+            }
+            else
+            {
+               /////////////////////////////////////////////////////////////////////////////////////////////
+               // fields from child tables get a wideLayoutIndexPath (and we're assuming just 1 for each) //
+               /////////////////////////////////////////////////////////////////////////////////////////////
+               const newField = BulkLoadField.clone(existingField);
+               newField.wideLayoutIndexPath = [0];
+               newAdditionalFields.push(newField)
+               anyChanges = true;
+            }
+         }
+      }
+
+      if (anyChanges)
+      {
+         this.additionalFields = newAdditionalFields;
+      }
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   public getFieldsForColumnIndex(i: number): BulkLoadField[]
+   {
+      const rs: BulkLoadField[] = [];
+
+      for (let field of [...this.requiredFields, ...this.additionalFields])
+      {
+         if(field.valueType == "column" && field.columnIndex == i)
+         {
+            rs.push(field);
+         }
+      }
+
+      return (rs);
    }
 }
 
@@ -517,21 +624,85 @@ export class FileDescription
    /***************************************************************************
     **
     ***************************************************************************/
-   public getPreviewValues(columnIndex: number): string[]
+   public getPreviewValues(columnIndex: number, fieldType?: QFieldType): string[]
    {
       if (columnIndex == undefined)
       {
          return [];
       }
 
-      if (this.hasHeaderRow)
+      function getTypedValue(value: any): string
       {
-         return (this.bodyValuesPreview[columnIndex]);
+         if(value == null)
+         {
+            return "";
+         }
+
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // this was useful at one point in time when we had an object coming back for xlsx files with many different data types //
+         // we'd see a .string attribute, which would have the value we'd want to show.  not using it now, but keep in case      //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (value && value.string)
+         {
+            switch (fieldType)
+            {
+               case QFieldType.BOOLEAN:
+               {
+                  return value.bool;
+               }
+
+               case QFieldType.STRING:
+               case QFieldType.TEXT:
+               case QFieldType.HTML:
+               case QFieldType.PASSWORD:
+               {
+                  return value.string;
+               }
+
+               case QFieldType.INTEGER:
+               case QFieldType.LONG:
+               {
+                  return value.integer;
+               }
+               case QFieldType.DECIMAL:
+               {
+                  return value.decimal;
+               }
+               case QFieldType.DATE:
+               {
+                  return value.date;
+               }
+               case QFieldType.TIME:
+               {
+                  return value.time;
+               }
+               case QFieldType.DATE_TIME:
+               {
+                  return value.dateTime;
+               }
+               case QFieldType.BLOB:
+                  return ""; // !!
+            }
+         }
+
+         return (`${value}`);
       }
-      else
+
+      const valueArray: string[] = [];
+
+      if (!this.hasHeaderRow)
       {
-         return ([this.headerValues[columnIndex], ...this.bodyValuesPreview[columnIndex]]);
+         const typedValue = getTypedValue(this.headerValues[columnIndex])
+         valueArray.push(typedValue == null ? "" : `${typedValue}`);
       }
+
+      for (let value of this.bodyValuesPreview[columnIndex])
+      {
+         const typedValue = getTypedValue(value)
+         valueArray.push(typedValue == null ? "" : `${typedValue}`);
+      }
+
+      return (valueArray);
    }
 }
 

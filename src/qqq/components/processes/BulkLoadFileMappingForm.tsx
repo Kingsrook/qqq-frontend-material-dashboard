@@ -26,10 +26,12 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {Badge, Icon} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip/Tooltip";
 import {useFormikContext} from "formik";
 import {DynamicFormFieldLabel} from "qqq/components/forms/DynamicForm";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
@@ -125,6 +127,14 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
                fieldErrors["hasHeaderRow"] = "This field is required.";
             }
             setFieldErrors(fieldErrors);
+
+            if(haveProfileErrors)
+            {
+               setTimeout(() => 
+               {
+                  document.querySelector(".bulkLoadFieldError")?.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+               }, 250);
+            }
 
             return {maySubmit: !haveProfileErrors && !haveLocalErrors, values};
          }
@@ -224,7 +234,11 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
          <BulkLoadFileMappingFields
             bulkLoadMapping={bulkLoadMapping}
             fileDescription={fileDescription}
-            forceParentUpdate={() => forceUpdate()}
+            forceParentUpdate={() =>
+            {
+               setRerenderHeader(rerenderHeader + 1);
+               forceUpdate();
+            }}
          />
       </Box>
 
@@ -293,7 +307,7 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
     ***************************************************************************/
    function layoutChanged(event: any, newValue: any)
    {
-      bulkLoadMapping.layout = newValue ? newValue.id : null;
+      bulkLoadMapping.switchLayout(newValue ? newValue.id : null);
       fieldErrors.layout = null;
       forceParentUpdate();
    }
@@ -322,7 +336,7 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
          <h5>File Details</h5>
          <Box ml="1rem">
             <ProcessViewForm fields={viewFields} values={viewValues} columns={2} />
-            <BulkLoadMappingFilePreview fileDescription={fileDescription} />
+            <BulkLoadMappingFilePreview fileDescription={fileDescription} bulkLoadMapping={bulkLoadMapping} />
             <Grid container pt="1rem">
                <Grid item xs={12} md={6}>
                   <DynamicFormFieldLabel name={hasHeaderRowFormField.name} label={`${hasHeaderRowFormField.label} *`} />
@@ -347,6 +361,7 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
                      getOptionLabel={(option) => typeof (option) == "string" ? option : (option?.label ?? "")}
                      isOptionEqualToValue={(option, value) => option == null && value == null || option.id == value.id}
                      renderOption={(props, option, state) => (<li {...props}>{option?.label ?? ""}</li>)}
+                     disableClearable
                      sx={{"& .MuiOutlinedInput-root": {padding: "0"}}}
                   />
                   {
@@ -366,13 +381,14 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
 
 interface BulkLoadMappingFilePreviewProps
 {
-   fileDescription: FileDescription;
+   fileDescription: FileDescription,
+   bulkLoadMapping?: BulkLoadMapping
 }
 
 /***************************************************************************
  ** private subcomponent - the file-preview section of the bulk load file mapping screen.
  ***************************************************************************/
-function BulkLoadMappingFilePreview({fileDescription}: BulkLoadMappingFilePreviewProps): JSX.Element
+function BulkLoadMappingFilePreview({fileDescription, bulkLoadMapping}: BulkLoadMappingFilePreviewProps): JSX.Element
 {
    const rows: number[] = [];
    for (let i = 0; i < fileDescription.bodyValuesPreview[0].length; i++)
@@ -380,25 +396,135 @@ function BulkLoadMappingFilePreview({fileDescription}: BulkLoadMappingFilePrevie
       rows.push(i);
    }
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getValue(i: number, j: number)
+   {
+      const value = fileDescription.bodyValuesPreview[j][i];
+      if (value == null)
+      {
+         return "";
+      }
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // this was useful at one point in time when we had an object coming back for xlsx files with many different data types //
+      // we'd see a .string attribute, which would have the value we'd want to show.  not using it now, but keep in case      //
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // @ts-ignore
+      if (value && value.string)
+      {
+         // @ts-ignore
+         return (value.string);
+      }
+      return `${value}`;
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getHeaderColor(count: number): string
+   {
+      if (count > 0)
+      {
+         return "blue";
+      }
+
+      return "black";
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getCursor(count: number): string
+   {
+      if (count > 0)
+      {
+         return "pointer";
+      }
+
+      return "default";
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getColumnTooltip(fields: BulkLoadField[])
+   {
+      return (<Box>
+         This column is mapped to the field{fields.length == 1 ? "" : "s"}:
+         <ul style={{marginLeft: "1rem"}}>
+            {fields.map((field, i) => <li key={i}>{field.getQualifiedLabel()}</li>)}
+         </ul>
+      </Box>);
+   }
+
    return (
       <Box sx={{"& table, & td": {border: "1px solid black", borderCollapse: "collapse", padding: "0 0.25rem", fontSize: "0.875rem", whiteSpace: "nowrap"}}}>
          <Box sx={{width: "100%", overflow: "auto"}}>
             <table cellSpacing="0" width="100%">
                <thead>
-                  <tr style={{backgroundColor: "#d3d3d3"}}>
+                  <tr style={{backgroundColor: "#d3d3d3", height: "1.75rem"}}>
                      <td></td>
-                     {fileDescription.headerLetters.map((letter) => <td key={letter} style={{textAlign: "center"}}>{letter}</td>)}
+                     {fileDescription.headerLetters.map((letter, index) =>
+                     {
+                        const fields = bulkLoadMapping.getFieldsForColumnIndex(index);
+                        const count = fields.length;
+                        return (<td key={letter} style={{textAlign: "center", color: getHeaderColor(count), cursor: getCursor(count)}}>
+                           <>
+                              {
+                                 count > 0 &&
+                                 <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}>
+                                    <Box>
+                                       {letter}
+                                       <Badge badgeContent={count} variant={"standard"} color="secondary" sx={{marginTop: ".75rem"}}><Icon></Icon></Badge>
+                                    </Box>
+                                 </Tooltip>
+                              }
+                              {
+                                 count == 0 && <Box>{letter}</Box>
+                              }
+                           </>
+                        </td>);
+                     })}
                   </tr>
                </thead>
                <tbody>
                   <tr>
                      <td style={{backgroundColor: "#d3d3d3", textAlign: "center"}}>1</td>
-                     {fileDescription.headerValues.map((value) => <td key={value} style={{backgroundColor: fileDescription.hasHeaderRow ? "#ebebeb" : ""}}>{value}</td>)}
+
+                     {fileDescription.headerValues.map((value, index) =>
+                     {
+                        const fields = bulkLoadMapping.getFieldsForColumnIndex(index);
+                        const count = fields.length;
+                        const tdStyle = {color: getHeaderColor(count), cursor: getCursor(count), backgroundColor: ""};
+
+                        if(fileDescription.hasHeaderRow)
+                        {
+                           tdStyle.backgroundColor = "#ebebeb";
+
+                           if(count > 0)
+                           {
+                              return <td key={value} style={tdStyle}>
+                                 <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}><Box>{value}</Box></Tooltip>
+                              </td>
+                           }
+                           else
+                           {
+                              return <td key={value} style={tdStyle}>{value}</td>
+                           }
+                        }
+                        else
+                        {
+                           return <td key={value} style={tdStyle}>{value}</td>
+                        }
+                     }
+                     )}
                   </tr>
                   {rows.map((i) => (
                      <tr key={i}>
                         <td style={{backgroundColor: "#d3d3d3", textAlign: "center"}}>{i + 2}</td>
-                        {fileDescription.headerLetters.map((letter, j) => <td key={j}>{fileDescription.bodyValuesPreview[j][i]}</td>)}
+                        {fileDescription.headerLetters.map((letter, j) => <td key={j}>{getValue(i, j)}</td>)}
                      </tr>
                   ))}
                </tbody>
