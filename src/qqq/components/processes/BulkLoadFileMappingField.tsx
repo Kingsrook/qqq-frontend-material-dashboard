@@ -56,6 +56,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
 
    const [valueType, setValueType] = useState(bulkLoadField.valueType);
    const [selectedColumn, setSelectedColumn] = useState({label: columnNames[bulkLoadField.columnIndex], value: bulkLoadField.columnIndex});
+   const [selectedColumnInputValue, setSelectedColumnInputValue] = useState(columnNames[bulkLoadField.columnIndex]);
 
    const [doingInitialLoadOfPossibleValue, setDoingInitialLoadOfPossibleValue] = useState(false);
    const [everDidInitialLoadOfPossibleValue, setEverDidInitialLoadOfPossibleValue] = useState(false);
@@ -121,6 +122,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    if(bulkLoadField.columnIndex != null && bulkLoadField.columnIndex != undefined && selectedColumn.label && columnNames[bulkLoadField.columnIndex] != selectedColumn.label)
    {
       setSelectedColumn({label: columnNames[bulkLoadField.columnIndex], value: bulkLoadField.columnIndex})
+      setSelectedColumnInputValue(columnNames[bulkLoadField.columnIndex]);
    }
 
    const mainFontSize = "0.875rem";
@@ -146,6 +148,8 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    function columnChanged(event: any, newValue: any, reason: string)
    {
       setSelectedColumn(newValue);
+      setSelectedColumnInputValue(newValue == null ? "" : newValue.label);
+
       bulkLoadField.columnIndex = newValue == null ? null : newValue.value;
 
       if (fileDescription.hasHeaderRow)
@@ -192,7 +196,15 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       forceParentUpdate && forceParentUpdate();
    }
 
-   return (<Box py="0.5rem" sx={{borderBottom: "1px solid lightgray", width: "100%", overflow: "auto"}}>
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function changeSelectedColumnInputValue(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>)
+   {
+      setSelectedColumnInputValue(e.target.value);
+   }
+
+   return (<Box py="0.5rem" sx={{borderBottom: "1px solid lightgray", width: "100%", overflow: "auto"}} id={`blfmf-${bulkLoadField.field.name}`}>
       <Box display="grid" gridTemplateColumns="200px 400px auto" fontSize="1rem" gap="0.5rem" sx={
          {
             "& .MuiFormControlLabel-label": {ml: "0 !important", fontWeight: "normal !important", fontSize: mainFontSize}
@@ -215,13 +227,13 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
                      valueType == "column" && <Box width="100%">
                         <Autocomplete
                            id={bulkLoadField.field.name}
-                           renderInput={(params) => (<TextField {...params} label={""} value={selectedColumn?.label} fullWidth variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} sx={{"& .MuiOutlinedInput-root": {borderRadius: "0.75rem"}}} />)}
+                           renderInput={(params) => (<TextField {...params} label={""} value={selectedColumnInputValue} onChange={e => changeSelectedColumnInputValue(e)} fullWidth variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} sx={{"& .MuiOutlinedInput-root": {borderRadius: "0.75rem"}}} />)}
                            fullWidth
                            options={columnOptions}
                            multiple={false}
                            defaultValue={selectedColumn}
                            value={selectedColumn}
-                           inputValue={selectedColumn?.label}
+                           inputValue={selectedColumnInputValue}
                            onChange={columnChanged}
                            getOptionLabel={(option) => typeof (option) == "string" ? option : (option?.label ?? "")}
                            isOptionEqualToValue={(option, value) => option == null && value == null || option.value == value.value}
