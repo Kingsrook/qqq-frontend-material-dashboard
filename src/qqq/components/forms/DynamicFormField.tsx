@@ -141,7 +141,10 @@ function QDynamicFormField({
                   newValue = newValue.toLowerCase();
                }
                setFieldValue(name, newValue);
-               onChangeCallback(newValue);
+               if(onChangeCallback)
+               {
+                  onChangeCallback(newValue);
+               }
             });
 
             const input = document.getElementById(name) as HTMLInputElement;
