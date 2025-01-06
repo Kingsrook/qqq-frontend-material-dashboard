@@ -550,6 +550,8 @@ export class BulkLoadMapping
       {
          this.additionalFields = newAdditionalFields;
       }
+
+      this.layout = newLayout;
    }
 
 
