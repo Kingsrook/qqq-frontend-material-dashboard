@@ -43,6 +43,7 @@ export class BulkLoadField
    wideLayoutIndexPath: number[] = [];
 
    error: string = null;
+   warning: string = null;
 
    key: string;
 
@@ -50,7 +51,7 @@ export class BulkLoadField
    /***************************************************************************
     **
     ***************************************************************************/
-   constructor(field: QFieldMetaData, tableStructure: BulkLoadTableStructure, valueType: ValueType = "column", columnIndex?: number, headerName?: string, defaultValue?: any, doValueMapping?: boolean, wideLayoutIndexPath: number[] = [])
+   constructor(field: QFieldMetaData, tableStructure: BulkLoadTableStructure, valueType: ValueType = "column", columnIndex?: number, headerName?: string, defaultValue?: any, doValueMapping?: boolean, wideLayoutIndexPath: number[] = [], error: string = null, warning: string = null)
    {
       this.field = field;
       this.tableStructure = tableStructure;
@@ -60,6 +61,8 @@ export class BulkLoadField
       this.defaultValue = defaultValue;
       this.doValueMapping = doValueMapping;
       this.wideLayoutIndexPath = wideLayoutIndexPath;
+      this.error = error;
+      this.warning = warning;
       this.key = new Date().getTime().toString();
    }
 
@@ -69,7 +72,7 @@ export class BulkLoadField
     ***************************************************************************/
    public static clone(source: BulkLoadField): BulkLoadField
    {
-      return (new BulkLoadField(source.field, source.tableStructure, source.valueType, source.columnIndex, source.headerName, source.defaultValue, source.doValueMapping, source.wideLayoutIndexPath));
+      return (new BulkLoadField(source.field, source.tableStructure, source.valueType, source.columnIndex, source.headerName, source.defaultValue, source.doValueMapping, source.wideLayoutIndexPath, source.error, source.warning));
    }
 
 
@@ -431,7 +434,7 @@ export class BulkLoadMapping
             {
                if (existingField.getQualifiedName() == bulkLoadField.getQualifiedName())
                {
-                  const thisIndex = existingField.wideLayoutIndexPath[0]
+                  const thisIndex = existingField.wideLayoutIndexPath[0];
                   if (thisIndex != null && thisIndex != undefined && thisIndex > maxIndex)
                   {
                      maxIndex = thisIndex;
@@ -506,7 +509,7 @@ export class BulkLoadMapping
                   namesWhereOneWideLayoutIndexHasBeenFound[name] = true;
                   const newField = BulkLoadField.clone(existingField);
                   newField.wideLayoutIndexPath = [];
-                  newAdditionalFields.push(newField)
+                  newAdditionalFields.push(newField);
                   anyChanges = true;
                }
             }
@@ -515,7 +518,7 @@ export class BulkLoadMapping
                //////////////////////////////////////////////////////
                // else, non-wide-path fields, just get added as-is //
                //////////////////////////////////////////////////////
-               newAdditionalFields.push(existingField)
+               newAdditionalFields.push(existingField);
             }
          }
       }
@@ -531,7 +534,7 @@ export class BulkLoadMapping
                ////////////////////////////////////////////
                // fields from main table come over as-is //
                ////////////////////////////////////////////
-               newAdditionalFields.push(existingField)
+               newAdditionalFields.push(existingField);
             }
             else
             {
@@ -540,7 +543,7 @@ export class BulkLoadMapping
                /////////////////////////////////////////////////////////////////////////////////////////////
                const newField = BulkLoadField.clone(existingField);
                newField.wideLayoutIndexPath = [0];
-               newAdditionalFields.push(newField)
+               newAdditionalFields.push(newField);
                anyChanges = true;
             }
          }
@@ -564,13 +567,75 @@ export class BulkLoadMapping
 
       for (let field of [...this.requiredFields, ...this.additionalFields])
       {
-         if(field.valueType == "column" && field.columnIndex == i)
+         if (field.valueType == "column" && field.columnIndex == i)
          {
             rs.push(field);
          }
       }
 
       return (rs);
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   public handleChangeToHasHeaderRow(newValue: any, fileDescription: FileDescription)
+   {
+      const newRequiredFields: BulkLoadField[] = [];
+      let anyChangesToRequiredFields = false;
+
+      const newAdditionalFields: BulkLoadField[] = [];
+      let anyChangesToAdditionalFields = false;
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // if we're switching to have header-rows enabled, then make sure that no columns w/ duplicated headers are selected //
+      // strategy to do this:  build new lists of both required & additional fields - and track if we had to change any    //
+      // column indexes (set to null) - add a warning to them, and only replace the arrays if there were changes.          //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      if (newValue)
+      {
+         for (let field of this.requiredFields)
+         {
+            if (field.valueType == "column" && fileDescription.duplicateHeaderIndexes[field.columnIndex])
+            {
+               const newField = BulkLoadField.clone(field);
+               newField.columnIndex = null;
+               newField.warning = "This field was assigned to a column with a duplicated header"
+               newRequiredFields.push(newField);
+               anyChangesToRequiredFields = true;
+            }
+            else
+            {
+               newRequiredFields.push(field);
+            }
+         }
+
+         for (let field of this.additionalFields)
+         {
+            if (field.valueType == "column" && fileDescription.duplicateHeaderIndexes[field.columnIndex])
+            {
+               const newField = BulkLoadField.clone(field);
+               newField.columnIndex = null;
+               newField.warning = "This field was assigned to a column with a duplicated header"
+               newAdditionalFields.push(newField);
+               anyChangesToAdditionalFields = true;
+            }
+            else
+            {
+               newAdditionalFields.push(field);
+            }
+         }
+      }
+
+      if (anyChangesToRequiredFields)
+      {
+         this.requiredFields = newRequiredFields;
+      }
+
+      if (anyChangesToAdditionalFields)
+      {
+         this.additionalFields = newAdditionalFields;
+      }
    }
 }
 
@@ -584,6 +649,8 @@ export class FileDescription
    headerLetters: string[];
    bodyValuesPreview: string[][];
 
+   duplicateHeaderIndexes: boolean[];
+
    // todo - just get this from the profile always - it's not part of the file per-se
    hasHeaderRow: boolean = true;
 
@@ -595,6 +662,18 @@ export class FileDescription
       this.headerValues = headerValues;
       this.headerLetters = headerLetters;
       this.bodyValuesPreview = bodyValuesPreview;
+
+      this.duplicateHeaderIndexes = [];
+      const usedLabels: { [label: string]: boolean } = {};
+      for (let i = 0; i < headerValues.length; i++)
+      {
+         const label = headerValues[i];
+         if (usedLabels[label])
+         {
+            this.duplicateHeaderIndexes[i] = true;
+         }
+         usedLabels[label] = true;
+      }
    }
 
 
@@ -635,7 +714,7 @@ export class FileDescription
 
       function getTypedValue(value: any): string
       {
-         if(value == null)
+         if (value == null)
          {
             return "";
          }
@@ -694,13 +773,13 @@ export class FileDescription
 
       if (!this.hasHeaderRow)
       {
-         const typedValue = getTypedValue(this.headerValues[columnIndex])
+         const typedValue = getTypedValue(this.headerValues[columnIndex]);
          valueArray.push(typedValue == null ? "" : `${typedValue}`);
       }
 
       for (let value of this.bodyValuesPreview[columnIndex])
       {
-         const typedValue = getTypedValue(value)
+         const typedValue = getTypedValue(value);
          valueArray.push(typedValue == null ? "" : `${typedValue}`);
       }
 

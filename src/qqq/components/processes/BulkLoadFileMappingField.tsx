@@ -131,11 +131,18 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
 
    //////////////////////////////////////////////////////
    // build array of options for the columns drop down //
+   // don't allow duplicates                           //
    //////////////////////////////////////////////////////
    const columnOptions: { value: number, label: string }[] = [];
+   const usedLabels: {[label: string]: boolean} = {};
    for (let i = 0; i < columnNames.length; i++)
    {
-      columnOptions.push({label: columnNames[i], value: i});
+      const label = columnNames[i];
+      if(!usedLabels[label])
+      {
+         columnOptions.push({label: label, value: i});
+         usedLabels[label] = true;
+      }
    }
 
    //////////////////////////////////////////////////////////////////////
@@ -180,6 +187,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       }
 
       bulkLoadField.error = null;
+      bulkLoadField.warning = null;
       forceParentUpdate && forceParentUpdate();
    }
 
@@ -192,6 +200,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       setFieldValue(`${bulkLoadField.field.name}.defaultValue`, newValue);
       bulkLoadField.defaultValue = newValue;
       bulkLoadField.error = null;
+      bulkLoadField.warning = null;
       forceParentUpdate && forceParentUpdate();
    }
 
@@ -205,6 +214,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       bulkLoadField.valueType = newValueType;
       setValueType(newValueType);
       bulkLoadField.error = null;
+      bulkLoadField.warning = null;
       forceParentUpdate && forceParentUpdate();
    }
 
@@ -287,6 +297,12 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
                   }
                </Box>
             </Box>
+            {
+               bulkLoadField.warning &&
+               <Box fontSize={smallerFontSize} color={colors.warning.main} ml="145px" className="bulkLoadFieldError">
+                  {bulkLoadField.warning}
+               </Box>
+            }
             {
                bulkLoadField.error &&
                <Box fontSize={smallerFontSize} color={colors.error.main} ml="145px" className="bulkLoadFieldError">

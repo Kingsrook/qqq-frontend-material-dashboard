@@ -298,6 +298,9 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
    {
       bulkLoadMapping.hasHeaderRow = newValue;
       fileDescription.hasHeaderRow = newValue;
+
+      bulkLoadMapping.handleChangeToHasHeaderRow(newValue, fileDescription);
+
       fieldErrors.hasHeaderRow = null;
       forceParentUpdate();
    }
@@ -470,19 +473,29 @@ function BulkLoadMappingFilePreview({fileDescription, bulkLoadMapping}: BulkLoad
                      {
                         const fields = bulkLoadMapping.getFieldsForColumnIndex(index);
                         const count = fields.length;
+
+                        let dupeWarning = <></>
+                        if(fileDescription.hasHeaderRow && fileDescription.duplicateHeaderIndexes[index])
+                        {
+                           dupeWarning = <Tooltip title="This column header is a duplicate.  Only the first occurrance of it will be used." placement="top" enterDelay={500}>
+                              <Icon color="warning" sx={{p: "0.125rem", mr: "0.25rem"}}>warning</Icon>
+                           </Tooltip>
+                        }
+
                         return (<td key={letter} style={{textAlign: "center", color: getHeaderColor(count), cursor: getCursor(count)}}>
                            <>
                               {
                                  count > 0 &&
                                  <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}>
                                     <Box>
+                                       {dupeWarning}
                                        {letter}
                                        <Badge badgeContent={count} variant={"standard"} color="secondary" sx={{marginTop: ".75rem"}}><Icon></Icon></Badge>
                                     </Box>
                                  </Tooltip>
                               }
                               {
-                                 count == 0 && <Box>{letter}</Box>
+                                 count == 0 && <Box>{dupeWarning}{letter}</Box>
                               }
                            </>
                         </td>);
