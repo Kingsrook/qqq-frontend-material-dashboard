@@ -33,6 +33,7 @@ import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import {useFormikContext} from "formik";
+import colors from "qqq/assets/theme/base/colors";
 import {DynamicFormFieldLabel} from "qqq/components/forms/DynamicForm";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -68,6 +69,7 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
    const [wrappedCurrentSavedBulkLoadProfile] = useState(new Wrapper<QRecord>(currentSavedBulkLoadProfile));
 
    const [fieldErrors, setFieldErrors] = useState({} as { [fieldName: string]: string });
+   const [noMappedFieldsError, setNoMappedFieldsError] = useState(null as string);
 
    const [suggestedBulkLoadProfile] = useState(processValues.suggestedBulkLoadProfile as BulkLoadProfile);
    const [tableStructure] = useState(processValues.tableStructure as BulkLoadTableStructure);
@@ -127,6 +129,17 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
                fieldErrors["hasHeaderRow"] = "This field is required.";
             }
             setFieldErrors(fieldErrors);
+
+            if(wrappedBulkLoadMapping.get().requiredFields.length == 0 && wrappedBulkLoadMapping.get().additionalFields.length == 0)
+            {
+               setNoMappedFieldsError("You must have at least 1 field.");
+               haveLocalErrors = true;
+               setTimeout(() => setNoMappedFieldsError(null), 2500);
+            }
+            else
+            {
+               setNoMappedFieldsError(null);
+            }
 
             if(haveProfileErrors)
             {
@@ -240,6 +253,9 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
                forceUpdate();
             }}
          />
+         {
+            noMappedFieldsError && <Box color={colors.error.main} textAlign="right">{noMappedFieldsError}</Box>
+         }
       </Box>
 
    </Box>);
