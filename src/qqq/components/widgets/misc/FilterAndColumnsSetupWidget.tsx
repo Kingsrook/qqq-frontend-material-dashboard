@@ -86,9 +86,12 @@ const qController = Client.getInstance();
 export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
-   const [hideColumns, setHideColumns] = useState(widgetData?.hideColumns);
-   const [hidePreview, setHidePreview] = useState(widgetData?.hidePreview);
+   const [hideColumns] = useState(widgetData?.hideColumns);
+   const [hidePreview] = useState(widgetData?.hidePreview);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+
+   const [filterFieldName] = useState(widgetData?.filterFieldName ?? "queryFilterJson")
+   const [columnsFieldName] = useState(widgetData?.columnsFieldName ?? "columnsJson")
 
    const [alertContent, setAlertContent] = useState(null as string);
 
@@ -108,7 +111,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /////////////////////////////
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
-   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   let queryFilter = recordValues[filterFieldName] && JSON.parse(recordValues[filterFieldName]) as QQueryFilter;
    const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
@@ -142,9 +145,9 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       });
    }
 
-   if (recordValues["columnsJson"])
+   if (recordValues[columnsFieldName])
    {
-      columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
+      columns = QQueryColumns.buildFromJSON(recordValues[columnsFieldName]);
    }
 
    //////////////////////////////////////////////////////////////////////
@@ -230,7 +233,10 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       setFrontendQueryFilter(view.queryFilter);
       const filter = FilterUtils.prepQueryFilterForBackend(tableMetaData, view.queryFilter);
 
-      onSaveCallback({queryFilterJson: JSON.stringify(filter), columnsJson: JSON.stringify(view.queryColumns)});
+      const rs: {[key: string]: any} = {};
+      rs[filterFieldName] = JSON.stringify(filter);
+      rs[columnsFieldName] = JSON.stringify(view.queryColumns);
+      onSaveCallback(rs);
 
       closeEditor();
    }
