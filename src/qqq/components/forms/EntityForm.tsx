@@ -407,6 +407,7 @@ function EntityForm(props: Props): JSX.Element
             widgetMetaData={widgetMetaData}
             widgetData={widgetData}
             recordValues={formValues}
+            label={tableMetaData?.fields.get(widgetData?.filterFieldName ?? "queryFilterJson")?.label}
             onSaveCallback={setFormFieldValuesFromWidget}
          />;
       }

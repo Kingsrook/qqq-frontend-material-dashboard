@@ -49,7 +49,7 @@ function ScriptDocsForm({helpText, exampleCode, aceEditorHeight}: Props): JSX.El
                <Card sx={{width: "100%", height: "100%"}}>
                   <Typography variant="h6" p={2} pb={1}>{heading}</Typography>
                   <Box className="devDocumentation" height="100%">
-                     <Typography variant="body2" sx={{maxWidth: "1200px", margin: "auto", height: "100%"}}>
+                     <Typography variant="body2" sx={{maxWidth: "1200px", margin: "auto", height: "calc(100% - 0.5rem)"}}>
                         <AceEditor
                            mode={mode}
                            theme="github"
@@ -62,7 +62,7 @@ function ScriptDocsForm({helpText, exampleCode, aceEditorHeight}: Props): JSX.El
                            width="100%"
                            showPrintMargin={false}
                            height="100%"
-                           style={{borderBottomRightRadius: "1rem", borderBottomLeftRadius: "1rem"}}
+                           style={{borderBottomRightRadius: "0.75rem", borderBottomLeftRadius: "0.75rem"}}
                         />
                      </Typography>
                   </Box>

@@ -393,7 +393,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
    }
 
    return (
-      <Grid container className="scriptViewer" m={-2} pt={4} width={"calc(100% + 2rem)"}>
+      <Grid container className="scriptViewer" my={-3} mx={-3} pt={4} width={"calc(100% + 3rem)"}>
          <Grid item xs={12}>
             <Box>
                {
@@ -530,7 +530,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                  </TabPanel>
 
                                  <TabPanel index={2} value={selectedTab}>
-                                    <Box sx={{height: "455px"}} px={2} pb={1}>
+                                    <Box sx={{height: "455px"}} px={2} pt={1}>
                                        <ScriptTestForm scriptId={scriptId}
                                           scriptType={scriptTypeRecord}
                                           tableName={associatedScriptTableName}
@@ -543,7 +543,7 @@ export default function ScriptViewer({scriptId, associatedScriptTableName, assoc
                                  </TabPanel>
 
                                  <TabPanel index={3} value={selectedTab}>
-                                    <Box sx={{height: "455px"}} px={2} pb={1}>
+                                    <Box sx={{height: "455px"}} px={2} pt={1}>
                                        <ScriptDocsForm helpText={scriptTypeRecord?.values.get("helpText")} exampleCode={scriptTypeRecord?.values.get("sampleCode")} />
                                     </Box>
                                  </TabPanel>
