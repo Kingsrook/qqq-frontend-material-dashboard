@@ -313,6 +313,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
    function deleteChildRecord(name: string, widgetIndex: number, rowIndex: number)
    {
       updateChildRecordList(name, "delete", rowIndex);
+      forceUpdate();
       actionCallback(widgetData[widgetIndex]);
    };
 
