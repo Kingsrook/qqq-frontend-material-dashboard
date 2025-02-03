@@ -40,7 +40,7 @@ import {Link, useNavigate} from "react-router-dom";
 export interface ChildRecordListData extends WidgetData
 {
    title?: string;
-   queryOutput?: { records: { values: any }[] };
+   queryOutput?: { records: { values: any, displayValues?: any } [] };
    childTableMetaData?: QTableMetaData;
    tablePath?: string;
    viewAllLink?: string;
@@ -48,20 +48,22 @@ export interface ChildRecordListData extends WidgetData
    canAddChildRecord?: boolean;
    defaultValuesForNewChildRecords?: { [fieldName: string]: any };
    disabledFieldsForNewChildRecords?: { [fieldName: string]: any };
+   defaultValuesForNewChildRecordsFromParentFields?: { [fieldName: string]: string };
 }
 
 interface Props
 {
-   widgetMetaData: QWidgetMetaData;
-   data: ChildRecordListData;
-   addNewRecordCallback?: () => void;
-   disableRowClick: boolean;
-   allowRecordEdit: boolean;
-   editRecordCallback?: (rowIndex: number) => void;
-   allowRecordDelete: boolean;
-   deleteRecordCallback?: (rowIndex: number) => void;
-   gridOnly?: boolean;
-   gridDensity?: GridDensity;
+   widgetMetaData: QWidgetMetaData,
+   data: ChildRecordListData,
+   addNewRecordCallback?: () => void,
+   disableRowClick: boolean,
+   allowRecordEdit: boolean,
+   editRecordCallback?: (rowIndex: number) => void,
+   allowRecordDelete: boolean,
+   deleteRecordCallback?: (rowIndex: number) => void,
+   gridOnly?: boolean,
+   gridDensity?: GridDensity,
+   parentRecord?: QRecord
 }
 
 RecordGridWidget.defaultProps =
@@ -74,7 +76,7 @@ RecordGridWidget.defaultProps =
 
 const qController = Client.getInstance();
 
-function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback, gridOnly, gridDensity}: Props): JSX.Element
+function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback, gridOnly, gridDensity, parentRecord}: Props): JSX.Element
 {
    const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
@@ -97,7 +99,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          {
             for (let i = 0; i < queryOutputRecords.length; i++)
             {
-               if(queryOutputRecords[i] instanceof QRecord)
+               if (queryOutputRecords[i] instanceof QRecord)
                {
                   records.push(queryOutputRecords[i] as QRecord);
                }
@@ -252,7 +254,22 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       {
          disabledFields = data.defaultValuesForNewChildRecords;
       }
-      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback));
+
+      const defaultValuesForNewChildRecords = data.defaultValuesForNewChildRecords || {}
+
+      ///////////////////////////////////////////////////////////////////////////////////////
+      // copy values from specified fields in the parent record down into the child record //
+      ///////////////////////////////////////////////////////////////////////////////////////
+      if(data.defaultValuesForNewChildRecordsFromParentFields)
+      {
+         for(let childField in data.defaultValuesForNewChildRecordsFromParentFields)
+         {
+            const parentField = data.defaultValuesForNewChildRecordsFromParentFields[childField];
+            defaultValuesForNewChildRecords[childField] = parentRecord?.values?.get(parentField);
+         }
+      }
+
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback));
    }
 
 
@@ -357,7 +374,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       />
    );
 
-   if(gridOnly)
+   if (gridOnly)
    {
       return (grid);
    }
