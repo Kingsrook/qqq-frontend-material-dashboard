@@ -368,7 +368,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
    /*******************************************************************************
     **
     *******************************************************************************/
-   function submitEditChildForm(values: any)
+   function submitEditChildForm(values: any, tableName: string)
    {
       updateChildRecordList(showEditChildForm.widgetName, showEditChildForm.rowIndex == null ? "insert" : "edit", showEditChildForm.rowIndex, values);
       let widgetIndex = determineChildRecordListIndex(showEditChildForm.widgetName);
@@ -718,6 +718,7 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                      addNewRecordCallback={widgetData[i]?.isInProcess ? () => openAddChildRecord(widgetMetaData.name, widgetData[i]) : null}
                      widgetMetaData={widgetMetaData}
                      data={widgetData[i]}
+                     parentRecord={record}
                   />
                )
 
