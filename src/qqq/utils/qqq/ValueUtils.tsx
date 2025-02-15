@@ -23,6 +23,7 @@ import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Ado
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs"; // https://github.com/datejs/Datejs
 import {Chip, ClickAwayListener, Icon} from "@mui/material";
@@ -76,14 +77,14 @@ class ValueUtils
     ** When you have a field, and a record - call this method to get a string or
     ** element back to display the field's value.
     *******************************************************************************/
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view", overrideFieldName?: string): string | JSX.Element | JSX.Element[]
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view", overrideFieldName?: string, tableVariant?: QTableVariant): string | JSX.Element | JSX.Element[]
    {
       const fieldName = overrideFieldName ?? field.name;
 
       const displayValue = record.displayValues ? record.displayValues.get(fieldName) : undefined;
       const rawValue = record.values ? record.values.get(fieldName) : undefined;
 
-      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage);
+      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage, tableVariant);
    }
 
 
@@ -91,7 +92,7 @@ class ValueUtils
     ** When you have a field and a value (either just a raw value, or a raw and
     ** display value), call this method to get a string Element to display.
     *******************************************************************************/
-   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view"): string | JSX.Element | JSX.Element[]
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view", tableVariant?: QTableVariant): string | JSX.Element | JSX.Element[]
    {
       if (field.hasAdornment(AdornmentType.LINK))
       {
@@ -199,8 +200,19 @@ class ValueUtils
 
       if (field.type == QFieldType.BLOB || field.hasAdornment(AdornmentType.FILE_DOWNLOAD))
       {
-         return (<BlobComponent field={field} url={rawValue} filename={displayValue} usage={usage} />);
+         let url = rawValue;
+         if(tableVariant)
+         {
+            url += "?tableVariant=" + encodeURIComponent(JSON.stringify(tableVariant));
+         }
+
+         return (<BlobComponent field={field} url={url} filename={displayValue} usage={usage} />);
       }
+
+      // todo if(field.hasAdornment(AdornmentType.CODE))
+      // todo {
+      // todo    return <span style={{fontFamily: "monospace", fontSize: "12px", color: "#4f4f4f"}}>{ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue)}</span>
+      // todo }
 
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }

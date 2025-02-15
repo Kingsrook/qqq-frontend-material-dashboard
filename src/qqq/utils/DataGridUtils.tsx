@@ -24,6 +24,7 @@ import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QF
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import {GridColDef, GridRowsProp, MuiEvent} from "@mui/x-data-grid-pro";
@@ -70,7 +71,7 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, allowEmptyId = false): GridRowsProp[] =>
+   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, tableVariant?: QTableVariant): GridRowsProp[] =>
    {
       const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
@@ -82,7 +83,7 @@ export default class DataGridUtils
 
          fields.forEach((field) =>
          {
-            row[field.name] = ValueUtils.getDisplayValue(field, record, "query");
+            row[field.name] = ValueUtils.getDisplayValue(field, record, "query", undefined, tableVariant);
          });
 
          if (tableMetaData.exposedJoins)
@@ -97,7 +98,7 @@ export default class DataGridUtils
                   fields.forEach((field) =>
                   {
                      let fieldName = join.joinTable.name + "." + field.name;
-                     row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName);
+                     row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName, tableVariant);
                   });
                }
             }
@@ -111,7 +112,7 @@ export default class DataGridUtils
                /////////////////////////////////////////////////////////////////////////////////////////
                // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
                /////////////////////////////////////////////////////////////////////////////////////////
-               if (!allowEmptyId)
+               if (!tableVariant)
                {
                   row["id"] = "--";
                }
@@ -241,6 +242,20 @@ export default class DataGridUtils
                cellValues.value ? <Link to={`${linkBase}${encodeURIComponent(cellValues.value)}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link> : ""
             );
          }
+         /* todo wip ... not sure if/how to get tooltipFieldName set in the row... */
+         /*
+         else if (field.hasAdornment(AdornmentType.TOOLTIP))
+         {
+            const tooltipAdornment = field.getAdornment(AdornmentType.TOOLTIP);
+            const tooltipFieldName: string = tooltipAdornment.getValue("tooltipFieldName");
+            if(tooltipFieldName)
+            {
+               column.renderCell = (cellValues: any) => (
+                  cellValues.value ? <Tooltip title={cellValues.row[tooltipFieldName]}><span>{cellValues.value}</span></Tooltip> : ""
+               );
+            }
+         }
+        */
       });
    }
 

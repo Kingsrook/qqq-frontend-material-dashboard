@@ -111,7 +111,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          }
 
          const tableMetaData = data.childTableMetaData instanceof QTableMetaData ? data.childTableMetaData as QTableMetaData : new QTableMetaData(data.childTableMetaData);
-         const rows = DataGridUtils.makeRows(records, tableMetaData, true);
+         const rows = DataGridUtils.makeRows(records, tableMetaData);
 
          /////////////////////////////////////////////////////////////////////////////////
          // note - tablePath may be null, if the user doesn't have access to the table. //
