@@ -35,7 +35,7 @@ export interface ModalEditFormData
    defaultValues?: { [key: string]: string };
    disabledFields?: { [key: string]: boolean } | string[];
    overrideHeading?: string;
-   onSubmitCallback?: (values: any) => void;
+   onSubmitCallback?: (values: any, tableName: String) => void;
    initialShowModalValue?: boolean;
 }
 
