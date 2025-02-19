@@ -57,7 +57,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
             <MDTypography variant="h5">{formLabel}</MDTypography>
          </Box>
          <Box mt={1.625}>
-            <Grid container spacing={3}>
+            <Grid container lg={12} display="flex" spacing={3}>
                {formFields
                   && Object.keys(formFields).length > 0
                   && Object.keys(formFields).map((fieldName: any) =>
@@ -74,13 +74,14 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                      }
 
                      let formattedHelpContent = <HelpContent helpContents={field?.fieldMetaData?.helpContents} roles={helpRoles} helpContentKey={`${helpContentKeyPrefix ?? ""}field:${fieldName}`} />;
-                     if(formattedHelpContent)
+                     if (formattedHelpContent)
                      {
-                        formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.25rem">{formattedHelpContent}</Box>
+                        formattedHelpContent = <Box color="#757575" fontSize="0.875rem" mt="-0.25rem">{formattedHelpContent}</Box>;
                      }
 
                      const labelElement = <DynamicFormFieldLabel name={field.name} label={field.label} />;
 
+                     let itemLG = (field?.fieldMetaData?.gridColumns && field?.fieldMetaData?.gridColumns > 0) ? field.fieldMetaData.gridColumns : 6;
                      let itemXS = 12;
                      let itemSM = 6;
 
@@ -92,13 +93,13 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         const fileUploadAdornment = field.fieldMetaData?.getAdornment(AdornmentType.FILE_UPLOAD);
                         const width = fileUploadAdornment?.values?.get("width") ?? "half";
 
-                        if(width == "full")
+                        if (width == "full")
                         {
                            itemSM = 12;
                         }
 
                         return (
-                           <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
+                           <Grid item lg={itemLG} xs={itemXS} sm={itemSM} flexDirection="column" key={fieldName}>
                               {labelElement}
                               <FileInputField field={field} record={record} errorMessage={errors[fieldName]} />
                            </Grid>
@@ -114,10 +115,10 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         Object.keys(values).forEach((key) =>
                         {
                            otherValuesMap.set(key, values[key]);
-                        })
+                        });
 
                         return (
-                           <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
+                           <Grid item lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName}>
                               {labelElement}
                               <DynamicSelect
                                  fieldPossibleValueProps={field.possibleValueProps}
@@ -138,7 +139,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                      // everything else!! //
                      ///////////////////////
                      return (
-                        <Grid item xs={itemXS} sm={itemSM} key={fieldName}>
+                        <Grid item lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName}>
                            {labelElement}
                            <QDynamicFormField
                               id={field.name}

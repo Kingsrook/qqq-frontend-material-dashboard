@@ -92,9 +92,9 @@ const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 /*******************************************************************************
  **
  *******************************************************************************/
-export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: {label?: SxProps, value?: SxProps})
+export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: { label?: SxProps, value?: SxProps })
 {
-   return <Box key={key} display="flex" flexDirection="column" py={1} pr={2}>
+   return <Grid container lg={12} key={key} display="flex" py={1} pr={2}>
       {
          fieldNames.map((fieldName: string) =>
          {
@@ -103,6 +103,7 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
             if (field != null)
             {
                let label = field.label;
+               let gridColumns = (field.gridColumns && field.gridColumns > 0) ? field.gridColumns : 12;
 
                const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
                const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
@@ -111,7 +112,7 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
                const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default", ...(styleOverrides?.label ?? {})}}>{label}:</Typography>;
 
                return (
-                  <Box key={fieldName} flexDirection="row" pr={2}>
+                  <Grid item key={fieldName} lg={gridColumns} flexDirection="column" pr={2}>
                      <>
                         {
                            showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
@@ -121,12 +122,12 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
                            {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
                         </Typography>
                      </>
-                  </Box>
+                  </Grid>
                );
             }
          })
       }
-   </Box>;
+   </Grid>;
 }
 
 
