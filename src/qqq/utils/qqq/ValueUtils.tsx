@@ -84,7 +84,7 @@ class ValueUtils
       const displayValue = record.displayValues ? record.displayValues.get(fieldName) : undefined;
       const rawValue = record.values ? record.values.get(fieldName) : undefined;
 
-      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage, tableVariant);
+      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage, tableVariant, record, fieldName);
    }
 
 
@@ -92,14 +92,35 @@ class ValueUtils
     ** When you have a field and a value (either just a raw value, or a raw and
     ** display value), call this method to get a string Element to display.
     *******************************************************************************/
-   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view", tableVariant?: QTableVariant): string | JSX.Element | JSX.Element[]
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view", tableVariant?: QTableVariant, record?: QRecord, fieldName?: string): string | JSX.Element | JSX.Element[]
    {
       if (field.hasAdornment(AdornmentType.LINK))
       {
          const adornment = field.getAdornment(AdornmentType.LINK);
-         let href = rawValue;
+         let href = String(rawValue);
 
-         const toRecordFromTable = adornment.getValue("toRecordFromTable");
+         let toRecordFromTable = adornment.getValue("toRecordFromTable");
+
+         /////////////////////////////////////////////////////////////////////////////////////
+         // if the link adornment has a 'toRecordFromTableDynamic', then look for a display //
+         // value named `fieldName`:toRecordFromTableDynamic for the table name.            //
+         /////////////////////////////////////////////////////////////////////////////////////
+         if(adornment.getValue("toRecordFromTableDynamic"))
+         {
+            const toRecordFromTableDynamic = record?.displayValues?.get(fieldName + ":toRecordFromTableDynamic");
+            if(toRecordFromTableDynamic)
+            {
+               toRecordFromTable = toRecordFromTableDynamic;
+            }
+            else
+            {
+               ///////////////////////////////////////////////////////////////////
+               // if the table name isn't known, then return w/o the adornment. //
+               ///////////////////////////////////////////////////////////////////
+               return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+            }
+         }
+
          if (toRecordFromTable)
          {
             if (ValueUtils.getQInstance())
@@ -108,7 +129,7 @@ class ValueUtils
                if (!tablePath)
                {
                   console.log("Couldn't find path for table: " + toRecordFromTable);
-                  return (displayValue ?? rawValue);
+                  return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
                }
 
                if (!tablePath.endsWith("/"))
@@ -206,6 +227,28 @@ class ValueUtils
             url += "?tableVariant=" + encodeURIComponent(JSON.stringify(tableVariant));
          }
 
+         //////////////////////////////////////////////////////////////////////////////
+         // if the field has the download adornment with a downloadUrlDynamic value, //
+         // then get the url from a displayValue of `fieldName`:downloadUrlDynamic.  //
+         //////////////////////////////////////////////////////////////////////////////
+         if(field.hasAdornment(AdornmentType.FILE_DOWNLOAD))
+         {
+            const adornment = field.getAdornment(AdornmentType.FILE_DOWNLOAD);
+            let downloadUrlDynamicAdornmentValue = adornment.getValue("downloadUrlDynamic");
+            const downloadUrlDynamicValue = record?.displayValues?.get(fieldName + ":downloadUrlDynamic");
+            if (downloadUrlDynamicAdornmentValue && downloadUrlDynamicValue)
+            {
+               url = downloadUrlDynamicValue;
+            }
+            else
+            {
+               ////////////////////////////////////////////////////////////////
+               // if the url isn't available, then return w/o the adornment. //
+               ////////////////////////////////////////////////////////////////
+               return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+            }
+         }
+
          return (<BlobComponent field={field} url={url} filename={displayValue} usage={usage} />);
       }
 
@@ -216,6 +259,7 @@ class ValueUtils
 
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }
+
 
    /*******************************************************************************
     ** After we know there's no element to be returned (e.g., because no adornment),
