@@ -235,17 +235,20 @@ class ValueUtils
          {
             const adornment = field.getAdornment(AdornmentType.FILE_DOWNLOAD);
             let downloadUrlDynamicAdornmentValue = adornment.getValue("downloadUrlDynamic");
-            const downloadUrlDynamicValue = record?.displayValues?.get(fieldName + ":downloadUrlDynamic");
-            if (downloadUrlDynamicAdornmentValue && downloadUrlDynamicValue)
+            if(downloadUrlDynamicAdornmentValue)
             {
-               url = downloadUrlDynamicValue;
-            }
-            else
-            {
-               ////////////////////////////////////////////////////////////////
-               // if the url isn't available, then return w/o the adornment. //
-               ////////////////////////////////////////////////////////////////
-               return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+               const downloadUrlDynamicValue = record?.displayValues?.get(fieldName + ":downloadUrlDynamic");
+               if (downloadUrlDynamicValue)
+               {
+                  url = downloadUrlDynamicValue;
+               }
+               else
+               {
+                  ////////////////////////////////////////////////////////////////
+                  // if the url isn't available, then return w/o the adornment. //
+                  ////////////////////////////////////////////////////////////////
+                  return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+               }
             }
          }
 
