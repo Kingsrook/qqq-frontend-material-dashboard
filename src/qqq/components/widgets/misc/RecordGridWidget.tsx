@@ -111,7 +111,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          }
 
          const tableMetaData = data.childTableMetaData instanceof QTableMetaData ? data.childTableMetaData as QTableMetaData : new QTableMetaData(data.childTableMetaData);
-         const rows = DataGridUtils.makeRows(records, tableMetaData);
+         const rows = DataGridUtils.makeRows(records, tableMetaData, undefined, true);
 
          /////////////////////////////////////////////////////////////////////////////////
          // note - tablePath may be null, if the user doesn't have access to the table. //
@@ -255,14 +255,14 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          disabledFields = data.defaultValuesForNewChildRecords;
       }
 
-      const defaultValuesForNewChildRecords = data.defaultValuesForNewChildRecords || {}
+      const defaultValuesForNewChildRecords = data.defaultValuesForNewChildRecords || {};
 
       ///////////////////////////////////////////////////////////////////////////////////////
       // copy values from specified fields in the parent record down into the child record //
       ///////////////////////////////////////////////////////////////////////////////////////
-      if(data.defaultValuesForNewChildRecordsFromParentFields)
+      if (data.defaultValuesForNewChildRecordsFromParentFields)
       {
-         for(let childField in data.defaultValuesForNewChildRecordsFromParentFields)
+         for (let childField in data.defaultValuesForNewChildRecordsFromParentFields)
          {
             const parentField = data.defaultValuesForNewChildRecordsFromParentFields[childField];
             defaultValuesForNewChildRecords[childField] = parentRecord?.values?.get(parentField);

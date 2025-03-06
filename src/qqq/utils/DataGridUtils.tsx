@@ -71,7 +71,7 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, tableVariant?: QTableVariant): GridRowsProp[] =>
+   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, tableVariant?: QTableVariant, allowEmptyId = false): GridRowsProp[] =>
    {
       const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
@@ -112,7 +112,7 @@ export default class DataGridUtils
                /////////////////////////////////////////////////////////////////////////////////////////
                // DataGrid gets very upset about a null or undefined here, so, try to make it happier //
                /////////////////////////////////////////////////////////////////////////////////////////
-               if (!tableVariant)
+               if (!allowEmptyId)
                {
                   row["id"] = "--";
                }
@@ -242,20 +242,6 @@ export default class DataGridUtils
                cellValues.value ? <Link to={`${linkBase}${encodeURIComponent(cellValues.value)}`} onClick={(e) => e.stopPropagation()}>{cellValues.value}</Link> : ""
             );
          }
-         /* todo wip ... not sure if/how to get tooltipFieldName set in the row... */
-         /*
-         else if (field.hasAdornment(AdornmentType.TOOLTIP))
-         {
-            const tooltipAdornment = field.getAdornment(AdornmentType.TOOLTIP);
-            const tooltipFieldName: string = tooltipAdornment.getValue("tooltipFieldName");
-            if(tooltipFieldName)
-            {
-               column.renderCell = (cellValues: any) => (
-                  cellValues.value ? <Tooltip title={cellValues.row[tooltipFieldName]}><span>{cellValues.value}</span></Tooltip> : ""
-               );
-            }
-         }
-        */
       });
    }
 

@@ -255,11 +255,6 @@ class ValueUtils
          return (<BlobComponent field={field} url={url} filename={displayValue} usage={usage} />);
       }
 
-      // todo if(field.hasAdornment(AdornmentType.CODE))
-      // todo {
-      // todo    return <span style={{fontFamily: "monospace", fontSize: "12px", color: "#4f4f4f"}}>{ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue)}</span>
-      // todo }
-
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }
 
