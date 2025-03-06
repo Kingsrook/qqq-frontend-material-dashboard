@@ -1103,7 +1103,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
       ////////////////////////////////
       // make the rows for the grid //
       ////////////////////////////////
-      const rows = DataGridUtils.makeRows(results, tableMetaData);
+      const rows = DataGridUtils.makeRows(results, tableMetaData, tableVariant);
       setRows(rows);
 
       setLoading(false);

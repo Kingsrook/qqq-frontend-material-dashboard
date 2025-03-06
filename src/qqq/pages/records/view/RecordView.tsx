@@ -92,7 +92,7 @@ const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 /*******************************************************************************
  **
  *******************************************************************************/
-export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: { label?: SxProps, value?: SxProps })
+export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: {label?: SxProps, value?: SxProps}, tableVariant?: QTableVariant)
 {
    return <Grid container lg={12} key={key} display="flex" py={1} pr={2}>
       {
@@ -119,7 +119,7 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
                         }
                         <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
                         <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)" sx={{...(styleOverrides?.value ?? {})}}>
-                           {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                           {ValueUtils.getDisplayValue(field, record, "view", fieldName, tableVariant)}
                         </Typography>
                      </>
                   </Grid>
@@ -598,7 +598,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                // for a section with field names, render the field values.                                               //
                // for the T1 section, the "wrapper" will come out below - but for other sections, produce a wrapper too. //
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const fields = renderSectionOfFields(section.name, section.fieldNames, tableMetaData, helpHelpActive, record);
+               const fields = renderSectionOfFields(section.name, section.fieldNames, tableMetaData, helpHelpActive, record, undefined, undefined, tableVariant);
 
                if (section.tier === "T1")
                {
