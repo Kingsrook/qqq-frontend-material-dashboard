@@ -47,6 +47,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Modal from "@mui/material/Modal";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
+import {SxProps} from "@mui/system";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import AuditBody from "qqq/components/audits/AuditBody";
@@ -91,9 +92,9 @@ const TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT = "qqq.tableVariant";
 /*******************************************************************************
  **
  *******************************************************************************/
-export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData })
+export function renderSectionOfFields(key: string, fieldNames: string[], tableMetaData: QTableMetaData, helpHelpActive: boolean, record: QRecord, fieldMap?: { [name: string]: QFieldMetaData }, styleOverrides?: {label?: SxProps, value?: SxProps}, tableVariant?: QTableVariant)
 {
-   return <Box key={key} display="flex" flexDirection="column" py={1} pr={2}>
+   return <Grid container lg={12} key={key} display="flex" py={1} pr={2}>
       {
          fieldNames.map((fieldName: string) =>
          {
@@ -102,30 +103,31 @@ export function renderSectionOfFields(key: string, fieldNames: string[], tableMe
             if (field != null)
             {
                let label = field.label;
+               let gridColumns = (field.gridColumns && field.gridColumns > 0) ? field.gridColumns : 12;
 
                const helpRoles = ["VIEW_SCREEN", "READ_SCREENS", "ALL_SCREENS"];
                const showHelp = helpHelpActive || hasHelpContent(field.helpContents, helpRoles);
                const formattedHelpContent = <HelpContent helpContents={field.helpContents} roles={helpRoles} heading={label} helpContentKey={`table:${tableMetaData?.name};field:${fieldName}`} />;
 
-               const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default"}}>{label}:</Typography>;
+               const labelElement = <Typography variant="button" textTransform="none" fontWeight="bold" pr={1} color="rgb(52, 71, 103)" sx={{cursor: "default", ...(styleOverrides?.label ?? {})}}>{label}:</Typography>;
 
                return (
-                  <Box key={fieldName} flexDirection="row" pr={2}>
+                  <Grid item key={fieldName} lg={gridColumns} flexDirection="column" pr={2}>
                      <>
                         {
                            showHelp && formattedHelpContent ? <Tooltip title={formattedHelpContent}>{labelElement}</Tooltip> : labelElement
                         }
                         <div style={{display: "inline-block", width: 0}}>&nbsp;</div>
-                        <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)">
-                           {ValueUtils.getDisplayValue(field, record, "view", fieldName)}
+                        <Typography variant="button" textTransform="none" fontWeight="regular" color="rgb(123, 128, 154)" sx={{...(styleOverrides?.value ?? {})}}>
+                           {ValueUtils.getDisplayValue(field, record, "view", fieldName, tableVariant)}
                         </Typography>
                      </>
-                  </Box>
+                  </Grid>
                );
             }
          })
       }
-   </Box>;
+   </Grid>;
 }
 
 
@@ -596,7 +598,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                // for a section with field names, render the field values.                                               //
                // for the T1 section, the "wrapper" will come out below - but for other sections, produce a wrapper too. //
                ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               const fields = renderSectionOfFields(section.name, section.fieldNames, tableMetaData, helpHelpActive, record);
+               const fields = renderSectionOfFields(section.name, section.fieldNames, tableMetaData, helpHelpActive, record, undefined, undefined, tableVariant);
 
                if (section.tier === "T1")
                {
@@ -1002,10 +1004,10 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                               }
 
                               <Grid container spacing={3}>
-                                 <Grid item xs={12} lg={3}>
+                                 <Grid item xs={12} lg={3} className="recordSidebar">
                                     <QRecordSidebar tableSections={tableSections} />
                                  </Grid>
-                                 <Grid item xs={12} lg={9}>
+                                 <Grid item xs={12} lg={9} className="recordWithSidebar">
 
                                     <Grid container spacing={3}>
                                        <Grid item xs={12} mb={3}>

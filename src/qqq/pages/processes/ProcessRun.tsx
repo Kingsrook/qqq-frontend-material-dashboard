@@ -20,7 +20,6 @@
  */
 
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
 import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
@@ -52,16 +51,19 @@ import {Form, Formik} from "formik";
 import parse from "html-react-parser";
 import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
-import {QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
+import {QAlternateButton, QCancelButton, QSubmitButton} from "qqq/components/buttons/DefaultButtons";
 import QDynamicForm from "qqq/components/forms/DynamicForm";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
-import MDButton from "qqq/components/legacy/MDButton";
 import MDProgress from "qqq/components/legacy/MDProgress";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";
 import QRecordSidebar from "qqq/components/misc/RecordSidebar";
+import BulkLoadFileMappingForm from "qqq/components/processes/BulkLoadFileMappingForm";
+import BulkLoadProfileForm from "qqq/components/processes/BulkLoadProfileForm";
+import BulkLoadValueMappingForm from "qqq/components/processes/BulkLoadValueMappingForm";
 import {GoogleDriveFolderPickerWrapper} from "qqq/components/processes/GoogleDriveFolderPickerWrapper";
 import ProcessSummaryResults from "qqq/components/processes/ProcessSummaryResults";
+import ProcessViewForm from "qqq/components/processes/ProcessViewForm";
 import ValidationReview from "qqq/components/processes/ValidationReview";
 import {BlockData} from "qqq/components/widgets/blocks/BlockModels";
 import CompositeWidget, {CompositeData} from "qqq/components/widgets/CompositeWidget";
@@ -73,7 +75,7 @@ import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/Reco
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import * as Yup from "yup";
 
@@ -96,6 +98,8 @@ const INITIAL_RETRY_MILLIS = 1_500;
 const RETRY_MAX_MILLIS = 12_000;
 const BACKOFF_AMOUNT = 1.5;
 
+const qController = Client.getInstance();
+
 ////////////////////////////////////////////////////////////////////////////////
 // define some functions that we can make reference to, which we'll overwrite //
 // with functions from formik, once we're inside formik.                      //
@@ -109,6 +113,10 @@ let formikSetTouched = ({}: any, touched: boolean): void =>
 };
 
 const cachedPossibleValueLabels: { [fieldName: string]: { [id: string | number]: string } } = {};
+
+export interface SubFormPreSubmitCallbackResultType {maySubmit: boolean; values: {[name: string]: any}}
+type SubFormPreSubmitCallback = () => SubFormPreSubmitCallbackResultType;
+type SubFormPreSubmitCallbackWithName = {name: string, callback: SubFormPreSubmitCallback}
 
 function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
@@ -130,9 +138,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [qJobRunningDate, setQJobRunningDate] = useState(null as Date);
    const [activeStepIndex, setActiveStepIndex] = useState(0);
    const [activeStep, setActiveStep] = useState(null as QFrontendStepMetaData);
+   const [activeStepLabel, setActiveStepLabel] = useState(null as string);
    const [newStep, setNewStep] = useState(null);
    const [stepInstanceCounter, setStepInstanceCounter] = useState(0);
    const [steps, setSteps] = useState([] as QFrontendStepMetaData[]);
+   const [backStepName, setBackStepName] = useState(null as string);
    const [needInitialLoad, setNeedInitialLoad] = useState(true);
    const [lastForcedReInit, setLastForcedReInit] = useState(null as number);
    const [processMetaData, setProcessMetaData] = useState(null);
@@ -151,7 +161,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [previouslySeenUpdatedFieldMetaDataMap, setPreviouslySeenUpdatedFieldMetaDataMap] = useState(new Map<string, QFieldMetaData>);
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
-   const [controlCallbacks, setControlCallbacks] = useState({} as { [name: string]: () => void });
+   const [controlCallbacks, setControlCallbacks] = useState({} as {[name: string]: () => void});
+   const [subFormPreSubmitCallbacks, setSubFormPreSubmitCallbacks] = useState([] as SubFormPreSubmitCallbackWithName[]);
 
    const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
 
@@ -208,6 +219,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    // record list state //
    ///////////////////////
    const [needRecords, setNeedRecords] = useState(false);
+   const [loadingRecords, setLoadingRecords] = useState(false);
    const [recordConfig, setRecordConfig] = useState({} as any);
    const [pageNumber, setPageNumber] = useState(0);
    const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -221,6 +233,11 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
    const navigate = useNavigate();
    const location = useLocation();
+
+   const bulkLoadFileMappingFormRef = useRef();
+   const bulkLoadValueMappingFormRef = useRef();
+   const bulkLoadProfileFormRef = useRef();
+   const [bulkLoadValueMappingFormFields, setBulkLoadValueMappingFormFields] = useState([] as any[])
 
    const doesStepHaveComponent = (step: QFrontendStepMetaData, type: QComponentType): boolean =>
    {
@@ -677,6 +694,42 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          });
       }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      // if we have a bulk-load file mapping form, register its pre-submit callback //
+      ////////////////////////////////////////////////////////////////////////////////
+      if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_FILE_MAPPING_FORM))
+      {
+         if(bulkLoadFileMappingFormRef?.current)
+         {
+            // @ts-ignore ...
+            addSubFormPreSubmitCallbacks("bulkLoadFileMappingForm", bulkLoadFileMappingFormRef?.current?.preSubmit)
+         }
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////
+      // if we have a bulk-load value mapping form, register its pre-submit callback //
+      /////////////////////////////////////////////////////////////////////////////////
+      if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_VALUE_MAPPING_FORM))
+      {
+         if(bulkLoadValueMappingFormRef?.current)
+         {
+            // @ts-ignore ...
+            addSubFormPreSubmitCallbacks("bulkLoadValueMappingForm", bulkLoadValueMappingFormRef?.current?.preSubmit)
+         }
+      }
+
+      ///////////////////////////////////////////////////////////////////////////
+      // if we have a bulk-load profile form, register its pre-submit callback //
+      ///////////////////////////////////////////////////////////////////////////
+      if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_PROFILE_FORM))
+      {
+         if(bulkLoadProfileFormRef?.current)
+         {
+            // @ts-ignore ...
+            addSubFormPreSubmitCallbacks("bulkLoadProfileFormRef", bulkLoadProfileFormRef?.current?.preSubmit)
+         }
+      }
+
       /////////////////////////////////////
       // screen(step)-level help content //
       /////////////////////////////////////
@@ -695,7 +748,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                !isWidget && !isFormatScanner &&
                <MDTypography variant={isWidget ? "h6" : "h5"} component="div" fontWeight="bold">
                   {(isModal) ? `${overrideLabel ?? process.label}: ` : ""}
-                  {step?.label}
+                  {activeStepLabel}
                </MDTypography>
             }
 
@@ -849,29 +902,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         }
                         {
                            component.type === QComponentType.VIEW_FORM && step.viewFields && (
-                              <div>
-                                 {step.viewFields.map((field: QFieldMetaData) => (
-                                    field.hasAdornment(AdornmentType.ERROR) ? (
-                                       processValues[field.name] && (
-                                          <Box key={field.name} display="flex" py={1} pr={2}>
-                                             <MDTypography variant="button" fontWeight="regular">
-                                                {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
-                                             </MDTypography>
-                                          </Box>
-                                       )
-                                    ) : (
-                                       <Box key={field.name} display="flex" py={1} pr={2}>
-                                          <MDTypography variant="button" fontWeight="bold">
-                                             {field.label}
-                                             : &nbsp;
-                                          </MDTypography>
-                                          <MDTypography variant="button" fontWeight="regular" color="text">
-                                             {ValueUtils.getValueForDisplay(field, processValues[field.name], undefined, "view")}
-                                          </MDTypography>
-                                       </Box>
-                                    )))
-                                 }
-                              </div>
+                              <ProcessViewForm fields={step.viewFields} values={processValues} columns={1} />
                            )
                         }
                         {
@@ -902,6 +933,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                  processValues={processValues}
                                  step={step}
                                  previewRecords={records}
+                                 loadingRecords={loadingRecords}
                                  formValues={formData.values}
                                  doFullValidationRadioChangedHandler={(event: any) =>
                                  {
@@ -993,6 +1025,41 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                     <Alert severity="error">Error: Component is marked as WIDGET type, but does not specify a <u>widgetName</u>, nor the <u>isAdHocWidget</u> flag.</Alert>
                                  }
                               </>
+                           )
+                        }
+                        {
+                           component.type === QComponentType.BULK_LOAD_FILE_MAPPING_FORM && (
+                              <BulkLoadFileMappingForm
+                                 processValues={processValues}
+                                 tableMetaData={tableMetaData}
+                                 processMetaData={processMetaData}
+                                 metaData={qInstance}
+                                 ref={bulkLoadFileMappingFormRef}
+                                 setActiveStepLabel={setActiveStepLabel}
+                                 frontendStep={activeStep}
+                              />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.BULK_LOAD_VALUE_MAPPING_FORM && (
+                              <BulkLoadValueMappingForm
+                                 processValues={processValues}
+                                 tableMetaData={tableMetaData}
+                                 metaData={qInstance}
+                                 ref={bulkLoadValueMappingFormRef}
+                                 setActiveStepLabel={setActiveStepLabel}
+                                 formFields={bulkLoadValueMappingFormFields}
+                              />
+                           )
+                        }
+                        {
+                           component.type === QComponentType.BULK_LOAD_PROFILE_FORM && (
+                              <BulkLoadProfileForm
+                                 processValues={processValues}
+                                 tableMetaData={tableMetaData}
+                                 metaData={qInstance}
+                                 ref={bulkLoadProfileFormRef}
+                              />
                            )
                         }
                      </div>
@@ -1101,6 +1168,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       {
          const activeStep = steps[newIndex];
          setActiveStep(activeStep);
+         setActiveStepLabel(activeStep.label);
          setFormId(activeStep.name);
 
          let dynamicFormFields: any = {};
@@ -1227,6 +1295,43 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             }
          }
 
+         /////////////////////////////////////////////////////////////////
+         // Help make this component's fields work with our formik form //
+         /////////////////////////////////////////////////////////////////
+         if(activeStep && doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_VALUE_MAPPING_FORM))
+         {
+            const fileValues = processValues.fileValues ?? [];
+            const valueMapping = processValues.valueMapping ?? {};
+            const mappedValueLabels = processValues.mappedValueLabels ?? {};
+
+            const fieldFullName = processValues.valueMappingFullFieldName;
+            const fieldTableName = processValues.valueMappingFieldTableName;
+
+            const field = new QFieldMetaData(processValues.valueMappingField);
+            const qFieldMetaData = new QFieldMetaData(field);
+
+            const fieldsForComponent: any[] = [];
+            for (let i = 0; i < fileValues.length; i++)
+            {
+               const dynamicField = DynamicFormUtils.getDynamicField(qFieldMetaData);
+               const wrappedField: any  = {};
+               wrappedField[field.name] = dynamicField;
+               DynamicFormUtils.addPossibleValueProps(wrappedField, [field], fieldTableName, null, null);
+
+               const initialValue = valueMapping[fileValues[i]];
+
+               if(dynamicField.possibleValueProps)
+               {
+                  dynamicField.possibleValueProps.initialDisplayValue = mappedValueLabels[initialValue]
+               }
+
+               addField(`${fieldFullName}.value.${i}`, dynamicField, initialValue, null)
+               fieldsForComponent.push(dynamicField);
+            }
+
+            setBulkLoadValueMappingFormFields(fieldsForComponent)
+         }
+
          if (Object.keys(dynamicFormFields).length > 0)
          {
             ///////////////////////////////////////////
@@ -1310,7 +1415,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          setNeedRecords(false);
          (async () =>
          {
-            const response = await Client.getInstance().processRecords(
+            const response = await qController.processRecords(
                processName,
                processUUID,
                recordConfig.rowsPerPage * recordConfig.pageNo,
@@ -1319,6 +1424,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
             const {records} = response;
             setRecords(records);
+            setLoadingRecords(false);
 
             if (!childRecordData || childRecordData.length == 0)
             {
@@ -1411,6 +1517,24 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    }
 
 
+   /***************************************************************************
+    ** manage adding pre-submit callbacks (so they get added just once)
+    ***************************************************************************/
+   function addSubFormPreSubmitCallbacks(name: string, callback: SubFormPreSubmitCallback)
+   {
+      if(subFormPreSubmitCallbacks.findIndex(c => c.name == name) == -1)
+      {
+         const newCallbacks: SubFormPreSubmitCallbackWithName[] = []
+         for(let i = 0; i < subFormPreSubmitCallbacks.length; i++)
+         {
+            newCallbacks[i] = subFormPreSubmitCallbacks[i];
+         }
+         newCallbacks.push({name, callback})
+         setSubFormPreSubmitCallbacks(newCallbacks)
+      }
+   }
+
+
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    // handle a response from the server - e.g., after starting a backend job, or getting its status/result //
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1472,7 +1596,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                         const fieldName = field.name;
                         if (field.possibleValueSourceName && newValues && newValues[fieldName])
                         {
-                           const results: QPossibleValue[] = await Client.getInstance().possibleValues(null, processName, fieldName, null, [newValues[fieldName]]);
+                           const results: QPossibleValue[] = await qController.possibleValues(null, processName, fieldName, null, [newValues[fieldName]]);
                            if (results && results.length > 0)
                            {
                               if (!cachedPossibleValueLabels[fieldName])
@@ -1486,12 +1610,17 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                   }
                }
 
+               //////////////////////////////////////
+               // reset some state between screens //
+               //////////////////////////////////////
                setJobUUID(null);
                setNewStep(nextStepName);
                setStepInstanceCounter(1 + stepInstanceCounter);
                setProcessValues(newValues);
                setRenderedWidgets({});
+               setSubFormPreSubmitCallbacks([]);
                setQJobRunning(null);
+               setBackStepName(qJobComplete.backStep)
 
                if (formikSetFieldValueFunction)
                {
@@ -1569,7 +1698,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                try
                {
-                  const processResponse = await Client.getInstance().processJobStatus(
+                  const processResponse = await qController.processJobStatus(
                      processName,
                      processUUID,
                      jobUUID,
@@ -1670,7 +1799,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const qInstance = await Client.getInstance().loadMetaData();
+            const qInstance = await qController.loadMetaData();
             ValueUtils.qInstance = qInstance;
             setQInstance(qInstance);
          }
@@ -1682,7 +1811,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const processMetaData = await Client.getInstance().loadProcessMetaData(processName);
+            const processMetaData = await qController.loadProcessMetaData(processName);
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
 
@@ -1693,7 +1822,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             {
                try
                {
-                  const tableMetaData = await Client.getInstance().loadTableMetaData(processMetaData.tableName);
+                  const tableMetaData = await qController.loadTableMetaData(processMetaData.tableName);
                   setTableMetaData(tableMetaData);
                }
                catch (e)
@@ -1724,7 +1853,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
          try
          {
-            const processResponse = await Client.getInstance().processInit(processName, queryStringPairsForInit.join("&"));
+            const processResponse = await qController.processInit(processName, queryStringPairsForInit.join("&"));
             setProcessUUID(processResponse.processUUID);
             setLastProcessResponse(processResponse);
          }
@@ -1741,7 +1870,27 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    //////////////////////////////////////////////////////////////////////////////////////////////////////
    const handleBack = () =>
    {
-      setNewStep(activeStepIndex - 1);
+      //////////////////////////////////////////////////////////////////////////////////////////////////
+      // note, this is kept out of clearStatesBeforeHittingBackend, because in handleSubmit, the form //
+      // might become invalidated, in which case we'd want a form error, i guess.                     //
+      //////////////////////////////////////////////////////////////////////////////////////////////////
+      setFormError(null);
+
+      clearStatesBeforeHittingBackend();
+
+      setTimeout(async () =>
+      {
+         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+
+         const processResponse = await qController.processStep(
+            processName,
+            processUUID,
+            backStepName,
+            "isStepBack=true",
+            qController.defaultMultipartFormDataHeaders(),
+         );
+         setLastProcessResponse(processResponse);
+      });
    };
 
    ////////////////////////////////////////////
@@ -1749,10 +1898,6 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    ////////////////////////////////////////////
    const doSubmit = async (formData: FormData) =>
    {
-      const formDataHeaders = {
-         "content-type": "multipart/form-data; boundary=--------------------------320289315924586491558366",
-      };
-
       setTimeout(async () =>
       {
          recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
@@ -1762,7 +1907,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             processUUID,
             activeStep.name,
             formData,
-            formDataHeaders
+            qController.defaultMultipartFormDataHeaders()
          );
          setLastProcessResponse(processResponse);
       });
@@ -1775,6 +1920,27 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const handleFormSubmit = async (values: any) =>
    {
       setFormError(null);
+
+      ///////////////////////////////////////////////////////////////
+      // run any sub-form pre-submit callbacks that are registered //
+      ///////////////////////////////////////////////////////////////
+      for(let i = 0; i < subFormPreSubmitCallbacks.length; i++)
+      {
+         const {maySubmit, values: moreValues} = subFormPreSubmitCallbacks[i].callback();
+         if(!maySubmit)
+         {
+            console.log(`May not submit form, per callback: ${subFormPreSubmitCallbacks[i].name}`);
+            return;
+         }
+
+         if(moreValues)
+         {
+            for (let key in moreValues)
+            {
+               values[key] = moreValues[key]
+            }
+         }
+      }
 
       const formData = new FormData();
       Object.keys(values).forEach((key) =>
@@ -1811,6 +1977,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          formData.append("bulkEditEnabledFields", bulkEditEnabledFields.join(","));
       }
 
+      clearStatesBeforeHittingBackend();
+
       /////////////////////////////////////////////////////////////
       // convert to regular objects so that they can be jsonized //
       /////////////////////////////////////////////////////////////
@@ -1819,13 +1987,32 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          formData.append("frontendRecords", JSON.stringify(childRecordData.queryOutput.records));
       }
 
+      doSubmit(formData);
+   };
+
+
+   /*******************************************************************************
+    ** common code shared by 'back' and 'submit' (next) - to clear some state values.
+    *******************************************************************************/
+   const clearStatesBeforeHittingBackend = () =>
+   {
       setProcessValues({});
       setRecords([]);
       setOverrideOnLastStep(null);
       setLastProcessResponse(new QJobRunning({message: "Working..."}));
 
-      doSubmit(formData);
-   };
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // clear out the active step now, to avoid a flash of the old one after the job completes, but before the new one is all set //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      setActiveStep(null);
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // setting this flag here (initially, for use in ValidationReview) will ensure that the initial render of //
+      // such a component will show as "loading", rather than a flash of "no records" before going into loading //
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      setLoadingRecords(true);
+
+   }
 
 
    /*******************************************************************************
@@ -1838,7 +2025,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       //////////////////////////////////////////////////////////////////
       if (!isClose)
       {
-         Client.getInstance().processCancel(processName, processUUID);
+         qController.processCancel(processName, processUUID);
       }
 
       if (isModal && closeModalHandler)
@@ -1976,12 +2163,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                            {/********************************
                             ** back &| next/submit buttons **
                             ********************************/}
-                           <Box mt={3} width="100%" display="flex" justifyContent="space-between" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
-                              {true || activeStepIndex === 0 ? (
-                                 <Box />
-                              ) : (
-                                 <MDButton variant="gradient" color="light" onClick={handleBack}>back</MDButton>
-                              )}
+                           <Box mt={3} width="100%" display="flex" justifyContent="flex-end" position={isWidget ? "absolute" : "initial"} bottom={isWidget ? "3rem" : "initial"} right={isWidget ? "1.5rem" : "initial"}>
                               {processError || qJobRunning || !activeStep || activeStep?.format?.toLowerCase() == "scanner" ? (
                                  <Box />
                               ) : (
@@ -2002,6 +2184,13 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                                                       <QCancelButton onClickHandler={() => handleCancelClicked(false)} disabled={isSubmitting} />
                                                    )
                                                 }
+
+                                                {backStepName ? (
+                                                   <QAlternateButton label="Back" onClick={handleBack} disabled={isSubmitting} iconName="arrow_back" />
+                                                ) : (
+                                                   <Box />
+                                                )}
+
                                                 <QSubmitButton label={nextButtonLabel} iconName={nextButtonIcon} disabled={isSubmitting} />
                                              </Grid>
                                           </Box>
@@ -2033,7 +2222,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    if (isModal)
    {
       return (
-         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+         <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}} id="modalProcessScrollContainer">
             {body}
          </Box>
       );

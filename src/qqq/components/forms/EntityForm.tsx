@@ -66,7 +66,7 @@ interface Props
    defaultValues: { [key: string]: string };
    disabledFields: { [key: string]: boolean } | string[];
    isCopy?: boolean;
-   onSubmitCallback?: (values: any) => void;
+   onSubmitCallback?: (values: any, tableName: string) => void;
    overrideHeading?: string;
 }
 
@@ -173,12 +173,24 @@ function EntityForm(props: Props): JSX.Element
     *******************************************************************************/
    function openAddChildRecord(name: string, widgetData: any)
    {
-      let defaultValues = widgetData.defaultValuesForNewChildRecords;
+      let defaultValues = widgetData.defaultValuesForNewChildRecords || {};
 
       let disabledFields = widgetData.disabledFieldsForNewChildRecords;
       if (!disabledFields)
       {
          disabledFields = widgetData.defaultValuesForNewChildRecords;
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////
+      // copy values from specified fields in the parent record down into the child record //
+      ///////////////////////////////////////////////////////////////////////////////////////
+      if(widgetData.defaultValuesForNewChildRecordsFromParentFields)
+      {
+         for(let childField in widgetData.defaultValuesForNewChildRecordsFromParentFields)
+         {
+            const parentField = widgetData.defaultValuesForNewChildRecordsFromParentFields[childField];
+            defaultValues[childField] = formValues[parentField];
+         }
       }
 
       doOpenEditChildForm(name, widgetData.childTableMetaData, null, defaultValues, disabledFields);
@@ -208,7 +220,7 @@ function EntityForm(props: Props): JSX.Element
    function deleteChildRecord(name: string, widgetData: any, rowIndex: number)
    {
       updateChildRecordList(name, "delete", rowIndex);
-   };
+   }
 
 
    /*******************************************************************************
@@ -243,16 +255,16 @@ function EntityForm(props: Props): JSX.Element
    /*******************************************************************************
     **
     *******************************************************************************/
-   function submitEditChildForm(values: any)
+   function submitEditChildForm(values: any, tableName: string)
    {
-      updateChildRecordList(showEditChildForm.widgetName, showEditChildForm.rowIndex == null ? "insert" : "edit", showEditChildForm.rowIndex, values);
+      updateChildRecordList(showEditChildForm.widgetName, showEditChildForm.rowIndex == null ? "insert" : "edit", showEditChildForm.rowIndex, values, tableName);
    }
 
 
    /*******************************************************************************
     **
     *******************************************************************************/
-   async function updateChildRecordList(widgetName: string, action: "insert" | "edit" | "delete", rowIndex?: number, values?: any)
+   async function updateChildRecordList(widgetName: string, action: "insert" | "edit" | "delete", rowIndex?: number, values?: any, childTableName?: string)
    {
       const metaData = await qController.loadMetaData();
       const widgetMetaData = metaData.widgets.get(widgetName);
@@ -263,13 +275,38 @@ function EntityForm(props: Props): JSX.Element
          newChildListWidgetData[widgetName].queryOutput.records = [];
       }
 
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // build a map of display values for the new record, specifically, for any possible-values that need translated. //
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      const displayValues: {[fieldName: string]: string} = {};
+      if(childTableName && values)
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         // this function internally memoizes, so, we could potentially avoid an await here, but, seems ok... //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////
+         const childTableMetaData = await qController.loadTableMetaData(childTableName)
+         for (let key in values)
+         {
+            const value = values[key];
+            const field = childTableMetaData.fields.get(key);
+            if(field.possibleValueSourceName)
+            {
+               const possibleValues = await qController.possibleValues(childTableName, null, field.name, null, [value], objectToMap(values), "form")
+               if(possibleValues && possibleValues.length > 0)
+               {
+                  displayValues[key] = possibleValues[0].label;
+               }
+            }
+         }
+      }
+
       switch (action)
       {
          case "insert":
-            newChildListWidgetData[widgetName].queryOutput.records.push({values: values});
+            newChildListWidgetData[widgetName].queryOutput.records.push({values: values, displayValues: displayValues});
             break;
          case "edit":
-            newChildListWidgetData[widgetName].queryOutput.records[rowIndex] = {values: values};
+            newChildListWidgetData[widgetName].queryOutput.records[rowIndex] = {values: values, displayValues: displayValues};
             break;
          case "delete":
             newChildListWidgetData[widgetName].queryOutput.records.splice(rowIndex, 1);
@@ -407,6 +444,7 @@ function EntityForm(props: Props): JSX.Element
             widgetMetaData={widgetMetaData}
             widgetData={widgetData}
             recordValues={formValues}
+            label={tableMetaData?.fields.get(widgetData?.filterFieldName ?? "queryFilterJson")?.label}
             onSaveCallback={setFormFieldValuesFromWidget}
          />;
       }
@@ -475,6 +513,26 @@ function EntityForm(props: Props): JSX.Element
          }
          setFieldRules(newFieldRules);
       }
+   }
+
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function objectToMap(object: { [key: string]: any }): Map<string, any>
+   {
+      if(object == null)
+      {
+         return (null);
+      }
+
+      const rs = new Map<string, any>();
+      for (let key in object)
+      {
+         rs.set(key, object[key]);
+      }
+      return rs
    }
 
 
@@ -595,18 +653,24 @@ function EntityForm(props: Props): JSX.Element
                   if (defaultValue)
                   {
                      initialValues[fieldName] = defaultValue;
+                  }
+               }
 
-                     ///////////////////////////////////////////////////////////////////////////////////////////
-                     // we need to set the initialDisplayValue for possible value fields with a default value //
-                     // so, look them up here now if needed                                                   //
-                     ///////////////////////////////////////////////////////////////////////////////////////////
-                     if (fieldMetaData.possibleValueSourceName)
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               // do a second loop, this time looking up display-values for any possible-value fields with a default value                    //
+               // do it in a second loop, to pass in all the other values (from initialValues), in case there's a PVS filter that needs them. //
+               /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               for (let i = 0; i < fieldArray.length; i++)
+               {
+                  const fieldMetaData = fieldArray[i];
+                  const fieldName = fieldMetaData.name;
+                  const defaultValue = (defaultValues && defaultValues[fieldName]) ? defaultValues[fieldName] : fieldMetaData.defaultValue;
+                  if (defaultValue && fieldMetaData.possibleValueSourceName)
+                  {
+                     const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]], objectToMap(initialValues), "form");
+                     if (results && results.length > 0)
                      {
-                        const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]], undefined, "form");
-                        if (results && results.length > 0)
-                        {
-                           defaultDisplayValues.set(fieldName, results[0].label);
-                        }
+                        defaultDisplayValues.set(fieldName, results[0].label);
                      }
                   }
                }
@@ -823,7 +887,7 @@ function EntityForm(props: Props): JSX.Element
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       if (props.onSubmitCallback)
       {
-         props.onSubmitCallback(values);
+         props.onSubmitCallback(values, tableName);
          return;
       }
 

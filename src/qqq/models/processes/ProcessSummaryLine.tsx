@@ -53,6 +53,8 @@ export class ProcessSummaryLine
    linkText: string;
    linkPostText: string;
 
+   bulletsOfText: any[];
+
    constructor(processSummaryLine: any)
    {
       this.status = processSummaryLine.status;
@@ -65,6 +67,8 @@ export class ProcessSummaryLine
       this.linkPreText = processSummaryLine.linkPreText;
       this.linkText = processSummaryLine.linkText;
       this.linkPostText = processSummaryLine.linkPostText;
+
+      this.bulletsOfText = processSummaryLine.bulletsOfText;
 
       this.filter = processSummaryLine.filter;
    }
@@ -141,6 +145,13 @@ export class ProcessSummaryLine
                            {lastWord}&nbsp;{linkTag}
                         </span>
                      ) : <span>{lastWord}</span>
+                  }
+                  {
+                     this.bulletsOfText && <ul style={{marginLeft: "2rem"}}>
+                        {
+                           this.bulletsOfText.map((bullet, index) => <li key={index}>{bullet}</li>)
+                        }
+                     </ul>
                   }
                </ListItemText>
             </Box>

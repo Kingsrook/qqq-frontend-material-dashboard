@@ -804,3 +804,17 @@ input[type="search"]::-webkit-search-results-decoration
 {
    color: #0062FF !important;
 }
+
+@media (min-width: 1400px)
+{
+   .recordSidebar
+   {
+      max-width: 400px !important;
+   }
+
+   .recordWithSidebar
+   {
+      max-width: 100% !important;
+      flex-grow: 1 !important;
+   }
+}

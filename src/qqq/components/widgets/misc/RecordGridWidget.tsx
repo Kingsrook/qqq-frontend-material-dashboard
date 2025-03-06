@@ -28,7 +28,7 @@ import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
 import Typography from "@mui/material/Typography";
-import {DataGridPro, GridCallbackDetails, GridEventListener, GridRenderCellParams, GridRowParams, GridToolbarContainer, MuiEvent, useGridApiContext, useGridApiEventHandler} from "@mui/x-data-grid-pro";
+import {DataGridPro, GridCallbackDetails, GridDensity, GridEventListener, GridRenderCellParams, GridRowParams, GridToolbarContainer, MuiEvent, useGridApiContext, useGridApiEventHandler} from "@mui/x-data-grid-pro";
 import Widget, {AddNewRecordButton, LabelComponent, WidgetData} from "qqq/components/widgets/Widget";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import HtmlUtils from "qqq/utils/HtmlUtils";
@@ -40,7 +40,7 @@ import {Link, useNavigate} from "react-router-dom";
 export interface ChildRecordListData extends WidgetData
 {
    title?: string;
-   queryOutput?: { records: { values: any }[] };
+   queryOutput?: { records: { values: any, displayValues?: any } [] };
    childTableMetaData?: QTableMetaData;
    tablePath?: string;
    viewAllLink?: string;
@@ -48,30 +48,35 @@ export interface ChildRecordListData extends WidgetData
    canAddChildRecord?: boolean;
    defaultValuesForNewChildRecords?: { [fieldName: string]: any };
    disabledFieldsForNewChildRecords?: { [fieldName: string]: any };
+   defaultValuesForNewChildRecordsFromParentFields?: { [fieldName: string]: string };
 }
 
 interface Props
 {
-   widgetMetaData: QWidgetMetaData;
-   data: ChildRecordListData;
-   addNewRecordCallback?: () => void;
-   disableRowClick: boolean;
-   allowRecordEdit: boolean;
-   editRecordCallback?: (rowIndex: number) => void;
-   allowRecordDelete: boolean;
-   deleteRecordCallback?: (rowIndex: number) => void;
+   widgetMetaData: QWidgetMetaData,
+   data: ChildRecordListData,
+   addNewRecordCallback?: () => void,
+   disableRowClick: boolean,
+   allowRecordEdit: boolean,
+   editRecordCallback?: (rowIndex: number) => void,
+   allowRecordDelete: boolean,
+   deleteRecordCallback?: (rowIndex: number) => void,
+   gridOnly?: boolean,
+   gridDensity?: GridDensity,
+   parentRecord?: QRecord
 }
 
 RecordGridWidget.defaultProps =
    {
       disableRowClick: false,
       allowRecordEdit: false,
-      allowRecordDelete: false
+      allowRecordDelete: false,
+      gridOnly: false,
    };
 
 const qController = Client.getInstance();
 
-function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback}: Props): JSX.Element
+function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRowClick, allowRecordEdit, editRecordCallback, allowRecordDelete, deleteRecordCallback, gridOnly, gridDensity, parentRecord}: Props): JSX.Element
 {
    const instance = useRef({timer: null});
    const [rows, setRows] = useState([]);
@@ -94,12 +99,19 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          {
             for (let i = 0; i < queryOutputRecords.length; i++)
             {
-               records.push(new QRecord(queryOutputRecords[i]));
+               if (queryOutputRecords[i] instanceof QRecord)
+               {
+                  records.push(queryOutputRecords[i] as QRecord);
+               }
+               else
+               {
+                  records.push(new QRecord(queryOutputRecords[i]));
+               }
             }
          }
 
-         const tableMetaData = new QTableMetaData(data.childTableMetaData);
-         const rows = DataGridUtils.makeRows(records, tableMetaData, true);
+         const tableMetaData = data.childTableMetaData instanceof QTableMetaData ? data.childTableMetaData as QTableMetaData : new QTableMetaData(data.childTableMetaData);
+         const rows = DataGridUtils.makeRows(records, tableMetaData, undefined, true);
 
          /////////////////////////////////////////////////////////////////////////////////
          // note - tablePath may be null, if the user doesn't have access to the table. //
@@ -242,7 +254,22 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       {
          disabledFields = data.defaultValuesForNewChildRecords;
       }
-      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, data.defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback));
+
+      const defaultValuesForNewChildRecords = data.defaultValuesForNewChildRecords || {};
+
+      ///////////////////////////////////////////////////////////////////////////////////////
+      // copy values from specified fields in the parent record down into the child record //
+      ///////////////////////////////////////////////////////////////////////////////////////
+      if (data.defaultValuesForNewChildRecordsFromParentFields)
+      {
+         for (let childField in data.defaultValuesForNewChildRecordsFromParentFields)
+         {
+            const parentField = data.defaultValuesForNewChildRecordsFromParentFields[childField];
+            defaultValuesForNewChildRecords[childField] = parentRecord?.values?.get(parentField);
+         }
+      }
+
+      labelAdditionalComponentsRight.push(new AddNewRecordButton(data.childTableMetaData, defaultValuesForNewChildRecords, "Add new", disabledFields, addNewRecordCallback));
    }
 
 
@@ -302,6 +329,56 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
    }
 
 
+   const grid = (
+      <DataGridPro
+         autoHeight
+         sx={{
+            borderBottom: "none",
+            borderLeft: "none",
+            borderRight: "none"
+         }}
+         rows={rows}
+         disableSelectionOnClick
+         columns={columns}
+         rowBuffer={10}
+         getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
+         onRowClick={handleRowClick}
+         getRowId={(row) => row.__rowIndex}
+         // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
+         components={{
+            Toolbar: CustomToolbar
+         }}
+         // pinnedColumns={pinnedColumns}
+         // onPinnedColumnsChange={handlePinnedColumnsChange}
+         // pagination
+         // paginationMode="server"
+         // rowsPerPageOptions={[20]}
+         // sortingMode="server"
+         // filterMode="server"
+         // page={pageNumber}
+         // checkboxSelection
+         rowCount={data && data.totalRows}
+         // onPageSizeChange={handleRowsPerPageChange}
+         // onStateChange={handleStateChange}
+         density={gridDensity ?? "standard"}
+         // loading={loading}
+         // filterModel={filterModel}
+         // onFilterModelChange={handleFilterChange}
+         // columnVisibilityModel={columnVisibilityModel}
+         // onColumnVisibilityModelChange={handleColumnVisibilityChange}
+         // onColumnOrderChange={handleColumnOrderChange}
+         // onSelectionModelChange={selectionChanged}
+         // onSortModelChange={handleSortChange}
+         // sortingOrder={[ "asc", "desc" ]}
+         // sortModel={columnSortModel}
+      />
+   );
+
+   if (gridOnly)
+   {
+      return (grid);
+   }
+
    return (
       <Widget
          widgetMetaData={widgetMetaData}
@@ -312,48 +389,7 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
       >
          <Box mx={containerPadding} mb={containerPadding}>
             <Box>
-               <DataGridPro
-                  autoHeight
-                  sx={{
-                     borderBottom: "none",
-                     borderLeft: "none",
-                     borderRight: "none"
-                  }}
-                  rows={rows}
-                  disableSelectionOnClick
-                  columns={columns}
-                  rowBuffer={10}
-                  getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd")}
-                  onRowClick={handleRowClick}
-                  getRowId={(row) => row.__rowIndex}
-                  // getRowHeight={() => "auto"} // maybe nice?  wraps values in cells...
-                  components={{
-                     Toolbar: CustomToolbar
-                  }}
-                  // pinnedColumns={pinnedColumns}
-                  // onPinnedColumnsChange={handlePinnedColumnsChange}
-                  // pagination
-                  // paginationMode="server"
-                  // rowsPerPageOptions={[20]}
-                  // sortingMode="server"
-                  // filterMode="server"
-                  // page={pageNumber}
-                  // checkboxSelection
-                  rowCount={data && data.totalRows}
-                  // onPageSizeChange={handleRowsPerPageChange}
-                  // onStateChange={handleStateChange}
-                  // density={density}
-                  // loading={loading}
-                  // filterModel={filterModel}
-                  // onFilterModelChange={handleFilterChange}
-                  // columnVisibilityModel={columnVisibilityModel}
-                  // onColumnVisibilityModelChange={handleColumnVisibilityChange}
-                  // onColumnOrderChange={handleColumnOrderChange}
-                  // onSelectionModelChange={selectionChanged}
-                  // onSortModelChange={handleSortChange}
-                  // sortingOrder={[ "asc", "desc" ]}
-                  // sortModel={columnSortModel}
-               />
+               {grid}
             </Box>
          </Box>
       </Widget>

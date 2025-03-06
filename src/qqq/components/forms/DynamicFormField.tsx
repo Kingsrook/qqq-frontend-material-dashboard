@@ -19,10 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {Box, InputAdornment, InputLabel} from "@mui/material";
 import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field, useFormikContext} from "formik";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
+import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import React, {useMemo, useState} from "react";
 import AceEditor from "react-ace";
 import colors from "qqq/assets/theme/base/colors";
@@ -43,6 +45,8 @@ interface Props
    placeholder?: string;
    backgroundColor?: string;
 
+   onChangeCallback?: (newValue: any) => void;
+
    [key: string]: any;
 
    bulkEditMode?: boolean;
@@ -51,7 +55,7 @@ interface Props
 }
 
 function QDynamicFormField({
-   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, placeholder, backgroundColor, formFieldObject, ...rest
+   label, name, displayFormat, value, bulkEditMode, bulkEditSwitchChangeHandler, type, isEditable, placeholder, backgroundColor, formFieldObject, onChangeCallback, ...rest
 }: Props): JSX.Element
 {
    const [switchChecked, setSwitchChecked] = useState(false);
@@ -116,42 +120,79 @@ function QDynamicFormField({
    // put the onChange in an object and assign it with a spread          //
    ////////////////////////////////////////////////////////////////////////
    let onChange: any = {};
-   if (isToUpperCase || isToLowerCase)
+   if (isToUpperCase || isToLowerCase || onChangeCallback)
    {
       onChange.onChange = (e: any) =>
       {
-         const beforeStart = e.target.selectionStart;
-         const beforeEnd = e.target.selectionEnd;
-
-         flushSync(() =>
+         if(isToUpperCase || isToLowerCase)
          {
-            let newValue = e.currentTarget.value;
-            if (isToUpperCase)
-            {
-               newValue = newValue.toUpperCase();
-            }
-            if (isToLowerCase)
-            {
-               newValue = newValue.toLowerCase();
-            }
-            setFieldValue(name, newValue);
-         });
+            const beforeStart = e.target.selectionStart;
+            const beforeEnd = e.target.selectionEnd;
 
-         const input = document.getElementById(name) as HTMLInputElement;
-         if (input)
+            flushSync(() =>
+            {
+               let newValue = e.currentTarget.value;
+               if (isToUpperCase)
+               {
+                  newValue = newValue.toUpperCase();
+               }
+               if (isToLowerCase)
+               {
+                  newValue = newValue.toLowerCase();
+               }
+               setFieldValue(name, newValue);
+               if(onChangeCallback)
+               {
+                  onChangeCallback(newValue);
+               }
+            });
+
+            const input = document.getElementById(name) as HTMLInputElement;
+            if (input)
+            {
+               input.setSelectionRange(beforeStart, beforeEnd);
+            }
+         }
+         else if(onChangeCallback)
          {
-            input.setSelectionRange(beforeStart, beforeEnd);
+            onChangeCallback(e.currentTarget.value);
          }
       };
    }
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function dynamicSelectOnChange(newValue?: QPossibleValue)
+   {
+      if(onChangeCallback)
+      {
+         onChangeCallback(newValue == null ? null : newValue.id)
+      }
+   }
+
    let field;
    let getsBulkEditHtmlLabel = true;
-   if (type === "checkbox")
+   if(formFieldObject.possibleValueProps)
+   {
+      field = (<DynamicSelect
+         name={name}
+         fieldPossibleValueProps={formFieldObject.possibleValueProps}
+         isEditable={!isDisabled}
+         fieldLabel={label}
+         initialValue={value}
+         bulkEditMode={bulkEditMode}
+         bulkEditSwitchChangeHandler={bulkEditSwitchChangeHandler}
+         onChange={dynamicSelectOnChange}
+         // otherValues={otherValuesMap}
+         useCase="form"
+      />)
+   }
+   else if (type === "checkbox")
    {
       getsBulkEditHtmlLabel = false;
       field = (<>
-         <BooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} />
+         <BooleanFieldSwitch name={name} label={label} value={value} isDisabled={isDisabled} onChangeCallback={onChangeCallback} />
          <Box mt={0.75}>
             <MDTypography component="div" variant="caption" color="error" fontWeight="regular">
                {!isDisabled && <div className="fieldErrorMessage"><ErrorMessage name={name} render={msg => <span data-field-error="true">{msg}</span>} /></div>}
@@ -179,6 +220,10 @@ function QDynamicFormField({
                onChange={(value: string, event: any) =>
                {
                   setFieldValue(name, value, false);
+                  if(onChangeCallback)
+                  {
+                     onChangeCallback(value);
+                  }
                }}
                setOptions={{useWorker: false}}
                width="100%"

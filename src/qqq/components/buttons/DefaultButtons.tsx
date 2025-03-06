@@ -145,7 +145,7 @@ export function QCancelButton({
 }: QCancelButtonProps): JSX.Element
 {
    return (
-      <Box ml={standardML} mb={2} width={standardWidth}>
+      <Box ml={standardML} width={standardWidth}>
          <MDButton type="button" variant="outlined" color="dark" size="small" fullWidth startIcon={<Icon>{iconName}</Icon>} onClick={onClickHandler} disabled={disabled}>
             {label}
          </MDButton>
@@ -180,3 +180,24 @@ QSubmitButton.defaultProps = {
    label: "Submit",
    iconName: "check",
 };
+
+interface QAlternateButtonProps
+{
+   label: string,
+   iconName?: string,
+   disabled: boolean,
+   onClick?: () => void
+}
+
+export function QAlternateButton({label, iconName, disabled, onClick}: QAlternateButtonProps): JSX.Element
+{
+   return (
+      <Box ml={standardML} width={standardWidth}>
+         <MDButton type="button" variant="gradient" color="secondary" size="small" fullWidth startIcon={iconName && <Icon>{iconName}</Icon>} onClick={onClick} disabled={disabled}>
+            {label}
+         </MDButton>
+      </Box>
+   );
+}
+
+QAlternateButton.defaultProps = {};

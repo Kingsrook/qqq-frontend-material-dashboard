@@ -23,6 +23,7 @@ import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Ado
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import "datejs"; // https://github.com/datejs/Datejs
 import {Chip, ClickAwayListener, Icon} from "@mui/material";
@@ -76,14 +77,14 @@ class ValueUtils
     ** When you have a field, and a record - call this method to get a string or
     ** element back to display the field's value.
     *******************************************************************************/
-   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view", overrideFieldName?: string): string | JSX.Element | JSX.Element[]
+   public static getDisplayValue(field: QFieldMetaData, record: QRecord, usage: "view" | "query" = "view", overrideFieldName?: string, tableVariant?: QTableVariant): string | JSX.Element | JSX.Element[]
    {
       const fieldName = overrideFieldName ?? field.name;
 
       const displayValue = record.displayValues ? record.displayValues.get(fieldName) : undefined;
       const rawValue = record.values ? record.values.get(fieldName) : undefined;
 
-      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage);
+      return ValueUtils.getValueForDisplay(field, rawValue, displayValue, usage, tableVariant, record, fieldName);
    }
 
 
@@ -91,14 +92,35 @@ class ValueUtils
     ** When you have a field and a value (either just a raw value, or a raw and
     ** display value), call this method to get a string Element to display.
     *******************************************************************************/
-   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view"): string | JSX.Element | JSX.Element[]
+   public static getValueForDisplay(field: QFieldMetaData, rawValue: any, displayValue: any = rawValue, usage: "view" | "query" = "view", tableVariant?: QTableVariant, record?: QRecord, fieldName?: string): string | JSX.Element | JSX.Element[]
    {
       if (field.hasAdornment(AdornmentType.LINK))
       {
          const adornment = field.getAdornment(AdornmentType.LINK);
-         let href = rawValue;
+         let href = String(rawValue);
 
-         const toRecordFromTable = adornment.getValue("toRecordFromTable");
+         let toRecordFromTable = adornment.getValue("toRecordFromTable");
+
+         /////////////////////////////////////////////////////////////////////////////////////
+         // if the link adornment has a 'toRecordFromTableDynamic', then look for a display //
+         // value named `fieldName`:toRecordFromTableDynamic for the table name.            //
+         /////////////////////////////////////////////////////////////////////////////////////
+         if(adornment.getValue("toRecordFromTableDynamic"))
+         {
+            const toRecordFromTableDynamic = record?.displayValues?.get(fieldName + ":toRecordFromTableDynamic");
+            if(toRecordFromTableDynamic)
+            {
+               toRecordFromTable = toRecordFromTableDynamic;
+            }
+            else
+            {
+               ///////////////////////////////////////////////////////////////////
+               // if the table name isn't known, then return w/o the adornment. //
+               ///////////////////////////////////////////////////////////////////
+               return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+            }
+         }
+
          if (toRecordFromTable)
          {
             if (ValueUtils.getQInstance())
@@ -107,7 +129,7 @@ class ValueUtils
                if (!tablePath)
                {
                   console.log("Couldn't find path for table: " + toRecordFromTable);
-                  return (displayValue ?? rawValue);
+                  return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
                }
 
                if (!tablePath.endsWith("/"))
@@ -199,11 +221,43 @@ class ValueUtils
 
       if (field.type == QFieldType.BLOB || field.hasAdornment(AdornmentType.FILE_DOWNLOAD))
       {
-         return (<BlobComponent field={field} url={rawValue} filename={displayValue} usage={usage} />);
+         let url = rawValue;
+         if(tableVariant)
+         {
+            url += "?tableVariant=" + encodeURIComponent(JSON.stringify(tableVariant));
+         }
+
+         //////////////////////////////////////////////////////////////////////////////
+         // if the field has the download adornment with a downloadUrlDynamic value, //
+         // then get the url from a displayValue of `fieldName`:downloadUrlDynamic.  //
+         //////////////////////////////////////////////////////////////////////////////
+         if(field.hasAdornment(AdornmentType.FILE_DOWNLOAD))
+         {
+            const adornment = field.getAdornment(AdornmentType.FILE_DOWNLOAD);
+            let downloadUrlDynamicAdornmentValue = adornment.getValue("downloadUrlDynamic");
+            if(downloadUrlDynamicAdornmentValue)
+            {
+               const downloadUrlDynamicValue = record?.displayValues?.get(fieldName + ":downloadUrlDynamic");
+               if (downloadUrlDynamicValue)
+               {
+                  url = downloadUrlDynamicValue;
+               }
+               else
+               {
+                  ////////////////////////////////////////////////////////////////
+                  // if the url isn't available, then return w/o the adornment. //
+                  ////////////////////////////////////////////////////////////////
+                  return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
+               }
+            }
+         }
+
+         return (<BlobComponent field={field} url={url} filename={displayValue} usage={usage} />);
       }
 
       return (ValueUtils.getUnadornedValueForDisplay(field, rawValue, displayValue));
    }
+
 
    /*******************************************************************************
     ** After we know there's no element to be returned (e.g., because no adornment),

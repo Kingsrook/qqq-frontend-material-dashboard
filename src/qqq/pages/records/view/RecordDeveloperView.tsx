@@ -191,7 +191,7 @@ function RecordDeveloperView({table}: Props): JSX.Element
                                                 <Card sx={{mb: 3}}>
                                                    <Typography variant="h6" p={2} pl={3} pb={3}>{field?.label}</Typography>
 
-                                                   <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
+                                                   <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mx={3} mb={3} mt={0}>
                                                       {scriptId ?
                                                          <ScriptViewer
                                                             scriptId={scriptId}

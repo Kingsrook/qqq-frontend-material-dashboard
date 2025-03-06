@@ -46,11 +46,12 @@ import React, {useContext, useEffect, useRef, useState} from "react";
 
 interface FilterAndColumnsSetupWidgetProps
 {
-   isEditable: boolean;
-   widgetMetaData: QWidgetMetaData;
-   widgetData: any;
-   recordValues: { [name: string]: any };
-   onSaveCallback?: (values: { [name: string]: any }) => void;
+   isEditable: boolean,
+   widgetMetaData: QWidgetMetaData,
+   widgetData: any,
+   recordValues: { [name: string]: any },
+   onSaveCallback?: (values: { [name: string]: any }) => void,
+   label?: string
 }
 
 FilterAndColumnsSetupWidget.defaultProps = {
@@ -83,12 +84,15 @@ const qController = Client.getInstance();
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback}: FilterAndColumnsSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback, label}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
-   const [hideColumns, setHideColumns] = useState(widgetData?.hideColumns);
-   const [hidePreview, setHidePreview] = useState(widgetData?.hidePreview);
+   const [hideColumns] = useState(widgetData?.hideColumns);
+   const [hidePreview] = useState(widgetData?.hidePreview);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+
+   const [filterFieldName] = useState(widgetData?.filterFieldName ?? "queryFilterJson");
+   const [columnsFieldName] = useState(widgetData?.columnsFieldName ?? "columnsJson");
 
    const [alertContent, setAlertContent] = useState(null as string);
 
@@ -108,7 +112,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /////////////////////////////
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
-   let queryFilter = recordValues["queryFilterJson"] && JSON.parse(recordValues["queryFilterJson"]) as QQueryFilter;
+   let queryFilter = recordValues[filterFieldName] && JSON.parse(recordValues[filterFieldName]) as QQueryFilter;
    const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
@@ -142,9 +146,9 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       });
    }
 
-   if (recordValues["columnsJson"])
+   if (recordValues[columnsFieldName])
    {
-      columns = QQueryColumns.buildFromJSON(recordValues["columnsJson"]);
+      columns = QQueryColumns.buildFromJSON(recordValues[columnsFieldName]);
    }
 
    //////////////////////////////////////////////////////////////////////
@@ -230,7 +234,10 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       setFrontendQueryFilter(view.queryFilter);
       const filter = FilterUtils.prepQueryFilterForBackend(tableMetaData, view.queryFilter);
 
-      onSaveCallback({queryFilterJson: JSON.stringify(filter), columnsJson: JSON.stringify(view.queryColumns)});
+      const rs: { [key: string]: any } = {};
+      rs[filterFieldName] = JSON.stringify(filter);
+      rs[columnsFieldName] = JSON.stringify(view.queryColumns);
+      onSaveCallback(rs);
 
       closeEditor();
    }
@@ -356,7 +363,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          </Collapse>
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
-               <h5>Query Filter</h5>
+               <h5>{label ?? "Query Filter"}</h5>
                <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
             </Box>
             {

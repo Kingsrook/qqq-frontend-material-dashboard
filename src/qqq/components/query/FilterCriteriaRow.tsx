@@ -109,6 +109,7 @@ export const getOperatorOptions = (tableMetaData: QTableMetaData, fieldName: str
          {
             case QFieldType.DECIMAL:
             case QFieldType.INTEGER:
+            case QFieldType.LONG:
                operatorOptions.push({label: "equals", value: QCriteriaOperator.EQUALS, valueMode: ValueMode.SINGLE});
                operatorOptions.push({label: "does not equal", value: QCriteriaOperator.NOT_EQUALS_OR_IS_NULL, valueMode: ValueMode.SINGLE});
                operatorOptions.push({label: "greater than", value: QCriteriaOperator.GREATER_THAN, valueMode: ValueMode.SINGLE});

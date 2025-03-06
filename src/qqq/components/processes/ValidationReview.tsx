@@ -24,29 +24,45 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {Box, Button, FormControlLabel, ListItem, Radio, RadioGroup, Typography} from "@mui/material";
+import {Button, FormControlLabel, ListItem, Radio, RadioGroup, Typography} from "@mui/material";
+import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
-import React, {useState} from "react";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
+import RecordGridWidget, {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget";
 import {ProcessSummaryLine} from "qqq/models/processes/ProcessSummaryLine";
+import {renderSectionOfFields} from "qqq/pages/records/view/RecordView";
 import Client from "qqq/utils/qqq/Client";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React, {useEffect, useState} from "react";
 
 interface Props
 {
-   qInstance: QInstance;
-   process: QProcessMetaData;
-   table: QTableMetaData;
-   processValues: any;
-   step: QFrontendStepMetaData;
-   previewRecords: QRecord[];
-   formValues: any;
-   doFullValidationRadioChangedHandler: any
+   qInstance: QInstance,
+   process: QProcessMetaData,
+   table: QTableMetaData,
+   processValues: any,
+   step: QFrontendStepMetaData,
+   previewRecords: QRecord[],
+   formValues: any,
+   doFullValidationRadioChangedHandler: any,
+   loadingRecords?: boolean
+}
+
+////////////////////////////////////////////////////////////////////////////
+// e.g., for bulk-load, where we want to show associations under a record //
+// the processValue will have these data, to drive this screen.           //
+////////////////////////////////////////////////////////////////////////////
+interface AssociationPreview
+{
+   tableName: string;
+   widgetName: string;
+   associationName: string;
 }
 
 /*******************************************************************************
@@ -55,21 +71,76 @@ interface Props
  ** results when they are available.
  *******************************************************************************/
 function ValidationReview({
-   qInstance, process, table = null, processValues, step, previewRecords = [], formValues, doFullValidationRadioChangedHandler,
+   qInstance, process, table = null, processValues, step, previewRecords = [], formValues, doFullValidationRadioChangedHandler, loadingRecords
 }: Props): JSX.Element
 {
    const [previewRecordIndex, setPreviewRecordIndex] = useState(0);
    const [sourceTableMetaData, setSourceTableMetaData] = useState(null as QTableMetaData);
+   const [previewTableMetaData, setPreviewTableMetaData] = useState(null as QTableMetaData);
+   const [childTableMetaData, setChildTableMetaData] = useState({} as { [name: string]: QTableMetaData });
 
-   if(processValues.sourceTable && !sourceTableMetaData)
+   const [associationPreviewsByWidgetName, setAssociationPreviewsByWidgetName] = useState({} as { [widgetName: string]: AssociationPreview });
+
+   if (processValues.sourceTable && !sourceTableMetaData)
    {
       (async () =>
       {
-         const sourceTableMetaData = await Client.getInstance().loadTableMetaData(processValues.sourceTable)
+         const sourceTableMetaData = await Client.getInstance().loadTableMetaData(processValues.sourceTable);
          setSourceTableMetaData(sourceTableMetaData);
       })();
    }
 
+   ////////////////////////////////////////////////////////////////////////////////////////
+   // load meta-data and set up associations-data structure, if so directed from backend //
+   ////////////////////////////////////////////////////////////////////////////////////////
+   useEffect(() =>
+   {
+      if (processValues.formatPreviewRecordUsingTableLayout && !previewTableMetaData)
+      {
+         (async () =>
+         {
+            const previewTableMetaData = await Client.getInstance().loadTableMetaData(processValues.formatPreviewRecordUsingTableLayout);
+            setPreviewTableMetaData(previewTableMetaData);
+         })();
+      }
+
+      try
+      {
+         const previewRecordAssociatedTableNames: string[] = processValues.previewRecordAssociatedTableNames ?? [];
+         const previewRecordAssociatedWidgetNames: string[] = processValues.previewRecordAssociatedWidgetNames ?? [];
+         const previewRecordAssociationNames: string[] = processValues.previewRecordAssociationNames ?? [];
+
+         const associationPreviewsByWidgetName: { [widgetName: string]: AssociationPreview } = {};
+         for (let i = 0; i < Math.min(previewRecordAssociatedTableNames.length, previewRecordAssociatedWidgetNames.length, previewRecordAssociationNames.length); i++)
+         {
+            const associationPreview = {tableName: previewRecordAssociatedTableNames[i], widgetName: previewRecordAssociatedWidgetNames[i], associationName: previewRecordAssociationNames[i]};
+            associationPreviewsByWidgetName[associationPreview.widgetName] = associationPreview;
+         }
+         setAssociationPreviewsByWidgetName(associationPreviewsByWidgetName);
+
+         if (Object.keys(associationPreviewsByWidgetName))
+         {
+            (async () =>
+            {
+               for (let key in associationPreviewsByWidgetName)
+               {
+                  const associationPreview = associationPreviewsByWidgetName[key];
+                  childTableMetaData[associationPreview.tableName] = await Client.getInstance().loadTableMetaData(associationPreview.tableName);
+                  setChildTableMetaData(Object.assign({}, childTableMetaData));
+               }
+            })();
+         }
+      }
+      catch (e)
+      {
+         console.log(`Error setting up association previews: ${e}`);
+      }
+   }, []);
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const updatePreviewRecordIndex = (offset: number) =>
    {
       let newIndex = previewRecordIndex + offset;
@@ -85,6 +156,10 @@ function ValidationReview({
       setPreviewRecordIndex(newIndex);
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
    const buildDoFullValidationRadioListItem = (value: "true" | "false", labelText: string, tooltipHTML: JSX.Element): JSX.Element =>
    {
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,6 +266,7 @@ function ValidationReview({
       </List>
    );
 
+
    const recordPreviewWidget = step.recordListFields && (
       <Box border="1px solid rgb(70%, 70%, 70%)" borderRadius="10px" p={2} mt={2}>
          <Box mx={2} mt={-5} p={1} sx={{width: "fit-content", borderColor: "rgb(70%, 70%, 70%)", borderWidth: "2px", borderStyle: "solid", borderRadius: ".25em", backgroundColor: "#FFFFFF"}} width="initial" color="white">
@@ -200,43 +276,47 @@ function ValidationReview({
             <MDTypography color="body" variant="body2" component="div" mb={2}>
                <Box display="flex">
                   {
-                     processValues?.previewMessage && previewRecords && previewRecords.length > 0 ? (
-                        <>
-                           <i>{processValues?.previewMessage}</i>
-                           <CustomWidthTooltip
-                              title={(
-                                 <div>
-                                    Note that the number of preview records available may be fewer than the total number of records being processed.
-                                 </div>
-                              )}
-                           >
-                              <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
-                           </CustomWidthTooltip>
-                        </>
-                     ) : (
-                        <>
-                           <i>No record previews are available at this time.</i>
-                           <CustomWidthTooltip
-                              title={(
-                                 <div>
-                                    {
-                                       processValues.validationSummary ? (
-                                          <>
-                                             It appears as though this process does not contain any valid records.
-                                          </>
-                                       ) : (
-                                          <>
-                                             If you choose to Perform Validation, and there are any valid records, then you will see a preview here.
-                                          </>
-                                       )
-                                    }
-                                 </div>
-                              )}
-                           >
-                              <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
-                           </CustomWidthTooltip>
-                        </>
-                     )
+                     loadingRecords ? <i>Loading...</i> : <>
+                        {
+                           processValues?.previewMessage && previewRecords && previewRecords.length > 0 ? (
+                              <>
+                                 <i>{processValues?.previewMessage}</i>
+                                 <CustomWidthTooltip
+                                    title={(
+                                       <div>
+                                          Note that the number of preview records available may be fewer than the total number of records being processed.
+                                       </div>
+                                    )}
+                                 >
+                                    <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
+                                 </CustomWidthTooltip>
+                              </>
+                           ) : (
+                              <>
+                                 <i>No record previews are available at this time.</i>
+                                 <CustomWidthTooltip
+                                    title={(
+                                       <div>
+                                          {
+                                             processValues.validationSummary ? (
+                                                <>
+                                                   It appears as though this process does not contain any valid records.
+                                                </>
+                                             ) : (
+                                                <>
+                                                   If you choose to Perform Validation, and there are any valid records, then you will see a preview here.
+                                                </>
+                                             )
+                                          }
+                                       </div>
+                                    )}
+                                 >
+                                    <IconButton sx={{py: 0}}><Icon fontSize="small">info_outlined</Icon></IconButton>
+                                 </CustomWidthTooltip>
+                              </>
+                           )
+                        }
+                     </>
                   }
                </Box>
             </MDTypography>
@@ -244,15 +324,26 @@ function ValidationReview({
                <Box sx={{maxHeight: "calc(100vh - 640px)", overflow: "auto", minHeight: "300px", marginRight: "-40px"}}>
                   <Box sx={{paddingRight: "40px"}}>
                      {
-                        previewRecords && previewRecords[previewRecordIndex] && step.recordListFields.map((field) => (
+                        previewRecords && !processValues.formatPreviewRecordUsingTableLayout && previewRecords[previewRecordIndex] && step.recordListFields.map((field) => (
                            <Box key={field.name} style={{marginBottom: "12px"}}>
                               <b>{`${field.label}:`}</b>
                               {" "}
-                           &nbsp;
+                              &nbsp;
                               {" "}
                               {ValueUtils.getDisplayValue(field, previewRecords[previewRecordIndex], "view")}
                            </Box>
                         ))
+                     }
+                     {
+                        previewRecords && processValues.formatPreviewRecordUsingTableLayout && previewRecords[previewRecordIndex] &&
+                        <PreviewRecordUsingTableLayout
+                           index={previewRecordIndex}
+                           record={previewRecords[previewRecordIndex]}
+                           tableMetaData={previewTableMetaData}
+                           qInstance={qInstance}
+                           associationPreviewsByWidgetName={associationPreviewsByWidgetName}
+                           childTableMetaData={childTableMetaData}
+                        />
                      }
                   </Box>
                </Box>
@@ -287,5 +378,85 @@ function ValidationReview({
       </Box>
    );
 }
+
+
+
+interface PreviewRecordUsingTableLayoutProps
+{
+   index: number
+   record: QRecord,
+   tableMetaData: QTableMetaData,
+   qInstance: QInstance,
+   associationPreviewsByWidgetName: { [widgetName: string]: AssociationPreview },
+   childTableMetaData: { [name: string]: QTableMetaData },
+}
+
+function PreviewRecordUsingTableLayout({record, tableMetaData, qInstance, associationPreviewsByWidgetName, childTableMetaData, index}: PreviewRecordUsingTableLayoutProps): JSX.Element
+{
+   if (!tableMetaData)
+   {
+      return (<i>Loading...</i>);
+   }
+
+   const renderedSections: JSX.Element[] = [];
+   const tableSections = TableUtils.getSectionsForRecordSidebar(tableMetaData);
+
+   for (let i = 0; i < tableSections.length; i++)
+   {
+      const section = tableSections[i];
+      if (section.isHidden)
+      {
+         continue;
+      }
+
+      if (section.fieldNames)
+      {
+         renderedSections.push(<Box mb="1rem">
+            <Box><h4>{section.label}</h4></Box>
+            <Box ml="1rem">
+               {renderSectionOfFields(section.name, section.fieldNames, tableMetaData, false, record, undefined, {label: {fontWeight: "500"}})}
+            </Box>
+         </Box>);
+      }
+      else if (section.widgetName)
+      {
+         const widget = qInstance.widgets.get(section.widgetName);
+         if (widget)
+         {
+            let data: ChildRecordListData = null;
+            if (associationPreviewsByWidgetName[section.widgetName])
+            {
+               const associationPreview = associationPreviewsByWidgetName[section.widgetName];
+               const associationRecords = record.associatedRecords?.get(associationPreview.associationName) ?? [];
+               data = {
+                  canAddChildRecord: false,
+                  childTableMetaData: childTableMetaData[associationPreview.tableName],
+                  defaultValuesForNewChildRecords: {},
+                  disabledFieldsForNewChildRecords: {},
+                  queryOutput: {records: associationRecords},
+                  totalRows: associationRecords.length,
+                  tablePath: "",
+                  title: "",
+                  viewAllLink: "",
+               };
+
+               renderedSections.push(<Box mb="1rem">
+                  {
+                     data && <Box>
+                        <Box mb="0.5rem"><h4>{section.label}</h4></Box>
+                        <Box pl="1rem">
+                           <RecordGridWidget key={index} data={data} widgetMetaData={widget} disableRowClick gridOnly={true} gridDensity={"compact"} />
+                        </Box>
+                     </Box>
+                  }
+               </Box>);
+            }
+         }
+      }
+   }
+
+   return <>{renderedSections}</>;
+}
+
 
 export default ValidationReview;
