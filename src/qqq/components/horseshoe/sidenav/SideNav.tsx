@@ -34,6 +34,7 @@ import SideNavList from "qqq/components/horseshoe/sidenav/SideNavList";
 import SidenavRoot from "qqq/components/horseshoe/sidenav/SideNavRoot";
 import sidenavLogoLabel from "qqq/components/horseshoe/sidenav/styles/SideNav";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {getBannerClassName, getBannerStyles, getBanner, makeBannerContent} from "qqq/components/misc/Banners";
 import {setMiniSidenav, setTransparentSidenav, setWhiteSidenav, useMaterialUIController,} from "qqq/context";
 
 
@@ -300,6 +301,30 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
       }
    );
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function EnvironmentBanner({branding}: { branding: QBrandingMetaData }): JSX.Element | null
+   {
+      // deprecated!
+      if (branding && branding.environmentBannerText)
+      {
+         return <Box mt={2} bgcolor={branding.environmentBannerColor} borderRadius={2}>
+            {branding.environmentBannerText}
+         </Box>;
+      }
+
+      const banner = getBanner(branding, "QFMD_SIDE_NAV_UNDER_LOGO");
+      if (banner)
+      {
+         return <Box className={getBannerClassName(banner)} mt={2} borderRadius={2} sx={getBannerStyles(banner)}>
+            {makeBannerContent(banner)}
+         </Box>;
+      }
+
+      return (null);
+   }
+
    return (
       <SidenavRoot
          {...rest}
@@ -330,12 +355,7 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
                </Box>
                }
             </Box>
-            {
-               branding && branding.environmentBannerText &&
-               <Box mt={2} bgcolor={branding.environmentBannerColor} borderRadius={2}>
-                  {branding.environmentBannerText}
-               </Box>
-            }
+            <EnvironmentBanner branding={branding} />
          </Box>
          <Divider
             light={
