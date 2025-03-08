@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {useAuth0} from "@auth0/auth0-react";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 import {QAppNodeType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppNodeType";
 import {QAppTreeNode} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAppTreeNode";
@@ -34,11 +33,13 @@ import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
 import {LicenseInfo} from "@mui/x-license-pro";
 import CommandMenu from "CommandMenu";
-import jwt_decode from "jwt-decode";
 import QContext from "QContext";
+import useAnonymousAuthenticationModule from "qqq/authorization/anonymous/useAnonymousAuthenticationModule";
+import useAuth0AuthenticationModule from "qqq/authorization/auth0/useAuth0AuthenticationModule";
+import useOAuth2AuthenticationModule from "qqq/authorization/oauth2/useOAuth2AuthenticationModule";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
-import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "qqq/context";
+import {setMiniSidenav, useMaterialUIController} from "qqq/context";
 import AppHome from "qqq/pages/apps/Home";
 import NoApps from "qqq/pages/apps/NoApps";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
@@ -65,7 +66,6 @@ export const SESSION_UUID_COOKIE_NAME = "sessionUUID";
 export default function App()
 {
    const [cookies, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
-   const {user, getAccessTokenSilently, logout} = useAuth0();
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
@@ -74,68 +74,21 @@ export default function App()
    const [needLicenseKey, setNeedLicenseKey] = useState(true);
    const [loggedInUser, setLoggedInUser] = useState({} as { name?: string, email?: string });
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
+   const [authenticationMetaData, setAuthenticationMetaData] = useState(null as QAuthenticationMetaData | null);
+   const [earlyReturnForAuth, setEarlyReturnForAuth] = useState(null as JSX.Element);
+
+   const {setupSession: auth0SetupSession, logout: auth0Logout} = useAuth0AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
+   const {setupSession: oauth2SetupSession, logout: oauth2Logout} = useOAuth2AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
+   const {setupSession: anonymousSetupSession, logout: anonymousLogout} = useAnonymousAuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
 
    /////////////////////////////////////////////////////////
    // tell the client how to do a logout if it sees a 401 //
    /////////////////////////////////////////////////////////
-   Client.setUnauthorizedCallback(() =>
-   {
-      logout();
-   });
+   Client.setUnauthorizedCallback(() => doLogout());
 
-   const shouldStoreNewToken = (newToken: string, oldToken: string): boolean =>
-   {
-      if (!cookies[SESSION_UUID_COOKIE_NAME])
-      {
-         console.log("No session uuid cookie - so we should store a new one.");
-         return (true);
-      }
-
-      if (!oldToken)
-      {
-         console.log("No accessToken in localStorage - so we should store a new one.");
-         return (true);
-      }
-
-      try
-      {
-         const oldJSON: any = jwt_decode(oldToken);
-         const newJSON: any = jwt_decode(newToken);
-
-         ////////////////////////////////////////////////////////////////////////////////////
-         // if the old (local storage) token is expired, then we need to store the new one //
-         ////////////////////////////////////////////////////////////////////////////////////
-         const oldExp = oldJSON["exp"];
-         if (oldExp * 1000 < (new Date().getTime()))
-         {
-            console.log("Access token in local storage was expired - so we should store a new one.");
-            return (true);
-         }
-
-         ////////////////////////////////////////////////////////////////////////////////////////////////
-         // remove the exp & iat values from what we compare - as they are always different from auth0 //
-         // note, this is only deleting them from what we compare, not from what we'd store.           //
-         ////////////////////////////////////////////////////////////////////////////////////////////////
-         delete newJSON["exp"];
-         delete newJSON["iat"];
-         delete oldJSON["exp"];
-         delete oldJSON["iat"];
-
-         const different = JSON.stringify(newJSON) !== JSON.stringify(oldJSON);
-         if (different)
-         {
-            console.log("Latest access token from auth0 has changed vs localStorage - so we should store a new one.");
-         }
-         return (different);
-      }
-      catch (e)
-      {
-         console.log("Caught in shouldStoreNewToken: " + e);
-      }
-
-      return (true);
-   };
-
+   /////////////////////////////////////////////////
+   // deal with making sure user is authenticated //
+   /////////////////////////////////////////////////
    useEffect(() =>
    {
       if (loadingToken)
@@ -147,64 +100,19 @@ export default function App()
       (async () =>
       {
          const authenticationMetaData: QAuthenticationMetaData = await qController.getAuthenticationMetaData();
+         setAuthenticationMetaData(authenticationMetaData);
 
          if (authenticationMetaData.type === "AUTH_0")
          {
-            /////////////////////////////////////////
-            // use auth0 if auth type is ... auth0 //
-            /////////////////////////////////////////
-            try
-            {
-               console.log("Loading token from auth0...");
-               const accessToken = await getAccessTokenSilently();
-
-               const lsAccessToken = localStorage.getItem("accessToken");
-               if (shouldStoreNewToken(accessToken, lsAccessToken))
-               {
-                  console.log("Sending accessToken to backend, requesting a sessionUUID...");
-                  const {uuid: newSessionUuid, values} = await qController.manageSession(accessToken, null);
-
-                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
-                  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
-
-                  localStorage.setItem("accessToken", accessToken);
-                  localStorage.setItem("sessionValues", JSON.stringify(values));
-                  console.log("Got new sessionUUID from backend, and stored new accessToken");
-               }
-               else
-               {
-                  console.log("Using existing sessionUUID cookie");
-               }
-
-               setIsFullyAuthenticated(true);
-               qController.setGotAuthentication();
-
-               setLoggedInUser(user);
-               console.log("Token load complete.");
-            }
-            catch (e)
-            {
-               console.log(`Error loading token: ${JSON.stringify(e)}`);
-               qController.clearAuthenticationMetaDataLocalStorage();
-               localStorage.removeItem("accessToken");
-               removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
-               logout();
-               return;
-            }
+            await auth0SetupSession();
+         }
+         else if (authenticationMetaData.type === "OAUTH2")
+         {
+            await oauth2SetupSession();
          }
          else if (authenticationMetaData.type === "FULLY_ANONYMOUS" || authenticationMetaData.type === "MOCK")
          {
-            /////////////////////////////////////////////
-            // use a random token if anonymous or mock //
-            /////////////////////////////////////////////
-            console.log("Generating random token...");
-            setIsFullyAuthenticated(true);
-            qController.setGotAuthentication();
-            setCookie(SESSION_UUID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
-            console.log("Token generation complete.");
-            return;
+            await anonymousSetupSession();
          }
          else
          {
@@ -220,9 +128,32 @@ export default function App()
       (async () =>
       {
          const metaData: QInstance = await qController.loadMetaData();
-         LicenseInfo.setLicenseKey(metaData.environmentValues.get("MATERIAL_UI_LICENSE_KEY") || process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
+         LicenseInfo.setLicenseKey(metaData.environmentValues?.get("MATERIAL_UI_LICENSE_KEY") || process.env.REACT_APP_MATERIAL_UI_LICENSE_KEY);
          setNeedLicenseKey(false);
       })();
+   }
+
+   /***************************************************************************
+    ** call approprite logout function based on authentication meta data type
+    ***************************************************************************/
+   function doLogout()
+   {
+      if (authenticationMetaData?.type === "AUTH_0")
+      {
+         auth0Logout();
+      }
+      else if (authenticationMetaData?.type === "OAUTH2")
+      {
+         oauth2Logout();
+      }
+      else if (authenticationMetaData?.type === "FULLY_ANONYMOUS" || authenticationMetaData?.type === "MOCK")
+      {
+         anonymousLogout();
+      }
+      else
+      {
+         console.log(`No logout callback for authentication type [${authenticationMetaData?.type}].`);
+      }
    }
 
    const [controller, dispatch] = useMaterialUIController();
@@ -592,10 +523,7 @@ export default function App()
                   localStorage.removeItem("accessToken");
                   removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
 
-                  //////////////////////////////////////////////////////
-                  // todo - this is auth0 logout... make more generic //
-                  //////////////////////////////////////////////////////
-                  logout();
+                  doLogout();
                   return;
                }
             }
@@ -603,7 +531,9 @@ export default function App()
       })();
    }, [needToLoadRoutes, isFullyAuthenticated]);
 
-   // Open sidenav when mouse enter on mini sidenav
+   ///////////////////////////////////////////////////
+   // Open sidenav when mouse enter on mini sidenav //
+   ///////////////////////////////////////////////////
    const handleOnMouseEnter = () =>
    {
       if (miniSidenav && !onMouseEnter)
@@ -613,7 +543,9 @@ export default function App()
       }
    };
 
-   // Close sidenav when mouse leave mini sidenav
+   /////////////////////////////////////////////////
+   // Close sidenav when mouse leave mini sidenav //
+   /////////////////////////////////////////////////
    const handleOnMouseLeave = () =>
    {
       if (onMouseEnter)
@@ -623,16 +555,14 @@ export default function App()
       }
    };
 
-   // Change the openConfigurator state
-   const handleConfiguratorOpen = () => setOpenConfigurator(dispatch, !openConfigurator);
-
-   // Setting the dir attribute for the body element
    useEffect(() =>
    {
       document.body.setAttribute("dir", direction);
    }, [direction]);
 
-   // Setting page scroll to 0 when changing the route
+   //////////////////////////////////////////////////////
+   // Setting page scroll to 0 when changing the route //
+   //////////////////////////////////////////////////////
    useEffect(() =>
    {
       document.documentElement.scrollTop = 0;
@@ -672,14 +602,14 @@ export default function App()
    const [dotMenuOpen, setDotMenuOpen] = useState(false);
    const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false);
    const [helpHelpActive] = useState(queryParams.has("helpHelp"));
-   const [userId, setUserId] = useState(user?.email);
+   const [userId, setUserId] = useState(loggedInUser?.email);
 
    useEffect(() =>
    {
-      setUserId(user?.email)
-   }, [user]);
+      setUserId(loggedInUser?.email);
+   }, [loggedInUser]);
 
-   
+
    const [googleAnalyticsUtils] = useState(new GoogleAnalyticsUtils());
 
    /*******************************************************************************
@@ -687,7 +617,16 @@ export default function App()
     *******************************************************************************/
    function recordAnalytics(model: AnalyticsModel)
    {
-      googleAnalyticsUtils.recordAnalytics(model)
+      googleAnalyticsUtils.recordAnalytics(model);
+   }
+
+   ///////////////////////////////////////////////////////////////////
+   // if any of the auth/session setup code determined that we need //
+   // to render something and return early - then do so here.       //
+   ///////////////////////////////////////////////////////////////////
+   if (earlyReturnForAuth)
+   {
+      return (earlyReturnForAuth);
    }
 
 
@@ -727,6 +666,7 @@ export default function App()
                   routes={sideNavRoutes}
                   onMouseEnter={handleOnMouseEnter}
                   onMouseLeave={handleOnMouseLeave}
+                  logout={doLogout}
                />
                <Routes>
                   <Route path="*" element={<Navigate to={defaultRoute} />} />

@@ -19,116 +19,97 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Auth0Provider} from "@auth0/auth0-react";
 import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
-import React from "react";
-import {createRoot} from "react-dom/client";
-import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
 import "qqq/styles/qqq-override-styles.css";
 import "qqq/styles/globals.scss";
 import "qqq/styles/raycast.scss";
-import HandleAuthorizationError from "HandleAuthorizationError";
-import ProtectedRoute from "qqq/authorization/auth0/ProtectedRoute";
+import useAnonymousAuthenticationModule from "qqq/authorization/anonymous/useAnonymousAuthenticationModule";
+import useAuth0AuthenticationModule from "qqq/authorization/auth0/useAuth0AuthenticationModule";
+import useOAuth2AuthenticationModule from "qqq/authorization/oauth2/useOAuth2AuthenticationModule";
 import {MaterialUIControllerProvider} from "qqq/context";
 import Client from "qqq/utils/qqq/Client";
+import React from "react";
+import {createRoot} from "react-dom/client";
+import {BrowserRouter} from "react-router-dom";
+
 
 const qController = Client.getInstance();
 
-if(document.location.search && document.location.search.indexOf("clearAuthenticationMetaDataLocalStorage") > -1)
+if (document.location.search && document.location.search.indexOf("clearAuthenticationMetaDataLocalStorage") > -1)
 {
-   qController.clearAuthenticationMetaDataLocalStorage()
+   qController.clearAuthenticationMetaDataLocalStorage();
 }
 
-const authenticationMetaDataPromise: Promise<QAuthenticationMetaData> = qController.getAuthenticationMetaData()
+const authenticationMetaDataPromise: Promise<QAuthenticationMetaData> = qController.getAuthenticationMetaData();
 
 authenticationMetaDataPromise.then((authenticationMetaData) =>
 {
-   // @ts-ignore
-   function Auth0ProviderWithRedirectCallback({children, ...props})
-   {
-      const navigate = useNavigate();
-      const [searchParams] = useSearchParams();
 
-      // @ts-ignore
-      const onRedirectCallback = (appState) =>
-      {
-         navigate((appState && appState.returnTo) || window.location.pathname);
-      };
-      if (searchParams.get("error"))
-      {
-         return (
-            // @ts-ignore
-            <Auth0Provider {...props}>
-               <HandleAuthorizationError errorMessage={searchParams.get("error_description")} />
-            </Auth0Provider>
-         );
-      }
-      else
-      {
-         return (
-            // @ts-ignore
-            <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
-               {children}
-            </Auth0Provider>
-         );
-      }
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function Auth0RouterBody()
+   {
+      const {renderAppWrapper} = useAuth0AuthenticationModule({});
+      return (renderAppWrapper(authenticationMetaData, null));
    }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function OAuth2RouterBody()
+   {
+      const {renderAppWrapper} = useOAuth2AuthenticationModule({});
+      return (renderAppWrapper(authenticationMetaData, (
+         <MaterialUIControllerProvider>
+            <App />
+         </MaterialUIControllerProvider>
+      )));
+   }
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function AnonymousRouterBody()
+   {
+      const {renderAppWrapper} = useAnonymousAuthenticationModule({});
+      return (renderAppWrapper(authenticationMetaData, (
+         <MaterialUIControllerProvider>
+            <App />
+         </MaterialUIControllerProvider>
+      )));
+   }
+
 
    const container = document.getElementById("root");
    const root = createRoot(container);
 
    if (authenticationMetaData.type === "AUTH_0")
    {
-      // @ts-ignore
-      let domain: string = authenticationMetaData.data.baseUrl;
-
-      // @ts-ignore
-      const clientId = authenticationMetaData.data.clientId;
-
-      // @ts-ignore
-      const audience = authenticationMetaData.data.audience;
-
-      if(!domain || !clientId)
-      {
-         root.render(
-            <div>Error:  AUTH0 authenticationMetaData is missing domain [{domain}] and/or clientId [{clientId}].</div>
-         );
-         return;
-      }
-
-      if(domain.endsWith("/"))
-      {
-         /////////////////////////////////////////////////////////////////////////////////////
-         // auth0 lib fails if we have a trailing slash.  be a bit more graceful than that. //
-         /////////////////////////////////////////////////////////////////////////////////////
-         domain = domain.replace(/\/$/, "");
-      }
-
-      root.render(
-         <BrowserRouter>
-            <Auth0ProviderWithRedirectCallback
-               domain={domain}
-               clientId={clientId}
-               audience={audience}
-               redirectUri={`${window.location.origin}/`}
-            >
-               <MaterialUIControllerProvider>
-                  <ProtectedRoute component={App} />
-               </MaterialUIControllerProvider>
-            </Auth0ProviderWithRedirectCallback>
-         </BrowserRouter>
-      );
+      root.render(<BrowserRouter>
+         <Auth0RouterBody />
+      </BrowserRouter>);
+   }
+   else if (authenticationMetaData.type === "OAUTH2")
+   {
+      root.render(<BrowserRouter>
+         <OAuth2RouterBody />
+      </BrowserRouter>);
+   }
+   else if (authenticationMetaData.type === "FULLY_ANONYMOUS" || authenticationMetaData.type === "MOCK")
+   {
+      root.render(<BrowserRouter>
+         <AnonymousRouterBody />
+      </BrowserRouter>);
    }
    else
    {
-      root.render(
-         <BrowserRouter>
-            <MaterialUIControllerProvider>
-               <App />
-            </MaterialUIControllerProvider>
-         </BrowserRouter>
-      );
+      root.render(<div>
+         Error: Unknown authenticationMetaData type: [{authenticationMetaData.type}].
+      </div>);
    }
 
-})
+});
