@@ -29,6 +29,7 @@ import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstan
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Icon from "@mui/material/Icon";
 import {ThemeProvider} from "@mui/material/styles";
@@ -38,6 +39,7 @@ import jwt_decode from "jwt-decode";
 import QContext from "QContext";
 import Sidenav from "qqq/components/horseshoe/sidenav/SideNav";
 import theme from "qqq/components/legacy/Theme";
+import {getBannerClassName, getBannerStyles, getBanner, makeBannerContent} from "qqq/components/misc/Banners";
 import {setMiniSidenav, setOpenConfigurator, useMaterialUIController} from "qqq/context";
 import AppHome from "qqq/pages/apps/Home";
 import NoApps from "qqq/pages/apps/NoApps";
@@ -691,6 +693,23 @@ export default function App()
    }
 
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function banner(): JSX.Element | null
+   {
+      const banner = getBanner(metaData?.branding, "QFMD_TOP_OF_SITE");
+
+      if (!banner)
+      {
+         return (null);
+      }
+
+      return (<Box className={getBannerClassName(banner)} sx={{display: "flex", justifyContent: "center", padding: "0.5rem", position: "sticky", top: "0", zIndex: 1, ...getBannerStyles(banner)}}>
+         {makeBannerContent(banner)}
+      </Box>);
+   }
+
    return (
 
       appRoutes && (
@@ -718,6 +737,7 @@ export default function App()
             <ThemeProvider theme={theme}>
                <CssBaseline />
                <CommandMenu metaData={metaData} />
+               {banner()}
                <Sidenav
                   color={sidenavColor}
                   icon={branding.icon}

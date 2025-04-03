@@ -21,11 +21,12 @@
 
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import Box from "@mui/material/Box";
-import {ReactNode, useEffect, useState} from "react";
 import Footer from "qqq/components/horseshoe/Footer";
 import NavBar from "qqq/components/horseshoe/NavBar";
+import {getBannerClassName, getBannerStyles, getBanner, makeBannerContent} from "qqq/components/misc/Banners";
 import DashboardLayout from "qqq/layouts/DashboardLayout";
 import Client from "qqq/utils/qqq/Client";
+import {ReactNode, useEffect, useState} from "react";
 
 interface Props
 {
@@ -80,12 +81,34 @@ function BaseLayout({stickyNavbar, children}: Props): JSX.Element
       return () => window.removeEventListener("resize", handleTabsOrientation);
    }, [tabsOrientation]);
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function banner(): JSX.Element | null
+   {
+      const banner = getBanner(metaData?.branding, "QFMD_TOP_OF_BODY");
+
+      if (!banner)
+      {
+         return (null);
+      }
+
+      return (<Box className={getBannerClassName(banner)} sx={{display: "flex", justifyContent: "center", padding: "0.5rem", margin: "-20px", marginBottom: "20px", ...getBannerStyles(banner)}}>
+         {makeBannerContent(banner)}
+      </Box>);
+   }
+
+
    return (
-      <DashboardLayout>
-         <NavBar />
-         <Box>{children}</Box>
-         <Footer company={{href: metaData?.branding?.companyUrl, name: metaData?.branding?.companyName}} />
-      </DashboardLayout>
+      <>
+         <DashboardLayout>
+            {banner()}
+            <NavBar />
+            <Box>{children}</Box>
+            <Footer company={{href: metaData?.branding?.companyUrl, name: metaData?.branding?.companyName}} />
+         </DashboardLayout>
+      </>
    );
 }
 
