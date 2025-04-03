@@ -1612,6 +1612,22 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
     *******************************************************************************/
    const processClicked = (process: QProcessMetaData) =>
    {
+      if (process.minInputRecords != null && process.minInputRecords > 0 && getNoOfSelectedRecords() === 0)
+      {
+         setAlertContent(`No records were selected for the process: ${process.label}`);
+         return;
+      }
+      else if (process.minInputRecords != null && getNoOfSelectedRecords() < process.minInputRecords)
+      {
+         setAlertContent(`Too few records were selected for the process: ${process.label}.  A minimum of ${process.minInputRecords} is required.`);
+         return;
+      }
+      else if (process.maxInputRecords != null && getNoOfSelectedRecords() > process.maxInputRecords)
+      {
+         setAlertContent(`Too many records were selected for the process: ${process.label}.  A maximum of ${process.maxInputRecords} is allowed.`);
+         return;
+      }
+
       // todo - let the process specify that it needs initial rows - err if none selected.
       //  alternatively, let a process itself have an initial screen to select rows...
       openModalProcess(process);
