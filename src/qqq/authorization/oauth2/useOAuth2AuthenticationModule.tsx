@@ -62,6 +62,12 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
          const preSigninRedirectPathnameKey = "oauth2.preSigninRedirect.pathname";
          if (window.location.pathname == "/token")
          {
+            ///////////////////////////////////////////////////////////////////////////
+            // if we're at a path of /token, get code & state params, look up values //
+            // from that state in local storage, and make a post to the backend to   //
+            // with these values - which will itself talk to the identity provider   //
+            // to get an access token, and ultimately a session.                     //
+            ///////////////////////////////////////////////////////////////////////////
             const code = searchParams.get("code");
             const state = searchParams.get("state");
             const oidcString = localStorage.getItem(`oidc.${state}`);
@@ -83,9 +89,19 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
                localStorage.removeItem(preSigninRedirectPathname);
                navigate(preSigninRedirectPathname ?? "/", {replace: true});
             }
+            else
+            {
+               ////////////////////////////////////////////
+               // if unrecognized state, render an error //
+               ////////////////////////////////////////////
+               setEarlyReturnForAuth(<div>Login error:  Unrecognized state.  Refresh to try again.</div>);
+            }
          }
          else
          {
+            //////////////////////////////////////////////////////////////////////////
+            // if we have a sessionUUID cookie, try to validate it with the backend //
+            //////////////////////////////////////////////////////////////////////////
             const sessionUuid = cookies[SESSION_UUID_COOKIE_NAME];
             if (sessionUuid)
             {
@@ -100,45 +116,16 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
             }
             else
             {
+               /////////////////////////////////////////////////////////////////////////////////////////////////
+               // else no cookie, and not a token url, we need to redirect to the provider's login page       //
+               // capture the path the user was trying to access in local storage, to redirect back to later. //
+               /////////////////////////////////////////////////////////////////////////////////////////////////
                console.log("Loading token from OAuth2 provider...");
                console.log(authOidc);
                localStorage.setItem(preSigninRedirectPathnameKey, window.location.pathname);
                setEarlyReturnForAuth(<div>Signing in...</div>);
                authOidc?.signinRedirect();
             }
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // this is what's in the docs, but, it sure doesn't seem to ever hit any case other than the signinRedirect block //
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            /*
-             if (authOidc.isLoading)
-             {
-                setLoadingToken(false); //? so we can come back in?  but i'm missing something here.
-                setEarlyReturnForAuth(<div>
-                   <div>Loading...</div>
-                   <button onClick={() => incrementCheckLoadingCounter()}>check again?</button>
-                </div>);
-             }
-             else if (authOidc.error)
-             {
-                setEarlyReturnForAuth(<div>Error: {authOidc.error.message}</div>);
-             }
-             else if (authOidc.isAuthenticated)
-             {
-                setEarlyReturnForAuth(
-                   <div>
-                      Welcome, {authOidc.user?.profile.name}!
-                      <button onClick={() => authOidc.signoutRedirect()}>Log out</button>
-                   </div>
-                );
-             }
-             else
-             {
-                localStorage.setItem(preSigninRedirectPathnameKey, window.location.pathname);
-                setEarlyReturnForAuth(<div>Signing in...</div>);
-                authOidc.signinRedirect();
-             }
-             */
          }
       }
       catch (e)
