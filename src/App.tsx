@@ -63,9 +63,14 @@ import {Md5} from "ts-md5/dist/md5";
 const qController = Client.getInstance();
 export const SESSION_UUID_COOKIE_NAME = "sessionUUID";
 
-export default function App()
+interface Props
 {
-   const [cookies, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
+   authenticationMetaData: QAuthenticationMetaData;
+}
+
+export default function App({authenticationMetaData}: Props)
+{
+   const [, , removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
    const [loadingToken, setLoadingToken] = useState(false);
    const [isFullyAuthenticated, setIsFullyAuthenticated] = useState(false);
    const [profileRoutes, setProfileRoutes] = useState({});
@@ -74,11 +79,10 @@ export default function App()
    const [needLicenseKey, setNeedLicenseKey] = useState(true);
    const [loggedInUser, setLoggedInUser] = useState({} as { name?: string, email?: string });
    const [defaultRoute, setDefaultRoute] = useState("/no-apps");
-   const [authenticationMetaData, setAuthenticationMetaData] = useState(null as QAuthenticationMetaData | null);
    const [earlyReturnForAuth, setEarlyReturnForAuth] = useState(null as JSX.Element);
 
    const {setupSession: auth0SetupSession, logout: auth0Logout} = useAuth0AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
-   const {setupSession: oauth2SetupSession, logout: oauth2Logout} = useOAuth2AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
+   const {setupSession: oauth2SetupSession, logout: oauth2Logout} = useOAuth2AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth, inOAuthContext: authenticationMetaData.type === "OAUTH2"});
    const {setupSession: anonymousSetupSession, logout: anonymousLogout} = useAnonymousAuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth});
 
    /////////////////////////////////////////////////////////
@@ -99,9 +103,6 @@ export default function App()
 
       (async () =>
       {
-         const authenticationMetaData: QAuthenticationMetaData = await qController.getAuthenticationMetaData();
-         setAuthenticationMetaData(authenticationMetaData);
-
          if (authenticationMetaData.type === "AUTH_0")
          {
             await auth0SetupSession();
@@ -134,7 +135,7 @@ export default function App()
    }
 
    /***************************************************************************
-    ** call approprite logout function based on authentication meta data type
+    ** call appropriate logout function based on authentication meta data type
     ***************************************************************************/
    function doLogout()
    {
@@ -157,7 +158,7 @@ export default function App()
    }
 
    const [controller, dispatch] = useMaterialUIController();
-   const {miniSidenav, direction, layout, openConfigurator, sidenavColor} = controller;
+   const {miniSidenav, direction, sidenavColor} = controller;
    const [onMouseEnter, setOnMouseEnter] = useState(false);
    const {pathname} = useLocation();
    const [queryParams] = useSearchParams();
@@ -450,11 +451,10 @@ export default function App()
                }
             }
 
-            let profileRoutes = {};
             const gravatarBase = "https://www.gravatar.com/avatar/";
             const hash = Md5.hashStr(loggedInUser?.email || "user");
             const profilePicture = `${gravatarBase}${hash}`;
-            profileRoutes = {
+            const profileRoutes = {
                type: "collapse",
                name: loggedInUser?.name ?? "Anonymous",
                key: "username",

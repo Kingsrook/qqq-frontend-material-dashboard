@@ -52,7 +52,7 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
    function Auth0RouterBody()
    {
       const {renderAppWrapper} = useAuth0AuthenticationModule({});
-      return (renderAppWrapper(authenticationMetaData, null));
+      return (renderAppWrapper(authenticationMetaData));
    }
 
 
@@ -61,10 +61,10 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
     ***************************************************************************/
    function OAuth2RouterBody()
    {
-      const {renderAppWrapper} = useOAuth2AuthenticationModule({});
+      const {renderAppWrapper} = useOAuth2AuthenticationModule({inOAuthContext: false});
       return (renderAppWrapper(authenticationMetaData, (
          <MaterialUIControllerProvider>
-            <App />
+            <App authenticationMetaData={authenticationMetaData} />
          </MaterialUIControllerProvider>
       )));
    }
@@ -78,7 +78,7 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
       const {renderAppWrapper} = useAnonymousAuthenticationModule({});
       return (renderAppWrapper(authenticationMetaData, (
          <MaterialUIControllerProvider>
-            <App />
+            <App authenticationMetaData={authenticationMetaData} />
          </MaterialUIControllerProvider>
       )));
    }

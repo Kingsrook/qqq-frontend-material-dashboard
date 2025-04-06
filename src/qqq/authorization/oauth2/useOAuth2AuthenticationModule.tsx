@@ -23,7 +23,7 @@ import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/me
 import {SESSION_UUID_COOKIE_NAME} from "App";
 import Client from "qqq/utils/qqq/Client";
 import {useCookies} from "react-cookie";
-import {AuthProvider, useAuth} from "react-oidc-context";
+import {AuthContextProps, AuthProvider, useAuth} from "react-oidc-context";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 const qController = Client.getInstance();
@@ -33,16 +33,22 @@ interface Props
    setIsFullyAuthenticated?: (is: boolean) => void;
    setLoggedInUser?: (user: any) => void;
    setEarlyReturnForAuth?: (element: JSX.Element | null) => void;
+   inOAuthContext: boolean;
 }
 
 /***************************************************************************
  ** hook for working with the OAuth2  authentication module
  ***************************************************************************/
-export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth}: Props)
+export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth, inOAuthContext}: Props)
 {
-   const authOidc = useAuth();
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // the useAuth hook should only be called if we're inside the <AuthProvider> element //
+   // so on the page that uses this hook to call renderAppWrapper, we aren't in that    //
+   // element/context, thus, don't call that hook.                                      //
+   ///////////////////////////////////////////////////////////////////////////////////////
+   const authOidc: AuthContextProps | null = inOAuthContext ? useAuth() : null;
 
-   const [cookies, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
+   const [cookies, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
    const [searchParams] = useSearchParams();
    const navigate = useNavigate();
 
@@ -84,7 +90,7 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
             if (sessionUuid)
             {
                console.log(`we have session UUID: ${sessionUuid} - validating it...`);
-               const {uuid: newSessionUuid, values} = await qController.manageSession(null, sessionUuid, null);
+               const {values} = await qController.manageSession(null, sessionUuid, null);
 
                setIsFullyAuthenticated(true);
                qController.setGotAuthentication();
@@ -98,7 +104,7 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
                console.log(authOidc);
                localStorage.setItem(preSigninRedirectPathnameKey, window.location.pathname);
                setEarlyReturnForAuth(<div>Signing in...</div>);
-               authOidc.signinRedirect();
+               authOidc?.signinRedirect();
             }
 
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +157,7 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
    {
       qController.clearAuthenticationMetaDataLocalStorage();
       removeCookie(SESSION_UUID_COOKIE_NAME, {path: "/"});
-      authOidc.signoutRedirect();
+      authOidc?.signoutRedirect();
    };
 
 

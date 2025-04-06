@@ -41,11 +41,11 @@ interface Props
 /***************************************************************************
  ** hook for working with the Auth0 authentication module
  ***************************************************************************/
-export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser, setEarlyReturnForAuth}: Props)
+export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, setLoggedInUser}: Props)
 {
    const {user: auth0User, getAccessTokenSilently: auth0GetAccessTokenSilently, logout: useAuth0Logout} = useAuth0();
 
-   const [cookies, setCookie, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
+   const [cookies, removeCookie] = useCookies([SESSION_UUID_COOKIE_NAME]);
 
 
    /***************************************************************************
@@ -119,12 +119,7 @@ export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, s
          if (shouldStoreNewToken(accessToken, lsAccessToken))
          {
             console.log("Sending accessToken to backend, requesting a sessionUUID...");
-            const {uuid: newSessionUuid, values} = await qController.manageSession(accessToken, null);
-
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // the request to the backend should send a header to set the cookie, so we don't need to do it ourselves. //
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // setCookie(SESSION_UUID_COOKIE_NAME, newSessionUuid, {path: "/"});
+            const {uuid: values} = await qController.manageSession(accessToken, null);
 
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("sessionValues", JSON.stringify(values));
@@ -199,7 +194,7 @@ export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, s
    /***************************************************************************
     **
     ***************************************************************************/
-   const renderAppWrapper = (authenticationMetaData: QAuthenticationMetaData, children: JSX.Element): JSX.Element =>
+   const renderAppWrapper = (authenticationMetaData: QAuthenticationMetaData): JSX.Element =>
    {
       // @ts-ignore
       let domain: string = authenticationMetaData.data.baseUrl;
@@ -225,6 +220,15 @@ export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, s
          domain = domain.replace(/\/$/, "");
       }
 
+      /***************************************************************************
+       ** simple Functional Component to wrap the <App> and pass the authentication-
+       ** MetaData prop in, so a simple Component can be passed into ProtectedRoute
+       ***************************************************************************/
+      function WrappedApp()
+      {
+         return <App authenticationMetaData={authenticationMetaData} />
+      }
+
       return (
          <Auth0ProviderWithRedirectCallback
             domain={domain}
@@ -232,7 +236,7 @@ export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, s
             audience={audience}
             redirectUri={`${window.location.origin}/`}>
             <MaterialUIControllerProvider>
-               <ProtectedRoute component={App} />
+               <ProtectedRoute component={WrappedApp} />
             </MaterialUIControllerProvider>
          </Auth0ProviderWithRedirectCallback>
       );
