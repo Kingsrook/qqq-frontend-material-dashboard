@@ -5,6 +5,7 @@
 .yalc*
 yalc.lock
 .env
+/certs
 
 # dependencies
 /node_modules
