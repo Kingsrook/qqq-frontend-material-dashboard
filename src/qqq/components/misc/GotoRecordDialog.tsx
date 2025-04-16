@@ -207,7 +207,7 @@ function GotoRecordDialog(props: Props): JSX.Element
       const queryStringParts: string[] = [];
       options[optionIndex].forEach((field) =>
       {
-         if (field.type == QFieldType.STRING && !values[field.name][0])
+         if (field.type == QFieldType.STRING && !values[field.name])
          {
             return;
          }
