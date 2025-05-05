@@ -71,6 +71,7 @@ import ColumnStats from "qqq/pages/records/query/ColumnStats";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
+import {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
@@ -933,7 +934,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          }
       }
 
-      recordAnalytics({category: "tableEvents", action: "query", label: tableMetaData.label});
+      doRecordAnalytics({category: "tableEvents", action: "query", label: tableMetaData.label});
 
       console.log(`In updateTable for ${reason} ${JSON.stringify(queryFilter)}`);
       setLoading(true);
@@ -1723,7 +1724,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
    {
       if (selectedSavedViewId != null)
       {
-         recordAnalytics({category: "tableEvents", action: "activateSavedView", label: tableMetaData.label});
+         doRecordAnalytics({category: "tableEvents", action: "activateSavedView", label: tableMetaData.label});
 
          //////////////////////////////////////////////
          // fetch, then activate the selected filter //
@@ -1740,7 +1741,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          /////////////////////////////////
          // this is 'new view' - right? //
          /////////////////////////////////
-         recordAnalytics({category: "tableEvents", action: "activateNewView", label: tableMetaData.label});
+         doRecordAnalytics({category: "tableEvents", action: "activateNewView", label: tableMetaData.label});
 
          //////////////////////////////
          // wipe away the saved view //
@@ -1768,7 +1769,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
       if (processResult instanceof QJobError)
       {
          const jobError = processResult as QJobError;
-         console.error("Could not retrieve saved filter: " + jobError.userFacingError);
+         console.error("Could not retrieve saved view: " + jobError.userFacingError);
          setAlertContent("There was an error loading the selected view.");
       }
       else
@@ -2438,7 +2439,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          setTableMetaData(tableMetaData);
          setTableLabel(tableMetaData.label);
 
-         recordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
+         doRecordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
 
          setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
          setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
@@ -2814,6 +2815,22 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          />
       </Box>);
    };
+
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function doRecordAnalytics(model: AnalyticsModel)
+   {
+      try
+      {
+         recordAnalytics(model);
+      }
+      catch (e)
+      {
+         console.log(`Error recording analytics: ${e}`);
+      }
+   }
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
    // these numbers help set the height of the grid (so page won't scroll) based on space above & below it //

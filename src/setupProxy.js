@@ -58,4 +58,5 @@ module.exports = function (app)
    app.use("/api*", getRequestHandler());
    app.use("/*api", getRequestHandler());
    app.use("/qqq/*", getRequestHandler());
+   app.use("/dynamic-qfmd-components/*", getRequestHandler());
 };

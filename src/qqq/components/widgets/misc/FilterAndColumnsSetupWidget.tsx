@@ -84,11 +84,13 @@ const qController = Client.getInstance();
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback, label}: FilterAndColumnsSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp, widgetMetaData, widgetData, recordValues, onSaveCallback, label}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
    const [hideColumns] = useState(widgetData?.hideColumns);
    const [hidePreview] = useState(widgetData?.hidePreview);
+   const [hideSortBy] = useState(widgetData?.hideSortBy);
+   const [isEditable] = useState(widgetData?.overrideIsEditable ?? isEditableProp)
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
 
    const [filterFieldName] = useState(widgetData?.filterFieldName ?? "queryFilterJson");
@@ -203,7 +205,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          return;
       }
 
-      if (recordValues["tableName"])
+      if (widgetData?.tableName || recordValues["tableName"])
       {
          setAlertContent(null);
          setModalOpen(true);
@@ -364,7 +366,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
                <h5>{label ?? "Query Filter"}</h5>
-               <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
+               {!hideSortBy && <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>}
             </Box>
             {
                mayShowQuery() &&

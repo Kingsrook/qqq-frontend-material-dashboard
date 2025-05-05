@@ -22,6 +22,7 @@
 import {Auth0Provider} from "@auth0/auth0-react";
 import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import React from "react";
+import ReactDOM from "react-dom";
 import {createRoot} from "react-dom/client";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
@@ -32,6 +33,12 @@ import HandleAuthorizationError from "HandleAuthorizationError";
 import ProtectedRoute from "qqq/authorization/auth0/ProtectedRoute";
 import {MaterialUIControllerProvider} from "qqq/context";
 import Client from "qqq/utils/qqq/Client";
+
+/////////////////////////////////////////////////////////////////////////////////
+// Expose React and ReactDOM as globals, for use by dynamically loaded modules //
+/////////////////////////////////////////////////////////////////////////////////
+(window as any).React = React;
+(window as any).ReactDOM = ReactDOM;
 
 const qController = Client.getInstance();
 
