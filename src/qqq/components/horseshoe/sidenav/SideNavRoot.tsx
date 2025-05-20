@@ -97,6 +97,7 @@ export default styled(Drawer)(({theme, ownerState}: { theme?: Theme | any; owner
          margin: "0",
          borderRadius: "0",
          height: "100%",
+         top: "unset",
 
          ...(miniSidenav ? drawerCloseStyles() : drawerOpenStyles()),
       },

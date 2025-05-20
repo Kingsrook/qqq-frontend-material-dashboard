@@ -748,35 +748,54 @@ input[type="search"]::-webkit-search-results-decoration
    padding: 8px 0;
 }
 
-.helpContentAlert.success
+.helpContentAlert.info,
+.banner.info
+{
+   background-color: rgb(234, 242, 255);
+   color: rgb(20, 51, 102);
+}
+
+.helpContentAlert.info .MuiAlert-icon .material-icons-round,
+.banner.info .MuiAlert-icon .material-icons-round
+{
+   color: #0062FF;
+}
+
+.helpContentAlert.success,
+.banner.success
 {
    background-color: rgb(240, 248, 241);
    color: rgb(44, 76, 46);
 }
 
-.helpContentAlert.success .MuiAlert-icon .material-icons-round
+.helpContentAlert.success .MuiAlert-icon .material-icons-round,
+.banner.success .MuiAlert-icon .material-icons-round
 {
    color: #4CAF50;
 }
 
-.helpContentAlert.warning
+.helpContentAlert.warning,
+.banner.warning
 {
    background-color: rgb(254, 245, 234);
    color: rgb(100, 65, 20);
 }
 
-.helpContentAlert.warning .MuiAlert-icon .material-icons-round
+.helpContentAlert.warning .MuiAlert-icon .material-icons-round,
+.banner.warning .MuiAlert-icon .material-icons-round
 {
    color: #fb8c00;
 }
 
-.helpContentAlert.error
+.helpContentAlert.error,
+.banner.error
 {
    background-color: rgb(254, 239, 238);
    color: rgb(98, 41, 37);
 }
 
-.helpContentAlert.error .MuiAlert-icon .material-icons-round
+.helpContentAlert.error .MuiAlert-icon .material-icons-round,
+.banner.error .MuiAlert-icon .material-icons-round
 {
    color: #F44335;
 }

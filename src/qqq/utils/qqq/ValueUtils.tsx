@@ -267,7 +267,13 @@ class ValueUtils
    {
       if (!displayValue && field.defaultValue)
       {
-         displayValue = field.defaultValue;
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // note, at one point in time, we used a field's default value here if no displayValue... but that feels 100% wrong,   //
+         // e.g., a null field would show up (on a query or view screen) has having some value!                                 //
+         // not sure if this was maybe supposed to be displayValue = rawValue, but, keep that in mind, and keep this block here //
+         // in case we run into issues and need to revisit/rethink                                                              //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // displayValue = field.defaultValue;
       }
 
       if (field.type === QFieldType.DATE_TIME)

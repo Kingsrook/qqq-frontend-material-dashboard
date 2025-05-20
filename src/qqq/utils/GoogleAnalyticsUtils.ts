@@ -102,7 +102,7 @@ export default class GoogleAnalyticsUtils
          console.log("Error reading session values from localStorage: " + e);
       }
 
-      if (this.metaData.environmentValues.get("GOOGLE_ANALYTICS_ENABLED") == "true" && this.metaData.environmentValues.get("GOOGLE_ANALYTICS_TRACKING_ID"))
+      if (this.metaData.environmentValues?.get("GOOGLE_ANALYTICS_ENABLED") == "true" && this.metaData.environmentValues?.get("GOOGLE_ANALYTICS_TRACKING_ID"))
       {
          this.active = true;
 

@@ -29,7 +29,7 @@
    <packaging>jar</packaging>
 
    <properties>
-      <revision>0.24.0</revision>
+      <revision>0.25.0</revision>
 
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -66,7 +66,7 @@
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
          <artifactId>qqq-backend-core</artifactId>
-         <version>0.21.0</version>
+         <version>0.25.0-integration-sprint-62-20250307-205536</version>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>

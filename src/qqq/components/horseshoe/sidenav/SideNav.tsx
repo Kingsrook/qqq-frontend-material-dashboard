@@ -20,21 +20,22 @@
  */
 
 import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
+import {Button} from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import Link from "@mui/material/Link";
 import List from "@mui/material/List";
-import {ReactNode, useEffect, useReducer, useState} from "react";
-import {NavLink, useLocation} from "react-router-dom";
-import AuthenticationButton from "qqq/components/buttons/AuthenticationButton";
 import SideNavCollapse from "qqq/components/horseshoe/sidenav/SideNavCollapse";
 import SideNavItem from "qqq/components/horseshoe/sidenav/SideNavItem";
 import SideNavList from "qqq/components/horseshoe/sidenav/SideNavList";
 import SidenavRoot from "qqq/components/horseshoe/sidenav/SideNavRoot";
 import sidenavLogoLabel from "qqq/components/horseshoe/sidenav/styles/SideNav";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import {getBannerClassName, getBannerStyles, getBanner, makeBannerContent} from "qqq/components/misc/Banners";
 import {setMiniSidenav, setTransparentSidenav, setWhiteSidenav, useMaterialUIController,} from "qqq/context";
+import {ReactNode, useEffect, useReducer, useState} from "react";
+import {NavLink, useLocation} from "react-router-dom";
 
 
 interface Props
@@ -44,6 +45,7 @@ interface Props
    logo?: string;
    appName?: string;
    branding?: QBrandingMetaData;
+   logout: () => void;
    routes: {
       [key: string]:
          | ReactNode
@@ -66,7 +68,7 @@ interface Props
    [key: string]: any;
 }
 
-function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props): JSX.Element
+function Sidenav({color, icon, logo, appName, branding, routes, logout, ...rest}: Props): JSX.Element
 {
    const [openCollapse, setOpenCollapse] = useState<boolean | string>(false);
    const [openNestedCollapse, setOpenNestedCollapse] = useState<boolean | string>(false);
@@ -257,7 +259,7 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
                      active={key === collapseName}
                      open={openCollapse === key}
                      noCollapse={noCollapse}
-                     onClick={() => (! noCollapse ? (openCollapse === key ? setOpenCollapse(false) : setOpenCollapse(key)) : null) }
+                     onClick={() => (!noCollapse ? (openCollapse === key ? setOpenCollapse(false) : setOpenCollapse(key)) : null)}
                   >
                      {collapse ? renderCollapse(collapse) : null}
                   </SideNavCollapse>
@@ -300,6 +302,30 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
       }
    );
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function EnvironmentBanner({branding}: { branding: QBrandingMetaData }): JSX.Element | null
+   {
+      // deprecated!
+      if (branding && branding.environmentBannerText)
+      {
+         return <Box mt={2} bgcolor={branding.environmentBannerColor} borderRadius={2}>
+            {branding.environmentBannerText}
+         </Box>;
+      }
+
+      const banner = getBanner(branding, "QFMD_SIDE_NAV_UNDER_LOGO");
+      if (banner)
+      {
+         return <Box className={getBannerClassName(banner)} mt={2} borderRadius={2} sx={getBannerStyles(banner)}>
+            {makeBannerContent(banner)}
+         </Box>;
+      }
+
+      return (null);
+   }
+
    return (
       <SidenavRoot
          {...rest}
@@ -330,12 +356,7 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
                </Box>
                }
             </Box>
-            {
-               branding && branding.environmentBannerText &&
-               <Box mt={2} bgcolor={branding.environmentBannerColor} borderRadius={2}>
-                  {branding.environmentBannerText}
-               </Box>
-            }
+            <EnvironmentBanner branding={branding} />
          </Box>
          <Divider
             light={
@@ -350,7 +371,7 @@ function Sidenav({color, icon, logo, appName, branding, routes, ...rest}: Props)
                (darkMode && !transparentSidenav && whiteSidenav)
             }
          />
-         <AuthenticationButton />
+         <Button onClick={logout}>Log Out</Button>
       </SidenavRoot>
    );
 }

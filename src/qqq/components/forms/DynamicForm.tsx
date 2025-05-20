@@ -96,6 +96,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         if (width == "full")
                         {
                            itemSM = 12;
+                           itemLG = 12;
                         }
 
                         return (

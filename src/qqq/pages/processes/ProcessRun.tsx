@@ -1838,6 +1838,20 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             return;
          }
 
+         if(urlSearchParams.get("defaultProcessValues"))
+         {
+            if(!defaultProcessValues)
+            {
+               defaultProcessValues = {}
+            }
+
+            const values = JSON.parse(urlSearchParams.get("defaultProcessValues"));
+            for (let key in values)
+            {
+               defaultProcessValues[key] = values[key]
+            }
+         }
+
          if (defaultProcessValues)
          {
             for (let key in defaultProcessValues)

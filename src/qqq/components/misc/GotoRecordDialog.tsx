@@ -20,6 +20,7 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
@@ -35,12 +36,11 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import TextField from "@mui/material/TextField";
-import {any} from "prop-types";
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
 import {QCancelButton} from "qqq/components/buttons/DefaultButtons";
 import MDButton from "qqq/components/legacy/MDButton";
 import Client from "qqq/utils/qqq/Client";
+import React, {useState} from "react";
+import {useNavigate} from "react-router-dom";
 
 interface Props
 {
@@ -162,8 +162,8 @@ function GotoRecordDialog(props: Props): JSX.Element
 
 
    /***************************************************************************
-   ** event handler for close button
-   ***************************************************************************/
+    ** event handler for close button
+    ***************************************************************************/
    const closeRequested = () =>
    {
       if (props.mayClose)
@@ -182,23 +182,23 @@ function GotoRecordDialog(props: Props): JSX.Element
 
       options[optionIndex].forEach((field) =>
       {
-         if(values[field.name])
+         if (values[field.name])
          {
             anyFieldsInThisOptionHaveAValue = true;
          }
-      })
+      });
 
-      if(!anyFieldsInThisOptionHaveAValue)
+      if (!anyFieldsInThisOptionHaveAValue)
       {
          return (true);
       }
       return (false);
-   }
+   };
 
 
    /***************************************************************************
-   ** event handler for clicking an 'option's go/submit button
-   ***************************************************************************/
+    ** event handler for clicking an 'option's go/submit button
+    ***************************************************************************/
    const optionGoClicked = async (optionIndex: number) =>
    {
       setError("");
@@ -207,9 +207,13 @@ function GotoRecordDialog(props: Props): JSX.Element
       const queryStringParts: string[] = [];
       options[optionIndex].forEach((field) =>
       {
-         criteria.push(new QFilterCriteria(field.name, QCriteriaOperator.EQUALS, [values[field.name]]))
-         queryStringParts.push(`${field.name}=${encodeURIComponent(values[field.name])}`)
-      })
+         if (field.type == QFieldType.STRING && !values[field.name])
+         {
+            return;
+         }
+         criteria.push(new QFilterCriteria(field.name, QCriteriaOperator.EQUALS, [values[field.name]]));
+         queryStringParts.push(`${field.name}=${encodeURIComponent(values[field.name])}`);
+      });
 
       const filter = new QQueryFilter(criteria, null, null, "AND", null, 10);
 
@@ -223,7 +227,7 @@ function GotoRecordDialog(props: Props): JSX.Element
          }
          else if (queryResult.length == 1)
          {
-            if(options[optionIndex].length == 1 && options[optionIndex][0].name == pkey?.name)
+            if (options[optionIndex].length == 1 && options[optionIndex][0].name == pkey?.name)
             {
                /////////////////////////////////////////////////
                // navigate by pkey, if that's how we searched //
