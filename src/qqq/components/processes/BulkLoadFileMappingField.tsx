@@ -26,7 +26,6 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Icon from "@mui/material/Icon";
-import IconButton from "@mui/material/IconButton";
 import RadioGroup from "@mui/material/RadioGroup";
 import TextField from "@mui/material/TextField";
 import {useFormikContext} from "formik";
@@ -94,7 +93,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    // deal with dynamically loading the initial default value for a possible value... //
    /////////////////////////////////////////////////////////////////////////////////////
    let actuallyDoingInitialLoadOfPossibleValue = doingInitialLoadOfPossibleValue;
-   if(dynamicField.possibleValueProps && bulkLoadField.defaultValue && !doingInitialLoadOfPossibleValue && !everDidInitialLoadOfPossibleValue)
+   if (dynamicField.possibleValueProps && bulkLoadField.defaultValue && !doingInitialLoadOfPossibleValue && !everDidInitialLoadOfPossibleValue)
    {
       actuallyDoingInitialLoadOfPossibleValue = true;
       setDoingInitialLoadOfPossibleValue(true);
@@ -104,7 +103,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       {
          try
          {
-            const possibleValues = await qController.possibleValues(bulkLoadField.tableStructure.tableName, null, fieldMetaData.name, null, [bulkLoadField.defaultValue], undefined, "filter");
+            const possibleValues = await qController.possibleValues(bulkLoadField.tableStructure.tableName, null, fieldMetaData.name, null, [bulkLoadField.defaultValue], undefined, null, "filter");
             if (possibleValues && possibleValues.length > 0)
             {
                setPossibleValueInitialDisplayValue(possibleValues[0].label);
@@ -114,9 +113,9 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
                setPossibleValueInitialDisplayValue(null);
             }
          }
-         catch(e)
+         catch (e)
          {
-            console.log(`Error loading possible value: ${e}`)
+            console.log(`Error loading possible value: ${e}`);
          }
 
          actuallyDoingInitialLoadOfPossibleValue = false;
@@ -124,7 +123,7 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       })();
    }
 
-   if(dynamicField.possibleValueProps && possibleValueInitialDisplayValue)
+   if (dynamicField.possibleValueProps && possibleValueInitialDisplayValue)
    {
       dynamicField.possibleValueProps.initialDisplayValue = possibleValueInitialDisplayValue;
    }
@@ -134,11 +133,11 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    // don't allow duplicates                           //
    //////////////////////////////////////////////////////
    const columnOptions: { value: number, label: string }[] = [];
-   const usedLabels: {[label: string]: boolean} = {};
+   const usedLabels: { [label: string]: boolean } = {};
    for (let i = 0; i < columnNames.length; i++)
    {
       const label = columnNames[i];
-      if(!usedLabels[label])
+      if (!usedLabels[label])
       {
          columnOptions.push({label: label, value: i});
          usedLabels[label] = true;
@@ -148,9 +147,9 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
    //////////////////////////////////////////////////////////////////////
    // try to pick up changes in the hasHeaderRow toggle from way above //
    //////////////////////////////////////////////////////////////////////
-   if(bulkLoadField.columnIndex != null && bulkLoadField.columnIndex != undefined && selectedColumn.label && columnNames[bulkLoadField.columnIndex] != selectedColumn.label)
+   if (bulkLoadField.columnIndex != null && bulkLoadField.columnIndex != undefined && selectedColumn.label && columnNames[bulkLoadField.columnIndex] != selectedColumn.label)
    {
-      setSelectedColumn({label: columnNames[bulkLoadField.columnIndex], value: bulkLoadField.columnIndex})
+      setSelectedColumn({label: columnNames[bulkLoadField.columnIndex], value: bulkLoadField.columnIndex});
       setSelectedColumnInputValue(columnNames[bulkLoadField.columnIndex]);
    }
 

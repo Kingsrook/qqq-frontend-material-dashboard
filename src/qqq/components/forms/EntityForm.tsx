@@ -184,9 +184,9 @@ function EntityForm(props: Props): JSX.Element
       ///////////////////////////////////////////////////////////////////////////////////////
       // copy values from specified fields in the parent record down into the child record //
       ///////////////////////////////////////////////////////////////////////////////////////
-      if(widgetData.defaultValuesForNewChildRecordsFromParentFields)
+      if (widgetData.defaultValuesForNewChildRecordsFromParentFields)
       {
-         for(let childField in widgetData.defaultValuesForNewChildRecordsFromParentFields)
+         for (let childField in widgetData.defaultValuesForNewChildRecordsFromParentFields)
          {
             const parentField = widgetData.defaultValuesForNewChildRecordsFromParentFields[childField];
             defaultValues[childField] = formValues[parentField];
@@ -278,21 +278,21 @@ function EntityForm(props: Props): JSX.Element
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // build a map of display values for the new record, specifically, for any possible-values that need translated. //
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      const displayValues: {[fieldName: string]: string} = {};
-      if(childTableName && values)
+      const displayValues: { [fieldName: string]: string } = {};
+      if (childTableName && values)
       {
          ///////////////////////////////////////////////////////////////////////////////////////////////////////
          // this function internally memoizes, so, we could potentially avoid an await here, but, seems ok... //
          ///////////////////////////////////////////////////////////////////////////////////////////////////////
-         const childTableMetaData = await qController.loadTableMetaData(childTableName)
+         const childTableMetaData = await qController.loadTableMetaData(childTableName);
          for (let key in values)
          {
             const value = values[key];
             const field = childTableMetaData.fields.get(key);
-            if(field.possibleValueSourceName)
+            if (field.possibleValueSourceName)
             {
-               const possibleValues = await qController.possibleValues(childTableName, null, field.name, null, [value], objectToMap(values), "form")
-               if(possibleValues && possibleValues.length > 0)
+               const possibleValues = await qController.possibleValues(childTableName, null, field.name, null, [value], null, objectToMap(values), "form");
+               if (possibleValues && possibleValues.length > 0)
                {
                   displayValues[key] = possibleValues[0].label;
                }
@@ -516,13 +516,12 @@ function EntityForm(props: Props): JSX.Element
    }
 
 
-
    /***************************************************************************
     **
     ***************************************************************************/
    function objectToMap(object: { [key: string]: any }): Map<string, any>
    {
-      if(object == null)
+      if (object == null)
       {
          return (null);
       }
@@ -532,7 +531,7 @@ function EntityForm(props: Props): JSX.Element
       {
          rs.set(key, object[key]);
       }
-      return rs
+      return rs;
    }
 
 
@@ -667,7 +666,7 @@ function EntityForm(props: Props): JSX.Element
                   const defaultValue = (defaultValues && defaultValues[fieldName]) ? defaultValues[fieldName] : fieldMetaData.defaultValue;
                   if (defaultValue && fieldMetaData.possibleValueSourceName)
                   {
-                     const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]], objectToMap(initialValues), "form");
+                     const results: QPossibleValue[] = await qController.possibleValues(tableName, null, fieldName, null, [initialValues[fieldName]], null, objectToMap(initialValues), "form");
                      if (results && results.length > 0)
                      {
                         defaultDisplayValues.set(fieldName, results[0].label);

@@ -174,7 +174,7 @@ function DynamicSelect({fieldPossibleValueProps, overrideId, name, fieldLabel, i
    const filterInlinePossibleValues = (searchTerm: string, possibleValues: QPossibleValue[]): QPossibleValue[] =>
    {
       return possibleValues.filter(pv => pv.label?.toLowerCase().startsWith(searchTerm));
-   }
+   };
 
 
    /***************************************************************************
@@ -182,15 +182,15 @@ function DynamicSelect({fieldPossibleValueProps, overrideId, name, fieldLabel, i
     ***************************************************************************/
    const loadResults = async (): Promise<QPossibleValue[]> =>
    {
-      if(possibleValues)
+      if (possibleValues)
       {
-         return filterInlinePossibleValues(searchTerm, possibleValues)
+         return filterInlinePossibleValues(searchTerm, possibleValues);
       }
       else
       {
-         return await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, otherValues, useCase);
+         return await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, null, otherValues, useCase);
       }
-   }
+   };
 
 
    /***************************************************************************

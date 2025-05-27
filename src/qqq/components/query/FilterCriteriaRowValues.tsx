@@ -398,20 +398,25 @@ function FilterCriteriaRowValues({operatorOption, criteria, field, table, valueC
                initialValues = criteria.values;
             }
          }
-         return <Box>
-            <DynamicSelect
-               fieldPossibleValueProps={{tableName: table.name, fieldName: field.name, initialDisplayValue: null}}
-               overrideId={field.name + "-multi-" + criteria.id}
-               key={field.name + "-multi-" + criteria.id}
-               isMultiple
-               fieldLabel="Values"
-               initialValues={initialValues}
-               initiallyOpen={false /*initiallyOpenMultiValuePvs*/}
-               inForm={false}
-               onChange={(value: any) => valueChangeHandler(null, "all", value)}
-               variant="standard"
-               useCase="filter"
-            />
+         return <Box display="flex" alignItems="flex-end" className="multiValue">
+            <Box width={"100%"}>
+               <DynamicSelect
+                  fieldPossibleValueProps={{tableName: table.name, fieldName: field.name, initialDisplayValue: null}}
+                  overrideId={field.name + "-multi-" + criteria.id}
+                  key={field.name + "-multi-" + criteria.id + "-" + criteria.values.length}
+                  isMultiple
+                  fieldLabel="Values"
+                  initialValues={initialValues}
+                  initiallyOpen={false /*initiallyOpenMultiValuePvs*/}
+                  inForm={false}
+                  onChange={(value: any) => valueChangeHandler(null, "all", value)}
+                  variant="standard"
+                  useCase="filter"
+               />
+            </Box>
+            <Box>
+               <FilterCriteriaPaster table={table} field={field} type="pvs" onSave={(newValues: any[]) => saveNewPasterValues(newValues)} />
+            </Box>
          </Box>;
    }
 
