@@ -377,23 +377,57 @@ export default function App({authenticationMetaData}: Props)
                   });
                });
 
-               const runRecordScriptProcess = metaData.processes.get("runRecordScript");
-               if (runRecordScriptProcess)
+               const materialDashboardInstanceMetaData = metaData.supplementalInstanceMetaData?.get("materialDashboard");
+               if (materialDashboardInstanceMetaData)
                {
-                  const process = runRecordScriptProcess;
-                  routeList.push({
-                     name: process.label,
-                     key: process.name,
-                     route: `${path}/${process.name}`,
-                     component: <RecordQuery table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
-                  });
+                  const processNamesToAddToAllQueryAndViewScreens = materialDashboardInstanceMetaData.processNamesToAddToAllQueryAndViewScreens;
+                  if (processNamesToAddToAllQueryAndViewScreens)
+                  {
+                     for (let processName of processNamesToAddToAllQueryAndViewScreens)
+                     {
+                        const process = metaData.processes.get(processName);
+                        if (process)
+                        {
+                           routeList.push({
+                              name: process.label,
+                              key: process.name,
+                              route: `${path}/${process.name}`,
+                              component: <RecordQuery table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
+                           });
 
-                  routeList.push({
-                     name: process.label,
-                     key: `${app.name}/${process.name}`,
-                     route: `${path}/:id/${process.name}`,
-                     component: <RecordView table={table} launchProcess={process} />,
-                  });
+                           routeList.push({
+                              name: process.label,
+                              key: `${app.name}/${process.name}`,
+                              route: `${path}/:id/${process.name}`,
+                              component: <RecordView table={table} launchProcess={process} />,
+                           });
+                        }
+                     }
+                  }
+               }
+               else
+               {
+                  ////////////////
+                  // deprecated //
+                  ////////////////
+                  const runRecordScriptProcess = metaData.processes.get("runRecordScript");
+                  if (runRecordScriptProcess)
+                  {
+                     const process = runRecordScriptProcess;
+                     routeList.push({
+                        name: process.label,
+                        key: process.name,
+                        route: `${path}/${process.name}`,
+                        component: <RecordQuery table={table} key={`${table.name}-${process.name}`} launchProcess={process} />,
+                     });
+
+                     routeList.push({
+                        name: process.label,
+                        key: `${app.name}/${process.name}`,
+                        route: `${path}/:id/${process.name}`,
+                        component: <RecordView table={table} launchProcess={process} />,
+                     });
+                  }
                }
 
                const reportsForTable = ProcessUtils.getReportsForTable(metaData, table.name, true);

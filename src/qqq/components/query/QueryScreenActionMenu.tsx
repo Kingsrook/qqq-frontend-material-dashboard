@@ -29,9 +29,9 @@ import Icon from "@mui/material/Icon";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import {QActionsMenuButton} from "qqq/components/buttons/DefaultButtons";
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {QActionsMenuButton} from "qqq/components/buttons/DefaultButtons";
 
 interface QueryScreenActionMenuProps
 {
@@ -44,40 +44,35 @@ interface QueryScreenActionMenuProps
    processClicked: (process: QProcessMetaData) => void;
 }
 
-QueryScreenActionMenu.defaultProps = {
-};
+QueryScreenActionMenu.defaultProps = {};
 
 export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
 {
-   const [anchorElement, setAnchorElement] = useState(null)
+   const [anchorElement, setAnchorElement] = useState(null);
 
    const navigate = useNavigate();
 
    const openActionsMenu = (event: any) =>
    {
       setAnchorElement(event.currentTarget);
-   }
+   };
 
    const closeActionsMenu = () =>
    {
       setAnchorElement(null);
-   }
-
-   const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
-   {
-      if (menuItems.length > 0)
-      {
-         menuItems.push(<Divider key="divider" />);
-      }
    };
 
    const runSomething = (handler: () => void) =>
    {
       closeActionsMenu();
       handler();
-   }
+   };
 
    const menuItems: JSX.Element[] = [];
+
+   //////////////////////////////////////////////////////
+   // start with bulk actions, if user has permissions //
+   //////////////////////////////////////////////////////
    if (tableMetaData.capabilities.has(Capability.TABLE_INSERT) && tableMetaData.insertPermission)
    {
       menuItems.push(<MenuItem key="bulkLoad" onClick={() => runSomething(bulkLoadClicked)}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
@@ -91,19 +86,7 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
       menuItems.push(<MenuItem key="bulkDelete" onClick={() => runSomething(bulkDeleteClicked)}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
    }
 
-   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
-   if (runRecordScriptProcess)
-   {
-      const process = runRecordScriptProcess;
-      menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
-   }
-
-   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableMetaData.name)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
-
-   if (tableProcesses && tableProcesses.length)
-   {
-      pushDividerIfNeeded(menuItems);
-   }
+   menuItems.push(<Divider key="divider1" />);
 
    tableProcesses.sort((a, b) => a.label.localeCompare(b.label));
    tableProcesses.map((process) =>
@@ -111,9 +94,60 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
       menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
    });
 
+   menuItems.push(<Divider key="divider2" />);
+
+   ////////////////////////////////////////////
+   // add processes that apply to all tables //
+   ////////////////////////////////////////////
+   const materialDashboardInstanceMetaData = metaData.supplementalInstanceMetaData?.get("materialDashboard");
+   if (materialDashboardInstanceMetaData)
+   {
+      const processNamesToAddToAllQueryAndViewScreens = materialDashboardInstanceMetaData.processNamesToAddToAllQueryAndViewScreens;
+      if (processNamesToAddToAllQueryAndViewScreens)
+      {
+         for (let processName of processNamesToAddToAllQueryAndViewScreens)
+         {
+            const process = metaData?.processes.get(processName);
+            if (process)
+            {
+               menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+            }
+         }
+      }
+   }
+   else
+   {
+      //////////////////////////////////////
+      // deprecated in favor of the above //
+      //////////////////////////////////////
+      const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
+      if (runRecordScriptProcess)
+      {
+         const process = runRecordScriptProcess;
+         menuItems.push(<MenuItem key={process.name} onClick={() => runSomething(() => processClicked(process))}><ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>{process.label}</MenuItem>);
+      }
+   }
+
+   ////////////////////////////////////////
+   // todo - any conditions around this? //
+   ////////////////////////////////////////
+   menuItems.push(<MenuItem key="developerMode" onClick={() => navigate(`${metaData.getTablePathByName(tableMetaData.name)}/dev`)}><ListItemIcon><Icon>code</Icon></ListItemIcon>Developer Mode</MenuItem>);
+
    if (menuItems.length === 0)
    {
       menuItems.push(<MenuItem key="notAvaialableNow" disabled><ListItemIcon><Icon>block</Icon></ListItemIcon><i>No actions available</i></MenuItem>);
+   }
+
+   ////////////////////////////////////////////////////////////////////////////////
+   // remove any duplicated dividers, and any dividers in the first or last slot //
+   ////////////////////////////////////////////////////////////////////////////////
+   for (let i = 0; i < menuItems.length; i++)
+   {
+      if (menuItems[i].type == Divider && (i == 0 || (i > 0 && menuItems[i - 1].type == Divider) || i == menuItems.length - 1))
+      {
+         menuItems.splice(i, 1);
+         i--;
+      }
    }
 
    return (
@@ -130,5 +164,5 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
             {menuItems}
          </Menu>
       </>
-   )
+   );
 }
