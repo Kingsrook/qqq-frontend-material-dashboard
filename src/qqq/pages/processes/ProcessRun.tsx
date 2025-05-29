@@ -72,6 +72,7 @@ import {ChildRecordListData} from "qqq/components/widgets/misc/RecordGridWidget"
 import BaseLayout from "qqq/layouts/BaseLayout";
 import ProcessWidgetBlockUtils from "qqq/pages/processes/ProcessWidgetBlockUtils";
 import {TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT} from "qqq/pages/records/query/RecordQuery";
+import {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import TableUtils from "qqq/utils/qqq/TableUtils";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
@@ -114,9 +115,14 @@ let formikSetTouched = ({}: any, touched: boolean): void =>
 
 const cachedPossibleValueLabels: { [fieldName: string]: { [id: string | number]: string } } = {};
 
-export interface SubFormPreSubmitCallbackResultType {maySubmit: boolean; values: {[name: string]: any}}
+export interface SubFormPreSubmitCallbackResultType
+{
+   maySubmit: boolean;
+   values: { [name: string]: any };
+}
+
 type SubFormPreSubmitCallback = () => SubFormPreSubmitCallbackResultType;
-type SubFormPreSubmitCallbackWithName = {name: string, callback: SubFormPreSubmitCallback}
+type SubFormPreSubmitCallbackWithName = { name: string, callback: SubFormPreSubmitCallback }
 
 function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, isReport, recordIds, closeModalHandler, forceReInit, overrideLabel}: Props): JSX.Element
 {
@@ -161,7 +167,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const [previouslySeenUpdatedFieldMetaDataMap, setPreviouslySeenUpdatedFieldMetaDataMap] = useState(new Map<string, QFieldMetaData>);
 
    const [renderedWidgets, setRenderedWidgets] = useState({} as { [step: string]: { [widgetName: string]: any } });
-   const [controlCallbacks, setControlCallbacks] = useState({} as {[name: string]: () => void});
+   const [controlCallbacks, setControlCallbacks] = useState({} as { [name: string]: () => void });
    const [subFormPreSubmitCallbacks, setSubFormPreSubmitCallbacks] = useState([] as SubFormPreSubmitCallbackWithName[]);
 
    const {pageHeader, recordAnalytics, setPageHeader, helpHelpActive} = useContext(QContext);
@@ -237,7 +243,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    const bulkLoadFileMappingFormRef = useRef();
    const bulkLoadValueMappingFormRef = useRef();
    const bulkLoadProfileFormRef = useRef();
-   const [bulkLoadValueMappingFormFields, setBulkLoadValueMappingFormFields] = useState([] as any[])
+   const [bulkLoadValueMappingFormFields, setBulkLoadValueMappingFormFields] = useState([] as any[]);
 
    const doesStepHaveComponent = (step: QFrontendStepMetaData, type: QComponentType): boolean =>
    {
@@ -699,10 +705,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ////////////////////////////////////////////////////////////////////////////////
       if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_FILE_MAPPING_FORM))
       {
-         if(bulkLoadFileMappingFormRef?.current)
+         if (bulkLoadFileMappingFormRef?.current)
          {
             // @ts-ignore ...
-            addSubFormPreSubmitCallbacks("bulkLoadFileMappingForm", bulkLoadFileMappingFormRef?.current?.preSubmit)
+            addSubFormPreSubmitCallbacks("bulkLoadFileMappingForm", bulkLoadFileMappingFormRef?.current?.preSubmit);
          }
       }
 
@@ -711,10 +717,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       /////////////////////////////////////////////////////////////////////////////////
       if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_VALUE_MAPPING_FORM))
       {
-         if(bulkLoadValueMappingFormRef?.current)
+         if (bulkLoadValueMappingFormRef?.current)
          {
             // @ts-ignore ...
-            addSubFormPreSubmitCallbacks("bulkLoadValueMappingForm", bulkLoadValueMappingFormRef?.current?.preSubmit)
+            addSubFormPreSubmitCallbacks("bulkLoadValueMappingForm", bulkLoadValueMappingFormRef?.current?.preSubmit);
          }
       }
 
@@ -723,10 +729,10 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ///////////////////////////////////////////////////////////////////////////
       if (doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_PROFILE_FORM))
       {
-         if(bulkLoadProfileFormRef?.current)
+         if (bulkLoadProfileFormRef?.current)
          {
             // @ts-ignore ...
-            addSubFormPreSubmitCallbacks("bulkLoadProfileFormRef", bulkLoadProfileFormRef?.current?.preSubmit)
+            addSubFormPreSubmitCallbacks("bulkLoadProfileFormRef", bulkLoadProfileFormRef?.current?.preSubmit);
          }
       }
 
@@ -1298,7 +1304,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
          /////////////////////////////////////////////////////////////////
          // Help make this component's fields work with our formik form //
          /////////////////////////////////////////////////////////////////
-         if(activeStep && doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_VALUE_MAPPING_FORM))
+         if (activeStep && doesStepHaveComponent(activeStep, QComponentType.BULK_LOAD_VALUE_MAPPING_FORM))
          {
             const fileValues = processValues.fileValues ?? [];
             const valueMapping = processValues.valueMapping ?? {};
@@ -1314,22 +1320,22 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             for (let i = 0; i < fileValues.length; i++)
             {
                const dynamicField = DynamicFormUtils.getDynamicField(qFieldMetaData);
-               const wrappedField: any  = {};
+               const wrappedField: any = {};
                wrappedField[field.name] = dynamicField;
                DynamicFormUtils.addPossibleValueProps(wrappedField, [field], fieldTableName, null, null);
 
                const initialValue = valueMapping[fileValues[i]];
 
-               if(dynamicField.possibleValueProps)
+               if (dynamicField.possibleValueProps)
                {
-                  dynamicField.possibleValueProps.initialDisplayValue = mappedValueLabels[initialValue]
+                  dynamicField.possibleValueProps.initialDisplayValue = mappedValueLabels[initialValue];
                }
 
-               addField(`${fieldFullName}.value.${i}`, dynamicField, initialValue, null)
+               addField(`${fieldFullName}.value.${i}`, dynamicField, initialValue, null);
                fieldsForComponent.push(dynamicField);
             }
 
-            setBulkLoadValueMappingFormFields(fieldsForComponent)
+            setBulkLoadValueMappingFormFields(fieldsForComponent);
          }
 
          if (Object.keys(dynamicFormFields).length > 0)
@@ -1522,15 +1528,15 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
     ***************************************************************************/
    function addSubFormPreSubmitCallbacks(name: string, callback: SubFormPreSubmitCallback)
    {
-      if(subFormPreSubmitCallbacks.findIndex(c => c.name == name) == -1)
+      if (subFormPreSubmitCallbacks.findIndex(c => c.name == name) == -1)
       {
-         const newCallbacks: SubFormPreSubmitCallbackWithName[] = []
-         for(let i = 0; i < subFormPreSubmitCallbacks.length; i++)
+         const newCallbacks: SubFormPreSubmitCallbackWithName[] = [];
+         for (let i = 0; i < subFormPreSubmitCallbacks.length; i++)
          {
             newCallbacks[i] = subFormPreSubmitCallbacks[i];
          }
-         newCallbacks.push({name, callback})
-         setSubFormPreSubmitCallbacks(newCallbacks)
+         newCallbacks.push({name, callback});
+         setSubFormPreSubmitCallbacks(newCallbacks);
       }
    }
 
@@ -1620,7 +1626,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
                setRenderedWidgets({});
                setSubFormPreSubmitCallbacks([]);
                setQJobRunning(null);
-               setBackStepName(qJobComplete.backStep)
+               setBackStepName(qJobComplete.backStep);
 
                if (formikSetFieldValueFunction)
                {
@@ -1815,8 +1821,8 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             setProcessMetaData(processMetaData);
             setSteps(processMetaData.frontendSteps);
 
-            recordAnalytics({location: window.location, title: "Process: " + processMetaData?.label});
-            recordAnalytics({category: "processEvents", action: "startProcess", label: processMetaData?.label});
+            doRecordAnalytics({location: window.location, title: "Process: " + processMetaData?.label});
+            doRecordAnalytics({category: "processEvents", action: "startProcess", label: processMetaData?.label});
 
             if (processMetaData.tableName && !tableMetaData)
             {
@@ -1838,17 +1844,17 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
             return;
          }
 
-         if(urlSearchParams.get("defaultProcessValues"))
+         if (urlSearchParams.get("defaultProcessValues"))
          {
-            if(!defaultProcessValues)
+            if (!defaultProcessValues)
             {
-               defaultProcessValues = {}
+               defaultProcessValues = {};
             }
 
             const values = JSON.parse(urlSearchParams.get("defaultProcessValues"));
             for (let key in values)
             {
-               defaultProcessValues[key] = values[key]
+               defaultProcessValues[key] = values[key];
             }
          }
 
@@ -1894,7 +1900,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
 
       setTimeout(async () =>
       {
-         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+         doRecordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
 
          const processResponse = await qController.processStep(
             processName,
@@ -1914,7 +1920,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
    {
       setTimeout(async () =>
       {
-         recordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
+         doRecordAnalytics({category: "processEvents", action: "processStep", label: activeStep.label});
 
          const processResponse = await Client.getInstance().processStep(
             processName,
@@ -1938,20 +1944,20 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ///////////////////////////////////////////////////////////////
       // run any sub-form pre-submit callbacks that are registered //
       ///////////////////////////////////////////////////////////////
-      for(let i = 0; i < subFormPreSubmitCallbacks.length; i++)
+      for (let i = 0; i < subFormPreSubmitCallbacks.length; i++)
       {
          const {maySubmit, values: moreValues} = subFormPreSubmitCallbacks[i].callback();
-         if(!maySubmit)
+         if (!maySubmit)
          {
             console.log(`May not submit form, per callback: ${subFormPreSubmitCallbacks[i].name}`);
             return;
          }
 
-         if(moreValues)
+         if (moreValues)
          {
             for (let key in moreValues)
             {
-               values[key] = moreValues[key]
+               values[key] = moreValues[key];
             }
          }
       }
@@ -2026,7 +2032,7 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////
       setLoadingRecords(true);
 
-   }
+   };
 
 
    /*******************************************************************************
@@ -2054,6 +2060,21 @@ function ProcessRun({process, table, defaultProcessValues, isModal, isWidget, is
       navigate(path, {replace: true});
    };
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function doRecordAnalytics(model: AnalyticsModel)
+   {
+      try
+      {
+         recordAnalytics(model);
+      }
+      catch (e)
+      {
+         console.log(`Error recording analytics: ${e}`);
+      }
+   }
 
    const formStyles: any = {};
    if (isWidget)
