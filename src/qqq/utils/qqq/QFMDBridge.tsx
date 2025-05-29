@@ -75,7 +75,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
       initialValues[field.name] = record.values.get(field.name);
    }
    const [lastValues, setLastValues] = useState(initialValues);
-   const [loaded, setLoaded] = useState(false)
+   const [loaded, setLoaded] = useState(false);
 
    useEffect(() =>
    {
@@ -102,7 +102,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
 
    if (!loaded)
    {
-      return (<div>Loading...</div>);
+      return (<Box py={"1rem"}>Loading...</Box>);
    }
 
    const {
@@ -110,6 +110,18 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
       formValidations,
    } = DynamicFormUtils.getFormData(fields);
    DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fields, null, null, record ? record.displayValues : new Map());
+
+   const otherValuesMap = new Map<string, any>();
+   record.values.forEach((value, key) => otherValuesMap.set(key, value));
+
+   for (let fieldName in dynamicFormFields)
+   {
+      const dynamicFormField = dynamicFormFields[fieldName];
+      if (dynamicFormField.possibleValueProps)
+      {
+         dynamicFormField.possibleValueProps.otherValues = otherValuesMap;
+      }
+   }
 
    /////////////////////////////////////////////////////////////////////////////////
    // re-introduce these two context providers, in case the child calls this      //
@@ -190,8 +202,14 @@ function QFMDBridgeWidget({widgetName, tableName, record, entityPrimaryKey, acti
          const qController = Client.getInstance();
          const qInstance = await qController.loadMetaData();
 
+         const queryStringParts: string[] = [];
+         for (let key of record?.values?.keys())
+         {
+            queryStringParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(record.values.get(key))}`);
+         }
+
          setWidgetMetaData(qInstance.widgets.get(widgetName));
-         setWidgetData(await qController.widget(widgetName, null)); // todo queryParams... ?
+         setWidgetData(await qController.widget(widgetName, queryStringParts.join("&")));
 
          setReady(true);
       })();
@@ -199,7 +217,7 @@ function QFMDBridgeWidget({widgetName, tableName, record, entityPrimaryKey, acti
 
    if (!ready)
    {
-      return (<div>Loading...</div>);
+      return (<Box py={"1rem"}>Loading...</Box>);
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
