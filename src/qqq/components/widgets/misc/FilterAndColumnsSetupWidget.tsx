@@ -43,6 +43,7 @@ import QQueryColumns, {Column} from "qqq/models/query/QQueryColumns";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
+import TableUtils from "qqq/utils/qqq/TableUtils";
 import React, {useContext, useEffect, useRef, useState} from "react";
 
 interface FilterAndColumnsSetupWidgetProps
@@ -102,6 +103,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
    const [columnsFieldName] = useState(widgetData?.columnsFieldName ?? "columnsJson");
 
    const [alertContent, setAlertContent] = useState(null as string);
+   const [warning, setWarning] = useState(null as string);
    const [widgetFailureAlertContent, setWidgetFailureAlertContent] = useState(null as string);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,11 +219,28 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                setTableMetaData(tableMetaData);
 
                const queryFilterForFrontend = Object.assign({}, queryFilter);
+
+               let warnings: string[] = [];
+               for (let i = 0; i < queryFilterForFrontend?.criteria?.length; i++)
+               {
+                  const criteria = queryFilter.criteria[i];
+                  let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
+                  if(!field)
+                  {
+                     warnings.push("Removing non-existing filter field: " + criteria.fieldName);
+                     queryFilterForFrontend.criteria.splice(i, 1);
+                     i--;
+                  }
+               }
+
                await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
                setFrontendQueryFilter(queryFilterForFrontend);
+
+               setWarning(warnings.join("; "));
             }
             catch (e)
             {
+               console.log(e);
                //@ts-ignore e.message
                setWidgetFailureAlertContent("Error preparing filter widget: " + (e.message ?? "Details not available."));
             }
@@ -416,6 +435,9 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
          }
          <Collapse in={Boolean(alertContent)}>
             <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
+         </Collapse>
+         <Collapse in={Boolean(warning)}>
+            <Alert severity="warning" sx={{mt: 1.5, mb: 0.5}} onClose={() => setWarning(null)}>{warning}</Alert>
          </Collapse>
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
