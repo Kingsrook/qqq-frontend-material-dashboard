@@ -20,6 +20,7 @@
  */
 
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import {ApiVersion} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
@@ -69,9 +70,9 @@ import RecordQueryView from "qqq/models/query/RecordQueryView";
 import ProcessRun from "qqq/pages/processes/ProcessRun";
 import ColumnStats from "qqq/pages/records/query/ColumnStats";
 import DataGridUtils from "qqq/utils/DataGridUtils";
+import {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
-import {AnalyticsModel} from "qqq/utils/GoogleAnalyticsUtils";
 import ProcessUtils from "qqq/utils/qqq/ProcessUtils";
 import {SavedViewUtils} from "qqq/utils/qqq/SavedViewUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
@@ -89,6 +90,7 @@ export type QueryScreenUsage = "queryScreen" | "reportSetup"
 interface Props
 {
    table?: QTableMetaData;
+   apiVersion?: ApiVersion;
    launchProcess?: QProcessMetaData;
    usage?: QueryScreenUsage;
    isModal?: boolean;
@@ -101,9 +103,10 @@ interface Props
 ///////////////////////////////////////////////////////
 // define possible values for our pageState variable //
 ///////////////////////////////////////////////////////
-type PageState = "initial" | "loadingMetaData" | "loadedMetaData" | "loadingView" | "loadedView" | "preparingGrid" | "ready";
+type PageState = "initial" | "loadingMetaData" | "loadedMetaData" | "loadingView" | "loadedView" | "preparingGrid" | "ready" | "error";
 
 const qController = Client.getInstance();
+const qControllerV1 = Client.getInstanceV1();
 
 /*******************************************************************************
  ** function to produce standard version of the screen while we're "loading"
@@ -127,7 +130,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
+const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -979,7 +982,8 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
             }
 
             let includeDistinct = isJoinMany(tableMetaData, getVisibleJoinTables());
-            qController.count(tableName, filterForBackend, queryJoins, includeDistinct, tableVariant).then(([count, distinctCount]) =>
+            // qController.count(tableName, filterForBackend, queryJoins, includeDistinct, tableVariant).then(([count, distinctCount]) =>
+            qControllerV1.count(tableName, apiVersion, filterForBackend, queryJoins, includeDistinct, tableVariant).then(([count, distinctCount]) =>
             {
                console.log(`Received count results for query ${thisQueryId}: ${count} ${distinctCount}`);
                countResults[thisQueryId] = [];
@@ -998,7 +1002,8 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
 
          setLastFetchedQFilterJSON(JSON.stringify(queryFilter));
          setLastFetchedVariant(tableVariant);
-         qController.query(tableName, filterForBackend, queryJoins, tableVariant).then((results) =>
+         // qController.query(tableName, filterForBackend, queryJoins, tableVariant).then((results) =>
+         qControllerV1.query(tableName, apiVersion, filterForBackend, queryJoins, tableVariant).then((results) =>
          {
             console.log(`Received results for query ${thisQueryId}`);
             queryResults[thisQueryId] = results;
@@ -1141,6 +1146,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
    const handlePageNumberChange = (page: number) =>
    {
       setPageNumber(page);
+      setLoading(true);
    };
 
    /*******************************************************************************
@@ -1149,6 +1155,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
    const handleRowsPerPageChange = (size: number) =>
    {
       setRowsPerPage(size);
+      setLoading(true);
 
       view.rowsPerPage = size;
       doSetView(view);
@@ -1672,8 +1679,9 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
    {
       if (savedViewRecord == null)
       {
-         console.log("doSetCurrentView called with a null view record - calling doClearCurrentSavedView instead.");
+         console.log("doSetCurrentView called with a null view record - calling doClearCurrentSavedView, and activating tableDefaultView instead.");
          doClearCurrentSavedView();
+         activateView(buildTableDefaultView(tableMetaData));
          return;
       }
 
@@ -2435,23 +2443,34 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          const metaData = await qController.loadMetaData();
          setMetaData(metaData);
 
-         const tableMetaData = await qController.loadTableMetaData(tableName);
-         setTableMetaData(tableMetaData);
-         setTableLabel(tableMetaData.label);
+         try
+         {
+            // const tableMetaData = await qController.loadTableMetaData(tableName);
+            const tableMetaData = await qControllerV1.loadTableMetaData(tableName, apiVersion);
+            setTableMetaData(tableMetaData);
+            setTableLabel(tableMetaData.label);
 
          doRecordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
+            doRecordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
 
-         setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
-         setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
+            setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
+            setAllTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName, true)); // these include hidden ones (e.g., to find the bulks)
 
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // now that we know the table - build a default view - initially, only used by SavedViews component, for showing if there's anything to be saved. //
-         // but also used when user selects new-view from the view menu                                                                                    //
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         const newDefaultView = buildTableDefaultView(tableMetaData);
-         setTableDefaultView(newDefaultView);
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // now that we know the table - build a default view - initially, only used by SavedViews component, for showing if there's anything to be saved. //
+            // but also used when user selects new-view from the view menu                                                                                    //
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            const newDefaultView = buildTableDefaultView(tableMetaData);
+            setTableDefaultView(newDefaultView);
 
-         setPageState("loadedMetaData");
+            setPageState("loadedMetaData");
+         }
+         catch (e)
+         {
+            setPageState("error");
+            //@ts-ignore e.message
+            setAlertContent("Error loading table: " + e?.message ?? "Details not available.");
+         }
       })();
    }
 
@@ -2717,6 +2736,16 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
             <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={gotoVariantSubHeader} />
          </BaseLayout>
       );
+   }
+
+   //////////////////////////////////////////////
+   // render an error screen (alert) if needed //
+   //////////////////////////////////////////////
+   if (pageState == "error")
+   {
+      console.log(`page state is ${pageState}... rendering an alert...`);
+      const errorBody = <Box py={3}><Alert severity="error">{alertContent}</Alert></Box>;
+      return isModal ? errorBody : <BaseLayout>{errorBody}</BaseLayout>;
    }
 
    ///////////////////////////////////////////////////////////
@@ -3069,6 +3098,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
 
 RecordQuery.defaultProps = {
    table: null,
+   apiVersion: null,
    usage: "queryScreen",
    launchProcess: null,
    isModal: false,
