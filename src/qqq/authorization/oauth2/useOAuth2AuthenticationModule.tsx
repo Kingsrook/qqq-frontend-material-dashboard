@@ -80,7 +80,7 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
                console.log(`we have new session UUID: ${newSessionUuid}`);
 
                setIsFullyAuthenticated(true);
-               qController.setGotAuthentication();
+               Client.setGotAuthenticationInAllControllers();
 
                setLoggedInUser(values?.user);
                console.log("Token load complete.");
@@ -109,7 +109,7 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
                const {values} = await qController.manageSession(null, sessionUuid, null);
 
                setIsFullyAuthenticated(true);
-               qController.setGotAuthentication();
+               Client.setGotAuthenticationInAllControllers();
 
                setLoggedInUser(values?.user);
                console.log("Token load complete.");
