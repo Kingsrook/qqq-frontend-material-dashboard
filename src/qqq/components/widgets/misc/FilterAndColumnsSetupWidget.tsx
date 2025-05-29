@@ -20,6 +20,7 @@
  */
 
 
+import {ApiVersion} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
@@ -80,6 +81,7 @@ unborderedButtonSX.opacity = "0.7";
 
 
 const qController = Client.getInstance();
+const qControllerV1 = Client.getInstanceV1();
 
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
@@ -90,13 +92,17 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
    const [hideColumns] = useState(widgetData?.hideColumns);
    const [hidePreview] = useState(widgetData?.hidePreview);
    const [hideSortBy] = useState(widgetData?.hideSortBy);
-   const [isEditable] = useState(widgetData?.overrideIsEditable ?? isEditableProp)
+   const [isEditable] = useState(widgetData?.overrideIsEditable ?? isEditableProp);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+
+   const [isApiVersioned] = useState(widgetData?.isApiVersioned);
+   const [apiVersion, setApiVersion] = useState(null as ApiVersion | null);
 
    const [filterFieldName] = useState(widgetData?.filterFieldName ?? "queryFilterJson");
    const [columnsFieldName] = useState(widgetData?.columnsFieldName ?? "columnsJson");
 
    const [alertContent, setAlertContent] = useState(null as string);
+   const [widgetFailureAlertContent, setWidgetFailureAlertContent] = useState(null as string);
 
    //////////////////////////////////////////////////////////////////////////////////////////////////
    // we'll actually keep 2 copies of the query filter around here -                               //
@@ -114,7 +120,9 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
    /////////////////////////////
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
-   let queryFilter = recordValues[filterFieldName] && JSON.parse(recordValues[filterFieldName]) as QQueryFilter;
+   const rawFilterValueFromRecord = recordValues[filterFieldName];
+   let queryFilter = rawFilterValueFromRecord &&
+      ((typeof rawFilterValueFromRecord == "string" ? JSON.parse(rawFilterValueFromRecord) : rawFilterValueFromRecord) as QQueryFilter);
    const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
@@ -167,16 +175,56 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
          tableName = recordValues["tableName"];
       }
 
+      let version: ApiVersion | null = null;
+      if (isApiVersioned)
+      {
+         let apiName = widgetData?.apiName;
+         let apiPath = widgetData?.apiPath;
+         let apiVersion = widgetData?.apiVersion;
+
+         if (!apiName && recordValues["apiName"])
+         {
+            apiName = recordValues["apiName"];
+         }
+
+         if (!apiPath && recordValues["apiPath"])
+         {
+            apiPath = recordValues["apiPath"];
+         }
+
+         if (!apiVersion && recordValues["apiVersion"])
+         {
+            apiVersion = recordValues["apiVersion"];
+         }
+
+         if (!apiName || !apiPath || !apiVersion)
+         {
+            console.log("API Name/Path/Version not set, but widget isApiVersioned, so cannot load table meta data...");
+            return;
+         }
+
+         version = {name: apiName, path: apiPath, version: apiVersion};
+         setApiVersion(version);
+      }
+
       if (tableName)
       {
          (async () =>
          {
-            const tableMetaData = await qController.loadTableMetaData(tableName);
-            setTableMetaData(tableMetaData);
+            try
+            {
+               const tableMetaData = await qControllerV1.loadTableMetaData(tableName, version);
+               setTableMetaData(tableMetaData);
 
-            const queryFilterForFrontend = Object.assign({}, queryFilter);
-            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
-            setFrontendQueryFilter(queryFilterForFrontend);
+               const queryFilterForFrontend = Object.assign({}, queryFilter);
+               await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
+               setFrontendQueryFilter(queryFilterForFrontend);
+            }
+            catch (e)
+            {
+               //@ts-ignore e.message
+               setWidgetFailureAlertContent("Error preparing filter widget: " + (e.message ?? "Details not available."));
+            }
          })();
       }
    }, [JSON.stringify(recordValues)]);
@@ -337,7 +385,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
    /////////////////////////////////////////////////
    // add link to widget header for opening modal //
    /////////////////////////////////////////////////
-   const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up your report filters and columns";
+   const selectTableFirstTooltipTitle = tableMetaData ? null : `You must select a table${isApiVersioned ? " and API details" : ""} before you can set up your filters${hideColumns ? "" : " and columns"}`;
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
@@ -351,6 +399,12 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
       }
    }
 
+   if (widgetFailureAlertContent)
+   {
+      return (<Widget widgetMetaData={widgetMetaData}>
+         <Alert severity="error" sx={{mt: 1.5, mb: 0.5}}>{widgetFailureAlertContent}</Alert>
+      </Widget>);
+   }
 
    return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
       <React.Fragment>
@@ -424,6 +478,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                   isModal={true}
                   initialQueryFilter={frontendQueryFilter}
                   initialColumns={columns}
+                  apiVersion={apiVersion}
                />
             </Box>
          )}
@@ -449,6 +504,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                               isModal={true}
                               initialQueryFilter={usingDefaultEmptyFilter ? null : frontendQueryFilter}
                               initialColumns={columns}
+                              apiVersion={apiVersion}
                            />
                         }
 
