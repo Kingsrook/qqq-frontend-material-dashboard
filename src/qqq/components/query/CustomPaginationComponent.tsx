@@ -26,9 +26,9 @@ import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";
 import IconButton from "@mui/material/IconButton";
 import {GridRowsProp} from "@mui/x-data-grid-pro";
-import React from "react";
 import CustomWidthTooltip from "qqq/components/tooltips/CustomWidthTooltip";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";
+import React from "react";
 
 interface CustomPaginationProps
 {
@@ -56,7 +56,7 @@ export default function CustomPaginationComponent({tableMetaData, rows, totalRec
          The number of rows shown on this screen may be greater than the number of {tableMetaData?.label} records
          that match your query, because you have included fields from other tables which may have
          more than one record associated with each {tableMetaData?.label}.
-      </>
+      </>;
       let distinctPart = isJoinMany ? (<Box display="inline" component="span" textAlign="right">
          &nbsp;({ValueUtils.safeToLocaleString(distinctRecords)} distinct<CustomWidthTooltip title={tooltipHTML}>
             <IconButton sx={{p: 0, pl: 0.25, mb: 0.25}}><Icon fontSize="small" sx={{fontSize: "1.125rem !important", color: "#9f9f9f"}}>info_outlined</Icon></IconButton>
@@ -66,13 +66,23 @@ export default function CustomPaginationComponent({tableMetaData, rows, totalRec
 
       if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
       {
+         if (loading)
+         {
+            return "Counting...";
+         }
+
+         if (!rows || rows.length == 0)
+         {
+            return "No rows";
+         }
+
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // to avoid a non-countable table showing (this is what data-grid did) 91-100 even if there were only 95 records, //
          // we'll do this... not quite good enough, but better than the original                                           //
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          if (rows.length > 0 && rows.length < to - from)
          {
-            to = from + rows.length;
+            to = from + (rows.length - 1);
          }
          return (`Showing ${from.toLocaleString()} to ${to.toLocaleString()}`);
       }
@@ -102,14 +112,55 @@ export default function CustomPaginationComponent({tableMetaData, rows, totalRec
       }
    };
 
+   ///////////////////////////////////////////////////////////////////////////////
+   // the `count` param that we pass to <TablePagination> below is very         //
+   // important - it drives which of the < and > (prev & next) buttons are      //
+   // enabled - and, it's a little tricky for tables where we don't do a count. //
+   ///////////////////////////////////////////////////////////////////////////////
+   let countForTablePagination: number;
+   if (tableMetaData && !tableMetaData.capabilities.has(Capability.TABLE_COUNT))
+   {
+      ////////////////////////////////////////////
+      // handle tables where count is disabled. //
+      ////////////////////////////////////////////
+      if(!rows || rows.length == 0)
+      {
+         /////////////////////////////////////////////
+         // if we have no rows, assume a count of 0 //
+         /////////////////////////////////////////////
+         countForTablePagination = 0;
+      }
+      if(rows.length < rowsPerPage)
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         // if the # of rows we have is less than the rowsPerPage, assume we're at the end of the query  //
+         // so, setting count to pageNo*rowsPer + rows.length - leaves prev. enabled, but disables next. //
+         //////////////////////////////////////////////////////////////////////////////////////////////////
+         countForTablePagination = (pageNumber * rowsPerPage) + rows.length;
+      }
+      else
+      {
+         ///////////////////////////////////////////////////////////////////////////////////////////////////
+         // else, we don't know how many more pages there could be - so, just assume it's at least 1 more //
+         ///////////////////////////////////////////////////////////////////////////////////////////////////
+         countForTablePagination = ((pageNumber + 1) * rowsPerPage) + 1;
+      }
+   }
+   else
+   {
+      ////////////////////////////////////////////////////////////////////////////////
+      // cases where count is enabled - they work much more like we'd expect:       //
+      // if we don't know totalRecords (probably same as loading?) - use a -1,      //
+      // which lets us see < and > both active;  else, use totalRecords when known. //
+      ////////////////////////////////////////////////////////////////////////////////
+      countForTablePagination = totalRecords === null || totalRecords === undefined ? -1 : totalRecords;
+   }
 
    return (
       <TablePagination
          component="div"
-         sx={{minWidth: "450px"}}
-         // note - passing null here makes the 'to' param in the defaultLabelDisplayedRows also be null,
-         // so pass a sentinel value of -1...
-         count={totalRecords === null || totalRecords === undefined ? -1 : totalRecords}
+         sx={{minWidth: "450px", "& .MuiTablePagination-displayedRows": {minWidth: "110px"}}}
+         count={countForTablePagination}
          page={pageNumber}
          rowsPerPageOptions={[10, 25, 50, 100, 250]}
          rowsPerPage={rowsPerPage}
