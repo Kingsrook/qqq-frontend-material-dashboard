@@ -303,8 +303,13 @@ input[type="search"]::-webkit-search-results-decoration
 .MuiTablePagination-root .MuiSvgIcon-root
 {
    display: inline;
-   color: gray;
+   color: rgba(0, 0, 0, 0.54);
    right: 0.125rem;
+}
+
+.MuiTablePagination-root .Mui-disabled  .MuiSvgIcon-root
+{
+   color: rgba(0, 0, 0, 0.16);
 }
 
 .devDocumentation ul > li
