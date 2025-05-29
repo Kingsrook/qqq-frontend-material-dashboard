@@ -117,6 +117,11 @@ export default class QQueryColumns
    {
       const [field, tableForField] = TableUtils.getFieldAndTable(table, fieldName)
 
+      if(!field)
+      {
+         console.warn(`Couldn't find field ${fieldName} in tableMetaData - so not adding a column for it`);
+      }
+
       let column: Column;
       if(tableForField.name == table.name)
       {

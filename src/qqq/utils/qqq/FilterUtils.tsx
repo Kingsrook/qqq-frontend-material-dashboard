@@ -108,6 +108,12 @@ class FilterUtils
          const criteria = queryFilter.criteria[i];
          let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
 
+         if(!field)
+         {
+            console.warn(`Field ${criteria.fieldName} not found in tableMetaData - unable to clean up values for it..`);
+            return;
+         }
+
          let values = criteria.values;
          let hasFilterVariable = false;
 
@@ -401,21 +407,21 @@ class FilterUtils
             {
                const expression = new ThisOrLastPeriodExpression(value);
                let startOfPrefix = "";
-               if (fieldMetaData.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
+               if (fieldMetaData?.type == QFieldType.DATE_TIME || expression.timeUnit != "DAYS")
                {
                   startOfPrefix = "start of ";
                }
                labels.push(`${startOfPrefix}${expression.toString()}`);
             }
-            else if (fieldMetaData.type == QFieldType.BOOLEAN)
+            else if (fieldMetaData?.type == QFieldType.BOOLEAN)
             {
                labels.push(value == true ? "yes" : "no");
             }
-            else if (fieldMetaData.type == QFieldType.DATE_TIME)
+            else if (fieldMetaData?.type == QFieldType.DATE_TIME)
             {
                labels.push(ValueUtils.formatDateTime(value));
             }
-            else if (fieldMetaData.type == QFieldType.DATE)
+            else if (fieldMetaData?.type == QFieldType.DATE)
             {
                labels.push(ValueUtils.formatDate(value));
             }
