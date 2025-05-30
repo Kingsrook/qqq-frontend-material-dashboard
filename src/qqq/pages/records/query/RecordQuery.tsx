@@ -2450,7 +2450,6 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
             setTableMetaData(tableMetaData);
             setTableLabel(tableMetaData.label);
 
-         doRecordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
             doRecordAnalytics({location: window.location, title: "Query: " + tableMetaData.label});
 
             setTableProcesses(ProcessUtils.getProcessesForTable(metaData, tableName)); // these are the ones to show in the dropdown
