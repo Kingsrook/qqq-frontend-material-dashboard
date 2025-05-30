@@ -30,6 +30,7 @@ import com.kingsrook.qqq.backend.core.exceptions.QException;
 import com.kingsrook.qqq.backend.core.logging.QLogger;
 import com.kingsrook.qqq.backend.core.model.metadata.QInstance;
 import com.kingsrook.qqq.backend.core.model.metadata.code.QCodeReference;
+import com.kingsrook.qqq.backend.core.utils.ClassPathUtils;
 import com.kingsrook.qqq.backend.javalin.QJavalinMetaData;
 import com.kingsrook.qqq.frontend.materialdashboard.model.metadata.MaterialDashboardFieldMetaData;
 import com.kingsrook.qqq.middleware.javalin.metadata.JavalinRouteProviderMetaData;
@@ -67,19 +68,23 @@ public class FormAdjusterRegistry
          onLoadAdjusters.clear();
       }
 
-      ////////////////////////////////////////////////////////////////////////////////
-      // if we need to register the javalin router, do so (only once per qInstance) //
-      ////////////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////////////
+      // if we need to register the javalin router, do so (only once per qInstance)      //
+      // note, javalin is optional dep, so make sure it's available before try to use it //
+      /////////////////////////////////////////////////////////////////////////////////////
       if(!didRegisterRouteProvider)
       {
-         QJavalinMetaData javalinMetaData = QJavalinMetaData.ofOrWithNew(qInstance);
-         javalinMetaData.withRouteProvider(new JavalinRouteProviderMetaData()
-            .withHostedPath("/material-dashboard-backend/form-adjuster/{identifier}/{event}")
-            .withMethods(List.of("POST"))
-            .withProcessName(RunFormAdjusterProcess.NAME)
-         );
+         if(ClassPathUtils.isClassAvailable(QJavalinMetaData.class.getName()))
+         {
+            QJavalinMetaData javalinMetaData = QJavalinMetaData.ofOrWithNew(qInstance);
+            javalinMetaData.withRouteProvider(new JavalinRouteProviderMetaData()
+               .withHostedPath("/material-dashboard-backend/form-adjuster/{identifier}/{event}")
+               .withMethods(List.of("POST"))
+               .withProcessName(RunFormAdjusterProcess.NAME)
+            );
 
-         qInstance.add(new RunFormAdjusterProcess().produce(qInstance));
+            qInstance.add(new RunFormAdjusterProcess().produce(qInstance));
+         }
 
          didRegisterRouteProvider = true;
          lastRegisteredQInstance = qInstance;
