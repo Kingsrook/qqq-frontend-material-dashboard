@@ -88,7 +88,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
             const value = record.values.get(field.name);
             if (field.possibleValueSourceName && value)
             {
-               const possibleValues = await qController.possibleValues(null, null, field.possibleValueSourceName, null, [value], record.values, "form");
+               const possibleValues = await qController.possibleValues(null, null, field.possibleValueSourceName, null, [value], [], record.values, "form");
                if (possibleValues && possibleValues.length > 0)
                {
                   record.displayValues.set(field.name, possibleValues[0].label);
