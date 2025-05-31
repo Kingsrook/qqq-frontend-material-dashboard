@@ -1,0 +1,16 @@
+{
+   "tableName": "person",
+   "recordLabel": "John Doe",
+   "values": {
+      "name": "John Doe",
+      "id": 1710,
+      "createDate": "2022-08-30T00:31:00Z",
+      "modifyDate": "2022-08-30T00:31:00Z"
+   },
+   "displayValues": {
+      "name": "John Doe",
+      "id": 1710,
+      "createDate": "2022-08-30T00:31:00Z",
+      "modifyDate": "2022-08-30T00:31:00Z"
+   }
+}

@@ -1,0 +1,139 @@
+{
+   "table": {
+      "name": "script",
+      "label": "Script",
+      "isHidden": false,
+      "primaryKeyField": "id",
+      "iconName": "data_object",
+      "fields": {
+         "modifyDate": {
+            "name": "modifyDate",
+            "label": "Modify Date",
+            "type": "DATE_TIME",
+            "isRequired": false,
+            "isEditable": false,
+            "displayFormat": "%s"
+         },
+         "name": {
+            "name": "name",
+            "label": "Name",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true,
+            "displayFormat": "%s"
+         },
+         "currentScriptRevisionId": {
+            "name": "currentScriptRevisionId",
+            "label": "Current Script Revision",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": true,
+            "possibleValueSourceName": "scriptRevision",
+            "displayFormat": "%s",
+            "adornments": [
+               {
+                  "type": "LINK",
+                  "values": {
+                     "toRecordFromTable": "scriptRevision"
+                  }
+               }
+            ]
+         },
+         "id": {
+            "name": "id",
+            "label": "Id",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": false,
+            "displayFormat": "%s"
+         },
+         "tableName": {
+            "name": "tableName",
+            "label": "Table Name",
+            "type": "STRING",
+            "isRequired": false,
+            "isEditable": true,
+            "possibleValueSourceName": "tables",
+            "displayFormat": "%s"
+         },
+         "createDate": {
+            "name": "createDate",
+            "label": "Create Date",
+            "type": "DATE_TIME",
+            "isRequired": false,
+            "isEditable": false,
+            "displayFormat": "%s"
+         },
+         "scriptTypeId": {
+            "name": "scriptTypeId",
+            "label": "Script Type",
+            "type": "INTEGER",
+            "isRequired": false,
+            "isEditable": true,
+            "possibleValueSourceName": "scriptType",
+            "displayFormat": "%s",
+            "adornments": [
+               {
+                  "type": "LINK",
+                  "values": {
+                     "toRecordFromTable": "scriptType"
+                  }
+               }
+            ]
+         }
+      },
+      "sections": [
+         {
+            "name": "identity",
+            "label": "Identity",
+            "tier": "T1",
+            "fieldNames": [
+               "id",
+               "name",
+               "scriptTypeId",
+               "tableName",
+               "currentScriptRevisionId"
+            ],
+            "icon": {
+               "name": "badge"
+            },
+            "isHidden": false
+         },
+         {
+            "name": "contents",
+            "label": "Contents",
+            "tier": "T2",
+            "widgetName": "scriptViewer",
+            "icon": {
+               "name": "data_object"
+            },
+            "isHidden": false
+         },
+         {
+            "name": "dates",
+            "label": "Dates",
+            "tier": "T3",
+            "fieldNames": [
+               "createDate",
+               "modifyDate"
+            ],
+            "icon": {
+               "name": "calendar_month"
+            },
+            "isHidden": false
+         }
+      ],
+      "capabilities": [
+         "TABLE_COUNT",
+         "TABLE_GET",
+         "TABLE_QUERY",
+         "TABLE_INSERT",
+         "TABLE_DELETE",
+         "TABLE_UPDATE"
+      ],
+      "readPermission": true,
+      "insertPermission": true,
+      "editPermission": true,
+      "deletePermission": true
+   }
+}

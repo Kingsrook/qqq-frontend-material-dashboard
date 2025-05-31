@@ -1,0 +1,16 @@
+{
+   "options": [
+      {
+         "id": "person",
+         "label": "Person"
+      },
+      {
+         "id": "city",
+         "label": "City"
+      },
+      {
+         "id": "savedReport",
+         "label": "Saved Report"
+      }
+   ]
+}
