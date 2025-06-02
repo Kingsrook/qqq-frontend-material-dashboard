@@ -1,0 +1,166 @@
+{
+   "name": "person",
+   "label": "Person",
+   "isHidden": false,
+   "primaryKeyField": "id",
+   "iconName": "person",
+   "deletePermission": true,
+   "editPermission": true,
+   "insertPermission": true,
+   "readPermission": true,
+   "fields": {
+      "firstName": {
+         "name": "firstName",
+         "label": "First Name",
+         "type": "STRING",
+         "isRequired": true,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "lastName": {
+         "name": "lastName",
+         "label": "Last Name",
+         "type": "STRING",
+         "isRequired": true,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "annualSalary": {
+         "name": "annualSalary",
+         "label": "Annual Salary",
+         "type": "DECIMAL",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "$%,.2f"
+      },
+      "modifyDate": {
+         "name": "modifyDate",
+         "label": "Modify Date",
+         "type": "DATE_TIME",
+         "isRequired": false,
+         "isEditable": false,
+         "displayFormat": "%s"
+      },
+      "daysWorked": {
+         "name": "daysWorked",
+         "label": "Days Worked",
+         "type": "INTEGER",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "%,d"
+      },
+      "id": {
+         "name": "id",
+         "label": "Id",
+         "type": "INTEGER",
+         "isRequired": false,
+         "isEditable": false,
+         "displayFormat": "%s"
+      },
+      "birthDate": {
+         "name": "birthDate",
+         "label": "Birth Date",
+         "type": "DATE",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "isEmployed": {
+         "name": "isEmployed",
+         "label": "Is Employed",
+         "type": "BOOLEAN",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "homeCityId": {
+         "name": "homeCityId",
+         "label": "Home City",
+         "type": "INTEGER",
+         "possibleValueSourceName": "city",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "email": {
+         "name": "email",
+         "label": "Email",
+         "type": "STRING",
+         "isRequired": false,
+         "isEditable": true,
+         "displayFormat": "%s"
+      },
+      "createDate": {
+         "name": "createDate",
+         "label": "Create Date",
+         "type": "DATE_TIME",
+         "isRequired": false,
+         "isEditable": false,
+         "displayFormat": "%s"
+      }
+   },
+   "sections": [
+      {
+         "name": "identity",
+         "label": "Identity",
+         "tier": "T1",
+         "fieldNames": [
+            "id",
+            "firstName",
+            "lastName"
+         ],
+         "icon": {
+            "name": "badge"
+         },
+         "isHidden": false
+      },
+      {
+         "name": "basicInfo",
+         "label": "Basic Info",
+         "tier": "T2",
+         "fieldNames": [
+            "email",
+            "birthDate"
+         ],
+         "icon": {
+            "name": "dataset"
+         },
+         "isHidden": false
+      },
+      {
+         "name": "employmentInfo",
+         "label": "Employment Info",
+         "tier": "T2",
+         "fieldNames": [
+            "isEmployed",
+            "annualSalary",
+            "daysWorked"
+         ],
+         "icon": {
+            "name": "work"
+         },
+         "isHidden": false
+      },
+      {
+         "name": "dates",
+         "label": "Dates",
+         "tier": "T3",
+         "fieldNames": [
+            "createDate",
+            "modifyDate"
+         ],
+         "icon": {
+            "name": "calendar_month"
+         },
+         "isHidden": false
+      }
+   ],
+   "capabilities": [
+      "TABLE_COUNT",
+      "TABLE_GET",
+      "TABLE_QUERY",
+      "TABLE_DELETE",
+      "TABLE_INSERT",
+      "TABLE_UPDATE"
+   ]
+}

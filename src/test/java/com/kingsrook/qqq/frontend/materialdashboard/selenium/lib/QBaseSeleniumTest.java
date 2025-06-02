@@ -181,7 +181,12 @@ public class QBaseSeleniumTest
          .withRouteToFile("/metaData/table/city", "metaData/table/person.json")
          .withRouteToFile("/metaData/table/script", "metaData/table/script.json")
          .withRouteToFile("/metaData/table/scriptRevision", "metaData/table/scriptRevision.json")
+         .withRouteToFile("/qqq/v1/metaData/table/person", "qqq/v1/metaData/table/person.json")
+         .withRouteToFile("/qqq/v1/metaData/table/city", "qqq/v1/metaData/table/city.json")
+         .withRouteToFile("/qqq/v1/metaData/table/script", "qqq/v1/metaData/table/script.json")
+         .withRouteToFile("/qqq/v1/metaData/table/scriptRevision", "qqq/v1/metaData/table/scriptRevision.json")
          .withRouteToFile("/processes/querySavedView/init", "processes/querySavedView/init.json");
+
    }
 
 
