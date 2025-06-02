@@ -20,6 +20,7 @@
  */
 
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {FormControl, InputLabel, Select, SelectChangeEvent} from "@mui/material";
@@ -34,7 +35,9 @@ import Typography from "@mui/material/Typography";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
 
 import ChipTextField from "qqq/components/forms/ChipTextField";
+import HelpContent from "qqq/components/misc/HelpContent";
 import {LoadingState} from "qqq/models/LoadingState";
+import Client from "qqq/utils/qqq/Client";
 import React, {useEffect, useReducer, useState} from "react";
 
 interface Props
@@ -46,6 +49,7 @@ interface Props
 }
 
 FilterCriteriaPaster.defaultProps = {};
+const qController = Client.getInstance();
 
 function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
 {
@@ -92,6 +96,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
    const [detectedText, setDetectedText] = useState("");
    const [errorText, setErrorText] = useState("");
    const [saveDisabled, setSaveDisabled] = useState(true);
+   const [metaData, setMetaData] = useState(null as QInstance);
 
    //////////////////////////////////////////////////////////////
    // handler for when paste icon is clicked in 'any' operator //
@@ -255,6 +260,12 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
 
    useEffect(() =>
    {
+      (async () =>
+      {
+         const metaData = await qController.loadMetaData();
+         setMetaData(metaData);
+      })();
+
       let currentDelimiter = delimiter;
       let currentDelimiterCharacter = delimiterCharacter;
 
@@ -291,6 +302,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
       // if delimiter is empty string, dont split anything //
       ///////////////////////////////////////////////////////
       setErrorText("");
+      let invalidCount = 0;
       if (currentDelimiterCharacter !== "")
       {
          for (let i = 0; i < parts.length; i++)
@@ -303,24 +315,38 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                //////////////////////////////////////////////////////////////////////
                // if numeric or pvs, check validity first before pushing as a chip //
                //////////////////////////////////////////////////////////////////////
-               if (chipValidity[i] !== true)
+               if (chipValidity[i] != null && chipValidity[i] !== true)
                {
-                  if (type === "number" && Number.isNaN(Number(part)))
+                  if ((type === "number" && Number.isNaN(Number(part))) || type === "pvs")
                   {
-                     setErrorText("Some values are not numbers");
-                  }
-                  else if (type === "pvs")
-                  {
-                     setErrorText("Some values are not valid");
+                     invalidCount++;
                   }
                }
             }
          }
       }
 
+      if (invalidCount > 0)
+      {
+         if (type === "number")
+         {
+            let suffix = invalidCount === 1 ? " value is not a number" : " values are not numbers";
+            setErrorText(invalidCount + suffix + "numbers and will not be added to the filter");
+         }
+         else if (type === "pvs")
+         {
+            let suffix = invalidCount === 1 ? " value was" : " values were";
+            setErrorText(invalidCount + suffix + " not found and will not be added to the filter");
+         }
+      }
+
       setChipData(chipData);
 
    }, [inputText, delimiterCharacter, customDelimiterValue, detectedText, chipValidity]);
+
+   const slotName = type === "pvs" ? "bulkAddFilterValuesPossibleValueSource" : "bulkAddFilterValues";
+   const helpRoles = ["QUERY_SCREEN"];
+   const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent.get(slotName)} roles={helpRoles} heading={null} helpContentKey={`instanceLevel:true;slot:${slotName}`} />;
 
    return (
       <Box>
@@ -339,11 +365,13 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                  <Grid container>
                                     <Grid item pr={3} xs={12} lg={12}>
                                        <Typography variant="h5">Bulk Add Filter Values</Typography>
-                                       <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
-                                          Paste into the box on the left.
-                                          Review the filter values in the box on the right.
-                                          If the filter values are not what are expected, try changing the separator using the dropdown below.
-                                       </Typography>
+                                       {
+                                          formattedHelpContent && <Box sx={{display: "flex", lineHeight: "1.7", textTransform: "none"}}>
+                                             <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
+                                                {formattedHelpContent}
+                                             </Typography>
+                                          </Box>
+                                       }
                                     </Grid>
                                  </Grid>
                               </Box>
@@ -441,7 +469,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                        )}
                                     </Box>
                                  </Grid>
-                                 <Grid sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}} item pl={1} xs={3} lg={3}>
+                                 <Grid sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}} item pl={1} xs={4} lg={4}>
                                     {
                                        errorText && chipData.length > 0 && (
                                           <Box sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}}>
@@ -459,7 +487,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                        )
                                     }
                                  </Grid>
-                                 <Grid sx={{display: "flex", justifyContent: "flex-end", alignItems: "flex-start"}} item pr={1} xs={3} lg={3}>
+                                 <Grid sx={{display: "flex", justifyContent: "flex-end", alignItems: "flex-start"}} item pr={1} xs={2} lg={2}>
                                     {
                                        chipData && chipData.length > 0 && (
                                           <Typography sx={{textTransform: "revert"}} variant="button">{chipData.length.toLocaleString()} {chipData.length === 1 ? "value" : "values"}</Typography>
@@ -473,7 +501,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                        onClickHandler={handleCancelClicked}
                                        iconName="cancel"
                                        disabled={false} />
-                                    <QSaveButton onClickHandler={handleSaveClicked} label="Add Filters" disabled={saveDisabled} />
+                                    <QSaveButton onClickHandler={handleSaveClicked} label="Add Values" disabled={saveDisabled} />
                                  </Grid>
                               </Box>
                            </Card>

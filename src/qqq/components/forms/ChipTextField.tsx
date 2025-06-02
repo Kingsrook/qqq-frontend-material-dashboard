@@ -91,7 +91,7 @@ function ChipTextField({...props})
             for (let k = 0; k < page.length; k++)
             {
                const result = page[k];
-               if (result.label === batch[j])
+               if (result.label.toLowerCase() === batch[j].toLowerCase())
                {
                   chipPVSIds.push(result.id);
                   newChipColors.push("info");
