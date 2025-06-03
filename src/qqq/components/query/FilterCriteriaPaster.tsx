@@ -346,7 +346,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
 
    const slotName = type === "pvs" ? "bulkAddFilterValuesPossibleValueSource" : "bulkAddFilterValues";
    const helpRoles = ["QUERY_SCREEN"];
-   const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent.get(slotName)} roles={helpRoles} heading={null} helpContentKey={`instanceLevel:true;slot:${slotName}`} />;
+   const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent?.get(slotName)} roles={helpRoles} heading={null} helpContentKey={`instanceLevel:true;slot:${slotName}`} />;
 
    return (
       <Box>
