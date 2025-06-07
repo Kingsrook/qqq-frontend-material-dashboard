@@ -91,6 +91,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
    const [delimiterCharacter, setDelimiterCharacter] = useState("");
    const [customDelimiterValue, setCustomDelimiterValue] = useState("");
    const [chipData, setChipData] = useState(undefined);
+   const [uniqueCount, setUniqueCount] = useState(undefined);
    const [chipValidity, setChipValidity] = useState([] as boolean[]);
    const [chipPVSIds, setChipPVSIds] = useState([] as any[]);
    const [detectedText, setDetectedText] = useState("");
@@ -297,6 +298,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
       let regex = new RegExp(currentDelimiterCharacter);
       let parts = inputText.split(regex);
       let chipData = [] as string[];
+      const uniqueValuesMap: { [key: string]: number } = {};
 
       ///////////////////////////////////////////////////////
       // if delimiter is empty string, dont split anything //
@@ -312,15 +314,20 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
             {
                chipData.push(part);
 
-               //////////////////////////////////////////////////////////////////////
-               // if numeric or pvs, check validity first before pushing as a chip //
-               //////////////////////////////////////////////////////////////////////
+               ////////////////////////////////////////////////////////////////
+               // if numeric or pvs, check validity and add to invalid count //
+               ////////////////////////////////////////////////////////////////
                if (chipValidity[i] != null && chipValidity[i] !== true)
                {
                   if ((type === "number" && Number.isNaN(Number(part))) || type === "pvs")
                   {
                      invalidCount++;
                   }
+               }
+               else
+               {
+                  let count = uniqueValuesMap[part] == null ? 0 : uniqueValuesMap[part];
+                  uniqueValuesMap[part] = count + 1;
                }
             }
          }
@@ -340,6 +347,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
          }
       }
 
+      setUniqueCount(Object.keys(uniqueValuesMap).length);
       setChipData(chipData);
 
    }, [inputText, delimiterCharacter, customDelimiterValue, detectedText, chipValidity]);
@@ -490,7 +498,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                  <Grid sx={{display: "flex", justifyContent: "flex-end", alignItems: "flex-start"}} item pr={1} xs={2} lg={2}>
                                     {
                                        chipData && chipData.length > 0 && (
-                                          <Typography sx={{textTransform: "revert"}} variant="button">{chipData.length.toLocaleString()} {chipData.length === 1 ? "value" : "values"}</Typography>
+                                          <Typography sx={{textTransform: "revert"}} variant="button">{chipData.length.toLocaleString()} {chipData.length === 1 ? "value" : "values"} {uniqueCount && `(${uniqueCount} unique)`}</Typography>
                                        )
                                     }
                                  </Grid>
