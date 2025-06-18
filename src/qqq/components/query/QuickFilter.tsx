@@ -38,7 +38,7 @@ import XIcon from "qqq/components/query/XIcon";
 import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
-import React, {SyntheticEvent, useContext, useReducer, useState} from "react";
+import React, {SyntheticEvent, useContext, useEffect, useReducer, useState} from "react";
 
 export type CriteriaParamType = QFilterCriteriaWithId | null | "tooComplex";
 
@@ -135,7 +135,7 @@ const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: Q
       return (filteredOptions[0]);
    }
 
-   if(return0thOptionInsteadOfNull)
+   if (return0thOptionInsteadOfNull)
    {
       console.log("Returning 0th operator instead of null - this isn't expected, but has been seen to happen - so here's some additional debugging:");
       try
@@ -144,7 +144,7 @@ const getOperatorSelectedValue = (operatorOptions: OperatorOption[], criteria: Q
          console.log("Criteria: " + JSON.stringify(criteria));
          console.log("Default Operator:   " + JSON.stringify(defaultOperator));
       }
-      catch(e)
+      catch (e)
       {
          console.log(`Error in debug output: ${e}`);
       }
@@ -186,6 +186,13 @@ export default function QuickFilter({tableMetaData, fullFieldName, fieldMetaData
    //////////////////////
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+   useEffect(() =>
+   {
+      //////////////////////////////////////////////////////////////////////////////
+      // was not seeing criteria changes take place until watching it stringified //
+      //////////////////////////////////////////////////////////////////////////////
+      setCriteria(criteria);
+   }, [JSON.stringify(criteria)]);
 
    /*******************************************************************************
     **

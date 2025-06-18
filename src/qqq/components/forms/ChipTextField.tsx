@@ -23,8 +23,10 @@ import {Chip} from "@mui/material";
 import TextField from "@mui/material/TextField";
 import {makeStyles} from "@mui/styles";
 import Downshift from "downshift";
+import {debounce} from "lodash";
 import {arrayOf, func, string} from "prop-types";
-import React, {useEffect, useState} from "react";
+import Client from "qqq/utils/qqq/Client";
+import React, {useEffect, useRef, useState} from "react";
 
 const useStyles = makeStyles((theme: any) => ({
    chip: {
@@ -34,21 +36,99 @@ const useStyles = makeStyles((theme: any) => ({
 
 function ChipTextField({...props})
 {
+   const qController = Client.getInstance();
    const classes = useStyles();
-   const {handleChipChange, label, chipType, disabled, placeholder, chipData, multiline, rows, ...other} = props;
+   const {table, field, handleChipChange, label, chipType, disabled, placeholder, chipData, multiline, rows, ...other} = props;
    const [inputValue, setInputValue] = useState("");
    const [chips, setChips] = useState([]);
+   const [chipColors, setChipColors] = useState([]);
+   const [chipValidity, setChipValidity] = useState([] as boolean[]);
+   const [chipPVSIds, setChipPVSIds] = useState([] as any[]);
+   const [isMakingRequest, setIsMakingRequest] = useState(false);
 
+   ////////////////////////////////////////////////////////////////////
+   // these refs are used for the async api call for possible values //
+   ////////////////////////////////////////////////////////////////////
+   const chipsRef = useRef<string[]>([]);
+
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   // use debounce library to not flood server as user types, wait a second before requesting //
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   async function fetchPVSLabelsAndColorChips()
+   {
+      //////////////////////////////////////////////////////////
+      // make a request for the possible value labels (chips) //
+      //////////////////////////////////////////////////////////
+      setIsMakingRequest(true);
+      const currentChips = chipsRef.current;
+      setChipColors([]);
+
+      ///////////////////////////////////////////////////////////////////////////////
+      // Determine chip colors based on whether each chip value appears in results //
+      ///////////////////////////////////////////////////////////////////////////////
+      const newChipColors = [] as string[];
+      const chipValidity = [] as boolean[];
+      const chipPVSIds = [] as any[];
+
+      ////////////////////////////////////////////////////////////////////////////
+      // make the request for all 'chips' with pagination to handle large sizes //
+      ////////////////////////////////////////////////////////////////////////////
+      const BATCH_SIZE = 250;
+      for (let i = 0; i < currentChips.length; i += BATCH_SIZE)
+      {
+         const batch = currentChips.slice(i, i + BATCH_SIZE);
+         const page = await qController.possibleValues(
+            table.name,
+            null,
+            field.name,
+            "",
+            null,
+            batch
+         );
+         for (let j = 0; j < batch.length; j++)
+         {
+            let found = false;
+            for (let k = 0; k < page.length; k++)
+            {
+               const result = page[k];
+               if (result.label.toLowerCase() === batch[j].toLowerCase())
+               {
+                  chipPVSIds.push(result.id);
+                  newChipColors.push("info");
+                  chipValidity.push(true);
+                  found = true;
+                  break;
+               }
+            }
+
+            if (!found)
+            {
+               chipPVSIds.push(null);
+               chipValidity.push(false);
+               newChipColors.push("error");
+            }
+         }
+      }
+
+      setChipPVSIds(chipPVSIds);
+      setChipColors(newChipColors);
+      setChipValidity(chipValidity);
+      setIsMakingRequest(false);
+   }
+
+   const debouncedApiCall = useRef(debounce(fetchPVSLabelsAndColorChips, 500)).current;
 
    useEffect(() =>
    {
       setChips(chipData);
-   }, [chipData]);
+      chipsRef.current = chipData;
+      determineChipColors();
+   }, [JSON.stringify(chipData)]);
 
    useEffect(() =>
    {
-      handleChipChange(chips);
-   }, [chips, handleChipChange]);
+      handleChipChange(isMakingRequest, chipValidity, chipPVSIds);
+   }, [chipValidity, chipPVSIds, isMakingRequest]);
 
    function handleKeyDown(event: any)
    {
@@ -64,13 +144,16 @@ function ChipTextField({...props})
             setInputValue("");
             return;
          }
-         if (!event.target.value.replace(/\s/g, "").length) return;
+         if (!event.target.value.replace(/\s/g, "").length)
+         {
+            return;
+         }
 
+         setInputValue("");
          newChipList.push(event.target.value.trim());
          setChips(newChipList);
-         setInputValue("");
       }
-      else if (chips.length && !inputValue.length && event.key === "Backspace" )
+      else if (chips.length && !inputValue.length && event.key === "Backspace")
       {
          setChips(chips.slice(0, chips.length - 1));
       }
@@ -87,16 +170,24 @@ function ChipTextField({...props})
       setChips(newChipList);
    }
 
-   const handleDelete = (item: any) => () =>
-   {
-      const newChipList = [...chips];
-      newChipList.splice(newChipList.indexOf(item), 1);
-      setChips(newChipList);
-   };
-
    function handleInputChange(event: { target: { value: React.SetStateAction<string>; }; })
    {
       setInputValue(event.target.value);
+   }
+
+   function determineChipColors(): any
+   {
+      if (chipType === "pvs")
+      {
+         debouncedApiCall();
+      }
+      else
+      {
+         const newChipColors = chips.map((chip, i) =>
+            (chipType !== "number" || !Number.isNaN(Number(chips[i]))) ? "info" : "error"
+         );
+         setChipColors(newChipColors);
+      }
    }
 
 
@@ -116,7 +207,7 @@ function ChipTextField({...props})
                });
                // @ts-ignore
                return (
-                  <div id="chip-text-field-container" style={{flexWrap: "wrap", display:"flex"}}>
+                  <div id="chip-text-field-container" style={{flexWrap: "wrap", display: "flex"}}>
                      <TextField
                         sx={{width: "99%"}}
                         disabled={disabled}
@@ -125,16 +216,16 @@ function ChipTextField({...props})
                            startAdornment:
                               <div style={{overflowY: "auto", overflowX: "hidden", margin: "-10px", width: "calc(100% + 20px)", padding: "10px", marginBottom: "-20px", height: "calc(100% + 10px)"}}>
                                  {
-                                    chips.map((item, i) => (
+                                    chips.map((item, index) => (
                                        <Chip
-                                          color={(chipType !== "number" || ! Number.isNaN(Number(item))) ? "info" : "error"}
-                                          key={`${item}-${i}`}
+                                          onChange={determineChipColors}
+                                          color={chipColors[index]}
+                                          key={`${item}-${index}`}
                                           variant="outlined"
                                           tabIndex={-1}
                                           label={item}
                                           className={classes.chip}
                                        />
-
                                     ))
                                  }
                               </div>,
@@ -158,6 +249,7 @@ function ChipTextField({...props})
       </React.Fragment>
    );
 }
+
 ChipTextField.defaultProps = {
    chipData: []
 };
@@ -166,4 +258,4 @@ ChipTextField.propTypes = {
    chipData: arrayOf(string)
 };
 
-export default ChipTextField
+export default ChipTextField;

@@ -20,17 +20,18 @@
  */
 
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {Box, InputAdornment, InputLabel} from "@mui/material";
+import {InputAdornment, InputLabel} from "@mui/material";
+import Box from "@mui/material/Box";
 import Switch from "@mui/material/Switch";
 import {ErrorMessage, Field, useFormikContext} from "formik";
-import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
-import DynamicSelect from "qqq/components/forms/DynamicSelect";
-import React, {useMemo, useState} from "react";
-import AceEditor from "react-ace";
 import colors from "qqq/assets/theme/base/colors";
 import BooleanFieldSwitch from "qqq/components/forms/BooleanFieldSwitch";
+import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
+import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import MDInput from "qqq/components/legacy/MDInput";
 import MDTypography from "qqq/components/legacy/MDTypography";
+import React, {useMemo, useState} from "react";
+import AceEditor from "react-ace";
 import {flushSync} from "react-dom";
 
 // Declaring props types for FormField
@@ -83,10 +84,10 @@ function QDynamicFormField({
 
    if (placeholder)
    {
-      inputProps.placeholder = placeholder
+      inputProps.placeholder = placeholder;
    }
 
-   if(backgroundColor)
+   if (backgroundColor)
    {
       inputProps.sx = {
          "&.MuiInputBase-root": {
@@ -124,7 +125,7 @@ function QDynamicFormField({
    {
       onChange.onChange = (e: any) =>
       {
-         if(isToUpperCase || isToLowerCase)
+         if (isToUpperCase || isToLowerCase)
          {
             const beforeStart = e.target.selectionStart;
             const beforeEnd = e.target.selectionEnd;
@@ -141,7 +142,7 @@ function QDynamicFormField({
                   newValue = newValue.toLowerCase();
                }
                setFieldValue(name, newValue);
-               if(onChangeCallback)
+               if (onChangeCallback)
                {
                   onChangeCallback(newValue);
                }
@@ -153,7 +154,7 @@ function QDynamicFormField({
                input.setSelectionRange(beforeStart, beforeEnd);
             }
          }
-         else if(onChangeCallback)
+         else if (onChangeCallback)
          {
             onChangeCallback(e.currentTarget.value);
          }
@@ -165,15 +166,15 @@ function QDynamicFormField({
     ***************************************************************************/
    function dynamicSelectOnChange(newValue?: QPossibleValue)
    {
-      if(onChangeCallback)
+      if (onChangeCallback)
       {
-         onChangeCallback(newValue == null ? null : newValue.id)
+         onChangeCallback(newValue == null ? null : newValue.id);
       }
    }
 
    let field;
    let getsBulkEditHtmlLabel = true;
-   if(formFieldObject.possibleValueProps)
+   if (formFieldObject.possibleValueProps)
    {
       field = (<DynamicSelect
          name={name}
@@ -186,7 +187,7 @@ function QDynamicFormField({
          onChange={dynamicSelectOnChange}
          // otherValues={otherValuesMap}
          useCase="form"
-      />)
+      />);
    }
    else if (type === "checkbox")
    {
@@ -220,7 +221,7 @@ function QDynamicFormField({
                onChange={(value: string, event: any) =>
                {
                   setFieldValue(name, value, false);
-                  if(onChangeCallback)
+                  if (onChangeCallback)
                   {
                      onChangeCallback(value);
                   }

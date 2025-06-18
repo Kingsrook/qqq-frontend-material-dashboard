@@ -133,7 +133,7 @@ class FilterUtils
                }
                else
                {
-                  values = await qController.possibleValues(fieldTable.name, null, field.name, "", values, undefined, "filter");
+                  values = await qController.possibleValues(fieldTable.name, null, field.name, "", values, undefined, undefined, "filter");
                }
             }
 

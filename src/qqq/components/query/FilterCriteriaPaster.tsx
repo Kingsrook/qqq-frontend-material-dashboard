@@ -19,6 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
 import {FormControl, InputLabel, Select, SelectChangeEvent} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -28,20 +32,26 @@ import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {GridFilterItem} from "@mui/x-data-grid-pro";
-import React, {useEffect, useState} from "react";
 import {QCancelButton, QSaveButton} from "qqq/components/buttons/DefaultButtons";
+
 import ChipTextField from "qqq/components/forms/ChipTextField";
+import HelpContent from "qqq/components/misc/HelpContent";
+import {LoadingState} from "qqq/models/LoadingState";
+import Client from "qqq/utils/qqq/Client";
+import React, {useEffect, useReducer, useState} from "react";
 
 interface Props
 {
    type: string;
    onSave: (newValues: any[]) => void;
+   table?: QTableMetaData;
+   field?: QFieldMetaData;
 }
 
 FilterCriteriaPaster.defaultProps = {};
+const qController = Client.getInstance();
 
-function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
+function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
 {
    enum Delimiter
    {
@@ -68,6 +78,12 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
    mainCardStyles.width = "60%";
    mainCardStyles.minWidth = "500px";
 
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // add a LoadingState object, in case the initial loads (of meta data and view) are slow //
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+   const [pageLoadingState, _] = useState(new LoadingState(forceUpdate));
+
    //x const [gridFilterItem, setGridFilterItem] = useState(props.item);
    const [pasteModalIsOpen, setPasteModalIsOpen] = useState(false);
    const [inputText, setInputText] = useState("");
@@ -75,8 +91,13 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
    const [delimiterCharacter, setDelimiterCharacter] = useState("");
    const [customDelimiterValue, setCustomDelimiterValue] = useState("");
    const [chipData, setChipData] = useState(undefined);
+   const [uniqueCount, setUniqueCount] = useState(undefined);
+   const [chipValidity, setChipValidity] = useState([] as boolean[]);
+   const [chipPVSIds, setChipPVSIds] = useState([] as any[]);
    const [detectedText, setDetectedText] = useState("");
    const [errorText, setErrorText] = useState("");
+   const [saveDisabled, setSaveDisabled] = useState(true);
+   const [metaData, setMetaData] = useState(null as QInstance);
 
    //////////////////////////////////////////////////////////////
    // handler for when paste icon is clicked in 'any' operator //
@@ -92,6 +113,7 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
       setDelimiter("");
       setDelimiterCharacter("");
       setChipData([]);
+      setChipValidity([]);
       setInputText("");
       setDetectedText("");
       setCustomDelimiterValue("");
@@ -106,16 +128,41 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
 
    const handleSaveClicked = () =>
    {
-      ////////////////////////////////////////
-      // if numeric remove any non-numerics //
-      ////////////////////////////////////////
+      ///////////////////////////////////////////////////////////////
+      // if numeric remove any non-numerics, or invalid pvs values //
+      ///////////////////////////////////////////////////////////////
       let saveData = [];
+      let usedLabels = new Map<any, boolean>();
       for (let i = 0; i < chipData.length; i++)
       {
-         if (type !== "number" || !Number.isNaN(Number(chipData[i])))
+         if (chipValidity[i] === true)
          {
-            saveData.push(chipData[i]);
+            if (type === "pvs")
+            {
+               /////////////////////////////////////////////
+               // if already used this PVS label, skip it //
+               /////////////////////////////////////////////
+               if (usedLabels.get(chipData[i]) != null)
+               {
+                  continue;
+               }
+
+               saveData.push(new QPossibleValue({id: chipPVSIds[i], label: chipData[i]}));
+               usedLabels.set(chipData[i], true);
+            }
+            else
+            {
+               saveData.push(chipData[i]);
+            }
          }
+      }
+
+      //////////////////////////////////////////
+      // for pvs, sort by label before saving //
+      //////////////////////////////////////////
+      if (type === "pvs")
+      {
+         saveData.sort((a: QPossibleValue, b: QPossibleValue) => b.label.localeCompare(a.label));
       }
 
       onSave(saveData);
@@ -214,6 +261,12 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
 
    useEffect(() =>
    {
+      (async () =>
+      {
+         const metaData = await qController.loadMetaData();
+         setMetaData(metaData);
+      })();
+
       let currentDelimiter = delimiter;
       let currentDelimiterCharacter = delimiterCharacter;
 
@@ -245,11 +298,13 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
       let regex = new RegExp(currentDelimiterCharacter);
       let parts = inputText.split(regex);
       let chipData = [] as string[];
+      const uniqueValuesMap: { [key: string]: number } = {};
 
       ///////////////////////////////////////////////////////
       // if delimiter is empty string, dont split anything //
       ///////////////////////////////////////////////////////
       setErrorText("");
+      let invalidCount = 0;
       if (currentDelimiterCharacter !== "")
       {
          for (let i = 0; i < parts.length; i++)
@@ -259,20 +314,47 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
             {
                chipData.push(part);
 
-               ///////////////////////////////////////////////////////////
-               // if numeric, check that first before pushing as a chip //
-               ///////////////////////////////////////////////////////////
-               if (type === "number" && Number.isNaN(Number(part)))
+               ////////////////////////////////////////////////////////////////
+               // if numeric or pvs, check validity and add to invalid count //
+               ////////////////////////////////////////////////////////////////
+               if (chipValidity[i] != null && chipValidity[i] !== true)
                {
-                  setErrorText("Some values are not numbers");
+                  if ((type === "number" && Number.isNaN(Number(part))) || type === "pvs")
+                  {
+                     invalidCount++;
+                  }
+               }
+               else
+               {
+                  let count = uniqueValuesMap[part] == null ? 0 : uniqueValuesMap[part];
+                  uniqueValuesMap[part] = count + 1;
                }
             }
          }
       }
 
+      if (invalidCount > 0)
+      {
+         if (type === "number")
+         {
+            let suffix = invalidCount === 1 ? " value is not a number" : " values are not numbers";
+            setErrorText(invalidCount + suffix + "numbers and will not be added to the filter");
+         }
+         else if (type === "pvs")
+         {
+            let suffix = invalidCount === 1 ? " value was" : " values were";
+            setErrorText(invalidCount + suffix + " not found and will not be added to the filter");
+         }
+      }
+
+      setUniqueCount(Object.keys(uniqueValuesMap).length);
       setChipData(chipData);
 
-   }, [inputText, delimiterCharacter, customDelimiterValue, detectedText]);
+   }, [inputText, delimiterCharacter, customDelimiterValue, detectedText, chipValidity]);
+
+   const slotName = type === "pvs" ? "bulkAddFilterValuesPossibleValueSource" : "bulkAddFilterValues";
+   const helpRoles = ["QUERY_SCREEN"];
+   const formattedHelpContent = <HelpContent helpContents={metaData?.helpContent?.get(slotName)} roles={helpRoles} heading={null} helpContentKey={`instanceLevel:true;slot:${slotName}`} />;
 
    return (
       <Box>
@@ -283,128 +365,155 @@ function FilterCriteriaPaster({type, onSave}: Props): JSX.Element
             pasteModalIsOpen &&
             (
                <Modal open={pasteModalIsOpen}>
-                  <Box sx={{position: "absolute", overflowY: "auto", width: "100%"}}>
-                     <Box py={3} justifyContent="center" sx={{display: "flex", mt: 8}}>
-                        <Card sx={mainCardStyles}>
-                           <Box p={4} pb={2}>
-                              <Grid container>
-                                 <Grid item pr={3} xs={12} lg={12}>
-                                    <Typography variant="h5">Bulk Add Filter Values</Typography>
-                                    <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
-                                       Paste into the box on the left.
-                                       Review the filter values in the box on the right.
-                                       If the filter values are not what are expected, try changing the separator using the dropdown below.
-                                    </Typography>
+                  <Box>
+                     <Box sx={{position: "absolute", overflowY: "auto", width: "100%"}}>
+                        <Box py={3} justifyContent="center" sx={{display: "flex", mt: 8}}>
+                           <Card sx={mainCardStyles}>
+                              <Box p={4} pb={2}>
+                                 <Grid container>
+                                    <Grid item pr={3} xs={12} lg={12}>
+                                       <Typography variant="h5">Bulk Add Filter Values</Typography>
+                                       {
+                                          formattedHelpContent && <Box sx={{display: "flex", lineHeight: "1.7", textTransform: "none"}}>
+                                             <Typography sx={{display: "flex", lineHeight: "1.7", textTransform: "revert"}} variant="button">
+                                                {formattedHelpContent}
+                                             </Typography>
+                                          </Box>
+                                       }
+                                    </Grid>
+                                 </Grid>
+                              </Box>
+                              <Grid container pl={3} pr={3} justifyContent="center" alignItems="stretch" sx={{display: "flex", height: "100%"}}>
+                                 <Grid item pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
+                                    <FormControl sx={{m: 1, width: "100%"}}>
+                                       <TextField
+                                          id="outlined-multiline-static"
+                                          label="PASTE TEXT"
+                                          multiline
+                                          onChange={handleTextChange}
+                                          rows={16}
+                                          value={inputText}
+                                       />
+                                    </FormControl>
+                                 </Grid>
+                                 <Grid item xs={6} lg={6} sx={{display: "flex", flexGrow: 1}}>
+                                    <FormControl sx={{m: 1, width: "100%"}}>
+                                       <ChipTextField
+                                          handleChipChange={(isMakingRequest: boolean, chipValidity: boolean[], chipPVSIds: any[]) =>
+                                          {
+                                             setErrorText("");
+                                             if (isMakingRequest)
+                                             {
+                                                pageLoadingState.setLoading();
+                                             }
+                                             else
+                                             {
+                                                pageLoadingState.setNotLoading();
+                                             }
+                                             setSaveDisabled(isMakingRequest);
+                                             setChipPVSIds(chipPVSIds);
+                                             setChipValidity(chipValidity);
+                                          }}
+                                          table={table}
+                                          field={field}
+                                          chipData={chipData}
+                                          chipValidity={chipValidity}
+                                          chipType={type}
+                                          multiline
+                                          fullWidth
+                                          variant="outlined"
+                                          id="tags"
+                                          rows={0}
+                                          name="tags"
+                                          label="FILTER VALUES REVIEW"
+                                       />
+                                    </FormControl>
                                  </Grid>
                               </Grid>
-                           </Box>
-                           <Grid container pl={3} pr={3} justifyContent="center" alignItems="stretch" sx={{display: "flex", height: "100%"}}>
-                              <Grid item pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
-                                 <FormControl sx={{m: 1, width: "100%"}}>
-                                    <TextField
-                                       id="outlined-multiline-static"
-                                       label="PASTE TEXT"
-                                       multiline
-                                       onChange={handleTextChange}
-                                       rows={16}
-                                       value={inputText}
-                                    />
-                                 </FormControl>
-                              </Grid>
-                              <Grid item xs={6} lg={6} sx={{display: "flex", flexGrow: 1}}>
-                                 <FormControl sx={{m: 1, width: "100%"}}>
-                                    <ChipTextField
-                                       handleChipChange={() =>
-                                       {
-                                       }}
-                                       chipData={chipData}
-                                       chipType={type}
-                                       multiline
-                                       fullWidth
-                                       variant="outlined"
-                                       id="tags"
-                                       rows={0}
-                                       name="tags"
-                                       label="FILTER VALUES REVIEW"
-                                    />
-                                 </FormControl>
-                              </Grid>
-                           </Grid>
-                           <Grid container pl={3} pr={3} justifyContent="center" alignItems="stretch" sx={{display: "flex", height: "100%"}}>
-                              <Grid item pl={1} pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
-                                 <Box sx={{display: "inline-flex", alignItems: "baseline"}}>
-                                    <FormControl sx={{mt: 2, width: "50%"}}>
-                                       <InputLabel htmlFor="select-native">
-                                          SEPARATOR
-                                       </InputLabel>
-                                       <Select
-                                          multiline
-                                          native
-                                          value={delimiter}
-                                          onChange={handleDelimiterChange}
-                                          label="SEPARATOR"
-                                          size="medium"
-                                          inputProps={{
-                                             id: "select-native",
-                                          }}
-                                       >
-                                          {delimiterDropdownOptions.map((delimiter) => (
-                                             <option key={delimiter} value={delimiter}>
-                                                {delimiter}
-                                             </option>
-                                          ))}
-                                       </Select>
-                                    </FormControl>
-                                    {delimiter === Delimiter.CUSTOM.valueOf() && (
-
-                                       <FormControl sx={{pl: 2, top: 5, width: "50%"}}>
-                                          <TextField
-                                             name="custom-delimiter-value"
-                                             placeholder="Custom Separator"
-                                             label="Custom Separator"
-                                             variant="standard"
-                                             value={customDelimiterValue}
-                                             onChange={handleCustomDelimiterChange}
-                                             inputProps={{maxLength: 1}}
-                                          />
+                              <Grid container pl={3} pr={3} justifyContent="center" alignItems="stretch" sx={{display: "flex", height: "100%"}}>
+                                 <Grid item pl={1} pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
+                                    <Box sx={{display: "inline-flex", alignItems: "baseline"}}>
+                                       <FormControl sx={{mt: 2, width: "50%"}}>
+                                          <InputLabel htmlFor="select-native">
+                                             SEPARATOR
+                                          </InputLabel>
+                                          <Select
+                                             multiline
+                                             native
+                                             value={delimiter}
+                                             onChange={handleDelimiterChange}
+                                             label="SEPARATOR"
+                                             size="medium"
+                                             inputProps={{
+                                                id: "select-native",
+                                             }}
+                                          >
+                                             {delimiterDropdownOptions.map((delimiter) => (
+                                                <option key={delimiter} value={delimiter}>
+                                                   {delimiter}
+                                                </option>
+                                             ))}
+                                          </Select>
                                        </FormControl>
-                                    )}
-                                    {inputText && delimiter === Delimiter.DETECT_AUTOMATICALLY.valueOf() && (
+                                       {delimiter === Delimiter.CUSTOM.valueOf() && (
 
-                                       <Typography pl={2} variant="button" sx={{top: "1px", textTransform: "revert"}}>
-                                          <i>{detectedText}</i>
-                                       </Typography>
-                                    )}
-                                 </Box>
+                                          <FormControl sx={{pl: 2, top: 5, width: "50%"}}>
+                                             <TextField
+                                                name="custom-delimiter-value"
+                                                placeholder="Custom Separator"
+                                                label="Custom Separator"
+                                                variant="standard"
+                                                value={customDelimiterValue}
+                                                onChange={handleCustomDelimiterChange}
+                                                inputProps={{maxLength: 1}}
+                                             />
+                                          </FormControl>
+                                       )}
+                                       {inputText && delimiter === Delimiter.DETECT_AUTOMATICALLY.valueOf() && (
+
+                                          <Typography pl={2} variant="button" sx={{top: "1px", textTransform: "revert"}}>
+                                             <i>{detectedText}</i>
+                                          </Typography>
+                                       )}
+                                    </Box>
+                                 </Grid>
+                                 <Grid sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}} item pl={1} xs={4} lg={4}>
+                                    {
+                                       errorText && chipData.length > 0 && (
+                                          <Box sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}}>
+                                             <Icon color="error">error</Icon>
+                                             <Typography sx={{paddingLeft: "4px", textTransform: "revert"}} variant="button">{errorText}</Typography>
+                                          </Box>
+                                       )
+                                    }
+                                    {
+                                       pageLoadingState.isLoadingSlow() && (
+                                          <Box sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}}>
+                                             <Icon color="warning">warning</Icon>
+                                             <Typography sx={{paddingLeft: "4px", textTransform: "revert"}} variant="button">Loading...</Typography>
+                                          </Box>
+                                       )
+                                    }
+                                 </Grid>
+                                 <Grid sx={{display: "flex", justifyContent: "flex-end", alignItems: "flex-start"}} item pr={1} xs={2} lg={2}>
+                                    {
+                                       chipData && chipData.length > 0 && (
+                                          <Typography sx={{textTransform: "revert"}} variant="button">{chipData.length.toLocaleString()} {chipData.length === 1 ? "value" : "values"} {uniqueCount && `(${uniqueCount} unique)`}</Typography>
+                                       )
+                                    }
+                                 </Grid>
                               </Grid>
-                              <Grid sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}} item pl={1} xs={3} lg={3}>
-                                 {
-                                    errorText && chipData.length > 0 && (
-                                       <Box sx={{display: "flex", justifyContent: "flex-start", alignItems: "flex-start"}}>
-                                          <Icon color="error">error</Icon>
-                                          <Typography sx={{paddingLeft: "4px", textTransform: "revert"}} variant="button">{errorText}</Typography>
-                                       </Box>
-                                    )
-                                 }
-                              </Grid>
-                              <Grid sx={{display: "flex", justifyContent: "flex-end", alignItems: "flex-start"}} item pr={1} xs={3} lg={3}>
-                                 {
-                                    chipData && chipData.length > 0 && (
-                                       <Typography sx={{textTransform: "revert"}} variant="button">{chipData.length.toLocaleString()} {chipData.length === 1 ? "value" : "values"}</Typography>
-                                    )
-                                 }
-                              </Grid>
-                           </Grid>
-                           <Box p={3} pt={0}>
-                              <Grid container pl={1} pr={1} justifyContent="right" alignItems="stretch" sx={{display: "flex-inline "}}>
-                                 <QCancelButton
-                                    onClickHandler={handleCancelClicked}
-                                    iconName="cancel"
-                                    disabled={false} />
-                                 <QSaveButton onClickHandler={handleSaveClicked} label="Add Filters" disabled={false} />
-                              </Grid>
-                           </Box>
-                        </Card>
+                              <Box p={3} pt={0}>
+                                 <Grid container pl={1} pr={1} justifyContent="right" alignItems="stretch" sx={{display: "flex-inline "}}>
+                                    <QCancelButton
+                                       onClickHandler={handleCancelClicked}
+                                       iconName="cancel"
+                                       disabled={false} />
+                                    <QSaveButton onClickHandler={handleSaveClicked} label="Add Values" disabled={saveDisabled} />
+                                 </Grid>
+                              </Box>
+                           </Card>
+                        </Box>
                      </Box>
                   </Box>
                </Modal>
