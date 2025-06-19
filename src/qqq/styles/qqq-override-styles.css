@@ -837,3 +837,26 @@ input[type="search"]::-webkit-search-results-decoration
       flex-grow: 1 !important;
    }
 }
+
+.stickyBottomButtonBar
+{
+   padding-bottom: 1rem !important;
+   padding-right: 0 !important;
+   margin-bottom: -4rem !important;
+   margin-top: -1.5rem !important;
+   position: sticky;
+   bottom: 0;
+   background: linear-gradient(to bottom, transparent 0, #f0f2f5 4px);
+   z-index: 10; /* have needed a little here, e.g. to get above MuiDataGrid-overlay and ACE */
+}
+
+.modalBottomButtonBar
+{
+   padding-bottom: 0 !important;
+   padding-right: 0 !important;
+}
+
+.stickyBottomButtonBar>.MuiGrid-container
+{
+   padding-top: 1rem;
+}
