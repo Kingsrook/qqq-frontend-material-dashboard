@@ -298,6 +298,10 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
       let regex = new RegExp(currentDelimiterCharacter);
       let parts = inputText.split(regex);
       let chipData = [] as string[];
+
+      /////////////////////////////////////////////////////////////////
+      // use a map to keep track of the counts for each unique value //
+      /////////////////////////////////////////////////////////////////
       const uniqueValuesMap: { [key: string]: number } = {};
 
       ///////////////////////////////////////////////////////
