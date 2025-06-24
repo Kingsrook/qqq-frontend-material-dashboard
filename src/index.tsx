@@ -36,6 +36,20 @@ import {BrowserRouter} from "react-router-dom";
 
 const qController = Client.getInstance();
 
+function getBasePath(): string
+{
+   // You can change this logic depending on how you detect your mount point
+   const path = window.location.pathname;
+
+   console.warn("Using hacked base path for QQQ application, please update this code to be better : path ["+ path +"].");
+
+   // Example: If app is deployed at /admin or /portal
+   if (path.startsWith("/admin")) return "/admin";
+   if (path.startsWith("/portal")) return "/portal";   // TODO: This is all temporary, we need to fix this properly
+
+   return "/";
+}
+
 if (document.location.search && document.location.search.indexOf("clearAuthenticationMetaDataLocalStorage") > -1)
 {
    qController.clearAuthenticationMetaDataLocalStorage();
@@ -89,19 +103,19 @@ authenticationMetaDataPromise.then((authenticationMetaData) =>
 
    if (authenticationMetaData.type === "AUTH_0")
    {
-      root.render(<BrowserRouter>
+      root.render(<BrowserRouter basename={getBasePath()}>
          <Auth0RouterBody />
       </BrowserRouter>);
    }
    else if (authenticationMetaData.type === "OAUTH2")
    {
-      root.render(<BrowserRouter>
+      root.render(<BrowserRouter basename={getBasePath()}>
          <OAuth2RouterBody />
       </BrowserRouter>);
    }
    else if (authenticationMetaData.type === "FULLY_ANONYMOUS" || authenticationMetaData.type === "MOCK")
    {
-      root.render(<BrowserRouter>
+      root.render(<BrowserRouter basename={getBasePath()}>
          <AnonymousRouterBody />
       </BrowserRouter>);
    }

@@ -23,6 +23,8 @@
       "@types/react-dom": "18.0.0",
       "@types/react-router-hash-link": "2.4.5",
       "ace-builds": "1.12.3",
+      "ajv": "^8.11.0",
+      "ajv-keywords": "^5.1.0",
       "chart.js": "3.4.1",
       "chroma-js": "2.4.2",
       "cmdk": "0.2.0",
@@ -35,8 +37,8 @@
       "html-react-parser": "1.4.8",
       "html-to-text": "^9.0.5",
       "http-proxy-middleware": "2.0.6",
-      "lodash": "4.17.21",
       "jwt-decode": "3.1.2",
+      "lodash": "4.17.21",
       "oidc-client-ts": "2.4.1",
       "rapidoc": "9.3.4",
       "react": "18.0.0",
@@ -60,14 +62,15 @@
       "yup": "0.32.11"
    },
    "scripts": {
-      "build": "react-scripts build",
+      "build": "PUBLIC_URL=. react-scripts build",
       "clean": "rm -rf node_modules package-lock.json lib",
       "eject": "react-scripts eject",
       "clean-and-install": "rm -rf node_modules/ && rm -rf package-lock.json && rm -rf lib/ && npm install --legacy-peer-deps && npm dedupe --force",
       "npm-install": "npm install --legacy-peer-deps",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
-      "start": "BROWSER=none react-scripts --max-http-header-size=65535 start",
-      "test": "react-scripts test"
+      "start": "PUBLIC_URL=. BROWSER=none react-scripts --max-http-header-size=65535 start",
+      "test": "react-scripts test",
+      "export": "rm -rf dist && PUBLIC_URL=. react-scripts build && rm -rf src/main/resources/material-dashboard && mkdir -p src/main/resources/material-dashboard && cp -r build/* src/main/resources/material-dashboard"
    },
    "eslintConfig": {
       "extends": [
