@@ -342,7 +342,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
          if (type === "number")
          {
             let suffix = invalidCount === 1 ? " value is not a number" : " values are not numbers";
-            setErrorText(invalidCount + suffix + "numbers and will not be added to the filter");
+            setErrorText(invalidCount + suffix + " and will not be added to the filter");
          }
          else if (type === "pvs")
          {

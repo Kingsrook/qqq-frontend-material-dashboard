@@ -123,6 +123,14 @@ function ChipTextField({...props})
       setChips(chipData);
       chipsRef.current = chipData;
       determineChipColors();
+
+      if (chipType !== "pvs")
+      {
+         const currentChipValidity = chips.map((chip, i) =>
+            (chipType !== "number" || !Number.isNaN(Number(chips[i])))
+         );
+         setChipValidity(currentChipValidity);
+      }
    }, [JSON.stringify(chipData)]);
 
    useEffect(() =>
