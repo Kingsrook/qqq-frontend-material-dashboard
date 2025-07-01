@@ -131,7 +131,7 @@ function ChipTextField({...props})
          );
          setChipValidity(currentChipValidity);
       }
-   }, [JSON.stringify(chipData)]);
+   }, [JSON.stringify(chipData), chips]);
 
    useEffect(() =>
    {
