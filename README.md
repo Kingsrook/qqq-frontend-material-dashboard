@@ -154,7 +154,7 @@ material-dashboard-2-pro-react-ts
     │   │   ├── Cards
     │   │   ├── Charts
     │   │   ├── Configurator
-    │   │   ├── Footer
+    │   │   ├── FooterCard
     │   │   ├── Items
     │   │   ├── LayoutContainers
     │   │   ├── Lists
