@@ -363,7 +363,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
    return (
       <Box>
          <Tooltip title="Quickly add many values to your filter by pasting them from a spreadsheet or any other data source.">
-            <Icon onClick={handlePasteClick} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>paste_content</Icon>
+            <Icon className="criteriaPasterButton" onClick={handlePasteClick} fontSize="small" color="info" sx={{mx: 0.25, cursor: "pointer"}}>paste_content</Icon>
          </Tooltip>
          {
             pasteModalIsOpen &&
@@ -391,6 +391,7 @@ function FilterCriteriaPaster({table, field, type, onSave}: Props): JSX.Element
                                  <Grid item pr={3} xs={6} lg={6} sx={{width: "100%", display: "flex", flexDirection: "column", flexGrow: 1}}>
                                     <FormControl sx={{m: 1, width: "100%"}}>
                                        <TextField
+                                          className="criteriaPasterTextArea"
                                           id="outlined-multiline-static"
                                           label="PASTE TEXT"
                                           multiline

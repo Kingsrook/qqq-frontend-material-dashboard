@@ -22,13 +22,16 @@
 package com.kingsrook.qqq.frontend.materialdashboard.selenium.tests.query;
 
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QBaseSeleniumTest;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QQQMaterialDashboardSelectors;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.QueryScreenLib;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.CapturedContext;
 import com.kingsrook.qqq.frontend.materialdashboard.selenium.lib.javalin.QSeleniumJavalin;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.WebElement;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -203,6 +206,204 @@ public class QueryScreenTest extends QBaseSeleniumTest
    /*******************************************************************************
     **
     *******************************************************************************/
+   @Test
+   void testCriteriaPasterHappyPath()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////
+      // go to the person page //
+      ////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      //////////////////////////////////////
+      // open the paste values dialog UI //
+      //////////////////////////////////////
+      queryScreenLib.openCriteriaPasterAndPasteValues("id", List.of("1", "2", "3"));
+
+      ///////////////////////////////////////////////////////////////
+      // wait for chips to appear in the filter values review box //
+      ///////////////////////////////////////////////////////////////
+      assertFilterPasterChipCounts(3, 0);
+
+      ///////////////////////////////////////////////
+      // confirm each chip has the blue color class //
+      ///////////////////////////////////////////////
+      qSeleniumLib.waitForSelectorAll(".MuiChip-root", 3).forEach(chip ->
+      {
+         String classAttr = chip.getAttribute("class");
+         assertThat(classAttr).contains("MuiChip-colorInfo");
+      });
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testCriteriaPasterInvalidValueValidation()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////
+      // go to the person page //
+      ////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      //////////////////////////////////////
+      // open the paste values dialog UI //
+      //////////////////////////////////////
+      queryScreenLib.openCriteriaPasterAndPasteValues("id", List.of("1", "a", "3"));
+
+      //////////////////////////////////////////////////////
+      // check that chips match values and are classified //
+      //////////////////////////////////////////////////////
+      assertFilterPasterChipCounts(2, 1);
+
+      ////////////////////////////////////////////////////////////////////
+      // confirm that an appropriate validation error message is shown //
+      ////////////////////////////////////////////////////////////////////
+      WebElement errorMessage = qSeleniumLib.waitForSelectorContaining("span", "value is not a number");
+      assertThat(errorMessage.getText()).contains("value is not a number");
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testCriteriaPasterDuplicateValueValidation()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////
+      // go to the person page //
+      ////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      //////////////////////////////////////
+      // open the paste values dialog UI //
+      //////////////////////////////////////
+      List<String> pastedValues = List.of("1", "1", "1", "2", "2");
+      queryScreenLib.openCriteriaPasterAndPasteValues("id", pastedValues);
+
+      ///////////////////////////////////////////////
+      // expected chip & uniqueness calculations  //
+      ///////////////////////////////////////////////
+      int totalCount  = pastedValues.size();                // 5
+      int uniqueCount = new HashSet<>(pastedValues).size(); // 2
+
+      /////////////////////////////
+      // chips should show dupes //
+      /////////////////////////////
+      assertFilterPasterChipCounts(pastedValues.size(), 0);
+
+      ////////////////////////////////////////////////////////////////
+      // counter text should match “5 values (2 unique)” (or alike) //
+      ////////////////////////////////////////////////////////////////
+      String     expectedCounter = totalCount + " values (" + uniqueCount + " unique)";
+      WebElement counterLabel    = qSeleniumLib.waitForSelectorContaining("span", "unique");
+      assertThat(counterLabel.getText()).contains(expectedCounter);
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testCriteriaPasterWithPVSHappyPath()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////
+      // go to the person page //
+      ////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      //////////////////////////////////////
+      // open the paste values dialog UI //
+      //////////////////////////////////////
+      queryScreenLib.addBasicFilter("home city");
+      queryScreenLib.openCriteriaPasterAndPasteValues("home city", List.of("St. Louis", "chesterfield"));
+      qSeleniumLib.waitForSeconds(1);
+
+      ///////////////////////////////////////////////////////////////
+      // wait for chips to appear in the filter values review box //
+      ///////////////////////////////////////////////////////////////
+      assertFilterPasterChipCounts(2, 0);
+
+      ///////////////////////////////////////////////
+      // confirm each chip has the blue color class //
+      ///////////////////////////////////////////////
+      qSeleniumLib.waitForSelectorAll(".MuiChip-root", 2).forEach(chip ->
+      {
+         String classAttr = chip.getAttribute("class");
+         assertThat(classAttr).contains("MuiChip-colorInfo");
+      });
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   @Test
+   void testCriteriaPasterWithPVSTwoGoodOneBadAndDupes()
+   {
+      QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);
+
+      ////////////////////////////
+      // go to the person page //
+      ////////////////////////////
+      qSeleniumLib.gotoAndWaitForBreadcrumbHeaderToContain("/peopleApp/greetingsApp/person", "Person");
+      queryScreenLib.waitForQueryToHaveRan();
+
+      //////////////////////////////////////
+      // open the paste values dialog UI //
+      //////////////////////////////////////
+      List<String> cities = List.of("St. Louis", "chesterfield", "Maryville", "st. louis", "st. louis", "chesterfield");
+      queryScreenLib.addBasicFilter("home city");
+      queryScreenLib.openCriteriaPasterAndPasteValues("home city", cities);
+      qSeleniumLib.waitForSeconds(1);
+
+      ///////////////////////////////////////////////
+      // expected chip & uniqueness calculations  //
+      ///////////////////////////////////////////////
+      int totalCount  = cities.size();
+      int uniqueCount = cities.stream().map(String::toLowerCase).collect(Collectors.toSet()).size();
+
+      ///////////////////////////////////////////
+      // chips should show dupes and bad chips //
+      ///////////////////////////////////////////
+      assertFilterPasterChipCounts(5, 1);
+
+      ////////////////////////////////////////////////////////////////
+      // counter text should match “5 values (2 unique)” (or alike) //
+      ////////////////////////////////////////////////////////////////
+      String     expectedCounter = totalCount + " values (" + uniqueCount + " unique)";
+      WebElement counterLabel    = qSeleniumLib.waitForSelectorContaining("span", "unique");
+      assertThat(counterLabel.getText()).contains(expectedCounter);
+
+      //////////////////////////////////////////
+      // assert the "value not found" warning //
+      //////////////////////////////////////////
+      WebElement warning = qSeleniumLib.waitForSelectorContaining("span", "was not found");
+      assertThat(warning.getText()).contains("1 value was not found and will not be added to the filter");
+
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    private void testBasicBooleanCriteria(QueryScreenLib queryScreenLib, String fieldLabel, String operatorLabel, String expectButtonStringRegex, String expectFilterJsonContains)
    {
       qSeleniumJavalin.beginCapture();
@@ -273,4 +474,18 @@ public class QueryScreenTest extends QBaseSeleniumTest
       queryScreenLib.clickAdvancedFilterClearIcon();
    }
 
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
+   private void assertFilterPasterChipCounts(int expectedValid, int expectedInvalid)
+   {
+      List<WebElement> chips      = qSeleniumLib.waitForSelectorAll(".MuiChip-root", expectedValid + expectedInvalid);
+      long             validCount = chips.stream().filter(c -> c.getAttribute("class").contains("MuiChip-colorInfo")).count();
+      long             errorCount = chips.stream().filter(c -> c.getAttribute("class").contains("MuiChip-colorError")).count();
+
+      assertThat(validCount).isEqualTo(expectedValid);
+      assertThat(errorCount).isEqualTo(expectedInvalid);
+   }
 }
