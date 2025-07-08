@@ -106,6 +106,30 @@ public class QueryScreenLib
    /*******************************************************************************
     **
     *******************************************************************************/
+   public void openCriteriaPasterAndPasteValues(String fieldName, List<String> values)
+   {
+      /////////////////////////////////////////////////////////////////////////////
+      // open the is any of criteria for given field and click the paster button //
+      /////////////////////////////////////////////////////////////////////////////
+      qSeleniumLib.waitForSelectorContaining("BUTTON", fieldName).click();
+      qSeleniumLib.waitForSelector("#criteriaOperator").click();
+      qSeleniumLib.waitForSelectorContaining("LI", "is any of").click();
+      qSeleniumLib.waitForMillis(250);
+      qSeleniumLib.waitForSelector(".criteriaPasterButton").click();
+
+      ////////////////////////////////////////
+      // paste the values into the textarea //
+      ////////////////////////////////////////
+      qSeleniumLib
+         .waitForSelector(".criteriaPasterTextArea textarea#outlined-multiline-static")
+         .sendKeys(String.join("\n", values));
+   }
+
+
+
+   /*******************************************************************************
+    **
+    *******************************************************************************/
    public void clickFilterBuilderButton()
    {
       qSeleniumLib.waitForSelectorContaining("BUTTON", "FILTER BUILDER").click();
