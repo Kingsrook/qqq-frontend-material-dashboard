@@ -73,9 +73,19 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
    for (let field of fields)
    {
       initialValues[field.name] = record.values.get(field.name);
+      if(initialValues[field.name] === undefined && field.defaultValue !== undefined)
+      {
+         initialValues[field.name] = field.defaultValue;
+      }
+
    }
    const [lastValues, setLastValues] = useState(initialValues);
    const [loaded, setLoaded] = useState(false);
+
+   ///////////////////////////////////////////////////////////////////////////////
+   // store reference to record display values in a state var - see usage below //
+   ///////////////////////////////////////////////////////////////////////////////
+   const [recordDisplayValues, setRecordDisplayValues] = useState(record?.displayValues ?? new Map<string, string>())
 
    useEffect(() =>
    {
@@ -91,7 +101,12 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
                const possibleValues = await qController.possibleValues(null, null, field.possibleValueSourceName, null, [value], [], record.values, "form");
                if (possibleValues && possibleValues.length > 0)
                {
-                  record.displayValues.set(field.name, possibleValues[0].label);
+                  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  // originally, we put this in record.displayValues, but, sometimes that would then be empty at the usage point below... //
+                  // this works, so, we'll go with it                                                                                     //
+                  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                  recordDisplayValues.set(field.name, possibleValues[0].label)
+                  setRecordDisplayValues(recordDisplayValues);
                }
             }
          }
@@ -109,7 +124,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
       dynamicFormFields,
       formValidations,
    } = DynamicFormUtils.getFormData(fields);
-   DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fields, null, null, record ? record.displayValues : new Map());
+   DynamicFormUtils.addPossibleValueProps(dynamicFormFields, fields, null, null, recordDisplayValues);
 
    const otherValuesMap = new Map<string, any>();
    record.values.forEach((value, key) => otherValuesMap.set(key, value));
