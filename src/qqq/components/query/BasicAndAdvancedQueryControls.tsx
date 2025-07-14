@@ -83,6 +83,8 @@ interface BasicAndAdvancedQueryControlsProps
 
    mode: string;
    setMode: (mode: string) => void;
+
+   omitExposedJoins?: string[];
 }
 
 let debounceTimeout: string | number | NodeJS.Timeout;
@@ -627,6 +629,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
          handleSelectedField={handleSetSort}
          fieldEndAdornment={<Box whiteSpace="nowrap"><Icon>arrow_upward</Icon><Icon>arrow_downward</Icon></Box>}
          handleAdornmentClick={handleSetSortArrowClick}
+         omitExposedJoins={props.omitExposedJoins}
       />);
 
    const filterBuilderMouseEvents =
@@ -721,6 +724,7 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                               buttonChildren={"Add Filter"}
                               isModeSelectOne={true}
                               handleSelectedField={handleFieldListMenuSelection}
+                              omitExposedJoins={props.omitExposedJoins}
                            />
                         }
                      </>

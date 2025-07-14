@@ -20,6 +20,7 @@
  */
 
 
+import {QExposedJoin} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QExposedJoin";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -27,25 +28,26 @@ import {Box} from "@mui/material";
 import Autocomplete, {AutocompleteRenderOptionState} from "@mui/material/Autocomplete";
 import Icon from "@mui/material/Icon";
 import TextField from "@mui/material/TextField";
-import React, {ReactNode, useState} from "react";
+import React, {ReactNode, useMemo, useState} from "react";
 
 interface FieldAutoCompleteProps
 {
-   id: string;
-   metaData: QInstance;
-   tableMetaData: QTableMetaData;
-   handleFieldChange: (event: any, newValue: any, reason: string) => void;
-   defaultValue?: { field: QFieldMetaData, table: QTableMetaData, fieldName: string };
-   autoFocus?: boolean;
-   forceOpen?: boolean;
-   hiddenFieldNames?: string[];
-   availableFieldNames?: string[];
-   variant?: "standard" | "filled" | "outlined";
-   label?: string;
-   textFieldSX?: any;
-   autocompleteSlotProps?: any;
-   hasError?: boolean;
-   noOptionsText?: string;
+   id: string,
+   metaData: QInstance,
+   tableMetaData: QTableMetaData,
+   handleFieldChange: (event: any, newValue: any, reason: string) => void,
+   defaultValue?: { field: QFieldMetaData, table: QTableMetaData, fieldName: string },
+   autoFocus?: boolean,
+   forceOpen?: boolean,
+   hiddenFieldNames?: string[],
+   availableFieldNames?: string[],
+   variant?: "standard" | "filled" | "outlined",
+   label?: string,
+   textFieldSX?: any,
+   autocompleteSlotProps?: any,
+   hasError?: boolean,
+   noOptionsText?: string,
+   omitExposedJoins?: string[]
 }
 
 FieldAutoComplete.defaultProps =
@@ -88,7 +90,7 @@ function makeFieldOptionsForTable(tableMetaData: QTableMetaData, fieldOptions: a
 /*******************************************************************************
  ** Component for rendering a list of field names from a table as an auto-complete.
  *******************************************************************************/
-export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, availableFieldNames, variant, label, textFieldSX, autocompleteSlotProps, hasError, noOptionsText}: FieldAutoCompleteProps): JSX.Element
+export default function FieldAutoComplete({id, metaData, tableMetaData, handleFieldChange, defaultValue, autoFocus, forceOpen, hiddenFieldNames, availableFieldNames, variant, label, textFieldSX, autocompleteSlotProps, hasError, noOptionsText, omitExposedJoins}: FieldAutoCompleteProps): JSX.Element
 {
    const [selectedFieldName, setSelectedFieldName] = useState(defaultValue ? defaultValue.fieldName : null);
 
@@ -96,11 +98,25 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
    makeFieldOptionsForTable(tableMetaData, fieldOptions, false, hiddenFieldNames, availableFieldNames, selectedFieldName);
    let fieldsGroupBy = null;
 
-   if (tableMetaData.exposedJoins && tableMetaData.exposedJoins.length > 0)
+   const availableExposedJoins = useMemo(() =>
    {
-      for (let i = 0; i < tableMetaData.exposedJoins.length; i++)
+      const rs: QExposedJoin[] = []
+      for(let exposedJoin of tableMetaData.exposedJoins ?? [])
       {
-         const exposedJoin = tableMetaData.exposedJoins[i];
+         if(omitExposedJoins?.indexOf(exposedJoin.joinTable.name) > -1)
+         {
+            continue;
+         }
+         rs.push(exposedJoin);
+      }
+      return (rs);
+   }, [tableMetaData, omitExposedJoins]);
+
+   if (availableExposedJoins && availableExposedJoins.length > 0)
+   {
+      for (let i = 0; i < availableExposedJoins.length; i++)
+      {
+         const exposedJoin = availableExposedJoins[i];
          if (metaData.tables.has(exposedJoin.joinTable.name))
          {
             fieldsGroupBy = (option: any) => `${option.table.label} fields`;
@@ -185,7 +201,7 @@ export default function FieldAutoComplete({id, metaData, tableMetaData, handleFi
                {originalEndAdornment}
             </Box>;
 
-            return (<TextField {...params} autoFocus={autoFocus} label={label} variant={variant} sx={textFieldSX} autoComplete="off" type="search" InputProps={inputProps} />)
+            return (<TextField {...params} autoFocus={autoFocus} label={label} variant={variant} sx={textFieldSX} autoComplete="off" type="search" InputProps={inputProps} />);
          }}
          // @ts-ignore
          defaultValue={defaultValue}

@@ -89,15 +89,16 @@ export type QueryScreenUsage = "queryScreen" | "reportSetup"
 
 interface Props
 {
-   table?: QTableMetaData;
-   apiVersion?: ApiVersion;
-   launchProcess?: QProcessMetaData;
-   usage?: QueryScreenUsage;
-   isModal?: boolean;
-   isPreview?: boolean;
-   initialQueryFilter?: QQueryFilter;
-   initialColumns?: QQueryColumns;
-   allowVariables?: boolean;
+   table?: QTableMetaData,
+   apiVersion?: ApiVersion,
+   launchProcess?: QProcessMetaData,
+   usage?: QueryScreenUsage,
+   isModal?: boolean,
+   isPreview?: boolean,
+   initialQueryFilter?: QQueryFilter,
+   initialColumns?: QQueryColumns,
+   allowVariables?: boolean,
+   omitExposedJoins?: string[]
 }
 
 ///////////////////////////////////////////////////////
@@ -130,7 +131,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns}: Props, ref) =>
+const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns, omitExposedJoins}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -2834,6 +2835,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
             idPrefix="columns"
             tableMetaData={tableMetaData}
             showTableHeaderEvenIfNoExposedJoins={true}
+            omitExposedJoins={omitExposedJoins}
             placeholder="Search Fields"
             buttonProps={{sx: columnMenuButtonStyles}}
             buttonChildren={<><Icon sx={{mr: "0.5rem"}}>view_week_outline</Icon> Columns ({view.queryColumns.getVisibleColumnCount()}) <Icon sx={{ml: "0.5rem"}}>keyboard_arrow_down</Icon></>}
@@ -2975,6 +2977,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                      setMode={doSetMode}
                      savedViewsComponent={savedViewsComponent}
                      columnMenuComponent={buildColumnMenu()}
+                     omitExposedJoins={omitExposedJoins}
                   />
                }
 
@@ -3000,7 +3003,8 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                                  metaData: metaData,
                                  queryFilter: queryFilter,
                                  updateFilter: doSetQueryFilter,
-                                 allowVariables: allowVariables
+                                 allowVariables: allowVariables,
+                                 omitExposedJoins: omitExposedJoins,
                               }
                         }}
                         localeText={{

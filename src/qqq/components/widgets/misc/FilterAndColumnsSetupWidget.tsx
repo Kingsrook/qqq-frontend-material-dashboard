@@ -44,7 +44,7 @@ import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";
-import React, {useContext, useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 
 interface FilterAndColumnsSetupWidgetProps
 {
@@ -105,6 +105,8 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
    const [alertContent, setAlertContent] = useState(null as string);
    const [warning, setWarning] = useState(null as string);
    const [widgetFailureAlertContent, setWidgetFailureAlertContent] = useState(null as string);
+
+   const omitExposedJoins: string[] = widgetData?.omitExposedJoins ?? [];
 
    //////////////////////////////////////////////////////////////////////////////////////////////////
    // we'll actually keep 2 copies of the query filter around here -                               //
@@ -441,7 +443,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
          </Collapse>
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
-               <h5>{label ?? "Query Filter"}</h5>
+               <h5>{label ?? widgetData.label ?? widgetMetaData.label ?? "Query Filter"}</h5>
                {!hideSortBy && <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>}
             </Box>
             {
@@ -454,7 +456,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                   {
                      isEditable &&
                      <Tooltip title={selectTableFirstTooltipTitle}>
-                        <span><Button disabled={!recordValues["tableName"]} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
+                        <span><Button disabled={tableMetaData == null} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
                      </Tooltip>
                   }
                   {
@@ -501,6 +503,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                   initialQueryFilter={frontendQueryFilter}
                   initialColumns={columns}
                   apiVersion={apiVersion}
+                  omitExposedJoins={omitExposedJoins}
                />
             </Box>
          )}
@@ -510,7 +513,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                <div>
                   <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
                      <Card sx={{m: "2rem", p: "2rem"}}>
-                        <h3>Edit Filters and Columns</h3>
+                        <h3>Edit Filters {hideColumns ? "" : " and Columns"}</h3>
                         {
                            showHelp("modalSubheader") &&
                            <Box color={colors.gray.main} pb={"0.5rem"}>
@@ -527,6 +530,7 @@ export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp,
                               initialQueryFilter={usingDefaultEmptyFilter ? null : frontendQueryFilter}
                               initialColumns={columns}
                               apiVersion={apiVersion}
+                              omitExposedJoins={omitExposedJoins}
                            />
                         }
 
