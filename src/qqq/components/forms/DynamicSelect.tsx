@@ -188,7 +188,16 @@ function DynamicSelect({fieldPossibleValueProps, overrideId, name, fieldLabel, i
       }
       else
       {
-         return await qController.possibleValues(tableName, processName, possibleValueSourceName ?? fieldName, searchTerm ?? "", null, null, otherValues, useCase);
+         return await qController.possibleValues(
+            {
+               tableName,
+               processName,
+               fieldNameOrPossibleValueSourceName: possibleValueSourceName ?? fieldName,
+               searchTerm: searchTerm ?? "",
+               values: otherValues,
+               useCase,
+               possibleValueSourceFilter: fieldPossibleValueProps.possibleValueSourceFilter
+            });
       }
    };
 

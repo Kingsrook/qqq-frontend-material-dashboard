@@ -20,6 +20,7 @@
  */
 
 import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
+import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
 
 /*******************************************************************************
  ** Properties attached to a (formik?) form field, to denote how it behaves as
@@ -34,5 +35,6 @@ export interface FieldPossibleValueProps
    tableName?: string;
    processName?: string;
    possibleValueSourceName?: string;
+   possibleValueSourceFilter?: QQueryFilter;
 }
 
