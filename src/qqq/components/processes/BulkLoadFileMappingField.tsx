@@ -43,6 +43,7 @@ interface BulkLoadMappingFieldProps
    removeFieldCallback?: () => void,
    fileDescription: FileDescription,
    forceParentUpdate?: () => void,
+   isBulkEdit?: boolean
 }
 
 const xIconButtonSX =
@@ -71,7 +72,7 @@ const qController = Client.getInstance();
 /***************************************************************************
  ** row for a single field on the bulk load mapping screen.
  ***************************************************************************/
-export default function BulkLoadFileMappingField({bulkLoadField, isRequired, removeFieldCallback, fileDescription, forceParentUpdate}: BulkLoadMappingFieldProps): JSX.Element
+export default function BulkLoadFileMappingField({bulkLoadField, isRequired, removeFieldCallback, fileDescription, forceParentUpdate, isBulkEdit}: BulkLoadMappingFieldProps): JSX.Element
 {
    const columnNames = fileDescription.getColumnNames();
 
@@ -227,6 +228,17 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
       forceParentUpdate && forceParentUpdate();
    }
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function clearIfEmptyChanged(value: boolean)
+   {
+      bulkLoadField.clearIfEmpty = value;
+      forceParentUpdate && forceParentUpdate();
+   }
+
+
    /***************************************************************************
     **
     ***************************************************************************/
@@ -313,8 +325,11 @@ export default function BulkLoadFileMappingField({bulkLoadField, isRequired, rem
          <Box ml="1rem">
             {
                valueType == "column" && <>
-                  <Box>
+                  <Box display="flex" alignItems="center" sx={{height: "45px"}}>
                      <FormControlLabel value="mapValues" control={<Checkbox size="small" defaultChecked={bulkLoadField.doValueMapping} onChange={(event, checked) => mapValuesChanged(checked)} />} label={"Map values"} sx={{minWidth: "140px", whiteSpace: "nowrap"}} />
+                     {
+                        isBulkEdit && !isRequired && <FormControlLabel value="clearIfEmpty" control={<Checkbox size="small" defaultChecked={bulkLoadField.clearIfEmpty} onChange={(event, checked) => clearIfEmptyChanged(checked)} />} label={"Clear if empty"} sx={{minWidth: "140px", whiteSpace: "nowrap"}} />
+                     }
                   </Box>
                   <Box fontSize={mainFontSize} mt="0.5rem">
                      Preview Values: <span style={{color: "gray"}}>{(fileDescription.getPreviewValues(selectedColumn?.value) ?? [""]).join(", ")}</span>

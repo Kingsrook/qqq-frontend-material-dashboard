@@ -75,7 +75,7 @@ const BulkLoadValueMappingForm = forwardRef(({processValues, setActiveStepLabel,
     *******************************************************************************/
    function initializeCurrentBulkLoadMapping(): BulkLoadMapping
    {
-      const bulkLoadMapping = BulkLoadMapping.fromBulkLoadProfile(tableStructure, bulkLoadProfile);
+      const bulkLoadMapping = BulkLoadMapping.fromBulkLoadProfile(tableStructure, bulkLoadProfile, processValues.name);
 
       if (!bulkLoadMapping.valueMappings[fieldFullName])
       {
@@ -155,7 +155,7 @@ const BulkLoadValueMappingForm = forwardRef(({processValues, setActiveStepLabel,
    function mappedValueChanged(fileValue: string, newValue: any)
    {
       valueErrors[fileValue] = null;
-      if(newValue == null)
+      if (newValue == null)
       {
          delete currentMapping.valueMappings[fieldFullName][fileValue];
       }
@@ -195,6 +195,7 @@ const BulkLoadValueMappingForm = forwardRef(({processValues, setActiveStepLabel,
             allowSelectingProfile={false}
             bulkLoadProfileOnChangeCallback={bulkLoadProfileOnChangeCallback}
             fileDescription={fileDescription}
+            isBulkEdit={processValues.isBulkEdit}
          />
       </Box>
 

@@ -36,15 +36,18 @@ import {useFormikContext} from "formik";
 import colors from "qqq/assets/theme/base/colors";
 import {DynamicFormFieldLabel} from "qqq/components/forms/DynamicForm";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
+import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import HelpContent from "qqq/components/misc/HelpContent";
 import SavedBulkLoadProfiles from "qqq/components/misc/SavedBulkLoadProfiles";
 import BulkLoadFileMappingFields from "qqq/components/processes/BulkLoadFileMappingFields";
 import {BulkLoadField, BulkLoadMapping, BulkLoadProfile, BulkLoadTableStructure, FileDescription, Wrapper} from "qqq/models/processes/BulkLoadModels";
 import {SubFormPreSubmitCallbackResultType} from "qqq/pages/processes/ProcessRun";
-import React, {forwardRef, useImperativeHandle, useReducer, useState} from "react";
+import Client from "qqq/utils/qqq/Client";
+import React, {forwardRef, useEffect, useImperativeHandle, useReducer, useState} from "react";
 import ProcessViewForm from "./ProcessViewForm";
 
+const qController = Client.getInstance();
 
 interface BulkLoadMappingFormProps
 {
@@ -73,12 +76,11 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
 
    const [suggestedBulkLoadProfile] = useState(processValues.suggestedBulkLoadProfile as BulkLoadProfile);
    const [tableStructure] = useState(processValues.tableStructure as BulkLoadTableStructure);
-   const [bulkLoadMapping, setBulkLoadMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, processValues.bulkLoadProfile));
+   const [bulkLoadMapping, setBulkLoadMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, processValues.bulkLoadProfile, processMetaData.name));
    const [wrappedBulkLoadMapping] = useState(new Wrapper<BulkLoadMapping>(bulkLoadMapping));
 
    const [fileDescription] = useState(new FileDescription(processValues.headerValues, processValues.headerLetters, processValues.bodyValuesPreview));
    fileDescription.setHasHeaderRow(bulkLoadMapping.hasHeaderRow);
-
 
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -114,6 +116,8 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
             values["savedBulkLoadProfileId"] = wrappedCurrentSavedBulkLoadProfile.get()?.values?.get("id");
             values["layout"] = wrappedBulkLoadMapping.get().layout;
             values["hasHeaderRow"] = wrappedBulkLoadMapping.get().hasHeaderRow;
+            values["isBulkEdit"] = wrappedBulkLoadMapping.get().isBulkEdit;
+            values["keyFields"] = wrappedBulkLoadMapping.get().keyFields;
 
             let haveLocalErrors = false;
             const fieldErrors: { [fieldName: string]: string } = {};
@@ -130,7 +134,14 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
             }
             setFieldErrors(fieldErrors);
 
-            if(wrappedBulkLoadMapping.get().requiredFields.length == 0 && wrappedBulkLoadMapping.get().additionalFields.length == 0)
+            if (values["isBulkEdit"] && (values["keyFields"] == null || values["keyFields"] == undefined))
+            {
+               haveLocalErrors = true;
+               fieldErrors["keyFields"] = "This field is required.";
+            }
+            setFieldErrors(fieldErrors);
+
+            if (wrappedBulkLoadMapping.get().requiredFields.length == 0 && wrappedBulkLoadMapping.get().additionalFields.length == 0)
             {
                setNoMappedFieldsError("You must have at least 1 field.");
                haveLocalErrors = true;
@@ -141,9 +152,9 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
                setNoMappedFieldsError(null);
             }
 
-            if(haveProfileErrors)
+            if (haveProfileErrors)
             {
-               setTimeout(() => 
+               setTimeout(() =>
                {
                   document.querySelector(".bulkLoadFieldError")?.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
                }, 250);
@@ -182,7 +193,7 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
     ***************************************************************************/
    function bulkLoadProfileResetToSuggestedMappingCallback()
    {
-      handleNewBulkLoadMapping(BulkLoadMapping.fromBulkLoadProfile(processValues.tableStructure, suggestedBulkLoadProfile));
+      handleNewBulkLoadMapping(BulkLoadMapping.fromBulkLoadProfile(processValues.tableStructure, suggestedBulkLoadProfile, processValues.name));
    }
 
 
@@ -201,6 +212,8 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
       setBulkLoadMapping(newBulkLoadMapping);
       wrappedBulkLoadMapping.set(newBulkLoadMapping);
 
+      setFieldValue("isBulkEdit", newBulkLoadMapping.isBulkEdit);
+      setFieldValue("keyFields", newBulkLoadMapping.keyFields);
       setFieldValue("hasHeaderRow", newBulkLoadMapping.hasHeaderRow);
       setFieldValue("layout", newBulkLoadMapping.layout);
 
@@ -228,10 +241,13 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
             bulkLoadProfileOnChangeCallback={bulkLoadProfileOnChangeCallback}
             bulkLoadProfileResetToSuggestedMappingCallback={bulkLoadProfileResetToSuggestedMappingCallback}
             fileDescription={fileDescription}
+            isBulkEdit={processValues.isBulkEdit}
          />
       </Box>
 
       <BulkLoadMappingHeader
+         tableMetaData={tableMetaData}
+         isBulkEdit={processValues.isBulkEdit}
          key={rerenderHeader}
          bulkLoadMapping={bulkLoadMapping}
          fileDescription={fileDescription}
@@ -245,6 +261,7 @@ const BulkLoadFileMappingForm = forwardRef(({processValues, tableMetaData, metaD
 
       <Box mt="2rem">
          <BulkLoadFileMappingFields
+            isBulkEdit={processValues.isBulkEdit}
             bulkLoadMapping={bulkLoadMapping}
             fileDescription={fileDescription}
             forceParentUpdate={() =>
@@ -267,6 +284,7 @@ export default BulkLoadFileMappingForm;
 
 interface BulkLoadMappingHeaderProps
 {
+   isBulkEdit?: boolean,
    fileDescription: FileDescription,
    fileName: string,
    bulkLoadMapping?: BulkLoadMapping,
@@ -275,13 +293,16 @@ interface BulkLoadMappingHeaderProps
    forceParentUpdate?: () => void,
    frontendStep: QFrontendStepMetaData,
    processMetaData: QProcessMetaData,
+   tableMetaData: QTableMetaData,
 }
 
 /***************************************************************************
  ** private subcomponent - the header section of the bulk load file mapping screen.
  ***************************************************************************/
-function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fieldErrors, tableStructure, forceParentUpdate, frontendStep, processMetaData}: BulkLoadMappingHeaderProps): JSX.Element
+function BulkLoadMappingHeader({isBulkEdit, fileDescription, fileName, bulkLoadMapping, fieldErrors, tableStructure, forceParentUpdate, frontendStep, processMetaData, tableMetaData}: BulkLoadMappingHeaderProps): JSX.Element
 {
+   const [dynamicField, setDynamicField] = useState(null);
+
    const viewFields = [
       new QFieldMetaData({name: "fileName", label: "File Name", type: "STRING"}),
       new QFieldMetaData({name: "fileDetails", label: "File Details", type: "STRING"}),
@@ -307,6 +328,36 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
 
    const selectedLayout = layoutOptions.filter(o => o.id == bulkLoadMapping.layout)[0] ?? null;
 
+   useEffect(() =>
+   {
+      (async () =>
+      {
+         if (isBulkEdit)
+         {
+            /////////////////////////////////////////////////////////////////////////
+            // if doing a bulk edit, the selected keyFields and set as the display //
+            /////////////////////////////////////////////////////////////////////////
+            const displayValues = new Map<string, string>;
+            if (bulkLoadMapping.keyFields)
+            {
+               const possibleValues = await qController.possibleValues(null, processMetaData.name, "tableKeyFields", bulkLoadMapping.keyFields, null);
+               console.log("Received possible values of: " + JSON.stringify(possibleValues));
+               displayValues.set("tableKeyFields", possibleValues[0].label);
+            }
+
+            const tableKeyFieldsField = processMetaData.frontendSteps.find(s => s.name == "fileMapping")?.formFields.find(f => f.name == "tableKeyFields");
+            const newDynamicField = DynamicFormUtils.getDynamicField(tableKeyFieldsField);
+            const dynamicFieldInObject: any = {};
+            dynamicFieldInObject[tableKeyFieldsField["name"]] = newDynamicField;
+            DynamicFormUtils.addPossibleValueProps(dynamicFieldInObject, [tableKeyFieldsField], null, processMetaData.name, displayValues);
+
+            keyFieldsChanged(bulkLoadMapping.keyFields);
+            setDynamicField(newDynamicField);
+            forceParentUpdate();
+         }
+      })();
+   }, [JSON.stringify(bulkLoadMapping)]);
+
    /***************************************************************************
     **
     ***************************************************************************/
@@ -328,6 +379,61 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
    {
       bulkLoadMapping.switchLayout(newValue ? newValue.id : null);
       fieldErrors.layout = null;
+      forceParentUpdate();
+   }
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   async function keyFieldsChanged(newValue: any)
+   {
+      fieldErrors.keyFields = null;
+
+      if (newValue && newValue.length > 0)
+      {
+         //////////////////////////////////////////////////////////
+         // validate that the fields in the key have been mapped //
+         //////////////////////////////////////////////////////////
+         console.log("Received key fields of: " + newValue);
+         const keyFields = newValue.split("|");
+         const unmappedKeyFields: string[] = [];
+         const requiredFields: BulkLoadField[] = [];
+         const additionalFields: BulkLoadField[] = [];
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         // iterate over all fields in the table, when there are key fields found, make them required, //
+         // otherwise add them to addition fields                                                      //
+         ////////////////////////////////////////////////////////////////////////////////////////////////
+         for (let bulkLoadField of [...bulkLoadMapping.requiredFields, ...bulkLoadMapping.additionalFields])
+         {
+            const qualifiedName = bulkLoadField.getQualifiedName();
+            const keyField = keyFields.find((k: string) => k == qualifiedName);
+            if (keyField)
+            {
+               requiredFields.push(bulkLoadField);
+               var fieldsByTablePrefix = bulkLoadMapping.fieldsByTablePrefix[""][keyField];
+               if (!fieldsByTablePrefix || fieldsByTablePrefix.columnIndex == null)
+               {
+                  unmappedKeyFields.push(tableMetaData.fields.get(keyField).label);
+               }
+            }
+            else
+            {
+               additionalFields.push(bulkLoadField);
+            }
+         }
+
+         bulkLoadMapping.requiredFields = requiredFields;
+         bulkLoadMapping.additionalFields = additionalFields;
+
+         if (unmappedKeyFields.length > 0)
+         {
+            fieldErrors.keyFields = "The following key fields are not mapped: " + unmappedKeyFields.join(", ");
+         }
+
+         bulkLoadMapping.handleChangeToKeyFields(newValue);
+      }
+
       forceParentUpdate();
    }
 
@@ -369,27 +475,50 @@ function BulkLoadMappingHeader({fileDescription, fileName, bulkLoadMapping, fiel
                   {getFormattedHelpContent("hasHeaderRow")}
                </Grid>
                <Grid item xs={12} md={6}>
-                  <DynamicFormFieldLabel name={"layout"} label={"File Layout *"} />
-                  <Autocomplete
-                     id={"layout"}
-                     renderInput={(params) => (<TextField {...params} label={""} fullWidth variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} sx={{"& .MuiOutlinedInput-root": {borderRadius: "0.75rem"}}} />)}
-                     options={layoutOptions}
-                     multiple={false}
-                     defaultValue={selectedLayout}
-                     onChange={layoutChanged}
-                     getOptionLabel={(option) => typeof (option) == "string" ? option : (option?.label ?? "")}
-                     isOptionEqualToValue={(option, value) => option == null && value == null || option.id == value.id}
-                     renderOption={(props, option, state) => (<li {...props}>{option?.label ?? ""}</li>)}
-                     disableClearable
-                     sx={{"& .MuiOutlinedInput-root": {padding: "0"}}}
-                  />
                   {
-                     fieldErrors.layout &&
-                     <MDTypography component="div" variant="caption" color="error" fontWeight="regular" mt="0.25rem">
-                        {<div className="fieldErrorMessage">{fieldErrors.layout}</div>}
-                     </MDTypography>
+                     !isBulkEdit ? (
+                        <>
+                           <DynamicFormFieldLabel name={"layout"} label={"File Layout *"} />
+                           <Autocomplete
+                              id={"layout"}
+                              renderInput={(params) => (<TextField {...params} label={""} fullWidth variant="outlined" autoComplete="off" type="search" InputProps={{...params.InputProps}} sx={{"& .MuiOutlinedInput-root": {borderRadius: "0.75rem"}}} />)}
+                              options={layoutOptions}
+                              multiple={false}
+                              defaultValue={selectedLayout}
+                              onChange={layoutChanged}
+                              getOptionLabel={(option) => typeof (option) == "string" ? option : (option?.label ?? "")}
+                              isOptionEqualToValue={(option, value) => option == null && value == null || option.id == value.id}
+                              renderOption={(props, option, state) => (<li {...props}>{option?.label ?? ""}</li>)}
+                              disableClearable
+                              sx={{"& .MuiOutlinedInput-root": {padding: "0"}}}
+                           />
+                           {
+                              fieldErrors.layout &&
+                              <MDTypography component="div" variant="caption" color="error" fontWeight="regular" mt="0.25rem">
+                                 {<div className="fieldErrorMessage">{fieldErrors.layout}</div>}
+                              </MDTypography>
+                           }
+                           {getFormattedHelpContent("layout")}
+                        </>
+                     ) : (
+                        <>
+                           {
+                              dynamicField &&
+                              <>
+                                 <DynamicFormFieldLabel name={dynamicField.name} label={`${dynamicField.label} *`} />
+                                 <QDynamicFormField name={dynamicField.name} displayFormat={""} label={""} formFieldObject={dynamicField} type={"pvs"} value={bulkLoadMapping.keyFields} onChangeCallback={keyFieldsChanged} />
+                                 {
+                                    fieldErrors.keyFields &&
+                                    <MDTypography component="div" variant="caption" color="error" fontWeight="regular" mt="0.25rem">
+                                       {<div className="fieldErrorMessage">{fieldErrors.keyFields}</div>}
+                                    </MDTypography>
+                                 }
+                                 {getFormattedHelpContent("tableKeyFields")}
+                              </>
+                           }
+                        </>
+                     )
                   }
-                  {getFormattedHelpContent("layout")}
                </Grid>
             </Grid>
          </Box>
@@ -490,25 +619,25 @@ function BulkLoadMappingFilePreview({fileDescription, bulkLoadMapping}: BulkLoad
                         const fields = bulkLoadMapping.getFieldsForColumnIndex(index);
                         const count = fields.length;
 
-                        let dupeWarning = <></>
-                        if(fileDescription.hasHeaderRow && fileDescription.duplicateHeaderIndexes[index])
+                        let dupeWarning = <></>;
+                        if (fileDescription.hasHeaderRow && fileDescription.duplicateHeaderIndexes[index])
                         {
                            dupeWarning = <Tooltip title="This column header is a duplicate.  Only the first occurrance of it will be used." placement="top" enterDelay={500}>
                               <Icon color="warning" sx={{p: "0.125rem", mr: "0.25rem"}}>warning</Icon>
-                           </Tooltip>
+                           </Tooltip>;
                         }
 
                         return (<td key={letter} style={{textAlign: "center", color: getHeaderColor(count), cursor: getCursor(count)}}>
                            <>
                               {
                                  count > 0 &&
-                                 <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}>
-                                    <Box>
-                                       {dupeWarning}
-                                       {letter}
-                                       <Badge badgeContent={count} variant={"standard"} color="secondary" sx={{marginTop: ".75rem"}}><Icon></Icon></Badge>
-                                    </Box>
-                                 </Tooltip>
+                              <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}>
+                                 <Box>
+                                    {dupeWarning}
+                                    {letter}
+                                    <Badge badgeContent={count} variant={"standard"} color="secondary" sx={{marginTop: ".75rem"}}><Icon></Icon></Badge>
+                                 </Box>
+                              </Tooltip>
                               }
                               {
                                  count == 0 && <Box>{dupeWarning}{letter}</Box>
@@ -528,24 +657,24 @@ function BulkLoadMappingFilePreview({fileDescription, bulkLoadMapping}: BulkLoad
                         const count = fields.length;
                         const tdStyle = {color: getHeaderColor(count), cursor: getCursor(count), backgroundColor: ""};
 
-                        if(fileDescription.hasHeaderRow)
+                        if (fileDescription.hasHeaderRow)
                         {
                            tdStyle.backgroundColor = "#ebebeb";
 
-                           if(count > 0)
+                           if (count > 0)
                            {
                               return <td key={value} style={tdStyle}>
                                  <Tooltip title={getColumnTooltip(fields)} placement="top" enterDelay={500}><Box>{value}</Box></Tooltip>
-                              </td>
+                              </td>;
                            }
                            else
                            {
-                              return <td key={value} style={tdStyle}>{value}</td>
+                              return <td key={value} style={tdStyle}>{value}</td>;
                            }
                         }
                         else
                         {
-                           return <td key={value} style={tdStyle}>{value}</td>
+                           return <td key={value} style={tdStyle}>{value}</td>;
                         }
                      }
                      )}

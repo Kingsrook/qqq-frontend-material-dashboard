@@ -29,9 +29,9 @@ import Icon from "@mui/material/Icon";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import {QActionsMenuButton} from "qqq/components/buttons/DefaultButtons";
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {QActionsMenuButton} from "qqq/components/buttons/DefaultButtons";
 
 interface QueryScreenActionMenuProps
 {
@@ -40,28 +40,28 @@ interface QueryScreenActionMenuProps
    tableProcesses: QProcessMetaData[];
    bulkLoadClicked: () => void;
    bulkEditClicked: () => void;
+   bulkEditWithFileClicked: () => void;
    bulkDeleteClicked: () => void;
    processClicked: (process: QProcessMetaData) => void;
 }
 
-QueryScreenActionMenu.defaultProps = {
-};
+QueryScreenActionMenu.defaultProps = {};
 
-export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
+export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkEditWithFileClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
 {
-   const [anchorElement, setAnchorElement] = useState(null)
+   const [anchorElement, setAnchorElement] = useState(null);
 
    const navigate = useNavigate();
 
    const openActionsMenu = (event: any) =>
    {
       setAnchorElement(event.currentTarget);
-   }
+   };
 
    const closeActionsMenu = () =>
    {
       setAnchorElement(null);
-   }
+   };
 
    const pushDividerIfNeeded = (menuItems: JSX.Element[]) =>
    {
@@ -75,7 +75,7 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
    {
       closeActionsMenu();
       handler();
-   }
+   };
 
    const menuItems: JSX.Element[] = [];
    if (tableMetaData.capabilities.has(Capability.TABLE_INSERT) && tableMetaData.insertPermission)
@@ -85,6 +85,7 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
    if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission)
    {
       menuItems.push(<MenuItem key="bulkEdit" onClick={() => runSomething(bulkEditClicked)}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
+      menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
    }
    if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission)
    {
@@ -130,5 +131,5 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
             {menuItems}
          </Menu>
       </>
-   )
+   );
 }

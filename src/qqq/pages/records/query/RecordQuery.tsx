@@ -1557,7 +1557,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
    /*******************************************************************************
     ** function to open one of the bulk (insert/edit/delete) processes.
     *******************************************************************************/
-   const openBulkProcess = (processNamePart: "Insert" | "Edit" | "Delete", processLabelPart: "Load" | "Edit" | "Delete") =>
+   const openBulkProcess = (processNamePart: "Insert" | "Edit" | "Delete" | "EditWithFile", processLabelPart: "Load" | "Edit" | "Delete" | "Edit With File") =>
    {
       const processList = allTableProcesses.filter(p => p.name.endsWith(`.bulk${processNamePart}`));
       if (processList.length > 0)
@@ -1590,6 +1590,15 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
          return;
       }
       openBulkProcess("Edit", "Edit");
+   };
+
+
+   /*******************************************************************************
+    ** Event handler for the bulk-edit-with-file process being selected
+    *******************************************************************************/
+   const bulkEditWithFileClicked = () =>
+   {
+      openBulkProcess("EditWithFile", "Edit With File");
    };
 
 
@@ -2861,6 +2870,7 @@ const RecordQuery = forwardRef(({table, usage, isModal, isPreview, allowVariable
                            tableProcesses={tableProcesses}
                            bulkLoadClicked={bulkLoadClicked}
                            bulkEditClicked={bulkEditClicked}
+                           bulkEditWithFileClicked={bulkEditWithFileClicked}
                            bulkDeleteClicked={bulkDeleteClicked}
                            processClicked={processClicked}
                         />

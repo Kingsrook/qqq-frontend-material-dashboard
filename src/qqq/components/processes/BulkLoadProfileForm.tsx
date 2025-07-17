@@ -43,12 +43,12 @@ interface BulkLoadValueMappingFormProps
 const BulkLoadProfileForm = forwardRef(({processValues, tableMetaData, metaData}: BulkLoadValueMappingFormProps, ref) =>
 {
    const savedBulkLoadProfileRecordProcessValue = processValues.savedBulkLoadProfileRecord;
-   const [savedBulkLoadProfileRecord, setSavedBulkLoadProfileRecord] = useState(savedBulkLoadProfileRecordProcessValue == null ? null : new QRecord(savedBulkLoadProfileRecordProcessValue))
+   const [savedBulkLoadProfileRecord, setSavedBulkLoadProfileRecord] = useState(savedBulkLoadProfileRecordProcessValue == null ? null : new QRecord(savedBulkLoadProfileRecordProcessValue));
 
    const [tableStructure] = useState(processValues.tableStructure as BulkLoadTableStructure);
 
    const [bulkLoadProfile, setBulkLoadProfile] = useState(processValues.bulkLoadProfile as BulkLoadProfile);
-   const [currentMapping, setCurrentMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, bulkLoadProfile))
+   const [currentMapping, setCurrentMapping] = useState(BulkLoadMapping.fromBulkLoadProfile(tableStructure, bulkLoadProfile));
    const [wrappedCurrentSavedBulkLoadProfile] = useState(new Wrapper<QRecord>(savedBulkLoadProfileRecord));
 
    const [fileDescription] = useState(new FileDescription(processValues.headerValues, processValues.headerLetters, processValues.bodyValuesPreview));
@@ -93,6 +93,7 @@ const BulkLoadProfileForm = forwardRef(({processValues, tableMetaData, metaData}
             allowSelectingProfile={false}
             fileDescription={fileDescription}
             bulkLoadProfileOnChangeCallback={bulkLoadProfileOnChangeCallback}
+            isBulkEdit={processValues.isBulkEdit}
          />
       </Box>
 

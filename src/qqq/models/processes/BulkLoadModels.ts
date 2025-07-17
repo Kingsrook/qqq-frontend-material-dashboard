@@ -39,6 +39,7 @@ export class BulkLoadField
    headerName?: string = null;
    defaultValue?: any = null;
    doValueMapping: boolean = false;
+   clearIfEmpty?: boolean = false;
 
    wideLayoutIndexPath: number[] = [];
 
@@ -51,7 +52,7 @@ export class BulkLoadField
    /***************************************************************************
     **
     ***************************************************************************/
-   constructor(field: QFieldMetaData, tableStructure: BulkLoadTableStructure, valueType: ValueType = "column", columnIndex?: number, headerName?: string, defaultValue?: any, doValueMapping?: boolean, wideLayoutIndexPath: number[] = [], error: string = null, warning: string = null)
+   constructor(field: QFieldMetaData, tableStructure: BulkLoadTableStructure, valueType: ValueType = "column", columnIndex?: number, headerName?: string, defaultValue?: any, doValueMapping?: boolean, wideLayoutIndexPath: number[] = [], error: string = null, warning: string = null, clearIfEmpty?: boolean)
    {
       this.field = field;
       this.tableStructure = tableStructure;
@@ -64,6 +65,7 @@ export class BulkLoadField
       this.error = error;
       this.warning = warning;
       this.key = new Date().getTime().toString();
+      this.clearIfEmpty = clearIfEmpty ?? false;
    }
 
 
@@ -72,7 +74,7 @@ export class BulkLoadField
     ***************************************************************************/
    public static clone(source: BulkLoadField): BulkLoadField
    {
-      return (new BulkLoadField(source.field, source.tableStructure, source.valueType, source.columnIndex, source.headerName, source.defaultValue, source.doValueMapping, source.wideLayoutIndexPath, source.error, source.warning));
+      return (new BulkLoadField(source.field, source.tableStructure, source.valueType, source.columnIndex, source.headerName, source.defaultValue, source.doValueMapping, source.wideLayoutIndexPath, source.error, source.warning, source.clearIfEmpty));
    }
 
 
@@ -173,6 +175,9 @@ export interface BulkLoadTableStructure
    associationPath: string;
    fields: QFieldMetaData[];
    associations: BulkLoadTableStructure[];
+   isBulkEdit: boolean;
+   possibleKeyFields: string[];
+   keyFields?: string;
 }
 
 
@@ -193,6 +198,8 @@ export class BulkLoadMapping
 
    valueMappings: { [fieldName: string]: { [fileValue: string]: any } } = {};
 
+   isBulkEdit: boolean;
+   keyFields: string;
    hasHeaderRow: boolean;
    layout: string;
 
@@ -211,6 +218,8 @@ export class BulkLoadMapping
          }
       }
 
+      this.isBulkEdit = tableStructure.isBulkEdit;
+      this.keyFields = tableStructure.keyFields;
       this.hasHeaderRow = true;
    }
 
@@ -218,11 +227,13 @@ export class BulkLoadMapping
    /***************************************************************************
     **
     ***************************************************************************/
-   private processTableStructure(tableStructure: BulkLoadTableStructure)
+   public processTableStructure(tableStructure: BulkLoadTableStructure)
    {
       const prefix = tableStructure.isMain ? "" : tableStructure.associationPath;
       this.fieldsByTablePrefix[prefix] = {};
       this.tablesByPath[prefix] = tableStructure;
+      this.isBulkEdit = tableStructure.isBulkEdit;
+      this.keyFields = tableStructure.keyFields;
 
       for (let field of tableStructure.fields)
       {
@@ -233,13 +244,35 @@ export class BulkLoadMapping
             this.fields[qualifiedName] = bulkLoadField;
             this.fieldsByTablePrefix[prefix][qualifiedName] = bulkLoadField;
 
-            if (tableStructure.isMain && field.isRequired)
+            if (this.isBulkEdit)
             {
-               this.requiredFields.push(bulkLoadField);
+               if (this.keyFields == null)
+               {
+                  this.unusedFields.push(bulkLoadField);
+               }
+               else
+               {
+                  const keyFields = this.keyFields.split("|");
+                  if (keyFields.includes(qualifiedName))
+                  {
+                     this.requiredFields.push(bulkLoadField);
+                  }
+                  else
+                  {
+                     this.unusedFields.push(bulkLoadField);
+                  }
+               }
             }
             else
             {
-               this.unusedFields.push(bulkLoadField);
+               if (tableStructure.isMain && field.isRequired)
+               {
+                  this.requiredFields.push(bulkLoadField);
+               }
+               else
+               {
+                  this.unusedFields.push(bulkLoadField);
+               }
             }
          }
       }
@@ -266,14 +299,16 @@ export class BulkLoadMapping
     ** take a saved bulk load profile - and convert it into a working bulkLoadMapping
     ** for the frontend to use!
     ***************************************************************************/
-   public static fromBulkLoadProfile(tableStructure: BulkLoadTableStructure, bulkLoadProfile: BulkLoadProfile): BulkLoadMapping
+   public static fromBulkLoadProfile(tableStructure: BulkLoadTableStructure, bulkLoadProfile: BulkLoadProfile, processName?: string): BulkLoadMapping
    {
       const bulkLoadMapping = new BulkLoadMapping(tableStructure);
 
       if (bulkLoadProfile.version == "v1")
       {
+         bulkLoadMapping.isBulkEdit = bulkLoadProfile.isBulkEdit;
          bulkLoadMapping.hasHeaderRow = bulkLoadProfile.hasHeaderRow;
          bulkLoadMapping.layout = bulkLoadProfile.layout;
+         bulkLoadMapping.keyFields = bulkLoadProfile.keyFields;
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // function to get a bulkLoadMapping field by its (full) name - whether that's in the required fields list,   //
@@ -322,6 +357,7 @@ export class BulkLoadMapping
             {
                bulkLoadField.valueType = "column";
                bulkLoadField.doValueMapping = bulkLoadProfileField.doValueMapping;
+               bulkLoadField.clearIfEmpty = bulkLoadProfileField.clearIfEmpty;
                bulkLoadField.headerName = bulkLoadProfileField.headerName;
                bulkLoadField.columnIndex = bulkLoadProfileField.columnIndex;
 
@@ -341,6 +377,29 @@ export class BulkLoadMapping
             {
                bulkLoadField.valueType = "defaultValue";
                bulkLoadField.defaultValue = bulkLoadProfileField.defaultValue;
+            }
+         }
+
+         if (!bulkLoadMapping.keyFields && tableStructure.possibleKeyFields?.length > 0)
+         {
+            ////////////////////////////////////////////////////////////////////////////////////////////////
+            // look at each of the possible key fields, compare with the fields in the bulk load profile, //
+            // on the first one that matches, use that as the default bulk load mapping key field         //
+            ////////////////////////////////////////////////////////////////////////////////////////////////
+            for (let keyField of tableStructure.possibleKeyFields)
+            {
+               const parts = keyField.split("|");
+               const allPartsMatch = parts.every(part =>
+                  (bulkLoadProfile.fieldList ?? []).some((field: BulkLoadProfileField) =>
+                     field.fieldName === part
+                  )
+               );
+
+               if (allPartsMatch)
+               {
+                  bulkLoadMapping.keyFields = keyField;
+                  break; // stop after the first valid match
+               }
             }
          }
 
@@ -365,6 +424,8 @@ export class BulkLoadMapping
       profile.version = "v1";
       profile.hasHeaderRow = this.hasHeaderRow;
       profile.layout = this.layout;
+      profile.isBulkEdit = this.isBulkEdit;
+      profile.keyFields = this.keyFields;
 
       for (let bulkLoadField of [...this.requiredFields, ...this.additionalFields])
       {
@@ -384,7 +445,7 @@ export class BulkLoadMapping
             }
             else
             {
-               const field: BulkLoadProfileField = {fieldName: fullFieldName, columnIndex: bulkLoadField.columnIndex, headerName: bulkLoadField.headerName, doValueMapping: bulkLoadField.doValueMapping};
+               const field: BulkLoadProfileField = {fieldName: fullFieldName, columnIndex: bulkLoadField.columnIndex, headerName: bulkLoadField.headerName, doValueMapping: bulkLoadField.doValueMapping, clearIfEmpty: bulkLoadField.clearIfEmpty};
 
                if (this.valueMappings[fullFieldName])
                {
@@ -576,6 +637,16 @@ export class BulkLoadMapping
       return (rs);
    }
 
+
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   public handleChangeToKeyFields(newKeyFields: any)
+   {
+      this.keyFields = newKeyFields;
+   }
+
+
    /***************************************************************************
     **
     ***************************************************************************/
@@ -600,7 +671,7 @@ export class BulkLoadMapping
             {
                const newField = BulkLoadField.clone(field);
                newField.columnIndex = null;
-               newField.warning = "This field was assigned to a column with a duplicated header"
+               newField.warning = "This field was assigned to a column with a duplicated header";
                newRequiredFields.push(newField);
                anyChangesToRequiredFields = true;
             }
@@ -616,7 +687,7 @@ export class BulkLoadMapping
             {
                const newField = BulkLoadField.clone(field);
                newField.columnIndex = null;
-               newField.warning = "This field was assigned to a column with a duplicated header"
+               newField.warning = "This field was assigned to a column with a duplicated header";
                newAdditionalFields.push(newField);
                anyChangesToAdditionalFields = true;
             }
@@ -798,6 +869,8 @@ export class BulkLoadProfile
    fieldList: BulkLoadProfileField[] = [];
    hasHeaderRow: boolean;
    layout: string;
+   isBulkEdit: boolean;
+   keyFields: string;
 }
 
 type BulkLoadProfileField =
@@ -807,6 +880,7 @@ type BulkLoadProfileField =
       headerName?: string,
       defaultValue?: any,
       doValueMapping?: boolean,
+      clearIfEmpty?: boolean,
       valueMappings?: { [fileValue: string]: any }
    };
 
