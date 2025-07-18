@@ -42,7 +42,7 @@ public class AssociatedRecordScriptTest extends QBaseSeleniumTest
    {
       super.addJavalinRoutes(qSeleniumJavalin);
       qSeleniumJavalin.withRouteToFile("/data/person/1", "data/person/1701.json");
-      qSeleniumJavalin.withRouteToFile("/data/person/1/developer", "data/person/1701.json");
+      qSeleniumJavalin.withRouteToFile("/data/person/1/developer", "data/person/developer.json");
    }
 
 
