@@ -1046,16 +1046,19 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                                           </React.Fragment>
                                        )) : null}
                                     </Grid>
-                                    <Box component="form" p={3}>
-                                       <Grid container justifyContent="flex-end" spacing={3}>
-                                          {
-                                             table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission && <QDeleteButton onClickHandler={handleClickDeleteButton} />
-                                          }
-                                          {
-                                             table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission && <QEditButton />
-                                          }
-                                       </Grid>
-                                    </Box>
+                                    {
+                                       tableMetaData && record && ((table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission) || (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission)) &&
+                                       <Box component="div" p={3} className={"stickyBottomButtonBar"}>
+                                          <Grid container justifyContent="flex-end" spacing={3}>
+                                             {
+                                                table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission && <QDeleteButton onClickHandler={handleClickDeleteButton} />
+                                             }
+                                             {
+                                                table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission && <QEditButton />
+                                             }
+                                          </Grid>
+                                       </Box>
+                                    }
 
                                  </Grid>
                               </Grid>

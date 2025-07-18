@@ -59,15 +59,17 @@ import * as Yup from "yup";
 
 interface Props
 {
-   id?: string;
-   isModal: boolean;
-   table?: QTableMetaData;
-   closeModalHandler?: (event: object, reason: string) => void;
-   defaultValues: { [key: string]: string };
-   disabledFields: { [key: string]: boolean } | string[];
-   isCopy?: boolean;
-   onSubmitCallback?: (values: any, tableName: string) => void;
-   overrideHeading?: string;
+   id?: string,
+   isModal: boolean,
+   table?: QTableMetaData,
+   closeModalHandler?: (event: object, reason: string) => void,
+   defaultValues: { [key: string]: string },
+   disabledFields: { [key: string]: boolean } | string[],
+   isCopy?: boolean,
+   onSubmitCallback?: (values: any, tableName: string) => void,
+   overrideHeading?: string,
+   saveButtonLabel?: string,
+   saveButtonIcon?: string,
 }
 
 EntityForm.defaultProps = {
@@ -79,6 +81,8 @@ EntityForm.defaultProps = {
    disabledFields: {},
    isCopy: false,
    onSubmitCallback: null,
+   saveButtonLabel: "Save",
+   saveButtonIcon: "save",
 };
 
 
@@ -1331,12 +1335,14 @@ function EntityForm(props: Props): JSX.Element
                                  </Box>
                               )) : null}
 
-                              <Box component="div" p={3}>
-                                 <Grid container justifyContent="flex-end" spacing={3}>
-                                    <QCancelButton onClickHandler={props.isModal ? props.closeModalHandler : handleCancelClicked} disabled={isSubmitting} />
-                                    <QSaveButton disabled={isSubmitting} />
-                                 </Grid>
-                              </Box>
+                              {formFields &&
+                                 <Box component="div" p={3} className={props.isModal ? "modalBottomButtonBar" : "stickyBottomButtonBar"}>
+                                    <Grid container justifyContent="flex-end" spacing={3}>
+                                       <QCancelButton onClickHandler={props.isModal ? props.closeModalHandler : handleCancelClicked} disabled={isSubmitting} />
+                                       <QSaveButton disabled={isSubmitting} label={props.saveButtonLabel} iconName={props.saveButtonIcon} />
+                                    </Grid>
+                                 </Box>
+                              }
 
                            </Form>
                         );
@@ -1355,6 +1361,8 @@ function EntityForm(props: Props): JSX.Element
                               disabledFields={showEditChildForm.disabledFields}
                               onSubmitCallback={props.onSubmitCallback ? props.onSubmitCallback : submitEditChildForm}
                               overrideHeading={`${showEditChildForm.rowIndex != null ? "Editing" : "Creating New"} ${showEditChildForm.table.label}`}
+                              saveButtonLabel="OK"
+                              saveButtonIcon="check"
                            />
                         </div>
                      </Modal>
