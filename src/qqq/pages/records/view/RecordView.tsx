@@ -440,6 +440,34 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
    };
 
 
+   /***************************************************************************
+    **
+    ***************************************************************************/
+   function getGenericProcesses(metaData: QInstance)
+   {
+      const genericProcesses: QProcessMetaData[] = [];
+      const materialDashboardInstanceMetaData = metaData?.supplementalInstanceMetaData?.get("materialDashboard");
+      if (materialDashboardInstanceMetaData)
+      {
+         const processNamesToAddToAllQueryAndViewScreens = materialDashboardInstanceMetaData.processNamesToAddToAllQueryAndViewScreens;
+         if (processNamesToAddToAllQueryAndViewScreens)
+         {
+            for (let processName of processNamesToAddToAllQueryAndViewScreens)
+            {
+               genericProcesses.push(metaData?.processes?.get(processName));
+            }
+         }
+      }
+      else
+      {
+         ////////////////
+         // deprecated //
+         ////////////////
+         genericProcesses.push(metaData?.processes.get("runRecordScript"));
+      }
+      return genericProcesses;
+   }
+
    if (!asyncLoadInited)
    {
       setAsyncLoadInited(true);
@@ -472,11 +500,16 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
          // load processes that the routing needs to respect //
          //////////////////////////////////////////////////////
          const allTableProcesses = ProcessUtils.getProcessesForTable(metaData, tableName, true); // these include hidden ones (e.g., to find the bulks)
-         const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
-         if (runRecordScriptProcess)
+         const genericProcesses = getGenericProcesses(metaData);
+
+         for (let genericProcess of genericProcesses)
          {
-            allTableProcesses.unshift(runRecordScriptProcess);
+            if (genericProcess)
+            {
+               allTableProcesses.unshift(genericProcess);
+            }
          }
+
          setAllTableProcesses(allTableProcesses);
 
          if (launchingProcess)
@@ -726,7 +759,6 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
 
    let hasEditOrDelete = (table.capabilities.has(Capability.TABLE_UPDATE) && table.editPermission) || (table.capabilities.has(Capability.TABLE_DELETE) && table.deletePermission);
 
-   const runRecordScriptProcess = metaData?.processes.get("runRecordScript");
 
    const renderActionsMenu = (
       <Menu
@@ -785,11 +817,14 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
          ))}
          {(tableProcesses?.length > 0 || hasEditOrDelete) && <Divider />}
          {
-            runRecordScriptProcess &&
-            <MenuItem key={runRecordScriptProcess.name} onClick={() => processClicked(runRecordScriptProcess)}>
-               <ListItemIcon><Icon>{runRecordScriptProcess.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
-               {runRecordScriptProcess.label}
-            </MenuItem>
+            getGenericProcesses(metaData).map((process) =>
+               (
+                  process &&
+                  <MenuItem key={process.name} onClick={() => processClicked(process)}>
+                     <ListItemIcon><Icon>{process.iconName ?? "arrow_forward"}</Icon></ListItemIcon>
+                     {process.label}
+                  </MenuItem>
+               ))
          }
          <MenuItem onClick={() => navigate("dev")}>
             <ListItemIcon><Icon>code</Icon></ListItemIcon>
@@ -969,7 +1004,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                      {
                         notFoundMessage
                            ?
-                           <Alert color="error" sx={{mb: 3}}>{notFoundMessage}</Alert>
+                           <Alert color="error" sx={{mb: 3}} icon={<Icon>warning</Icon>}>{notFoundMessage}</Alert>
                            :
                            <Box pb={3}>
                               {

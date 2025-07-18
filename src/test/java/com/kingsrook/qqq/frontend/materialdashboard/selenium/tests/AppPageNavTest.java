@@ -46,7 +46,9 @@ public class AppPageNavTest extends QBaseSeleniumTest
          .withRouteToString("/widget/QuickSightChartRenderer", """
             {"url": "http://www.google.com"}""")
          .withRouteToFile("/data/person/count", "data/person/count.json")
-         .withRouteToFile("/data/city/count", "data/city/count.json");
+         .withRouteToFile("/data/city/count", "data/city/count.json")
+         .withRouteToFile("/qqq/v1/table/person/count", "qqq/v1/table/person/count.json")
+         .withRouteToFile("/qqq/v1/table/city/count", "qqq/v1/table/city/count.json");
    }
 
 

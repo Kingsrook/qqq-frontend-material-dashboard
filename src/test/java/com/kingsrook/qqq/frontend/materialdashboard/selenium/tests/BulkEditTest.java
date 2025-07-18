@@ -63,6 +63,8 @@ public class BulkEditTest extends QBaseSeleniumTest
       qSeleniumJavalin.withRouteToFile("/data/person/count", "data/person/count.json");
       qSeleniumJavalin.withRouteToFile("/data/person/query", "data/person/index.json");
       qSeleniumJavalin.withRouteToFile("/data/person/variants", "data/person/variants.json");
+      qSeleniumJavalin.withRouteToFile("/qqq/v1/table/person/count", "qqq/v1/table/person/count.json");
+      qSeleniumJavalin.withRouteToFile("/qqq/v1/table/person/query", "qqq/v1/table/person/index.json");
       qSeleniumJavalin.withRouteToString("/processes/person.bulkEdit/74a03a7d-2f53-4784-9911-3a21f7646c43/records", "[]");
    }
 

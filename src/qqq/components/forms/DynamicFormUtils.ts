@@ -191,6 +191,11 @@ class DynamicFormUtils
                props.possibleValueSourceName = field.possibleValueSourceName;
             }
 
+            if(field.possibleValueSourceFilter)
+            {
+               props.possibleValueSourceFilter = field.possibleValueSourceFilter;
+            }
+
             dynamicFormFields[field.name].possibleValueProps = props;
          }
       }

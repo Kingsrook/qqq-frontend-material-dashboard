@@ -49,6 +49,7 @@ export interface ChildRecordListData extends WidgetData
    defaultValuesForNewChildRecords?: { [fieldName: string]: any };
    disabledFieldsForNewChildRecords?: { [fieldName: string]: any };
    defaultValuesForNewChildRecordsFromParentFields?: { [fieldName: string]: string };
+   omitFieldNames?: string[];
 }
 
 interface Props
@@ -118,6 +119,19 @@ function RecordGridWidget({widgetMetaData, data, addNewRecordCallback, disableRo
          /////////////////////////////////////////////////////////////////////////////////
          const childTablePath = data.tablePath ? data.tablePath + (data.tablePath.endsWith("/") ? "" : "/") : data.tablePath;
          const columns = DataGridUtils.setupGridColumns(tableMetaData, childTablePath, null, "bySection");
+
+         if (data.omitFieldNames)
+         {
+            for (let i = 0; i < columns.length; i++)
+            {
+               const column = columns[i];
+               if (data.omitFieldNames.indexOf(column.field) > -1)
+               {
+                  columns.splice(i, 1);
+                  i--;
+               }
+            }
+         }
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // capture all-columns to use for the export (before we might splice some away from the on-screen display) //

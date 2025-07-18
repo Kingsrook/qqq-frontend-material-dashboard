@@ -30,6 +30,7 @@ import {useCookies} from "react-cookie";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 const qController = Client.getInstance();
+const qControllerV1 = Client.getInstanceV1();
 
 interface Props
 {
@@ -131,7 +132,7 @@ export default function useAuth0AuthenticationModule({setIsFullyAuthenticated, s
          }
 
          setIsFullyAuthenticated(true);
-         qController.setGotAuthentication();
+         Client.setGotAuthenticationInAllControllers();
 
          setLoggedInUser(auth0User);
          console.log("Token load complete.");

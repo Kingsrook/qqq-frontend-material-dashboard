@@ -58,6 +58,8 @@ public class SavedViewsTest extends QBaseSeleniumTest
       super.addJavalinRoutes(qSeleniumJavalin);
       qSeleniumJavalin.withRouteToFile("/data/person/count", "data/person/count.json");
       qSeleniumJavalin.withRouteToFile("/data/person/query", "data/person/index.json");
+      qSeleniumJavalin.withRouteToFile("/qqq/v1/table/person/count", "qqq/v1/table/person/count.json");
+      qSeleniumJavalin.withRouteToFile("/qqq/v1/table/person/query", "qqq/v1/table/person/index.json");
       qSeleniumJavalin.withRouteToFile("/data/person/*", "data/person/1701.json");
    }
 
@@ -135,7 +137,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumLib.waitForCondition("Current URL should have filter id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
       queryScreenLib.assertSavedViewNameOnScreen("Some People");
       qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
-      CapturedContext capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
+      CapturedContext capturedContext = qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/query");
       assertTrue(capturedContext.getBody().contains("Kelkhoff"));
       qSeleniumJavalin.endCapture();
 
@@ -162,7 +164,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should not have filter id", () -> !driver.getCurrentUrl().endsWith("/person/savedView/2"));
       qSeleniumLib.waitForSelectorContaining("BUTTON", "Save View As");
-      capturedContext = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
+      capturedContext = qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/query");
       assertTrue(capturedContext.getBody().matches("(?s).*id.*LESS_THAN.*10.*"));
       qSeleniumJavalin.endCapture();
    }

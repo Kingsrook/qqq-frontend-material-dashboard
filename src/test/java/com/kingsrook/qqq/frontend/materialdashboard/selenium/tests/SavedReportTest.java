@@ -51,12 +51,15 @@ public class SavedReportTest extends QBaseSeleniumTest
       super.addJavalinRoutes(qSeleniumJavalin);
       qSeleniumJavalin
          .withRouteToFile("/metaData/table/savedReport", "metaData/table/savedReport.json")
+         .withRouteToFile("/qqq/v1/metaData/table/savedReport", "qqq/v1/metaData/table/savedReport.json")
          .withRouteToFile("/widget/reportSetupWidget", "widget/reportSetupWidget.json")
          .withRouteToFile("/widget/pivotTableSetupWidget", "widget/pivotTableSetupWidget.json")
          .withRouteToFile("/data/savedReport/possibleValues/tableName", "data/savedReport/possibleValues/tableName.json")
 
          .withRouteToFile("/data/person/count", "data/person/count.json")
          .withRouteToFile("/data/person/query", "data/person/index.json")
+         .withRouteToFile("/qqq/v1/table/person/count", "qqq/v1/table/person/count.json")
+         .withRouteToFile("/qqq/v1/table/person/query", "qqq/v1/table/person/index.json")
       ;
    }
 
@@ -93,8 +96,8 @@ public class SavedReportTest extends QBaseSeleniumTest
       ////////////////////////////////////////////////////
       qSeleniumJavalin.beginCapture();
       qSeleniumLib.waitForSelectorContaining("button", "Edit Filters and Columns").click();
-      qSeleniumJavalin.waitForCapturedPath("/data/person/count");
-      qSeleniumJavalin.waitForCapturedPath("/data/person/query");
+      qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/count");
+      qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/query");
       qSeleniumJavalin.endCapture();
 
       QueryScreenLib queryScreenLib = new QueryScreenLib(qSeleniumLib);

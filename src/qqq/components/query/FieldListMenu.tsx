@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {QExposedJoin} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QExposedJoin";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Box from "@mui/material/Box";
@@ -31,28 +32,26 @@ import ListItem, {ListItemProps} from "@mui/material/ListItem/ListItem";
 import Menu from "@mui/material/Menu";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
-import React, {useState} from "react";
+import React, {useMemo, useState} from "react";
 
 interface FieldListMenuProps
 {
-   idPrefix: string;
-   heading?: string;
-   placeholder?: string;
-   tableMetaData: QTableMetaData;
-   showTableHeaderEvenIfNoExposedJoins: boolean;
-   fieldNamesToHide?: string[];
-   buttonProps: any;
-   buttonChildren: JSX.Element | string;
-
-   isModeSelectOne?: boolean;
-   handleSelectedField?: (field: QFieldMetaData, table: QTableMetaData) => void;
-
-   isModeToggle?: boolean;
-   toggleStates?: {[fieldName: string]: boolean};
-   handleToggleField?: (field: QFieldMetaData, table: QTableMetaData, newValue: boolean) => void;
-
-   fieldEndAdornment?: JSX.Element
-   handleAdornmentClick?: (field: QFieldMetaData, table: QTableMetaData, event: React.MouseEvent<any>) => void;
+   idPrefix: string,
+   heading?: string,
+   placeholder?: string,
+   tableMetaData: QTableMetaData,
+   showTableHeaderEvenIfNoExposedJoins: boolean,
+   fieldNamesToHide?: string[],
+   buttonProps: any,
+   buttonChildren: JSX.Element | string,
+   isModeSelectOne?: boolean,
+   handleSelectedField?: (field: QFieldMetaData, table: QTableMetaData) => void,
+   isModeToggle?: boolean,
+   toggleStates?: { [fieldName: string]: boolean },
+   handleToggleField?: (field: QFieldMetaData, table: QTableMetaData, newValue: boolean) => void,
+   fieldEndAdornment?: JSX.Element,
+   handleAdornmentClick?: (field: QFieldMetaData, table: QTableMetaData, event: React.MouseEvent<any>) => void,
+   omitExposedJoins?: string[]
 }
 
 FieldListMenu.defaultProps = {
@@ -71,38 +70,52 @@ interface TableWithFields
  ** Component to render a list of fields from a table (and its join tables)
  ** which can be interacted with...
  *******************************************************************************/
-export default function FieldListMenu({idPrefix, heading, placeholder, tableMetaData, showTableHeaderEvenIfNoExposedJoins, buttonProps, buttonChildren, isModeSelectOne, fieldNamesToHide, handleSelectedField, isModeToggle, toggleStates, handleToggleField, fieldEndAdornment, handleAdornmentClick}: FieldListMenuProps): JSX.Element
+export default function FieldListMenu({idPrefix, heading, placeholder, tableMetaData, showTableHeaderEvenIfNoExposedJoins, buttonProps, buttonChildren, isModeSelectOne, fieldNamesToHide, handleSelectedField, isModeToggle, toggleStates, handleToggleField, fieldEndAdornment, handleAdornmentClick, omitExposedJoins}: FieldListMenuProps): JSX.Element
 {
    const [menuAnchorElement, setMenuAnchorElement] = useState(null);
    const [searchText, setSearchText] = useState("");
    const [focusedIndex, setFocusedIndex] = useState(null as number);
 
    const [fieldsByTable, setFieldsByTable] = useState([] as TableWithFields[]);
-   const [collapsedTables, setCollapsedTables] = useState({} as {[tableName: string]: boolean});
+   const [collapsedTables, setCollapsedTables] = useState({} as { [tableName: string]: boolean });
 
    const [lastMouseOverXY, setLastMouseOverXY] = useState({x: 0, y: 0});
-   const [timeOfLastArrow, setTimeOfLastArrow] = useState(0)
+   const [timeOfLastArrow, setTimeOfLastArrow] = useState(0);
+
+   const availableExposedJoins = useMemo(() =>
+   {
+      const rs: QExposedJoin[] = []
+      for(let exposedJoin of tableMetaData.exposedJoins ?? [])
+      {
+         if(omitExposedJoins?.indexOf(exposedJoin.joinTable.name) > -1)
+         {
+            continue;
+         }
+         rs.push(exposedJoin);
+      }
+      return (rs);
+   }, [tableMetaData, omitExposedJoins]);
 
    //////////////////
    // check usages //
    //////////////////
-   if(isModeSelectOne)
+   if (isModeSelectOne)
    {
-      if(!handleSelectedField)
+      if (!handleSelectedField)
       {
-         throw("In FieldListMenu, if isModeSelectOne=true, then a callback for handleSelectedField must be provided.");
+         throw ("In FieldListMenu, if isModeSelectOne=true, then a callback for handleSelectedField must be provided.");
       }
    }
 
-   if(isModeToggle)
+   if (isModeToggle)
    {
-      if(!toggleStates)
+      if (!toggleStates)
       {
-         throw("In FieldListMenu, if isModeToggle=true, then a model for toggleStates must be provided.");
+         throw ("In FieldListMenu, if isModeToggle=true, then a model for toggleStates must be provided.");
       }
-      if(!handleToggleField)
+      if (!handleToggleField)
       {
-         throw("In FieldListMenu, if isModeToggle=true, then a callback for handleToggleField must be provided.");
+         throw ("In FieldListMenu, if isModeToggle=true, then a callback for handleToggleField must be provided.");
       }
    }
 
@@ -113,16 +126,16 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
    {
       collapsedTables[tableMetaData.name] = false;
 
-      if (tableMetaData.exposedJoins?.length > 0)
+      if (availableExposedJoins?.length > 0)
       {
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          // if we have exposed joins, put the table meta data with its fields, and then all of the join tables & fields too //
          /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
          fieldsByTable.push({table: tableMetaData, fields: getTableFieldsAsAlphabeticalArray(tableMetaData)});
 
-         for (let i = 0; i < tableMetaData.exposedJoins?.length; i++)
+         for (let i = 0; i < availableExposedJoins?.length; i++)
          {
-            const joinTable = tableMetaData.exposedJoins[i].joinTable;
+            const joinTable = availableExposedJoins[i].joinTable;
             fieldsByTable.push({table: joinTable, fields: getTableFieldsAsAlphabeticalArray(joinTable)});
 
             collapsedTables[joinTable.name] = false;
@@ -150,16 +163,16 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
       table.fields.forEach(field =>
       {
          let fullFieldName = field.name;
-         if(table.name != tableMetaData.name)
+         if (table.name != tableMetaData.name)
          {
             fullFieldName = `${table.name}.${field.name}`;
          }
 
-         if(fieldNamesToHide && fieldNamesToHide.indexOf(fullFieldName) > -1)
+         if (fieldNamesToHide && fieldNamesToHide.indexOf(fullFieldName) > -1)
          {
             return;
          }
-         fields.push(field)
+         fields.push(field);
       });
       fields.sort((a, b) => a.label.localeCompare(b.label));
       return (fields);
@@ -181,7 +194,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
    /*******************************************************************************
     **
     *******************************************************************************/
-   function getShownFieldAndTableByIndex(targetIndex: number): {field: QFieldMetaData, table: QTableMetaData}
+   function getShownFieldAndTableByIndex(targetIndex: number): { field: QFieldMetaData, table: QTableMetaData }
    {
       let index = -1;
       for (let i = 0; i < fieldsByTableToShow.length; i++)
@@ -191,9 +204,9 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
          {
             index++;
 
-            if(index == targetIndex)
+            if (index == targetIndex)
             {
-               return {field: tableWithField.fields[j], table: tableWithField.table}
+               return {field: tableWithField.fields[j], table: tableWithField.table};
             }
          }
       }
@@ -210,7 +223,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
       // console.log(`Event key: ${event.key}`);
       setTimeout(() => document.getElementById(`field-list-dropdown-${idPrefix}-textField`).focus());
 
-      if(isModeSelectOne && event.key == "Enter" && focusedIndex != null)
+      if (isModeSelectOne && event.key == "Enter" && focusedIndex != null)
       {
          setTimeout(() =>
          {
@@ -249,13 +262,13 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                /////////////////
                // a down move //
                /////////////////
-               if(startIndex == null)
+               if (startIndex == null)
                {
                   startIndex = -1;
                }
 
                let goalIndex = startIndex + offset;
-               if(goalIndex > maxFieldIndex - 1)
+               if (goalIndex > maxFieldIndex - 1)
                {
                   goalIndex = maxFieldIndex - 1;
                }
@@ -268,7 +281,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                // an up move //
                ////////////////
                let goalIndex = startIndex + offset;
-               if(goalIndex < 0)
+               if (goalIndex < 0)
                {
                   goalIndex = 0;
                }
@@ -335,7 +348,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
       // the last x/y isn't really useful, because the mouse generally isn't left exactly where it was when the mouse-over happened (edge of the element) //
       // but the keyboard last-arrow time that we capture, that's what's actually being useful in here                                                    //
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      if(event.clientX == lastMouseOverXY.x && event.clientY == lastMouseOverXY.y)
+      if (event.clientX == lastMouseOverXY.x && event.clientY == lastMouseOverXY.y)
       {
          // console.log("mouse didn't move, so, doesn't count");
          return;
@@ -343,7 +356,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
 
       const now = new Date().getTime();
       // console.log(`Compare now [${now}] to last arrow [${timeOfLastArrow}] (diff: [${now - timeOfLastArrow}])`);
-      if(now < timeOfLastArrow + 300)
+      if (now < timeOfLastArrow + 300)
       {
          // console.log("An arrow event happened less than 300 mills ago, so doesn't count.");
          return;
@@ -480,7 +493,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
       for (let i = 0; i < fieldsList.length; i++)
       {
          const field = fieldsList[i];
-         if(doesFieldMatchSearchText(field))
+         if (doesFieldMatchSearchText(field))
          {
             handleToggleField(field, table, event.target.checked);
          }
@@ -491,18 +504,18 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
    /////////////////////////////////////////////////////////
    // compute the table-level toggle state & count values //
    /////////////////////////////////////////////////////////
-   const tableToggleStates: {[tableName: string]: boolean} = {};
-   const tableToggleCounts: {[tableName: string]: number} = {};
+   const tableToggleStates: { [tableName: string]: boolean } = {};
+   const tableToggleCounts: { [tableName: string]: number } = {};
 
-   if(isModeToggle)
+   if (isModeToggle)
    {
       const {allOn, count} = getTableToggleState(tableMetaData, true);
       tableToggleStates[tableMetaData.name] = allOn;
       tableToggleCounts[tableMetaData.name] = count;
 
-      for (let i = 0; i < tableMetaData.exposedJoins?.length; i++)
+      for (let i = 0; i < availableExposedJoins?.length; i++)
       {
-         const join = tableMetaData.exposedJoins[i];
+         const join = availableExposedJoins[i];
          const {allOn, count} = getTableToggleState(join.joinTable, false);
          tableToggleStates[join.joinTable.name] = allOn;
          tableToggleCounts[join.joinTable.name] = count;
@@ -513,7 +526,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
    /*******************************************************************************
     **
     *******************************************************************************/
-   function getTableToggleState(table: QTableMetaData, isMainTable: boolean): {allOn: boolean, count: number}
+   function getTableToggleState(table: QTableMetaData, isMainTable: boolean): { allOn: boolean, count: number }
    {
       const fieldsList = [...table.fields.values()];
       let allOn = true;
@@ -522,7 +535,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
       {
          const field = fieldsList[i];
          const name = isMainTable ? field.name : `${table.name}.${field.name}`;
-         if(!toggleStates[name])
+         if (!toggleStates[name])
          {
             allOn = false;
          }
@@ -541,7 +554,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
     *******************************************************************************/
    function toggleCollapsedTable(tableName: string)
    {
-      collapsedTables[tableName] = !collapsedTables[tableName]
+      collapsedTables[tableName] = !collapsedTables[tableName];
       setCollapsedTables(Object.assign({}, collapsedTables));
    }
 
@@ -559,7 +572,7 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
 
    let index = -1;
    const textFieldId = `field-list-dropdown-${idPrefix}-textField`;
-   let listItemPadding = isModeToggle ? "0.125rem": "0.5rem";
+   let listItemPadding = isModeToggle ? "0.125rem" : "0.5rem";
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // for z-indexes, we set each table header to i+1, then the fields in that table to i (so they go behind it) //
@@ -607,12 +620,12 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                         {
                            let headerContents = null;
                            const headerTable = tableWithFields.table || tableMetaData;
-                           if(tableWithFields.table || showTableHeaderEvenIfNoExposedJoins)
+                           if (tableWithFields.table || showTableHeaderEvenIfNoExposedJoins)
                            {
                               headerContents = (<b>{headerTable.label} Fields</b>);
                            }
 
-                           if(isModeToggle)
+                           if (isModeToggle)
                            {
                               headerContents = (<FormControlLabel
                                  sx={{display: "flex", alignItems: "flex-start", "& .MuiFormControlLabel-label": {lineHeight: "1.4", fontWeight: "500 !important"}}}
@@ -622,10 +635,10 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                                     checked={tableToggleStates[headerTable.name]}
                                     onChange={(event) => handleTableToggle(event, headerTable)}
                                  />}
-                                 label={<span style={{marginTop: "0.25rem", display: "inline-block"}}><b>{headerTable.label} Fields</b>&nbsp;<span style={{fontWeight: 400}}>({tableToggleCounts[headerTable.name]})</span></span>} />)
+                                 label={<span style={{marginTop: "0.25rem", display: "inline-block"}}><b>{headerTable.label} Fields</b>&nbsp;<span style={{fontWeight: 400}}>({tableToggleCounts[headerTable.name]})</span></span>} />);
                            }
 
-                           if(isModeToggle)
+                           if (isModeToggle)
                            {
                               headerContents = (
                                  <>
@@ -638,11 +651,11 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                                     </IconButton>
                                     {headerContents}
                                  </>
-                              )
+                              );
                            }
 
                            let marginLeft = "unset";
-                           if(isModeToggle)
+                           if (isModeToggle)
                            {
                               marginLeft = "-1rem";
                            }
@@ -652,14 +665,14 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                            return (
                               <React.Fragment key={tableWithFields.table?.name ?? "theTable"}>
                                  <>
-                                    {headerContents && <ListItem sx={{position: "sticky", top: -1, zIndex: zIndex+1, padding: listItemPadding, ml: marginLeft, display: "flex", alignItems: "flex-start", backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,1) 90%, rgba(255,255,255,0))"}}>{headerContents}</ListItem>}
+                                    {headerContents && <ListItem sx={{position: "sticky", top: -1, zIndex: zIndex + 1, padding: listItemPadding, ml: marginLeft, display: "flex", alignItems: "flex-start", backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,1) 90%, rgba(255,255,255,0))"}}>{headerContents}</ListItem>}
                                     {
                                        tableWithFields.fields.map((field) =>
                                        {
                                           index++;
-                                          const key = `${tableWithFields.table?.name}-${field.name}`
+                                          const key = `${tableWithFields.table?.name}-${field.name}`;
 
-                                          if(collapsedTables[headerTable.name])
+                                          if (collapsedTables[headerTable.name])
                                           {
                                              return (<React.Fragment key={key} />);
                                           }
@@ -677,13 +690,13 @@ export default function FieldListMenu({idPrefix, heading, placeholder, tableMeta
                                              {
                                                 closeMenu();
                                                 handleSelectedField(field, tableWithFields.table ?? tableMetaData);
-                                             }
+                                             };
                                           }
 
                                           let label: JSX.Element | string = field.label;
                                           const fullFieldName = tableWithFields.table && tableWithFields.table.name != tableMetaData.name ? `${tableWithFields.table.name}.${field.name}` : field.name;
 
-                                          if(fieldEndAdornment)
+                                          if (fieldEndAdornment)
                                           {
                                              label = <Box width="100%" display="inline-flex" justifyContent="space-between">
                                                 {label}

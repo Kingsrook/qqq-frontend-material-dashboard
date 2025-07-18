@@ -20,6 +20,7 @@
  */
 
 
+import {ApiVersion} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
@@ -42,7 +43,8 @@ import QQueryColumns, {Column} from "qqq/models/query/QQueryColumns";
 import RecordQuery from "qqq/pages/records/query/RecordQuery";
 import Client from "qqq/utils/qqq/Client";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
-import React, {useContext, useEffect, useRef, useState} from "react";
+import TableUtils from "qqq/utils/qqq/TableUtils";
+import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 
 interface FilterAndColumnsSetupWidgetProps
 {
@@ -80,21 +82,31 @@ unborderedButtonSX.opacity = "0.7";
 
 
 const qController = Client.getInstance();
+const qControllerV1 = Client.getInstanceV1();
 
 /*******************************************************************************
  ** Component for editing the main setup of a report - that is: filter & columns
  *******************************************************************************/
-export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData, widgetData, recordValues, onSaveCallback, label}: FilterAndColumnsSetupWidgetProps): JSX.Element
+export default function FilterAndColumnsSetupWidget({isEditable: isEditableProp, widgetMetaData, widgetData, recordValues, onSaveCallback, label}: FilterAndColumnsSetupWidgetProps): JSX.Element
 {
    const [modalOpen, setModalOpen] = useState(false);
    const [hideColumns] = useState(widgetData?.hideColumns);
    const [hidePreview] = useState(widgetData?.hidePreview);
+   const [hideSortBy] = useState(widgetData?.hideSortBy);
+   const [isEditable] = useState(widgetData?.overrideIsEditable ?? isEditableProp);
    const [tableMetaData, setTableMetaData] = useState(null as QTableMetaData);
+
+   const [isApiVersioned] = useState(widgetData?.isApiVersioned);
+   const [apiVersion, setApiVersion] = useState(null as ApiVersion | null);
 
    const [filterFieldName] = useState(widgetData?.filterFieldName ?? "queryFilterJson");
    const [columnsFieldName] = useState(widgetData?.columnsFieldName ?? "columnsJson");
 
    const [alertContent, setAlertContent] = useState(null as string);
+   const [warning, setWarning] = useState(null as string);
+   const [widgetFailureAlertContent, setWidgetFailureAlertContent] = useState(null as string);
+
+   const omitExposedJoins: string[] = widgetData?.omitExposedJoins ?? [];
 
    //////////////////////////////////////////////////////////////////////////////////////////////////
    // we'll actually keep 2 copies of the query filter around here -                               //
@@ -112,7 +124,9 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /////////////////////////////
    let columns: QQueryColumns = null;
    let usingDefaultEmptyFilter = false;
-   let queryFilter = recordValues[filterFieldName] && JSON.parse(recordValues[filterFieldName]) as QQueryFilter;
+   const rawFilterValueFromRecord = recordValues[filterFieldName];
+   let queryFilter = rawFilterValueFromRecord &&
+      ((typeof rawFilterValueFromRecord == "string" ? JSON.parse(rawFilterValueFromRecord) : rawFilterValueFromRecord) as QQueryFilter);
    const defaultFilterFields = widgetData?.filterDefaultFieldNames;
    if (!queryFilter)
    {
@@ -165,16 +179,73 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          tableName = recordValues["tableName"];
       }
 
+      let version: ApiVersion | null = null;
+      if (isApiVersioned)
+      {
+         let apiName = widgetData?.apiName;
+         let apiPath = widgetData?.apiPath;
+         let apiVersion = widgetData?.apiVersion;
+
+         if (!apiName && recordValues["apiName"])
+         {
+            apiName = recordValues["apiName"];
+         }
+
+         if (!apiPath && recordValues["apiPath"])
+         {
+            apiPath = recordValues["apiPath"];
+         }
+
+         if (!apiVersion && recordValues["apiVersion"])
+         {
+            apiVersion = recordValues["apiVersion"];
+         }
+
+         if (!apiName || !apiPath || !apiVersion)
+         {
+            console.log("API Name/Path/Version not set, but widget isApiVersioned, so cannot load table meta data...");
+            return;
+         }
+
+         version = {name: apiName, path: apiPath, version: apiVersion};
+         setApiVersion(version);
+      }
+
       if (tableName)
       {
          (async () =>
          {
-            const tableMetaData = await qController.loadTableMetaData(tableName);
-            setTableMetaData(tableMetaData);
+            try
+            {
+               const tableMetaData = await qControllerV1.loadTableMetaData(tableName, version);
+               setTableMetaData(tableMetaData);
 
-            const queryFilterForFrontend = Object.assign({}, queryFilter);
-            await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
-            setFrontendQueryFilter(queryFilterForFrontend);
+               const queryFilterForFrontend = Object.assign({}, queryFilter);
+
+               let warnings: string[] = [];
+               for (let i = 0; i < queryFilterForFrontend?.criteria?.length; i++)
+               {
+                  const criteria = queryFilter.criteria[i];
+                  let [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, criteria.fieldName);
+                  if(!field)
+                  {
+                     warnings.push("Removing non-existing filter field: " + criteria.fieldName);
+                     queryFilterForFrontend.criteria.splice(i, 1);
+                     i--;
+                  }
+               }
+
+               await FilterUtils.cleanupValuesInFilerFromQueryString(qController, tableMetaData, queryFilterForFrontend);
+               setFrontendQueryFilter(queryFilterForFrontend);
+
+               setWarning(warnings.join("; "));
+            }
+            catch (e)
+            {
+               console.log(e);
+               //@ts-ignore e.message
+               setWidgetFailureAlertContent("Error preparing filter widget: " + (e.message ?? "Details not available."));
+            }
          })();
       }
    }, [JSON.stringify(recordValues)]);
@@ -203,7 +274,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          return;
       }
 
-      if (recordValues["tableName"])
+      if (widgetData?.tableName || recordValues["tableName"])
       {
          setAlertContent(null);
          setModalOpen(true);
@@ -335,7 +406,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
    /////////////////////////////////////////////////
    // add link to widget header for opening modal //
    /////////////////////////////////////////////////
-   const selectTableFirstTooltipTitle = tableMetaData ? null : "You must select a table before you can set up your report filters and columns";
+   const selectTableFirstTooltipTitle = tableMetaData ? null : `You must select a table${isApiVersioned ? " and API details" : ""} before you can set up your filters${hideColumns ? "" : " and columns"}`;
    const labelAdditionalElementsRight: JSX.Element[] = [];
    if (isEditable)
    {
@@ -349,6 +420,12 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
       }
    }
 
+   if (widgetFailureAlertContent)
+   {
+      return (<Widget widgetMetaData={widgetMetaData}>
+         <Alert severity="error" sx={{mt: 1.5, mb: 0.5}}>{widgetFailureAlertContent}</Alert>
+      </Widget>);
+   }
 
    return (<Widget widgetMetaData={widgetMetaData} labelAdditionalElementsRight={labelAdditionalElementsRight}>
       <React.Fragment>
@@ -361,10 +438,13 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
          <Collapse in={Boolean(alertContent)}>
             <Alert severity="error" sx={{mt: 1.5, mb: 0.5}} onClose={() => setAlertContent(null)}>{alertContent}</Alert>
          </Collapse>
+         <Collapse in={Boolean(warning)}>
+            <Alert severity="warning" sx={{mt: 1.5, mb: 0.5}} onClose={() => setWarning(null)}>{warning}</Alert>
+         </Collapse>
          <Box pt="0.5rem">
             <Box display="flex" justifyContent="space-between" alignItems="center">
-               <h5>{label ?? "Query Filter"}</h5>
-               <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>
+               <h5>{label ?? widgetData.label ?? widgetMetaData.label ?? "Query Filter"}</h5>
+               {!hideSortBy && <Box fontSize="0.75rem" fontWeight="700">{mayShowQuery() && getCurrentSortIndicator(frontendQueryFilter, tableMetaData, null)}</Box>}
             </Box>
             {
                mayShowQuery() &&
@@ -376,7 +456,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                   {
                      isEditable &&
                      <Tooltip title={selectTableFirstTooltipTitle}>
-                        <span><Button disabled={!recordValues["tableName"]} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
+                        <span><Button disabled={tableMetaData == null} sx={{mb: "0.125rem", ...unborderedButtonSX}} onClick={openEditor}>+ Add Filters</Button></span>
                      </Tooltip>
                   }
                   {
@@ -422,6 +502,8 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                   isModal={true}
                   initialQueryFilter={frontendQueryFilter}
                   initialColumns={columns}
+                  apiVersion={apiVersion}
+                  omitExposedJoins={omitExposedJoins}
                />
             </Box>
          )}
@@ -431,7 +513,7 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                <div>
                   <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
                      <Card sx={{m: "2rem", p: "2rem"}}>
-                        <h3>Edit Filters and Columns</h3>
+                        <h3>Edit Filters {hideColumns ? "" : " and Columns"}</h3>
                         {
                            showHelp("modalSubheader") &&
                            <Box color={colors.gray.main} pb={"0.5rem"}>
@@ -447,6 +529,8 @@ export default function FilterAndColumnsSetupWidget({isEditable, widgetMetaData,
                               isModal={true}
                               initialQueryFilter={usingDefaultEmptyFilter ? null : frontendQueryFilter}
                               initialColumns={columns}
+                              apiVersion={apiVersion}
+                              omitExposedJoins={omitExposedJoins}
                            />
                         }
 

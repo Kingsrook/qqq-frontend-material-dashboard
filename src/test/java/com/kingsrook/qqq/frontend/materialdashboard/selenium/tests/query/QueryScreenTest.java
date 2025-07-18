@@ -51,6 +51,8 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumJavalin
          .withRouteToFile("/data/person/count", "data/person/count.json")
          .withRouteToFile("/data/person/query", "data/person/index.json")
+         .withRouteToFile("/qqq/v1/table/person/count", "qqq/v1/table/person/count.json")
+         .withRouteToFile("/qqq/v1/table/person/query", "qqq/v1/table/person/index.json")
          .withRouteToFile("/data/person/variants", "data/person/variants.json")
          .withRouteToFile("/data/person/possibleValues/homeCityId", "data/person/possibleValues/homeCityId.json")
          .withRouteToFile("/processes/querySavedView/init", "processes/querySavedView/init.json");
@@ -82,8 +84,8 @@ public class QueryScreenTest extends QBaseSeleniumTest
       ///////////////////////////////////////////////////////////////////
       String idEquals1FilterSubstring = """
          {"fieldName":"id","operator":"EQUALS","values":["1"]}""";
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/count", idEquals1FilterSubstring);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", idEquals1FilterSubstring);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/count", idEquals1FilterSubstring);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", idEquals1FilterSubstring);
       qSeleniumJavalin.endCapture();
 
       ///////////////////////////////////////
@@ -102,8 +104,8 @@ public class QueryScreenTest extends QBaseSeleniumTest
       ////////////////////////////////////////////////////////////////////
       // assert that query & count both no longer have the filter value //
       ////////////////////////////////////////////////////////////////////
-      CapturedContext capturedCount = qSeleniumJavalin.waitForCapturedPath("/data/person/count");
-      CapturedContext capturedQuery = qSeleniumJavalin.waitForCapturedPath("/data/person/query");
+      CapturedContext capturedCount = qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/count");
+      CapturedContext capturedQuery = qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/query");
       assertThat(capturedCount).extracting("body").asString().doesNotContain(idEquals1FilterSubstring);
       assertThat(capturedQuery).extracting("body").asString().doesNotContain(idEquals1FilterSubstring);
       qSeleniumJavalin.endCapture();
@@ -135,9 +137,9 @@ public class QueryScreenTest extends QBaseSeleniumTest
       String expectedFilterContents2 = """
          "booleanOperator":"OR\"""";
 
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents0);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents1);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectedFilterContents2);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectedFilterContents0);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectedFilterContents1);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectedFilterContents2);
       qSeleniumJavalin.endCapture();
    }
 
@@ -409,7 +411,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumJavalin.beginCapture();
       queryScreenLib.setBasicBooleanFilter(fieldLabel, operatorLabel);
       queryScreenLib.waitForBasicFilterButtonMatchingRegex(expectButtonStringRegex);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectFilterJsonContains);
       qSeleniumJavalin.endCapture();
    }
 
@@ -423,7 +425,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       qSeleniumJavalin.beginCapture();
       queryScreenLib.setBasicFilterPossibleValues(fieldLabel, operatorLabel, values);
       queryScreenLib.waitForBasicFilterButtonMatchingRegex(expectButtonStringRegex);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectFilterJsonContains);
       qSeleniumJavalin.endCapture();
    }
 
@@ -469,7 +471,7 @@ public class QueryScreenTest extends QBaseSeleniumTest
       queryScreenLib.addAdvancedQueryFilterInput(0, fieldLabel, operatorLabel, value, null);
       qSeleniumLib.clickBackdrop();
       queryScreenLib.waitForAdvancedQueryStringMatchingRegex(expectQueryStringRegex);
-      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/data/person/query", expectFilterJsonContains);
+      qSeleniumJavalin.waitForCapturedPathWithBodyContaining("/qqq/v1/table/person/query", expectFilterJsonContains);
       qSeleniumJavalin.endCapture();
       queryScreenLib.clickAdvancedFilterClearIcon();
    }

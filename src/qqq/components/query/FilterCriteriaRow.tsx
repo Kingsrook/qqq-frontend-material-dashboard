@@ -33,6 +33,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, {SelectChangeEvent} from "@mui/material/Select/Select";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
+import {omit} from "lodash";
 import FieldAutoComplete from "qqq/components/misc/FieldAutoComplete";
 import FilterCriteriaRowValues from "qqq/components/query/FilterCriteriaRowValues";
 import {QueryScreenUsage} from "qqq/pages/records/query/RecordQuery";
@@ -190,17 +191,18 @@ export const getOperatorOptions = (tableMetaData: QTableMetaData, fieldName: str
 
 interface FilterCriteriaRowProps
 {
-   id: number;
-   index: number;
-   tableMetaData: QTableMetaData;
-   metaData: QInstance;
-   criteria: QFilterCriteria;
-   booleanOperator: "AND" | "OR" | null;
-   updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean) => void;
-   removeCriteria: () => void;
-   updateBooleanOperator: (newValue: string) => void;
-   queryScreenUsage?: QueryScreenUsage;
-   allowVariables?: boolean;
+   id: number,
+   index: number,
+   tableMetaData: QTableMetaData,
+   metaData: QInstance,
+   criteria: QFilterCriteria,
+   booleanOperator: "AND" | "OR" | null,
+   updateCriteria: (newCriteria: QFilterCriteria, needDebounce: boolean) => void,
+   removeCriteria: () => void,
+   updateBooleanOperator: (newValue: string) => void,
+   queryScreenUsage?: QueryScreenUsage,
+   allowVariables?: boolean,
+   omitExposedJoins?: string[]
 }
 
 FilterCriteriaRow.defaultProps =
@@ -269,7 +271,7 @@ export function validateCriteria(criteria: QFilterCriteria, operatorSelectedValu
    return {criteriaIsValid, criteriaStatusTooltip};
 }
 
-export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage, allowVariables}: FilterCriteriaRowProps): JSX.Element
+export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria, booleanOperator, updateCriteria, removeCriteria, updateBooleanOperator, queryScreenUsage, allowVariables, omitExposedJoins}: FilterCriteriaRowProps): JSX.Element
 {
    // console.log(`FilterCriteriaRow: criteria: ${JSON.stringify(criteria)}`);
    const [operatorSelectedValue, setOperatorSelectedValue] = useState(null as OperatorOption);
@@ -488,7 +490,7 @@ export function FilterCriteriaRow({id, index, tableMetaData, metaData, criteria,
          </Box>
          <Box display="inline-block" width={250} className="fieldColumn">
             <FieldAutoComplete id={`field-${id}`} metaData={metaData} tableMetaData={tableMetaData} defaultValue={defaultFieldValue} handleFieldChange={handleFieldChange}
-               autocompleteSlotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
+               omitExposedJoins={omitExposedJoins} autocompleteSlotProps={{popper: {className: "filterCriteriaRowColumnPopper", style: {padding: 0, width: "250px"}}}}
             />
          </Box>
          <Box display="inline-block" width={200} className="operatorColumn">

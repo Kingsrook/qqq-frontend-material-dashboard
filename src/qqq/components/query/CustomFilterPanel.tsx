@@ -43,6 +43,7 @@ declare module "@mui/x-data-grid"
       metaData: QInstance;
       queryFilter: QQueryFilter;
       updateFilter: (newFilter: QQueryFilter) => void;
+      omitExposedJoins?: string[]
    }
 }
 
@@ -181,6 +182,7 @@ export const CustomFilterPanel = forwardRef<any, GridFilterPanelProps>(
                            updateBooleanOperator={(newValue) => updateBooleanOperator(newValue)}
                            allowVariables={props.allowVariables}
                            queryScreenUsage={props.queryScreenUsage}
+                           omitExposedJoins={props.omitExposedJoins}
                         />
                         {/*JSON.stringify(criteria)*/}
                      </Box>

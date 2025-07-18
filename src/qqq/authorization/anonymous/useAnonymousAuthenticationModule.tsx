@@ -48,7 +48,7 @@ export default function useAnonymousAuthenticationModule({setIsFullyAuthenticate
    {
       console.log("Generating random token...");
       setIsFullyAuthenticated(true);
-      qController.setGotAuthentication();
+      Client.setGotAuthenticationInAllControllers();
       setCookie(SESSION_UUID_COOKIE_NAME, Md5.hashStr(`${new Date()}`), {path: "/"});
       console.log("Token generation complete.");
    };

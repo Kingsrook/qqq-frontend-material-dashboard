@@ -1,0 +1,276 @@
+{
+   "record": {
+      "tableName": "client",
+      "recordLabel": "John Doe",
+      "values": {
+         "name": "John Doe",
+         "id": 120,
+         "deposcoOrderOptimizationCoolingScriptId": 2,
+         "createDate": "2022-08-30T00:31:00Z",
+         "modifyDate": "2023-02-19T01:28:30Z",
+         "isFulfillmentCenter": false,
+         "infoplusLobId": 18698,
+         "deposcoBusinessUnitName": "TRIFECTA",
+         "deposcoBusinessUnitId": 77,
+         "optimizationConfigId": 1,
+         "nfCode": "Client 224"
+      },
+      "displayValues": {
+         "optimizationConfigId": "Client: 120",
+         "name": "John Doe",
+         "id": "120",
+         "deposcoOrderOptimizationCoolingScriptId": "2",
+         "createDate": "2022-08-30T00:31:00Z",
+         "modifyDate": "2023-02-19T01:28:30Z",
+         "isFulfillmentCenter": "No",
+         "infoplusLobId": "18698",
+         "deposcoBusinessUnitName": "TRIFECTA",
+         "deposcoBusinessUnitId": "77",
+         "nfCode": "Client 224"
+      }
+   },
+   "associatedScripts": [
+      {
+         "testInputFields": [
+            {
+               "name": "selectedTimeInTransitDays",
+               "label": "Selected Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "standardTimeInTransitDays",
+               "label": "Standard Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "scriptType": {
+            "tableName": "scriptType",
+            "values": {
+               "name": "Deposco Order Optimization Cooling",
+               "id": 2,
+               "createDate": "2022-10-31T19:06:50Z",
+               "modifyDate": "2022-10-31T19:06:50Z"
+            }
+         },
+         "scriptRevisions": [
+            {
+               "tableName": "scriptRevision",
+               "values": {
+                  "id": 1,
+                  "contents": "1;",
+                  "createDate": "2023-02-19T01:28:30Z",
+                  "modifyDate": "2023-02-19T01:28:30Z",
+                  "scriptId": 2,
+                  "sequenceNo": 1,
+                  "commitMessage": "Initial version",
+                  "author": "Darin Kelkhoff"
+               }
+            }
+         ],
+         "testOutputFields": [
+            {
+               "name": "sku",
+               "label": "Sku",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "quantityPerCarton",
+               "label": "Quantity Per Carton",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "useClientProvidedCoolingSolution",
+               "label": "Use Client Provided Cooling Solution",
+               "type": "BOOLEAN",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "reason",
+               "label": "Reason",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "script": {
+            "tableName": "script",
+            "values": {
+               "name": "John Doe - Deposco Order Optimization Cooling",
+               "id": 2,
+               "scriptTypeId": 2,
+               "createDate": "2023-02-19T01:28:30Z",
+               "modifyDate": "2023-02-19T01:28:30Z",
+               "currentScriptRevisionId": 1
+            }
+         },
+         "associatedScript": {
+            "fieldName": "deposcoOrderOptimizationCoolingScriptId",
+            "scriptTypeId": 2,
+            "scriptTester": {
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationCoolingScript",
+               "codeType": "JAVA",
+               "codeUsage": "SCRIPT_TESTER"
+            }
+         }
+      },
+      {
+         "testInputFields": [
+            {
+               "name": "selectedTimeInTransitDays",
+               "label": "Selected Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "standardTimeInTransitDays",
+               "label": "Standard Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "runtimeWeekday",
+               "label": "Runtime Weekday",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "scriptType": {
+            "tableName": "scriptType",
+            "values": {
+               "name": "Deposco Order Optimization Batch Name",
+               "id": 1,
+               "createDate": "2022-10-31T19:06:50Z",
+               "modifyDate": "2022-10-31T19:06:50Z"
+            }
+         },
+         "testOutputFields": [
+            {
+               "name": "batchName",
+               "label": "Batch Name",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "reason",
+               "label": "Reason",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "associatedScript": {
+            "fieldName": "deposcoOrderOptimizationBatchNameScriptId",
+            "scriptTypeId": 1,
+            "scriptTester": {
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
+               "codeType": "JAVA",
+               "codeUsage": "SCRIPT_TESTER"
+            }
+         }
+      },
+      {
+         "testInputFields": [
+            {
+               "name": "selectedTimeInTransitDays",
+               "label": "Selected Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "standardTimeInTransitDays",
+               "label": "Standard Time In Transit Days",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "runtimeWeekday",
+               "label": "Runtime Weekday",
+               "type": "INTEGER",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "scriptType": {
+            "tableName": "scriptType",
+            "values": {
+               "name": "Deposco Order Optimization Batch Name",
+               "id": 1,
+               "createDate": "2022-10-31T19:06:50Z",
+               "modifyDate": "2022-10-31T19:06:50Z"
+            }
+         },
+         "testOutputFields": [
+            {
+               "name": "batchName",
+               "label": "Batch Name",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            },
+            {
+               "name": "reason",
+               "label": "Reason",
+               "type": "STRING",
+               "isRequired": false,
+               "isEditable": true,
+               "isHeavy": false,
+               "displayFormat": "%s"
+            }
+         ],
+         "associatedScript": {
+            "fieldName": "deposcoOrderOptimizationCartonizationScriptId",
+            "scriptTypeId": 1,
+            "scriptTester": {
+               "name": "com.coldtrack.live.processes.deposco.RunDeposcoOrderOptimizationBatchNameScript",
+               "codeType": "JAVA",
+               "codeUsage": "SCRIPT_TESTER"
+            }
+         }
+      }
+   ]
+}

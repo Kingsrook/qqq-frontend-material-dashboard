@@ -1,0 +1,245 @@
+{
+   "records": [
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 623577,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z",
+            "clientId": 107,
+            "auditDetail.id": 278660,
+            "auditDetail.auditId": 623577,
+            "auditDetail.message": "Set First Name to John",
+            "auditDetail.fieldName": "firstName",
+            "auditDetail.newValue": "John"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "623577",
+            "recordId": "1191682",
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 623577,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z",
+            "clientId": 107,
+            "auditDetail.id": 278661,
+            "auditDetail.auditId": 623577,
+            "auditDetail.message": "Removed Doe from Last Name",
+            "auditDetail.fieldName": "lastName",
+            "auditDetail.oldValue": "Doe"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "623577",
+            "recordId": "1191682",
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 623577,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z",
+            "clientId": 107,
+            "auditDetail.id": 278662,
+            "auditDetail.auditId": 623577,
+            "auditDetail.message": "Set Client to ACME",
+            "auditDetail.fieldName": "clientId",
+            "auditDetail.oldValue": "BetaMax",
+            "auditDetail.newValue": "ACME"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "623577",
+            "recordId": "1191682",
+            "message": "Record was Inserted",
+            "timestamp": "2023-02-17T14:11:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 624804,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T14:13:16Z",
+            "clientId": 107,
+            "auditDetail.id": 278990,
+            "auditDetail.auditId": 624804,
+            "auditDetail.message": "Set SLA Expected Service Days to 2",
+            "auditDetail.fieldName": "slaExpectedServiceDays",
+            "auditDetail.newValue": "2"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "624804",
+            "recordId": "1191682",
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T14:13:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 624804,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T14:13:16Z",
+            "clientId": 107,
+            "auditDetail.id": 278991,
+            "auditDetail.auditId": 624804,
+            "auditDetail.message": "Set SLA Status to \"Pending\"",
+            "auditDetail.fieldName": "slaStatusId",
+            "auditDetail.newValue": "Pending"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "624804",
+            "recordId": "1191682",
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T14:13:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 624809,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Audit message here",
+            "timestamp": "2023-02-17T14:13:16Z",
+            "clientId": 107,
+            "auditDetail.id": 279000,
+            "auditDetail.auditId": 624809,
+            "auditDetail.message": "This is a detail message"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "624809",
+            "recordId": "1191682",
+            "message": "Audit message here",
+            "timestamp": "2023-02-17T14:13:16Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 737694,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T17:22:08Z",
+            "clientId": 107,
+            "auditDetail.id": 299222,
+            "auditDetail.auditId": 737694,
+            "auditDetail.message": "Set Estimated Delivery Date Time to 2023-02-18 07:00:00 PM EST",
+            "auditDetail.fieldName": "estimatedDeliveryDateTime",
+            "auditDetail.newValue": "2023-02-18 07:00:00 PM EST"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "737694",
+            "recordId": "1191682",
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T17:22:08Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 737694,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T17:22:08Z",
+            "clientId": 107,
+            "auditDetail.id": 299223,
+            "auditDetail.auditId": 737694,
+            "auditDetail.message": "Changed Parcel Tracking Status from \"Unknown\" to \"Pre Transit\"",
+            "auditDetail.fieldName": "parcelTrackingStatusId",
+            "auditDetail.oldValue": "Unknown",
+            "auditDetail.newValue": "Pre Transit"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "737694",
+            "recordId": "1191682",
+            "message": "Record was Edited",
+            "timestamp": "2023-02-17T17:22:08Z"
+         }
+      },
+      {
+         "tableName": "audit",
+         "recordLabel": "Parcel 1191682",
+         "values": {
+            "id": 737695,
+            "auditTableId": 4,
+            "auditUserId": 2,
+            "recordId": 1191682,
+            "message": "Updating Parcel based on updated tracking details",
+            "timestamp": "2023-02-17T17:22:09Z",
+            "clientId": 107,
+            "auditDetail.id": 299224,
+            "auditDetail.auditId": 737695,
+            "auditDetail.message": "Set Parcel Tracking Status to Pre Transit based on most recent tracking update: Shipment information sent to FedEx"
+         },
+         "displayValues": {
+            "auditTableId": "Parcel",
+            "auditUserId": "QQQ User",
+            "clientId": "ACME",
+            "id": "737695",
+            "recordId": "1191682",
+            "message": "Updating Parcel based on updated tracking details",
+            "timestamp": "2023-02-17T17:22:09Z"
+         }
+      }
+   ]
+}

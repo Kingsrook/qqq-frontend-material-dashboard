@@ -39,6 +39,7 @@ import SmallLineChart from "qqq/components/widgets/charts/linechart/SmallLineCha
 import PieChart from "qqq/components/widgets/charts/piechart/PieChart";
 import StackedBarChart from "qqq/components/widgets/charts/StackedBarChart";
 import CompositeWidget from "qqq/components/widgets/CompositeWidget";
+import CustomComponentWidget from "qqq/components/widgets/misc/CustomComponentWidget";
 import DataBagViewer from "qqq/components/widgets/misc/DataBagViewer";
 import DividerWidget from "qqq/components/widgets/misc/Divider";
 import DynamicFormWidget from "qqq/components/widgets/misc/DynamicFormWidget";
@@ -781,8 +782,12 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
             {
                widgetMetaData.type === "filterAndColumnsSetup" && (
                   widgetData && widgetData[i] &&
-                  <FilterAndColumnsSetupWidget isEditable={false} widgetMetaData={widgetMetaData} widgetData={widgetData[i]} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={() =>
+                  <FilterAndColumnsSetupWidget isEditable={false} widgetMetaData={widgetMetaData} widgetData={widgetData[i]} recordValues={convertQRecordValuesFromMapToObject(record)} onSaveCallback={(values: { [name: string]: any }) =>
                   {
+                     if(actionCallback)
+                     {
+                        actionCallback(values)
+                     }
                   }} />
                )
             }
@@ -798,6 +803,14 @@ function DashboardWidgets({widgetMetaDataList, tableName, entityPrimaryKey, reco
                widgetMetaData.type === "dynamicForm" && (
                   widgetData && widgetData[i] &&
                   <DynamicFormWidget isEditable={false} widgetMetaData={widgetMetaData} widgetData={widgetData[i]} record={record} recordValues={convertQRecordValuesFromMapToObject(record)} />
+               )
+            }
+            {
+               widgetMetaData.type === "customComponent" && (
+                  widgetData && widgetData[i] &&
+                  <Widget widgetMetaData={widgetMetaData}>
+                     <CustomComponentWidget widgetMetaData={widgetMetaData} widgetData={widgetData[i]} record={record} />
+                  </Widget>
                )
             }
          </Box>

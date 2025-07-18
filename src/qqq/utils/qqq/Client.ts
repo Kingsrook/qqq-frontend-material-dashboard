@@ -20,6 +20,7 @@
  */
 
 import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
+import {QControllerV1} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
 import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
 
 /*******************************************************************************
@@ -29,6 +30,7 @@ import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException
 class Client
 {
    private static qController: QController;
+   private static qControllerV1: QControllerV1;
    private static unauthorizedCallback: () => void;
 
    private static handleException(exception: QException)
@@ -52,6 +54,22 @@ class Client
       }
 
       return this.qController;
+   }
+
+   public static getInstanceV1(path: string = "/qqq/v1")
+   {
+      if (this.qControllerV1 == null)
+      {
+         this.qControllerV1 = new QControllerV1(path, this.handleException);
+      }
+
+      return this.qControllerV1;
+   }
+
+   public static setGotAuthenticationInAllControllers()
+   {
+      Client.getInstance().setGotAuthentication();
+      Client.getInstanceV1().setGotAuthentication();
    }
 
    static setUnauthorizedCallback(unauthorizedCallback: () => void)

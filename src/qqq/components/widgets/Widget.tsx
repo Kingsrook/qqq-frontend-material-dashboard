@@ -728,7 +728,7 @@ function Widget(props: React.PropsWithChildren<Props>): JSX.Element
       <Box sx={{width: "100%", height: "100%", minHeight: props.widgetMetaData?.minHeight ? props.widgetMetaData?.minHeight : "initial"}}>
          {
             needLabelBox &&
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%", ...props.labelBoxAdditionalSx}} minHeight={"2.5rem"}>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{width: "100%", ...props.labelBoxAdditionalSx}} minHeight={"2.5rem"} className="widgetLabelBox">
                <Box display="flex" flexDirection="column">
                   <Box display="flex" alignItems="baseline">
                      {
