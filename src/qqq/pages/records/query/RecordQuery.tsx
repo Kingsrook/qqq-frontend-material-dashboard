@@ -23,6 +23,7 @@ import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QControl
 import {ApiVersion} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
 import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
 import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
 import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
 import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
 import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
@@ -138,6 +139,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
 
    const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(false);
    const [warningAlert, setWarningAlert] = useState(null as string);
+   const [warningAlertList, setWarningAlertList] = useState([] as string[]);
    const [successAlert, setSuccessAlert] = useState(null as string);
 
    const navigate = useNavigate();
@@ -901,6 +903,28 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
    };
 
 
+   /***************************************************************************
+    *
+    ***************************************************************************/
+   const pushWarningAlert = (newMessage: string) =>
+   {
+      if(warningAlertList.indexOf(newMessage) == -1)
+      {
+         setWarningAlertList([...warningAlertList, newMessage]);
+      }
+   }
+
+
+   /***************************************************************************
+    *
+    ***************************************************************************/
+   const deleteWarningAlert = (index: number) =>
+   {
+      warningAlertList.splice(index, 1);
+      setWarningAlertList([...warningAlertList]);
+   }
+
+
    /*******************************************************************************
     ** This is the method that actually executes a query to update the data in the table.
     *******************************************************************************/
@@ -930,7 +954,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
             const value = queryFilter.criteria[i].values[j];
             if (value?.type == "FilterVariableExpression")
             {
-               setWarningAlert("Cannot perform query because of a missing value for a variable.");
+               pushWarningAlert("Cannot perform query because of a missing value for a variable.")
                setLoading(false);
                setRows([]);
                return;
@@ -1731,6 +1755,12 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
     *******************************************************************************/
    const handleSavedViewChange = async (selectedSavedViewId: number) =>
    {
+      ////////////////////////////////////////////////////////////////////////////////////////
+      // clear warnings if changing views - they should never persist between views, right? //
+      // also - this is the callback for the 'reset all changes' link, which should do it.  //
+      ////////////////////////////////////////////////////////////////////////////////////////
+      setWarningAlertList([])
+
       if (selectedSavedViewId != null)
       {
          doRecordAnalytics({category: "tableEvents", action: "activateSavedView", label: tableMetaData.label});
@@ -1828,6 +1858,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
    {
       let changedView = false;
       const removedFieldNames = new Set<string>();
+      const removedFilterReasons = new Set<string>();
 
       if (view.queryColumns?.columns?.length > 0)
       {
@@ -1910,6 +1941,28 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
          }
       }
 
+      for (let i = 0; i < view?.queryFilter?.criteria?.length; i++)
+      {
+         const fieldName = view.queryFilter.criteria[i].fieldName;
+         const operator = view.queryFilter.criteria[i].operator;
+         const [field, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, fieldName);
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // todo - this could/should be a richer thing, but, this gets past an immediate known case/bug, so going w/ it //
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (field?.type == QFieldType.BOOLEAN && operator)
+         {
+            if([QCriteriaOperator.EQUALS, QCriteriaOperator.IS_BLANK, QCriteriaOperator.IS_NOT_BLANK].indexOf(operator) == -1)
+            {
+               console.log(`Deleting a criteria field w/ operator not supported for frontend: ${fieldName}`);
+               view.queryFilter.criteria.splice(i, 1);
+               changedView = true;
+               removedFilterReasons.add(field.label + " has an unsupported operator: " + operator);
+               i--;
+            }
+         }
+      }
+
       if (changedView && useCase == "initialPageLoad")
       {
          activateView(view);
@@ -1919,7 +1972,14 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       if (removedFieldCount > 0)
       {
          const plural = removedFieldCount > 1;
-         setWarningAlert(`${removedFieldCount} field${plural ? "s" : ""} that ${plural ? "were" : "was"} part of this view ${plural ? "are" : "is"} no longer in this table, and ${plural ? "were" : "was"} removed from this view (${[...removedFieldNames.values()].join(", ")}).`);
+         pushWarningAlert(`${removedFieldCount} field${plural ? "s" : ""} that ${plural ? "were" : "was"} part of this view ${plural ? "are" : "is"} no longer in this table, and ${plural ? "were" : "was"} removed from this view (${[...removedFieldNames.values()].join(", ")}).`);
+      }
+
+      const removedFilterCount = removedFilterReasons.size;
+      if (removedFilterCount > 0)
+      {
+         const plural = removedFilterCount > 1;
+         pushWarningAlert(`${removedFilterCount} filter${plural ? "s" : ""} is misconfigured for this screen and was removed from this view: (Details: ${[...removedFilterReasons.values()].join(", ")}).`);
       }
    };
 
@@ -2565,6 +2625,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
             }
             catch (e)
             {
+               console.error(e)
                setAlertContent("Error parsing filter from URL");
             }
          }
@@ -2957,6 +3018,11 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                         <Alert color="warning" icon={<Icon>warning</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
                      </Collapse>
                   ) : null
+               }
+               {
+                  warningAlertList.map((message, i) =>
+                     <Alert key={i} color="warning" icon={<Icon>warning</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => deleteWarningAlert(i)}>{message}</Alert>
+                  )
                }
 
                {
