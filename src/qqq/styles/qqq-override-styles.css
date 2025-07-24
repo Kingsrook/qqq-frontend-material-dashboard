@@ -859,7 +859,7 @@ input[type="search"]::-webkit-search-results-decoration
    position: sticky;
    bottom: 0;
    background: linear-gradient(to bottom, transparent 0, #f0f2f5 4px);
-   z-index: 10; /* have needed a little here, e.g. to get above MuiDataGrid-overlay and ACE */
+   z-index: 40; /* have needed a little here, e.g. to get above MuiDataGrid-overlay and ACE */
 }
 
 .modalBottomButtonBar
