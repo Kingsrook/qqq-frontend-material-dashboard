@@ -117,7 +117,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       WebElement valueInput = qSeleniumLib.waitForSelector(".filterValuesColumn INPUT");
       valueInput.click();
       valueInput.sendKeys("Kelkhoff");
-      qSeleniumLib.waitForMillis(100);
+      qSeleniumLib.waitForMillis(1000);
 
       qSeleniumLib.clickBackdrop();
       qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
