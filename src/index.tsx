@@ -38,14 +38,24 @@ const qController = Client.getInstance();
 
 function getBasePath(): string
 {
-   // You can change this logic depending on how you detect your mount point
+   ////////////////////////////////////////////////////////////////////////////
+   // You can change this logic depending on how you detect your mount point //
+   ////////////////////////////////////////////////////////////////////////////
    const path = window.location.pathname;
 
-   console.warn("Using hacked base path for QQQ application, please update this code to be better : path ["+ path +"].");
+   console.warn("kingsrook/qqq-frontend-material-dashboard/index.tsx/getBasePath() -> Using hacked base path for QQQ application, please update this code to be better : path [" + path + "].");
 
-   // Example: If app is deployed at /admin or /portal
-   if (path.startsWith("/admin")) return "/admin";
-   if (path.startsWith("/portal")) return "/portal";   // TODO: This is all temporary, we need to fix this properly
+   //////////////////////////////////////////////////////
+   // Example: If app is deployed at /admin or /portal //
+   //////////////////////////////////////////////////////
+   if (path.startsWith("/admin"))
+   {
+      return "/admin";
+   }
+   if (path.startsWith("/portal"))
+   {
+      return "/portal";
+   }   // TODO: This is all temporary, we need to fix this properly
 
    return "/";
 }

@@ -58,4 +58,19 @@ module.exports = function (app)
    app.use("/api*", getRequestHandler());
    app.use("/*api", getRequestHandler());
    app.use("/qqq/*", getRequestHandler());
+
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   // Proxy for all OpenID Connect (OIDC) requests under /auth-oidc (for local dev sign-in) //
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   app.use(
+      "/auth-oidc",
+      createProxyMiddleware({
+         target: "https://auth.kof22.com",
+         changeOrigin: true,
+         pathRewrite: {
+            "^/auth-oidc": "/application/o/kof22-website-admin-local-dev",
+         },
+         secure: false, // set to false if using self-signed certs
+      })
+   );
 };

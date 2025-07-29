@@ -163,14 +163,18 @@ export default function useOAuth2AuthenticationModule({setIsFullyAuthenticated, 
          );
       }
 
+
       const oidcConfig =
          {
             authority: authority,
             client_id: clientId,
-            redirect_uri: `${window.location.origin}/token`,
+            // redirect_uri: `${window.location.pathname}token`,                       // TODO - this needs to respect the baseUrl, not just the origin
+            redirect_uri: "/admin/token",
             response_type: "code",
             scope: "openid profile email offline_access",
          };
+
+      alert("Setting redirect_uri ["+ oidcConfig.redirect_uri +"]");
 
       return (<AuthProvider {...oidcConfig}>
          {children}

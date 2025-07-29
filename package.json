@@ -69,6 +69,7 @@
       "npm-install": "npm install --legacy-peer-deps",
       "prepublishOnly": "tsc -p ./ --outDir lib/",
       "start": "PUBLIC_URL=. BROWSER=none react-scripts --max-http-header-size=65535 start",
+      "dev": "./scripts/open-chrome-profile.sh http://localhost:3000/ && PUBLIC_URL=. BROWSER=none react-scripts --max-http-header-size=65535 start",
       "test": "react-scripts test",
       "export": "rm -rf dist && PUBLIC_URL=. react-scripts build && rm -rf src/main/resources/material-dashboard && mkdir -p src/main/resources/material-dashboard && cp -r build/* src/main/resources/material-dashboard"
    },

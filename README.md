@@ -1,261 +1,222 @@
-# [Material Dashboard 2 PRO React TS](http://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics?ref=readme-mdpr) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?url=https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts&text=Check%20Material%20Dashboard%202%20Pro%React%20made%20by%20@CreativeTim%20#webdesign%20#dashboard%20#materialdesign%20#react%20https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts)
+# QQQ Frontend Material Dashboard
 
-![version](https://img.shields.io/badge/version-1.0.0-blue.svg) [![GitHub issues open](https://img.shields.io/github/issues/creativetimofficial/ct-material-dashboard-pro-react.svg)](https://github.com/creativetimofficial/ct-material-dashboard-pro-react/issues?q=is%3Aopen+is%3Aissue) [![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/creativetimofficial/ct-material-dashboard-pro-react.svg)](https://github.com/creativetimofficial/ct-material-dashboard-pro-react/issues?q=is%3Aissue+is%3Aclosed)
+A low-code, extensible React + TypeScript dashboard for engineers, built on MUI and the QQQ framework. This project is designed for rapid development of admin panels, data-driven apps, and custom dashboards.
 
-![Image](https://s3.amazonaws.com/creativetim_bucket/products/594/original/material-dashboard-pro-react-typescript.jpg)
-
-Material Dashboard 2 PRO React TS is our newest premium MUI Admin Template based on React & TypeScript. If you’re a developer looking to create an admin dashboard that is developer-friendly, rich with features, and highly customisable, here is your match. Our innovative MUI + React + TypeScript dashboard comes with a beautiful design inspired by Google's Material Design and it will help you create stunning websites & web apps to delight your clients.
-
-**Fully Coded Elements**
-Material Dashboard 2 PRO React TS is built with over 200 frontend individual elements, like buttons, inputs, navbars, nav tabs, cards, or alerts, giving you the freedom of choosing and combining. All components can take variations in color, which you can easily modify using MUI styled() API and sx prop. You will save a lot of time going from prototyping to full-functional code because all elements are implemented.
-
-This Premium MUI + React + TypeScript Dashboard is coming with prebuilt design blocks, so the development process is seamless,
-switching from our pages to the real website is very easy to be done.
-
-View [all components here](https://www.creative-tim.com/learning-lab/react/alerts/material-dashboard/).
-
-**Documentation built by Developers**
-
-Each element is well presented in very complex documentation.
-
-You can read more about the [documentation here](https://www.creative-tim.com/learning-lab/react/overview/material-dashboard/).
-
-**Example Pages**
-
-If you want to get inspiration or just show something directly to your clients, you can jump-start your development with our pre-built example pages. You will be able to quickly set up the basic structure for your web project.
-
-View [example pages here](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics).
-
-**HELPFUL LINKS**
-
-- View [Github Repository](https://github.com/creativetimofficial/ct-material-dashboard-pro-react)
-- Check [FAQ Page](https://www.creative-tim.com/faq)
-
-#### Special thanks
-
-During the development of this dashboard, we have used many existing resources from awesome developers. We want to thank them for providing their tools open source:
-
-- [MUI](https://mui.com/) - The React UI library for faster and easier web development.
-- [React Table](https://react-table.tanstack.com/) - Lightweight and extensible data tables for React.
-- [React Flatpickr](https://github.com/haoxins/react-flatpickr) - Useful library used to select date.
-- [React ChartJS 2](http://reactchartjs.github.io/react-chartjs-2/#/) - Simple yet flexible React charting for designers & developers.
-- [Full Calendar](https://fullcalendar.io/) - Full-sized drag & drop event calendar.
-- [Dropzone](https://www.dropzonejs.com/) - An open source library that provides drag & drop file uploads with image previews.
-- [React Kanban](https://github.com/asseinfo/react-kanban) - Kanban/Trello board lib for React.
-- [React Images Viewer](https://guonanci.github.io/react-images-viewer/) - A simple, responsive images viewer component for ReactJS.
-- [React Quill](https://github.com/zenoamaro/react-quill) - A free, open source WYSIWYG editor built for the modern web.
-- [Formik](https://formik.org/) - Formik is the world's most popular open source form library for React and React Native.
-- [ChromaJS](https://gka.github.io/chroma.js/) - A small-ish zero-dependency JavaScript library for all kinds of color conversions and color scales.
-- [UUID](https://github.com/uuidjs/uuid) - JavaScript library for generating random id numbers.
-- [HTML React Parser](https://github.com/remarkablemark/html-react-parser) - A utility for converting HTML strings into React components.
-
-Let us know your thoughts below. And good luck with development!
+---
 
 ## Table of Contents
+- [Project Overview](#project-overview)
+- [Getting Started](#getting-started)
+- [Development Workflow](#development-workflow)
+- [Scripts](#scripts)
+- [Code Structure](#code-structure)
+- [TypeScript & Linting](#typescript--linting)
+- [Proxy/API Setup](#proxyapi-setup)
+- [Custom Chrome Profile Script](#custom-chrome-profile-script)
+- [Key Components & Utilities](#key-components--utilities)
+- [Contributing](#contributing)
 
-- [Versions](#versions)
-- [Demo](#demo)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [File Structure](#file-structure)
-- [Browser Support](#browser-support)
-- [Resources](#resources)
-- [Reporting Issues](#reporting-issues)
-- [Technical Support or Questions](#technical-support-or-questions)
-- [Licensing](#licensing)
-- [Useful Links](#useful-links)
+---
 
-## Versions
+## Project Overview
 
-[<img src="https://raw.githubusercontent.com/creativetimofficial/public-assets/master/logos/react-logo.png" width="60" height="60" />](https://www.creative-tim.com/product/material-dashboard-pro-react?ref=readme-mdpr)
-[<img src="https://raw.githubusercontent.com/creativetimofficial/public-assets/master/logos/typescript.png" width="60" height="60" />](https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts?ref=readme-mdpr)
+This repo is the main frontend for QQQ-based dashboards. It leverages:
+- **React 18** with functional components and hooks
+- **TypeScript** for type safety
+- **MUI (Material UI)** for UI components
+- **QQQ Core** for low-code app logic, authentication, and data
+- **Custom widgets, forms, and utilities** for rapid app building
 
-| React                                                                                                                                                                                                                                  | TypeScript                                                                                                                                                                                                                                                 |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [![Material Dashboard 2 PRO React](https://s3.amazonaws.com/creativetim_bucket/products/80/thumb/material-dashboard-pro-react.jpg)](http://demos.creative-tim.com/material-dashboard-pro-react/#/dashboards/analytics?ref=readme-mdpr) | [![Material Dashboard 2 PRO React TS](https://s3.amazonaws.com/creativetim_bucket/products/594/thumb/material-dashboard-pro-react-typescript.jpg)](http://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics?ref=readme-mdpr) |
+Authentication supports Auth0, OAuth2, and anonymous modes. The app is highly modular, with a focus on extensibility and developer productivity.
 
-## Demo
+---
 
-- [Dashboard](http://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics?ref=readme-mdpr)
-- [Sales](http://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/sales?ref=readme-mdpr)
-- [Profile](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/pages/profile/profile-overview?ref=readme-mdpr)
-- [Account](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/pages/account/settings?ref=readme-mdpr)
-- [RTL](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/pages/rtl?ref=readme-mdpr)
-- [Applications](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/applications/kanban?ref=readme-mdpr)
-- [Ecommerce](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/ecommerce/products/product-page?ref=readme-mdpr)
-- [Sign In](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/authentication/sign-in/basic?ref=readme-mdpr)
-- [Sign Up](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/authentication/sign-up/cover?ref=readme-mdpr)
+## Getting Started
 
-[View More](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics?ref=readme-mdpr).
+### Prerequisites
+- Node.js (LTS recommended)
+- npm (comes with Node.js)
 
-## Quick start
-
-Quick start options:
-
-- Buy React Version from [Creative Tim](https://www.creative-tim.com/product/material-dashboard-pro-react?ref=readme-mdpr).
-- Buy React + TypeScript Version from [Creative Tim](https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts?ref=readme-mdpr).
-
-## Terminal Commands
-
-1. Download and Install NodeJs LTS version from [NodeJs Official Page](https://nodejs.org/en/download/).
-2. Navigate to the root ./ directory of the product and run `yarn install` or `npm install` to install our local dependencies.
-
-## Documentation
-
-The documentation for the Material Dashboard is hosted at our [website](https://www.creative-tim.com/learning-lab/react/overview/material-dashboard/?ref=readme-mdpr).
-
-### What's included
-
-Within the download you'll find the following directories and files:
-
-```
-material-dashboard-2-pro-react-ts
-    ├── public
-    │   ├── apple-icon.png
-    │   ├── favicon.png
-    │   ├── index.html
-    │   ├── manifest.json
-    │   └── robots.txt
-    ├── src
-    │   ├── assets
-    │   │   ├── images
-    │   │   ├── theme
-    │   │   │   ├── base
-    │   │   │   ├── components
-    │   │   │   ├── functions
-    │   │   │   ├── index.ts
-    │   │   │   └── theme-rtl.ts
-    │   │   └── theme-dark
-    │   │       ├── base
-    │   │       ├── components
-    │   │       ├── functions
-    │   │       ├── index.ts
-    │   │       └── theme-rtl.ts
-    │   ├── components
-    │   │   ├── MDAlert
-    │   │   ├── MDAvatar
-    │   │   ├── MDBadge
-    │   │   ├── MDBadgeDot
-    │   │   ├── MDBox
-    │   │   ├── MDButton
-    │   │   ├── MDDatePicker
-    │   │   ├── MDDropzone
-    │   │   ├── MDEditor
-    │   │   ├── MDInput
-    │   │   ├── MDPagination
-    │   │   ├── MDProgress
-    │   │   ├── MDSnackbar
-    │   │   ├── MDSocialButton
-    │   │   └── MDTypography
-    │   ├── context
-    │   ├── examples
-    │   │   ├── Breadcrumbs
-    │   │   ├── Calendar
-    │   │   ├── Cards
-    │   │   ├── Charts
-    │   │   ├── Configurator
-    │   │   ├── FooterCard
-    │   │   ├── Items
-    │   │   ├── LayoutContainers
-    │   │   ├── Lists
-    │   │   ├── Navbars
-    │   │   ├── Sidenav
-    │   │   ├── Tables
-    │   │   └── Timeline
-    │   ├── layouts
-    │   │   ├── applications
-    │   │   │    ├── calendar
-    │   │   │    ├── data-tables
-    │   │   │    ├── kanban
-    │   │   │    └── wizard
-    │   │   ├── authentication
-    │   │   │    ├── components
-    │   │   │    ├── reset-password
-    │   │   │    ├── sign-in
-    │   │   │    └── sign-up
-    │   │   ├── dashboards
-    │   │   │    ├── analytics
-    │   │   │    └── sales
-    │   │   ├── ecommerce
-    │   │   │    ├── orders
-    │   │   │    └── products
-    │   │   └── pages
-    │   │        ├── account
-    │   │        ├── charts
-    │   │        ├── notifications
-    │   │        ├── pricing-page
-    │   │        ├── profile
-    │   │        ├── projects
-    │   │        ├── rtl
-    │   │        ├── users
-    │   │        └── widgets
-    │   ├── types
-    │   ├── App.tsx
-    │   ├── BaseLayout.tsx
-    │   ├── page.routes.tsx
-    │   └── routes.tsx
-    ├── .eslintignore
-    ├── .eslintrc.json
-    ├── .prettierrc.json
-    ├── CHANGELOG.md
-    ├── ISSUE_TEMPLATE.md
-    ├── package.json
-    ├── README.md
-    └── tsconfig.json
+### Install dependencies
+```sh
+npm install
 ```
 
-## Browser Support
+### Start the development server
+```sh
+npm start
+```
+- By default, this will **not** open a browser. See [Custom Chrome Profile Script](#custom-chrome-profile-script) for opening Chrome with a specific profile.
 
-At present, we officially aim to support the last two versions of the following browsers:
+### Build for production
+```sh
+npm run build
+```
 
-<img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/chrome.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/firefox.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/edge.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/safari.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/opera.png" width="64" height="64">
+### Clean and reinstall dependencies
+```sh
+npm run clean-and-install
+```
 
-## Resources
+---
 
-- [Live Preview](https://demos.creative-tim.com/material-dashboard-2-pro-react-ts/#/dashboards/analytics?ref=readme-mdpr)
-- [Buy Page](https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts?ref=readme-mdpr)
-- Documentation is [here](https://www.creative-tim.com/learning-lab/react/overview/material-dashboard/?ref=readme-mdpr)
-- [License Agreement](https://www.creative-tim.com/license?ref=readme-mdpr)
-- [Support](https://www.creative-tim.com/contact-us?ref=readme-mdpr)
-- Issues: [Github Issues Page](https://github.com/creativetimofficial/ct-material-dashboard-pro-react/issues)
+## Development Workflow
 
-## Reporting Issues
+- All source code is in `src/`.
+- Main entry point: [`src/index.tsx`](src/index.tsx)
+- Main app component: [`src/App.tsx`](src/App.tsx)
+- Custom QQQ code: [`src/qqq/`](src/qqq/)
+- Use the provided npm scripts for common tasks (see below).
+- TypeScript is enforced; linting is available via ESLint.
+- API requests are proxied to the backend (see [Proxy/API Setup](#proxyapi-setup)).
 
-We use GitHub Issues as the official bug tracker for the Material Dashboard 2 PRO React. Here are some advices for our users that want to report an issue:
+---
 
-1. Make sure that you are using the latest version of the Material Dashboard 2 PRO React. Check the CHANGELOG from your dashboard on our [website](https://www.creative-tim.com/product/material-dashboard-2-pro-react-ts?ref=readme-mdpr).
-2. Providing us reproducible steps for the issue will shorten the time it takes for it to be fixed.
-3. Some issues may be browser specific, so specifying in what browser you encountered the issue might help.
+## Scripts
 
-## Technical Support or Questions
+| Script                | Description                                                                                 |
+|-----------------------|---------------------------------------------------------------------------------------------|
+| `npm start`           | Start dev server (does **not** open a browser by default)                                   |
+| `npm run start-browser` | Start dev server and open Chrome with a custom profile (see below)                         |
+| `npm run build`       | Build for production                                                                         |
+| `npm run test`        | Run tests (Jest)                                                                            |
+| `npm run clean`       | Remove `node_modules`, lockfile, and build output                                            |
+| `npm run clean-and-install` | Clean and reinstall all dependencies, dedupe, and fix peer deps                        |
+| `npm run npm-install` | Install dependencies with legacy peer deps                                                   |
+| `npm run export`      | Build and export static files to backend resources directory                                |
 
-If you have questions or need help integrating the product please [contact us](https://www.creative-tim.com/contact-us?ref=readme-mdpr) instead of opening an issue.
+---
 
-## Licensing
+## Code Structure
 
-- Copyright 2022 [Creative Tim](https://www.creative-tim.com?ref=readme-mdpr)
-- Creative Tim [license](https://www.creative-tim.com/license?ref=readme-mdpr)
+- `src/` — Main source code
+  - `index.tsx` — App entry point, authentication, and bootstrapping
+  - `App.tsx` — Main app logic, routing, and layout
+  - `qqq/` — Custom QQQ modules, widgets, forms, utilities, and more
+    - `components/` — Custom and reusable UI components
+    - `pages/` — Page-level components and routes
+    - `utils/` — Utility functions and helpers
+    - `models/` — Data models and types
+    - `context/` — React context providers
+    - `authorization/` — Auth0, OAuth2, and anonymous auth modules
+  - `styles/` — Global and override styles (CSS/SCSS)
+  - `setupProxy.js` — Dev server proxy config
+  - `types/` — Custom TypeScript type definitions
 
-## Useful Links
+---
 
-- [More products](https://www.creative-tim.com/templates?ref=readme-mdpr) from Creative Tim
+## TypeScript & Linting
 
-- [Tutorials](https://www.youtube.com/channel/UCVyTG4sCw-rOvB9oHkzZD1w)
+- TypeScript config: [`tsconfig.json`](tsconfig.json)
+  - Strict mode is enabled (except `strictNullChecks`)
+  - Custom types in `src/types/`
+- Linting: ESLint config in `.eslintrc.json`
+- Run `npx eslint .` to check code style
 
-- [Freebies](https://www.creative-tim.com/bootstrap-themes/free?ref=readme-mdpr) from Creative Tim
+---
 
-- [Affiliate Program](https://www.creative-tim.com/affiliates/new?ref=readme-mdpr) (earn money)
+## Proxy/API Setup
 
-##### Social Media
+- [`src/setupProxy.js`](src/setupProxy.js) uses `http-proxy-middleware` to forward API requests to the backend (default port 8000, or set `REACT_APP_PROXY_LOCALHOST_PORT`).
+- Common API endpoints (e.g., `/data/*`, `/metaData/*`, `/api*`) are proxied for local development.
 
-Twitter: <https://twitter.com/CreativeTim>
+---
 
-Facebook: <https://www.facebook.com/CreativeTim>
+## Proxy Server Details
 
-Dribbble: <https://dribbble.com/creativetim>
+The development proxy server is essential for local development, allowing the frontend to communicate with the backend without CORS issues. Here’s how it works and how you can configure it:
 
-Google+: <https://plus.google.com/+CreativetimPage>
+### How It Works
+- The proxy is configured in [`src/setupProxy.js`](src/setupProxy.js) and is automatically used by Create React App when running `npm start`.
+- It uses the [`http-proxy-middleware`](https://github.com/chimurai/http-proxy-middleware) package.
+- Requests matching certain patterns (e.g., `/data/*`, `/metaData/*`, `/api*`, etc.) are forwarded to your backend server.
+- The default backend target is `http://localhost:8000`.
 
-Instagram: <https://instagram.com/creativetimofficial>
+### Customizing the Backend Port
+- To change the backend port, set the environment variable `REACT_APP_PROXY_LOCALHOST_PORT` before starting the dev server:
+  ```sh
+  REACT_APP_PROXY_LOCALHOST_PORT=8080 npm start
+  ```
+- The proxy will then forward requests to `http://localhost:8080`.
+
+### What Gets Proxied?
+- The following endpoints are proxied by default:
+  - `/data/*/export/*`
+  - `/download/*`
+  - `/metaData/*`
+  - `/data/*`
+  - `/possibleValues/*`
+  - `/possibleValues`
+  - `/widget/*`
+  - `/serverInfo`
+  - `/manageSession`
+  - `/processes`
+  - `/reports`
+  - `/images`
+  - `/api*`
+  - `/*api`
+  - `/qqq/*`
+- **OpenID Connect (OIDC) Proxy for Local Auth:**
+  - **All requests under `/auth-oidc`** are proxied to `https://auth.kof22.com/application/o/kof22-website-admin-local-dev`, preserving the subpath.
+  - This allows your frontend to access any OIDC endpoint (e.g., discovery, JWKS, token, userinfo, etc.) locally without CORS errors. For example, in your code, use:
+    ```js
+    fetch("/auth-oidc/.well-known/openid-configuration")
+    fetch("/auth-oidc/token", { method: "POST", ... })
+    ```
+    instead of the full remote URLs.
+- You can add or remove endpoints by editing `src/setupProxy.js`.
+
+### Production Note
+- The proxy is only active during development (`npm start`).
+- In production, your frontend and backend must be served from the same origin, or you must handle CORS on the backend.
+
+---
+
+## Custom Chrome Profile Script
+
+To open Chrome with a specific user profile (useful for dev/testing):
+
+1. Use the provided script:
+   - [`scripts/open-chrome-profile.sh`](scripts/open-chrome-profile.sh)
+   - This script launches Google Chrome with your default profile directory.
+2. Run:
+   ```sh
+   npm run start-browser
+   ```
+   This will start the dev server and open Chrome with your profile.
+
+---
+
+## Key Components & Utilities
+
+- **Widgets:**
+  - Charts: Bar, Line, Pie (`src/qqq/components/widgets/charts/`)
+  - Tables: DataTable, TableCard, TableWidget (`src/qqq/components/widgets/tables/`)
+  - Statistics: MiniStatisticsCard, MultiStatisticsCard (`src/qqq/components/widgets/statistics/`)
+  - Misc: PivotTable, USMapWidget, ScriptViewer, StepperCard, etc.
+- **Forms:**
+  - DynamicForm, EntityForm, FileInputField, BooleanFieldSwitch (`src/qqq/components/forms/`)
+- **Utilities:**
+  - DataGridUtils, GoogleAnalyticsUtils, HtmlUtils, DeveloperModeUtils (`src/qqq/utils/`)
+- **Authentication:**
+  - Auth0, OAuth2, and anonymous modules in `src/qqq/authorization/`
+- **Context:**
+  - MaterialUIControllerProvider, QContext (`src/qqq/context/`)
+
+---
+
+## Contributing
+
+- Follow the code style enforced by ESLint and TypeScript.
+- Add new widgets/components under `src/qqq/components/`.
+- Add utility functions under `src/qqq/utils/`.
+- Document new features and update this README as needed.
+- For questions, contact the Kingsrook team or open an issue.
+
+---
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0. See [LICENSE](https://www.gnu.org/licenses/agpl-3.0.html) for details.
 
 
