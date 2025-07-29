@@ -26,6 +26,7 @@ import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Q
 import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
 import {Alert} from "@mui/material";
 import Box from "@mui/material/Box";
+import Icon from "@mui/material/Icon";
 import Modal from "@mui/material/Modal";
 import {ThemeProvider} from "@mui/material/styles";
 import {Formik} from "formik";
@@ -73,7 +74,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
    for (let field of fields)
    {
       initialValues[field.name] = record.values.get(field.name);
-      if(initialValues[field.name] === undefined && field.defaultValue !== undefined)
+      if (initialValues[field.name] === undefined && field.defaultValue !== undefined)
       {
          initialValues[field.name] = field.defaultValue;
       }
@@ -85,7 +86,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
    ///////////////////////////////////////////////////////////////////////////////
    // store reference to record display values in a state var - see usage below //
    ///////////////////////////////////////////////////////////////////////////////
-   const [recordDisplayValues, setRecordDisplayValues] = useState(record?.displayValues ?? new Map<string, string>())
+   const [recordDisplayValues, setRecordDisplayValues] = useState(record?.displayValues ?? new Map<string, string>());
 
    useEffect(() =>
    {
@@ -105,7 +106,7 @@ function QFMDBridgeForm({fields, record, handleChange, handleSubmit}: QFMDBridge
                   // originally, we put this in record.displayValues, but, sometimes that would then be empty at the usage point below... //
                   // this works, so, we'll go with it                                                                                     //
                   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  recordDisplayValues.set(field.name, possibleValues[0].label)
+                  recordDisplayValues.set(field.name, possibleValues[0].label);
                   setRecordDisplayValues(recordDisplayValues);
                }
             }
@@ -327,15 +328,44 @@ function QFMDBridgeAlert({color, children, mayManuallyClose}: QFMDBridgeAlertPro
 
 
 /***************************************************************************
+ ** Component to render a button for the QFMD Bridge
+ ***************************************************************************/
+interface QFMDBridgeButtonProps
+{
+   label: string,
+   onClick: () => void,
+   extra?: { [key: string]: any }
+}
+
+QFMDBridgeButton.defaultProps = {};
+
+function QFMDBridgeButton({label, onClick, extra}: QFMDBridgeButtonProps): JSX.Element
+{
+   return (
+      <MaterialUIControllerProvider>
+         <ThemeProvider theme={theme}>
+            <MDButton {...extra} onClick={onClick} fullWidth>{label}</MDButton>
+         </ThemeProvider>
+      </MaterialUIControllerProvider>
+   );
+}
+
+
+/***************************************************************************
  ** define the default qfmd bridge object
  ***************************************************************************/
 export const qfmdBridge =
    {
       qController: Client.getInstance(),
 
+      makeIcon: (name: string): JSX.Element =>
+      {
+         return (<Icon>{name}</Icon>);
+      },
+
       makeButton: (label: string, onClick: () => void, extra?: { [key: string]: any }): JSX.Element =>
       {
-         return (<MDButton {...extra} onClick={onClick} fullWidth>{label}</MDButton>);
+         return (<QFMDBridgeButton extra={extra} onClick={onClick} label={label} />);
       },
 
       makeAlert: (text: string, color: string, mayManuallyClose?: boolean): JSX.Element =>
