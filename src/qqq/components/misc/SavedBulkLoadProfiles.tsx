@@ -59,7 +59,8 @@ interface Props
    bulkLoadProfileOnChangeCallback?: (record: QRecord | null) => void,
    allowSelectingProfile?: boolean,
    fileDescription?: FileDescription,
-   bulkLoadProfileResetToSuggestedMappingCallback?: () => void
+   bulkLoadProfileResetToSuggestedMappingCallback?: () => void,
+   isBulkEdit?: boolean;
 }
 
 SavedBulkLoadProfiles.defaultProps = {
@@ -72,7 +73,7 @@ const qController = Client.getInstance();
  ** menu-button, text elements, and modal(s) that let you work with saved
  ** bulk-load profiles.
  ***************************************************************************/
-function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, currentSavedBulkLoadProfileRecord, bulkLoadProfileOnChangeCallback, currentMapping, allowSelectingProfile, fileDescription, bulkLoadProfileResetToSuggestedMappingCallback}: Props): JSX.Element
+function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, currentSavedBulkLoadProfileRecord, bulkLoadProfileOnChangeCallback, currentMapping, allowSelectingProfile, fileDescription, bulkLoadProfileResetToSuggestedMappingCallback, isBulkEdit}: Props): JSX.Element
 {
    const [yourSavedBulkLoadProfiles, setYourSavedBulkLoadProfiles] = useState([] as QRecord[]);
    const [bulkLoadProfilesSharedWithYou, setBulkLoadProfilesSharedWithYou] = useState([] as QRecord[]);
@@ -142,6 +143,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
 
       const formData = new FormData();
       formData.append("tableName", tableMetaData.name);
+      formData.append("isBulkEdit", isBulkEdit.toString());
 
       const savedBulkLoadProfiles = await makeSavedBulkLoadProfileRequest("querySavedBulkLoadProfile", formData);
       const yourSavedBulkLoadProfiles: QRecord[] = [];
@@ -212,7 +214,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
             break;
          case RESET_TO_SUGGESTION:
             setSavePopupOpen(false);
-            if(bulkLoadProfileResetToSuggestedMappingCallback)
+            if (bulkLoadProfileResetToSuggestedMappingCallback)
             {
                bulkLoadProfileResetToSuggestedMappingCallback();
             }
@@ -265,6 +267,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
             const bulkLoadProfile = currentMapping.toProfile();
             const mappingJson = JSON.stringify(bulkLoadProfile.profile);
             formData.append("mappingJson", mappingJson);
+            formData.append("isBulkEdit", isBulkEdit.toString());
 
             if (isSaveAsAction || isRenameAction || currentSavedBulkLoadProfileRecord == null)
             {
@@ -389,6 +392,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
       return (savedBulkLoadProfiles);
    }
 
+   const bulkAction = isBulkEdit ? "Edit" : "Load";
    const hasStorePermission = metaData?.processes.has("storeSavedBulkLoadProfile");
    const hasDeletePermission = metaData?.processes.has("deleteSavedBulkLoadProfile");
    const hasQueryPermission = metaData?.processes.has("querySavedBulkLoadProfile");
@@ -428,15 +432,15 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
          PaperProps={{style: {maxHeight: "calc(100vh - 200px)", minWidth: menuWidth}}}
       >
          {
-            <MenuItem sx={{width: menuWidth}} disabled style={{opacity: "initial"}}><b>Bulk Load Profile Actions</b></MenuItem>
+            <MenuItem sx={{width: menuWidth}} disabled style={{opacity: "initial"}}><b>Bulk {bulkAction} Profile Actions</b></MenuItem>
          }
          {
             !allowSelectingProfile &&
             <MenuItem sx={{width: menuWidth}} disabled style={{opacity: "initial", whiteSpace: "wrap", display: "block"}}>
                {
                   currentSavedBulkLoadProfileRecord ?
-                     <span>You are using the bulk load profile:<br /><b style={{paddingLeft: "1rem"}}>{currentSavedBulkLoadProfileRecord.values.get("label")}</b><br /><br />You can manage this profile on this screen.</span>
-                     : <span>You are not using a saved bulk load profile.<br /><br />You can save your profile on this screen.</span>
+                     <span>You are using the bulk {bulkAction.toLowerCase()} profile:<br /><b style={{paddingLeft: "1rem"}}>{currentSavedBulkLoadProfileRecord.values.get("label")}</b><br /><br />You can manage this profile on this screen.</span>
+                     : <span>You are not using a saved bulk {bulkAction.toLowerCase()} profile.<br /><br />You can save your profile on this screen.</span>
                }
             </MenuItem>
          }
@@ -456,7 +460,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
          }
          {
             hasStorePermission && currentSavedBulkLoadProfileRecord != null &&
-            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Change the name for this saved bulk load profile."}>
+            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Change the name for this saved bulk {bulkAction.toLowerCase()} profile."}>
                <span>
                   <MenuItem disabled={currentSavedBulkLoadProfileRecord === null || disabledBecauseNotOwner} onClick={() => handleDropdownOptionClick(RENAME_OPTION)}>
                      <ListItemIcon><Icon>edit</Icon></ListItemIcon>
@@ -467,7 +471,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
          }
          {
             hasStorePermission && currentSavedBulkLoadProfileRecord != null &&
-            <Tooltip {...menuTooltipAttribs} title="Save a new copy this bulk load profile, with a different name, separate from the original.">
+            <Tooltip {...menuTooltipAttribs} title="Save a new copy this bulk {bulkAction.toLowerCase()} profile, with a different name, separate from the original.">
                <span>
                   <MenuItem disabled={currentSavedBulkLoadProfileRecord === null} onClick={() => handleDropdownOptionClick(DUPLICATE_OPTION)}>
                      <ListItemIcon><Icon>content_copy</Icon></ListItemIcon>
@@ -478,7 +482,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
          }
          {
             hasDeletePermission && currentSavedBulkLoadProfileRecord != null &&
-            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Delete this saved bulk load profile."}>
+            <Tooltip {...menuTooltipAttribs} title={notOwnerTooltipText ?? "Delete this saved bulk {bulkAction.toLowerCase()} profile."}>
                <span>
                   <MenuItem disabled={currentSavedBulkLoadProfileRecord === null || disabledBecauseNotOwner} onClick={() => handleDropdownOptionClick(DELETE_OPTION)}>
                      <ListItemIcon><Icon>delete</Icon></ListItemIcon>
@@ -489,11 +493,11 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
          }
          {
             allowSelectingProfile &&
-            <Tooltip {...menuTooltipAttribs} title="Create a new blank bulk load profile for this table, removing all mappings.">
+            <Tooltip {...menuTooltipAttribs} title="Create a new blank bulk {bulkAction.toLowerCase()} profile for this table, removing all mappings.">
                <span>
                   <MenuItem onClick={() => handleDropdownOptionClick(CLEAR_OPTION)}>
                      <ListItemIcon><Icon>monitor</Icon></ListItemIcon>
-                     New Bulk Load Profile
+                     New Bulk {bulkAction} Profile
                   </MenuItem>
                </span>
             </Tooltip>
@@ -504,7 +508,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                {
                   <Divider />
                }
-               <MenuItem disabled style={{"opacity": "initial"}}><b>Your Saved Bulk Load Profiles</b></MenuItem>
+               <MenuItem disabled style={{"opacity": "initial"}}><b>Your Saved Bulk {bulkAction} Profiles</b></MenuItem>
                {
                   yourSavedBulkLoadProfiles && yourSavedBulkLoadProfiles.length > 0 ? (
                      yourSavedBulkLoadProfiles.map((record: QRecord, index: number) =>
@@ -514,11 +518,11 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                      )
                   ) : (
                      <MenuItem disabled sx={{opacity: "1 !important"}}>
-                        <i>You do not have any saved bulk load profiles for this table.</i>
+                        <i>You do not have any saved bulk {bulkAction.toLowerCase()} profiles for this table.</i>
                      </MenuItem>
                   )
                }
-               <MenuItem disabled style={{"opacity": "initial"}}><b>Bulk Load Profiles Shared with you</b></MenuItem>
+               <MenuItem disabled style={{"opacity": "initial"}}><b>Bulk {bulkAction} Profiles Shared with you</b></MenuItem>
                {
                   bulkLoadProfilesSharedWithYou && bulkLoadProfilesSharedWithYou.length > 0 ? (
                      bulkLoadProfilesSharedWithYou.map((record: QRecord, index: number) =>
@@ -528,7 +532,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                      )
                   ) : (
                      <MenuItem disabled sx={{opacity: "1 !important"}}>
-                        <i>You do not have any bulk load profiles shared with you for this table.</i>
+                        <i>You do not have any bulk {bulkAction.toLowerCase()} profiles shared with you for this table.</i>
                      </MenuItem>
                   )
                }
@@ -537,7 +541,7 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
       </Menu>
    );
 
-   let buttonText = "Saved Bulk Load Profiles";
+   let buttonText = `Saved Bulk ${bulkAction} Profiles`;
    let buttonBackground = "none";
    let buttonBorder = colors.grayLines.main;
    let buttonColor = colors.gray.main;
@@ -639,13 +643,13 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                               <Tooltip {...tooltipMaxWidth("24rem")} sx={{cursor: "pointer"}} title={<>
                                  <b>Unsaved Mapping</b>
                                  <ul style={{padding: "0.5rem 1rem"}}>
-                                    <li>You are not using a saved bulk load profile.</li>
+                                    <li>You are not using a saved bulk {bulkAction.toLowerCase()} profile.</li>
                                     {
                                        /*bulkLoadProfileDiffs.map((s: string, i: number) => <li key={i}>{s}</li>)*/
                                     }
                                  </ul>
                               </>}>
-                                 <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save Bulk Load Profile As&hellip;</Button>
+                                 <Button disableRipple={true} sx={linkButtonStyle} onClick={() => handleDropdownOptionClick(SAVE_OPTION)}>Save Bulk {bulkAction} Profile As&hellip;</Button>
                               </Tooltip>
 
                               {/* vertical rule */}
@@ -716,20 +720,20 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                   {
                      currentSavedBulkLoadProfileRecord ? (
                         isDeleteAction ? (
-                           <DialogTitle id="alert-dialog-title">Delete Bulk Load Profile</DialogTitle>
+                           <DialogTitle id="alert-dialog-title">Delete Bulk {bulkAction} Profile</DialogTitle>
                         ) : (
                            isSaveAsAction ? (
-                              <DialogTitle id="alert-dialog-title">Save Bulk Load Profile As</DialogTitle>
+                              <DialogTitle id="alert-dialog-title">Save Bulk {bulkAction} Profile As</DialogTitle>
                            ) : (
                               isRenameAction ? (
-                                 <DialogTitle id="alert-dialog-title">Rename Bulk Load Profile</DialogTitle>
+                                 <DialogTitle id="alert-dialog-title">Rename Bulk {bulkAction} Profile</DialogTitle>
                               ) : (
-                                 <DialogTitle id="alert-dialog-title">Update Existing Bulk Load Profile</DialogTitle>
+                                 <DialogTitle id="alert-dialog-title">Update Existing Bulk {bulkAction} Profile</DialogTitle>
                               )
                            )
                         )
                      ) : (
-                        <DialogTitle id="alert-dialog-title">Save New Bulk Load Profile</DialogTitle>
+                        <DialogTitle id="alert-dialog-title">Save New Bulk {bulkAction} Profile</DialogTitle>
                      )
                   }
                   <DialogContent sx={{width: "500px"}}>
@@ -743,15 +747,15 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                            <Box>
                               {
                                  isSaveAsAction ? (
-                                    <Box mb={3}>Enter a name for this new saved bulk load profile.</Box>
+                                    <Box mb={3}>Enter a name for this new saved bulk {bulkAction.toLowerCase()} profile.</Box>
                                  ) : (
-                                    <Box mb={3}>Enter a new name for this saved bulk load profile.</Box>
+                                    <Box mb={3}>Enter a new name for this saved bulk {bulkAction.toLowerCase()} profile.</Box>
                                  )
                               }
                               <TextField
                                  autoFocus
                                  name="custom-delimiter-value"
-                                 placeholder="Bulk Load Profile Name"
+                                 placeholder={`Bulk ${bulkAction} Profile Name`}
                                  inputProps={{width: "100%", maxLength: 100}}
                                  value={savedBulkLoadProfileNameInputValue}
                                  sx={{width: "100%"}}
@@ -764,9 +768,9 @@ function SavedBulkLoadProfiles({metaData, tableMetaData, tableStructure, current
                            </Box>
                         ) : (
                            isDeleteAction ? (
-                              <Box>Are you sure you want to delete the bulk load profile {`'${currentSavedBulkLoadProfileRecord?.values.get("label")}'`}?</Box>
+                              <Box>Are you sure you want to delete the bulk {bulkAction.toLowerCase()} profile {`'${currentSavedBulkLoadProfileRecord?.values.get("label")}'`}?</Box>
                            ) : (
-                              <Box>Are you sure you want to update the bulk load profile {`'${currentSavedBulkLoadProfileRecord?.values.get("label")}'`}?</Box>
+                              <Box>Are you sure you want to update the bulk {bulkAction.toLowerCase()} profile {`'${currentSavedBulkLoadProfileRecord?.values.get("label")}'`}?</Box>
                            )
                         )
                      }

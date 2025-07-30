@@ -40,13 +40,14 @@ interface QueryScreenActionMenuProps
    tableProcesses: QProcessMetaData[];
    bulkLoadClicked: () => void;
    bulkEditClicked: () => void;
+   bulkEditWithFileClicked: () => void;
    bulkDeleteClicked: () => void;
    processClicked: (process: QProcessMetaData) => void;
 }
 
 QueryScreenActionMenu.defaultProps = {};
 
-export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
+export default function QueryScreenActionMenu({metaData, tableMetaData, tableProcesses, bulkLoadClicked, bulkEditClicked, bulkEditWithFileClicked, bulkDeleteClicked, processClicked}: QueryScreenActionMenuProps): JSX.Element
 {
    const [anchorElement, setAnchorElement] = useState(null);
 
@@ -80,6 +81,7 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
    if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission)
    {
       menuItems.push(<MenuItem key="bulkEdit" onClick={() => runSomething(bulkEditClicked)}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
+      menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
    }
    if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission)
    {

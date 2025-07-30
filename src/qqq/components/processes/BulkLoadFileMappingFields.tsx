@@ -33,6 +33,7 @@ interface BulkLoadMappingFieldsProps
    bulkLoadMapping: BulkLoadMapping,
    fileDescription: FileDescription,
    forceParentUpdate?: () => void,
+   isBulkEdit?: boolean
 }
 
 
@@ -43,7 +44,7 @@ const ALREADY_ADDED_FIELD_TOOLTIP = "This field has already been added to your m
 /***************************************************************************
  ** The section of the bulk load mapping screen with all the fields.
  ***************************************************************************/
-export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescription, forceParentUpdate}: BulkLoadMappingFieldsProps): JSX.Element
+export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescription, forceParentUpdate, isBulkEdit}: BulkLoadMappingFieldsProps): JSX.Element
 {
    const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -254,11 +255,16 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
 
    return (
       <>
-         <h5>Required Fields</h5>
+         {isBulkEdit ? <h5>Key Fields</h5> : <h5>Required Fields</h5>}
          <Box pl={"1rem"}>
             {
                bulkLoadMapping.requiredFields.length == 0 &&
-               <i style={{fontSize: "0.875rem"}}>There are no required fields in this table.</i>
+               (
+                  isBulkEdit ?
+                     <i style={{fontSize: "0.875rem"}}>Select table key fields to continue.</i>
+                     :
+                     <i style={{fontSize: "0.875rem"}}>There are no required fields in this table.</i>
+               )
             }
             {bulkLoadMapping.requiredFields.map((bulkLoadField) => (
                <BulkLoadFileMappingField
@@ -267,12 +273,13 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
                   bulkLoadField={bulkLoadField}
                   isRequired={true}
                   forceParentUpdate={forceParentUpdate}
+                  isBulkEdit={isBulkEdit}
                />
             ))}
          </Box>
 
          <Box mt="1rem">
-            <h5>Additional Fields</h5>
+            {isBulkEdit ? <h5>Fields To Update</h5> : <h5>Additional Fields</h5>}
             <Box pl={"1rem"}>
                {bulkLoadMapping.additionalFields.map((bulkLoadField) => (
                   <BulkLoadFileMappingField
@@ -282,6 +289,7 @@ export default function BulkLoadFileMappingFields({bulkLoadMapping, fileDescript
                      isRequired={false}
                      removeFieldCallback={() => removeField(bulkLoadField)}
                      forceParentUpdate={forceParentUpdate}
+                     isBulkEdit={isBulkEdit}
                   />
                ))}
 
