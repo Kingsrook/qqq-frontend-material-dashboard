@@ -1038,7 +1038,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                                     : ("")
                               }
 
-                              <Grid container spacing={3}>
+                              <Grid container spacing={3} flexWrap="nowrap">
                                  <Grid item xs={12} lg={3} className="recordSidebar">
                                     <QRecordSidebar tableSections={tableSections} />
                                  </Grid>
