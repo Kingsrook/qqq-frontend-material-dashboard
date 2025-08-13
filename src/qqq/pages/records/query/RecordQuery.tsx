@@ -2038,7 +2038,11 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       postBody.append("limit", limit);
       postBody.append("omitHeaderRow", true);
       postBody.append("fields", column.field);
-      postBody.append("filter", JSON.stringify(queryFilter));
+
+      const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
+      filterForBackend.skip = 0;
+      filterForBackend.limit = null;
+      postBody.append("filter", JSON.stringify(filterForBackend));
 
       setInfoAlert(`Copying ${qFieldMetaData.label} values...`);
 
