@@ -71,8 +71,21 @@ export default class DataGridUtils
    /*******************************************************************************
     **
     *******************************************************************************/
-   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, tableVariant?: QTableVariant, allowEmptyId = false): GridRowsProp[] =>
+   public static makeRows = (results: QRecord[], tableMetaData: QTableMetaData, tableVariant?: QTableVariant, allowEmptyId = false, maxValueLength: number = 2048): GridRowsProp[] =>
    {
+      function trimValue(value: any, maxLength: number)
+      {
+         if(typeof value == "string" && maxLength)
+         {
+            if(value.length > maxLength)
+            {
+               return (value.substring(0, maxLength) + "...");
+            }
+         }
+
+         return value;
+      }
+
       const fields = [...tableMetaData.fields.values()];
       const rows = [] as any[];
       let rowIndex = 0;
@@ -83,7 +96,7 @@ export default class DataGridUtils
 
          fields.forEach((field) =>
          {
-            row[field.name] = ValueUtils.getDisplayValue(field, record, "query", undefined, tableVariant);
+            row[field.name] = trimValue(ValueUtils.getDisplayValue(field, record, "query", undefined, tableVariant), maxValueLength);
          });
 
          if (tableMetaData.exposedJoins)
@@ -98,7 +111,7 @@ export default class DataGridUtils
                   fields.forEach((field) =>
                   {
                      let fieldName = join.joinTable.name + "." + field.name;
-                     row[fieldName] = ValueUtils.getDisplayValue(field, record, "query", fieldName, tableVariant);
+                     row[fieldName] = trimValue(ValueUtils.getDisplayValue(field, record, "query", fieldName, tableVariant), maxValueLength);
                   });
                }
             }

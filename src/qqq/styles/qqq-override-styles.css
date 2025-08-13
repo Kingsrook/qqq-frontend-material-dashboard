@@ -833,14 +833,21 @@ input[type="search"]::-webkit-search-results-decoration
 {
    .recordSidebar
    {
-      max-width: 400px !important;
+      width: 250px !important;
+      max-width: 250px !important;
    }
 
    .recordWithSidebar
    {
-      max-width: 100% !important;
+      max-width: calc(100vw - 520px) !important;
       flex-grow: 1 !important;
    }
+}
+
+.recordWithSidebar .MuiGrid-grid-lg-12
+{
+   /* this helps make sure the overflow-wrap: break-word always applies */
+   max-width: 100%;
 }
 
 .stickyBottomButtonBar
@@ -852,7 +859,7 @@ input[type="search"]::-webkit-search-results-decoration
    position: sticky;
    bottom: 0;
    background: linear-gradient(to bottom, transparent 0, #f0f2f5 4px);
-   z-index: 10; /* have needed a little here, e.g. to get above MuiDataGrid-overlay and ACE */
+   z-index: 40; /* have needed a little here, e.g. to get above MuiDataGrid-overlay and ACE */
 }
 
 .modalBottomButtonBar

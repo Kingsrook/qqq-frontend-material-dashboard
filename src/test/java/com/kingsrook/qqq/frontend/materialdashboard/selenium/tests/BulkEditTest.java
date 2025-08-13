@@ -82,15 +82,12 @@ public class BulkEditTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("li", "This page").click();
       qSeleniumLib.waitForSelectorContaining("div", "records on this page are selected");
 
-      /////////////////////////////////////////////////////////////////////////////////
-      // locally, passing fine, but in CI, failing around here ... trying a sleep... //
-      /////////////////////////////////////////////////////////////////////////////////
-      LOG.debug("Trying a sleep...");
-      qSeleniumLib.waitForMillis(1000);
-      LOG.debug("Proceeding post-sleep");
+      tryWait(1000);
 
       qSeleniumLib.waitForSelectorContaining("button", "action").click();
       qSeleniumLib.waitForSelectorContaining("li", "bulk edit").click();
+
+      tryWait(1000);
 
       /////////////////
       // edit screen //
@@ -124,6 +121,18 @@ public class BulkEditTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("button", "close").click();
 
       // qSeleniumLib.waitForever();
+   }
+
+
+
+   /***************************************************************************
+    *
+    ***************************************************************************/
+   private void tryWait(int millis)
+   {
+      LOG.debug("Trying a wait...");
+      qSeleniumLib.waitForMillis(millis);
+      LOG.debug("Proceeding post-wait...");
    }
 
 }

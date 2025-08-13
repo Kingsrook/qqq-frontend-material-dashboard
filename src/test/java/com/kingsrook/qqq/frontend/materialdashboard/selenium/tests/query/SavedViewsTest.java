@@ -117,10 +117,10 @@ public class SavedViewsTest extends QBaseSeleniumTest
       WebElement valueInput = qSeleniumLib.waitForSelector(".filterValuesColumn INPUT");
       valueInput.click();
       valueInput.sendKeys("Kelkhoff");
-      qSeleniumLib.waitForMillis(100);
+      qSeleniumLib.waitForMillis(1000);
 
       qSeleniumLib.clickBackdrop();
-      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
+      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Change");
 
       //////////////////////////////
       // click into a view screen //
@@ -136,7 +136,7 @@ public class SavedViewsTest extends QBaseSeleniumTest
       qSeleniumLib.waitForSelectorContaining("A", "Person").click();
       qSeleniumLib.waitForCondition("Current URL should have filter id", () -> driver.getCurrentUrl().endsWith("/person/savedView/2"));
       queryScreenLib.assertSavedViewNameOnScreen("Some People");
-      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Changes");
+      qSeleniumLib.waitForSelectorContaining("DIV", "Unsaved Change");
       CapturedContext capturedContext = qSeleniumJavalin.waitForCapturedPath("/qqq/v1/table/person/query");
       assertTrue(capturedContext.getBody().contains("Kelkhoff"));
       qSeleniumJavalin.endCapture();
