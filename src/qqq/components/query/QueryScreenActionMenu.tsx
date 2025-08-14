@@ -81,7 +81,7 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
    if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission)
    {
       menuItems.push(<MenuItem key="bulkEdit" onClick={() => runSomething(bulkEditClicked)}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
-      menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
+      // temp disable! menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
    }
    if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission)
    {
