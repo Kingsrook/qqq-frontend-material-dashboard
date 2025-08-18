@@ -829,6 +829,14 @@ input[type="search"]::-webkit-search-results-decoration
    color: #0062FF !important;
 }
 
+@media (min-width: 768px)
+{
+   .recordSidebar
+   {
+      max-width: 250px !important;
+   }
+}
+
 @media (min-width: 1400px)
 {
    .recordSidebar

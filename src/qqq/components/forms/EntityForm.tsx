@@ -1219,7 +1219,7 @@ function EntityForm(props: Props): JSX.Element
                   </Grid>
                </Grid>
             }
-            <Grid container spacing={3}>
+            <Grid container spacing={3} flexWrap={{md: "nowrap"}}>
                {
                   !props.isModal &&
                   <Grid item xs={12} lg={3} className="recordSidebar">

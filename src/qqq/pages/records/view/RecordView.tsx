@@ -1038,7 +1038,7 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                                     : ("")
                               }
 
-                              <Grid container spacing={3} flexWrap="nowrap">
+                              <Grid container spacing={3} flexWrap={{md: "nowrap"}}>
                                  <Grid item xs={12} lg={3} className="recordSidebar">
                                     <QRecordSidebar tableSections={tableSections} />
                                  </Grid>
@@ -1055,11 +1055,11 @@ function RecordView({table, record: overrideRecord, launchProcess}: Props): JSX.
                                                       </Icon>
                                                    </Avatar>
                                                 </Box>
-                                                <Box display="flex" justifyContent="space-between" width="100%" alignItems="center">
-                                                   <Typography variant="h5">
+                                                <Box display="flex" justifyContent="space-between" width="100%" alignItems="flex-start" flexWrap={{xs: "wrap", md: "nowrap"}}>
+                                                   <Typography variant="h5" mb="0.5rem">
                                                       {tableMetaData && record ? `Viewing ${tableMetaData?.label}: ${record?.recordLabel || ""}` : ""}
                                                    </Typography>
-                                                   <Box display="flex">
+                                                   <Box display="flex" ml="auto">
                                                       <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} />
                                                       {renderShareButton()}
                                                       <QActionsMenuButton isOpen={actionsMenu} onClickHandler={openActionsMenu} />

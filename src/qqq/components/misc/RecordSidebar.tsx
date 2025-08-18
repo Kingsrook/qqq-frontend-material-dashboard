@@ -77,12 +77,12 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
 
    return (
       <Card sx={{borderRadius: "0.75rem", position: "sticky", top: stickyTop, overflow: "hidden", maxHeight: "calc(100vh - 2rem)"}}>
-         <Box component="ul" display="flex" flexDirection="column" p={2} m={0} sx={{listStyle: "none", overflow: "auto", height: "100%"}}>
+         <Box component="ul" display="flex" flexDirection={{xs: "row", md: "column"}} flexWrap={{xs: "wrap", md: "nowrap"}} p={2} m={0} sx={{listStyle: "none", overflow: "auto", height: "100%"}}>
             {
                sidebarEntries ? sidebarEntries.map((entry: SidebarEntry, key: number) => (
 
-                  <Box key={`section-link-${entry.name}`} onClick={() => document.getElementById(entry.name).scrollIntoView()} sx={{cursor: "pointer"}}>
-                     <Box key={`section-${entry.name}`} component="li" pt={key === 0 ? 0 : 1}>
+                  <Box key={`section-link-${entry.name}`} onClick={() => document.getElementById(entry.name).scrollIntoView()} sx={{cursor: "pointer"}} width={{xs: "50%", md: "100%"}} >
+                     <Box key={`section-${entry.name}`} component="li" pt={0.5} pb={0.5}>
                         <MDTypography
                            variant="button"
                            fontWeight="regular"
@@ -92,7 +92,7 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
                               display: "flex",
                               alignItems: "center",
                               borderRadius: borderRadius.md,
-                              padding: `${pxToRem(10)} ${pxToRem(16)}`,
+                              padding: `${pxToRem(8)} ${pxToRem(8)}`,
                               transition: transitions.create("background-color", {
                                  easing: transitions.easing.easeInOut,
                                  duration: transitions.duration.shorter,
@@ -103,10 +103,10 @@ function QRecordSidebar({tableSections, widgetMetaDataList, light, stickyTop}: P
                               },
                            })}
                         >
-                           <Box mr={1.5} lineHeight={1} color="black">
+                           <Box mr={1.5} lineHeight={1.2} color="black">
                               <Icon fontSize="small">{entry.iconName}</Icon>
                            </Box>
-                           <Box mr={1.5} lineHeight={1} color="black">
+                           <Box lineHeight={1.2} color="black">
                               {entry.label}
                            </Box>
 
