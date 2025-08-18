@@ -1153,7 +1153,10 @@ function EntityForm(props: Props): JSX.Element
                   break;
                case FieldRuleAction.RELOAD_WIDGET:
                   const additionalQueryParamsForWidget: { [key: string]: any } = {};
-                  additionalQueryParamsForWidget[fieldRule.sourceField] = newValue;
+                  if(newValue != null)
+                  {
+                     additionalQueryParamsForWidget[fieldRule.sourceField] = newValue;
+                  }
                   reloadWidget(fieldRule.targetWidget, additionalQueryParamsForWidget);
             }
          }
