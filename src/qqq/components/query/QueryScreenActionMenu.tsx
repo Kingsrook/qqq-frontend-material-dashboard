@@ -71,19 +71,24 @@ export default function QueryScreenActionMenu({metaData, tableMetaData, tablePro
 
    const menuItems: JSX.Element[] = [];
 
-   //////////////////////////////////////////////////////
-   // start with bulk actions, if user has permissions //
-   //////////////////////////////////////////////////////
-   if (tableMetaData.capabilities.has(Capability.TABLE_INSERT) && tableMetaData.insertPermission)
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // start with bulk actions, if user has permissions.                                                                                      //
+   // Over time this should probably evolve to just check for the process (which means the process is defined and you have permission to it) //
+   // - as the capabilities and table-level permissions don't necessarily imply the process exists or you have permission                    //
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   if (tableMetaData.capabilities.has(Capability.TABLE_INSERT) && tableMetaData.insertPermission && metaData.processes.has(`${tableMetaData.name}.bulkInsert`))
    {
       menuItems.push(<MenuItem key="bulkLoad" onClick={() => runSomething(bulkLoadClicked)}><ListItemIcon><Icon>library_add</Icon></ListItemIcon>Bulk Load</MenuItem>);
    }
-   if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission)
+   if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission && metaData.processes.has(`${tableMetaData.name}.bulkEdit`))
    {
       menuItems.push(<MenuItem key="bulkEdit" onClick={() => runSomething(bulkEditClicked)}><ListItemIcon><Icon>edit</Icon></ListItemIcon>Bulk Edit</MenuItem>);
-      // temp disable! menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
    }
-   if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission)
+   if (tableMetaData.capabilities.has(Capability.TABLE_UPDATE) && tableMetaData.editPermission && metaData.processes.has(`${tableMetaData.name}.bulkEditWithFile`))
+   {
+      menuItems.push(<MenuItem key="bulkEditWithFile" onClick={() => runSomething(bulkEditWithFileClicked)}><ListItemIcon><Icon>edit_note</Icon></ListItemIcon>Bulk Edit With File</MenuItem>);
+   }
+   if (tableMetaData.capabilities.has(Capability.TABLE_DELETE) && tableMetaData.deletePermission && metaData.processes.has(`${tableMetaData.name}.bulkDelete`))
    {
       menuItems.push(<MenuItem key="bulkDelete" onClick={() => runSomething(bulkDeleteClicked)}><ListItemIcon><Icon>delete</Icon></ListItemIcon>Bulk Delete</MenuItem>);
    }
