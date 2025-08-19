@@ -1891,12 +1891,22 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
          //////////////////////////////////////////////////////////////
          // delete, from the view, any fields no longer in the table //
          //////////////////////////////////////////////////////////////
+         const visibilityToggleStates = view.queryColumns.getVisibilityToggleStates();
          for (let fieldName in fieldNamesInView)
          {
             console.log(`Deleting an old column from this view ${fieldName}`);
+
+            if(visibilityToggleStates[fieldName])
+            {
+               /////////////////////////////////////////////////////////////////////////////////////////////
+               // all available columns in the table (and its joins) are in the view queryColumns object, //
+               // but we only want/need to tell a user if a visible one got removed.                      //
+               /////////////////////////////////////////////////////////////////////////////////////////////
+               removedFieldNames.add(fieldName);
+            }
+
             view.queryColumns.deleteColumnForOldField(tableMetaData, fieldName);
             changedView = true;
-            removedFieldNames.add(fieldName);
          }
       }
 
