@@ -98,7 +98,7 @@ public class FormAdjusterRegistry
       QCodeReference onChangeCode = materialDashboardFieldMetaData.getOnChangeFormAdjuster();
       if(onChangeCode != null)
       {
-         if(onChangeAdjusters.containsKey(identifier))
+         if(onChangeAdjusters.containsKey(identifier) && !onChangeCode.equals(onChangeAdjusters.get(identifier)))
          {
             LOG.warn("Attempt to register more than one onChangeFormAdjuster with identifier: " + identifier);
          }
@@ -108,7 +108,7 @@ public class FormAdjusterRegistry
       QCodeReference onLoadCode = materialDashboardFieldMetaData.getOnLoadFormAdjuster();
       if(onLoadCode != null)
       {
-         if(onLoadAdjusters.containsKey(identifier))
+         if(onLoadAdjusters.containsKey(identifier) && !onLoadCode.equals(onLoadAdjusters.get(identifier)))
          {
             LOG.warn("Attempt to register more than one onLoadFormAdjuster with identifier: " + identifier);
          }
