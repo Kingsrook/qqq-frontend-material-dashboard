@@ -340,12 +340,10 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
       const fieldName = newValue ? newValue.fieldName : null;
       if (fieldName)
       {
-         if (defaultQuickFilterFieldNameMap[fieldName])
-         {
-            return;
-         }
-
-         if (quickFilterFieldNames.indexOf(fieldName) == -1)
+         ////////////////////////////////////////////////////////////////////////////////////////////////////
+         // don't add the field if it's already on active quick-filter or one of the default quick-filters //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////
+         if (quickFilterFieldNames.indexOf(fieldName) == -1 && !defaultQuickFilterFieldNameMap[fieldName])
          {
             /////////////////////////////////
             // add the field if we need to //
@@ -361,12 +359,15 @@ const BasicAndAdvancedQueryControls = forwardRef((props: BasicAndAdvancedQueryCo
                setTimeout(() => document.getElementById(`quickFilter.${fieldName}`)?.click(), 5);
             }
          }
-         else if (reason == "columnMenu")
+         else
          {
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // if field was already on-screen, but user clicked an option from the columnMenu, then open the quick-filter field //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            setTimeout(() => document.getElementById(`quickFilter.${fieldName}`)?.click(), 5);
+            if (reason == "columnMenu")
+            {
+               setTimeout(() => document.getElementById(`quickFilter.${fieldName}`)?.click(), 5);
+            }
          }
 
          closeAddQuickFilterMenu();

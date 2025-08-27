@@ -37,6 +37,8 @@ public class MaterialDashboardInstanceMetaData implements QSupplementalInstanceM
 
    private List<String> processNamesToAddToAllQueryAndViewScreens = new ArrayList<>();
 
+   private Integer queryScreenCopyFullQueryColumnValuesLimit = 100_000;
+
 
 
    /*******************************************************************************
@@ -109,5 +111,48 @@ public class MaterialDashboardInstanceMetaData implements QSupplementalInstanceM
       this.processNamesToAddToAllQueryAndViewScreens = processNamesToAddToAllQueryAndViewScreens;
       return (this);
    }
+
+
+   /*******************************************************************************
+    * Getter for queryScreenCopyFullQueryColumnValuesLimit
+    * @see #withQueryScreenCopyFullQueryColumnValuesLimit(Integer)
+    *******************************************************************************/
+   public Integer getQueryScreenCopyFullQueryColumnValuesLimit()
+   {
+      return (this.queryScreenCopyFullQueryColumnValuesLimit);
+   }
+
+
+
+   /*******************************************************************************
+    * Setter for queryScreenCopyFullQueryColumnValuesLimit
+    * @see #withQueryScreenCopyFullQueryColumnValuesLimit(Integer)
+    *******************************************************************************/
+   public void setQueryScreenCopyFullQueryColumnValuesLimit(Integer queryScreenCopyFullQueryColumnValuesLimit)
+   {
+      this.queryScreenCopyFullQueryColumnValuesLimit = queryScreenCopyFullQueryColumnValuesLimit;
+   }
+
+
+
+   /*******************************************************************************
+    * Fluent setter for queryScreenCopyFullQueryColumnValuesLimit
+    *
+    * @param queryScreenCopyFullQueryColumnValuesLimit
+    * for the Copy full query result option in the query screen's column menu,
+    * this value is the max number of rows allowed in the query result in order
+    * to allow the copy function to run.
+    * If null, then it's up to the frontend what to do (original implementation had
+    * a limit of 100,000).  To effectively disable this feature, set to, e.g.,
+    * Integer.MAX_VALUE.  If set to 0 or negative, will basically make the feature
+    * frustratingly unusable.
+    * @return this
+    *******************************************************************************/
+   public MaterialDashboardInstanceMetaData withQueryScreenCopyFullQueryColumnValuesLimit(Integer queryScreenCopyFullQueryColumnValuesLimit)
+   {
+      this.queryScreenCopyFullQueryColumnValuesLimit = queryScreenCopyFullQueryColumnValuesLimit;
+      return (this);
+   }
+
 
 }

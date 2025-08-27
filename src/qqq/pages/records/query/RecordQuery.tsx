@@ -138,9 +138,11 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
    const [searchParams] = useSearchParams();
 
    const [showSuccessfullyDeletedAlert, setShowSuccessfullyDeletedAlert] = useState(false);
+   const [errorAlert, setErrorAlert] = useState(null as string);
    const [warningAlert, setWarningAlert] = useState(null as string);
    const [warningAlertList, setWarningAlertList] = useState([] as string[]);
    const [successAlert, setSuccessAlert] = useState(null as string);
+   const [infoAlert, setInfoAlert] = useState(null as string);
 
    const navigate = useNavigate();
    const location = useLocation();
@@ -2041,9 +2043,10 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
 
 
    /*******************************************************************************
-    ** event handler from columns menu - that copies values from that column
+    * event handler from columns menu - that copies values from that column (for
+    * current page)
     *******************************************************************************/
-   const copyColumnValues = async (column: GridColDef) =>
+   const copyPageColumnValues = async (column: GridColDef) =>
    {
       let data = "";
       let counter = 0;
@@ -2053,26 +2056,115 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
          for (let i = 0; i < latestQueryResults.length; i++)
          {
             let record = latestQueryResults[i] as QRecord;
-            const value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(column.field), record.displayValues.get(column.field));
-            if (value !== null && value !== undefined && String(value) !== "")
+            let value = ValueUtils.getUnadornedValueForDisplay(qFieldMetaData, record.values.get(column.field), record.displayValues.get(column.field));
+
+            const isBlank = (value === null || value === undefined);
+            if(isBlank)
             {
-               data += value + "\n";
-               counter++;
+               value = "";
             }
+
+            data += value + "\n";
+            counter++;
          }
 
          if (counter > 0)
          {
             await navigator.clipboard.writeText(data);
             setSuccessAlert(`Copied ${counter} ${qFieldMetaData.label} value${counter == 1 ? "" : "s"}.`);
-            setTimeout(() => setSuccessAlert(null), 3000);
+            setTimeout(() => setSuccessAlert(null), 5000);
          }
          else
          {
             setWarningAlert(`There are no ${qFieldMetaData.label} values to copy.`);
-            setTimeout(() => setWarningAlert(null), 3000);
+            setTimeout(() => setWarningAlert(null), 5000);
          }
       }
+   };
+
+
+   /*******************************************************************************
+    ** event handler from columns menu - that copies values from that column for the
+    ** full query result (e.g., from the backend) - not just the current page.
+    *******************************************************************************/
+   const copyFullQueryColumnValues = async (column: GridColDef) =>
+   {
+      const format = "TSV";
+
+      const materialDashboardInstanceMetaData = metaData.supplementalInstanceMetaData?.get("materialDashboard");
+      const limit = materialDashboardInstanceMetaData?.queryScreenCopyFullQueryColumnValuesLimit ?? 100000;
+
+      if(totalRecords > limit)
+      {
+         setErrorAlert(`The current query contains too many rows to be copied (limit: ${ValueUtils.safeToLocaleString(limit)}).`);
+         setTimeout(() => setErrorAlert(null), 5000);
+         return;
+      }
+
+      let [qFieldMetaData, fieldTable] = TableUtils.getFieldAndTable(tableMetaData, column.field);
+
+      const postBody = new FormData();
+      postBody.append("format", format);
+      postBody.append("limit", limit);
+      postBody.append("omitHeaderRow", true);
+      postBody.append("fields", column.field);
+
+      const filterForBackend = FilterUtils.prepQueryFilterForBackend(tableMetaData, queryFilter);
+      filterForBackend.skip = 0;
+      filterForBackend.limit = null;
+      postBody.append("filter", JSON.stringify(filterForBackend));
+
+      setInfoAlert(`Copying ${qFieldMetaData.label} values...`);
+
+      qController.axiosRequest(
+         {
+            method: "post",
+            url: `/data/${encodeURIComponent(tableMetaData.name)}/export?format=${format}&limit=${limit}`,
+            data: postBody,
+            headers: qController.defaultMultipartFormDataHeaders()
+         })
+         .then(response =>
+         {
+            (async () =>
+            {
+               const numberOfValues = response.split("\n").length - 1;
+               if(numberOfValues == 0)
+               {
+                  setInfoAlert(null);
+                  setWarningAlert(`There are no ${qFieldMetaData.label} values to copy`);
+                  setTimeout(() => setWarningAlert(null), 5000);
+                  return;
+               }
+
+               try
+               {
+                  await navigator.clipboard.writeText(response);
+                  setInfoAlert(null);
+                  setSuccessAlert(`Copied ${ValueUtils.safeToLocaleString(numberOfValues)} ${qFieldMetaData.label} value${totalRecords == 1 ? "" : "s"}.`);
+                  setTimeout(() => setSuccessAlert(null), 5000);
+               }
+               catch(e)
+               {
+                  setInfoAlert(null);
+                  let message = `${e}`;
+
+                  if(!document.hasFocus())
+                  {
+                     message = "Keep this window active until the copy is complete.  Details: " + message;
+                  }
+
+                  setWarningAlert(`Error copying values: ${message}`);
+                  setTimeout(() => setSuccessAlert(null), 5000);
+               }
+            })();
+         })
+         .catch(e =>
+         {
+            console.error(e);
+            setInfoAlert(null);
+            setWarningAlert(`Error copying values: ${e?.message ?? e}`);
+            setTimeout(() => setWarningAlert(null), 5000);
+         });
    };
 
 
@@ -2151,21 +2243,39 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                <GridColumnPinningMenuItems onClick={hideMenu} column={currentColumn!} />
                <Divider />
 
-               <MenuItem sx={{justifyContent: "space-between"}} onClick={(e) =>
+               <Tooltip title={!totalRecords ? "There are no rows to copy from" : null} placement="right">
+                  <span>
+                     <MenuItem disabled={!totalRecords} onClick={(e) =>
+                     {
+                        hideMenu(e);
+                        copyPageColumnValues(currentColumn);
+                     }}>
+                        Copy page values
+                     </MenuItem>
+                  </span>
+               </Tooltip>
+
+               <Tooltip title={!totalRecords ? "There are no rows to copy from" : null} placement="right">
+                  <span>
+                     <MenuItem sx={{justifyContent: "space-between"}} disabled={!totalRecords} onClick={(e) =>
+                     {
+                        hideMenu(e);
+                        copyFullQueryColumnValues(currentColumn);
+                     }}>
+                        Copy full query values
+                     </MenuItem>
+                  </span>
+               </Tooltip>
+
+               {/* todo - alternative to the two copy options above, and advanced copy mode
+               <MenuItem onClick={(e) =>
                {
                   hideMenu(e);
-                  copyColumnValues(currentColumn);
+                  setCopyingFieldName(currentColumn.field);
                }}>
-                  Copy values
-
-                  {/* idea here was, more options, like what format, or copy all, not just current page...
-                  <Button sx={{minHeight: "auto", minWidth: "auto", padding: 0}} onClick={(e) => openCopyMoreMenu(e)}>...</Button>
-                  <Menu anchorEl={copyMoreMenu} anchorOrigin={{vertical: "top", horizontal: "right"}} transformOrigin={{vertical: "top", horizontal: "left"}} open={Boolean(copyMoreMenu)} onClose={closeCopyMoreMenu} keepMounted>
-                     <MenuItem>Oh</MenuItem>
-                     <MenuItem>My</MenuItem>
-                  </Menu>
-                  */}
+                  Copy values...
                </MenuItem>
+               */}
 
                <MenuItem onClick={(e) =>
                {
@@ -3033,6 +3143,13 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                   ) : null
                }
                {
+                  (infoAlert) ? (
+                     <Collapse in={Boolean(infoAlert)}>
+                        <Alert color="info" sx={{mt: 1.5, mb: 0.5}} onClose={() => setInfoAlert(null)} icon={<Icon>info_outline</Icon>}>{infoAlert}</Alert>
+                     </Collapse>
+                  ) : null
+               }
+               {
                   (warningAlert) ? (
                      <Collapse in={Boolean(warningAlert)}>
                         <Alert color="warning" icon={<Icon>warning</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => setWarningAlert(null)}>{warningAlert}</Alert>
@@ -3040,9 +3157,11 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                   ) : null
                }
                {
-                  warningAlertList.map((message, i) =>
-                     <Alert key={i} color="warning" icon={<Icon>warning</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => deleteWarningAlert(i)}>{message}</Alert>
-                  )
+                  (errorAlert) ? (
+                     <Collapse in={Boolean(errorAlert)}>
+                        <Alert color="error" icon={<Icon>error_outline</Icon>} sx={{mt: 1.5, mb: 0.5}} onClose={() => setErrorAlert(null)}>{errorAlert}</Alert>
+                     </Collapse>
+                  ) : null
                }
 
                {
@@ -3170,6 +3289,62 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
                   </div>
                </Modal>
             }
+
+            {/* todo - would work with advanced copy-values mode referenced above (should go into its own component probably
+               copyingFieldName &&
+               <Modal open={copyingFieldName !== null} onClose={(event, reason) => closeCopyingDialog(event, reason)}>
+                  <div className="columnStatsModal">
+                     <Box sx={{position: "absolute", overflowY: "auto", maxHeight: "100%", width: "100%"}}>
+                        <Card sx={{my: 5, mx: "auto", pb: 0, maxWidth: "600px"}}>
+                           <Box component="div">
+                              <Box p={3}>
+                                 <Typography variant="h5">Copy Values</Typography>
+                              </Box>
+                              <Box p={3} fontSize={14} sx={{
+                                 "& .MuiFormGroup-root": {
+                                    fontWeight: 700,
+                                    paddingBottom: "1rem",
+                                 },
+                                 "& .MuiFormControlLabel-root": {
+                                    minWidth: "200px",
+                                    whiteSpace: "nowrap",
+                                    "& .MuiFormControlLabel-label": {
+                                       fontWeight: 400
+                                    }
+                                 }
+                              }}>
+                                 <RadioGroup name="x">
+                                    Number of values:
+                                    <Box display="flex">
+                                       <FormControlLabel value="y" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} checked={true} />} label={"Current page"} />
+                                       <FormControlLabel value="z" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} />} label={"Full query result"} />
+                                    </Box>
+                                 </RadioGroup>
+                                 <RadioGroup name="y">
+                                    Blank values:
+                                    <Box display="flex">
+                                       <FormControlLabel value="y" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} checked={true} />} label={"Include blanks"} />
+                                       <FormControlLabel value="z" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} />} label={"Omit blanks"} />
+                                    </Box>
+                                 </RadioGroup>
+                                 <RadioGroup name="z">
+                                    Duplicated values:
+                                    <Box display="flex">
+                                       <FormControlLabel value="y" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} checked={true} />} label={"Include all duplicates"} />
+                                       <FormControlLabel value="z" control={<Radio size="small" onChange={(event, checked) => console.log(checked)} />} label={"Only include distinct values"} />
+                                    </Box>
+                                 </RadioGroup>
+                              </Box>
+                              <Box p={3} display="flex" flexDirection="row" justifyContent="flex-end">
+                                 <QCancelButton label="Cancel" onClickHandler={() => closeCopyingDialog(null, null)} disabled={false} />
+                                 <QSaveButton label="OK" onClickHandler={() => doCopy()} disabled={false} iconName="check" />
+                              </Box>
+                           </Box>
+                        </Card>
+                     </Box>
+                  </div>
+               </Modal>
+            */}
          </div>
       </React.Fragment>
    );
