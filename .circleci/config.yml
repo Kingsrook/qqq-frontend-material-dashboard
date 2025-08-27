@@ -36,6 +36,7 @@
 ## - Maven Central: CENTRAL_USERNAME, CENTRAL_PASSWORD
 ## - GPG Signing: GPG_PRIVATE_KEY_B64, GPG_KEYNAME, GPG_PASSPHRASE
 ## - GitHub Integration: GITHUB_TOKEN (for creating releases and tags)
+## - NPM Registry: NPM_TOKEN (for GitHub NPM package access)
 ## - All artifacts are GPG signed for verification
 ## - Credentials stored securely as environment variables
 ##
@@ -95,7 +96,7 @@ commands:
   ## - Restores Maven dependency cache for faster builds
   ## - Restores NPM dependency cache for faster builds  
   ## - Installs Chrome/ChromeDriver for browser testing
-  ## - Installs Node.js dependencies (npm ci --legacy-peer-deps)
+  ## - Installs Node.js dependencies (npm install --legacy-peer-deps)
   ## - Compiles the project with Maven (Java components)
   ## - Builds React application (npm run build)
   ## - Saves both Maven and NPM caches for future builds
@@ -115,9 +116,14 @@ commands:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - run:
+          name: Setup NPM authentication
+          command: |
+            echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+            echo "@kingsrook:registry=https://npm.pkg.github.com" >> ~/.npmrc
+      - run:
           name: Install Node.js dependencies
           command: |
-            npm ci --legacy-peer-deps
+            npm install --legacy-peer-deps
       - run:
           name: Run Maven Compile
           command: |
