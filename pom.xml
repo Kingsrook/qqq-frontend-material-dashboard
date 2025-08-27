@@ -66,13 +66,16 @@
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
          <artifactId>qqq-backend-core</artifactId>
-         <version>0.26.0-integration-20250529-234230</version>
+         <version>${revision}</version>
+         <optional>true</optional>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>com.kingsrook.qqq</groupId>
          <artifactId>qqq-middleware-javalin</artifactId>
          <optional>true</optional>
-         <version>0.26.0-integration-20250529-234230</version>
+         <version>${revision}</version>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
@@ -142,6 +145,30 @@
       </dependency>
    </dependencies>
 
+   <profiles>
+      <profile>
+         <id>release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <!-- Central Publishing Maven Plugin for releases -->
+               <plugin>
+                  <groupId>io.github.gradle-nexus.publish-plugin</groupId>
+                  <artifactId>central-publishing-maven-plugin</artifactId>
+                  <version>1.3.0</version>
+                  <configuration>
+                     <publishingType>RELEASE</publishingType>
+                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                     <serverId>central</serverId>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+
    <build>
       <plugins>
          <plugin>
@@ -159,8 +186,8 @@
             <configuration>
                <gitFlowConfig>
                   <productionBranch>main</productionBranch>
-                  <developmentBranch>dev</developmentBranch>
-                  <versionTagPrefix>version-</versionTagPrefix>
+                  <developmentBranch>develop</developmentBranch>
+                  <versionTagPrefix>v</versionTagPrefix>
                </gitFlowConfig>
                <skipFeatureVersion>true</skipFeatureVersion> <!-- Keep feature names out of versions -->
                <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
@@ -173,7 +200,9 @@
 
          <!-- Publish this project's test code as a jar -->
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
+            <version>3.3.0</version>
             <executions>
                <execution>
                   <phase>package</phase>
@@ -184,23 +213,61 @@
             </executions>
          </plugin>
 
+         <!-- GPG signing for Maven Central -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+               <execution>
+                  <id>sign-artifacts</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>sign</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+
+
+
       </plugins>
    </build>
 
    <repositories>
+      <!-- Maven Central for stable releases -->
       <repository>
-         <id>github-qqq-maven-registry</id>
-         <name>GitHub QQQ Maven Registry</name>
-         <url>https://maven.pkg.github.com/Kingsrook/qqq-maven-registry</url>
+         <id>central</id>
+         <name>Maven Central</name>
+         <url>https://repo1.maven.org/maven2/</url>
+      </repository>
+      <!-- Sonatype Snapshots for development builds -->
+      <repository>
+         <id>sonatype-snapshots</id>
+         <name>Sonatype Snapshots</name>
+         <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <releases>
+            <enabled>false</enabled>
+         </releases>
       </repository>
    </repositories>
 
    <distributionManagement>
+      <!-- Maven Central for releases -->
       <repository>
-         <id>github-qqq-maven-registry</id>
-         <name>GitHub QQQ Maven Registry</name>
-         <url>https://maven.pkg.github.com/Kingsrook/qqq-maven-registry</url>
+         <id>central</id>
+         <name>Maven Central</name>
+         <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
       </repository>
+      <!-- Sonatype Snapshots for development builds -->
+      <snapshotRepository>
+         <id>sonatype-snapshots</id>
+         <name>Sonatype Snapshots</name>
+         <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+      </snapshotRepository>
    </distributionManagement>
 
 </project>

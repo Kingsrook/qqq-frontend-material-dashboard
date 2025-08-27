@@ -1,6 +1,6 @@
 {
    "name": "qqq-frontend-material-dashboard",
-   "version": "1.0.0",
+   "version": "0.26.0-SNAPSHOT",
    "description": "QQQ Default Dashboard",
    "dependencies": {
       "@auth0/auth0-react": "1.10.2",
