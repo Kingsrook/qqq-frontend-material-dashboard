@@ -147,21 +147,70 @@
 
    <profiles>
       <profile>
+         <!-- Release profile for Maven Central: attach sources/javadocs and sign artifacts -->
          <id>release</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
          <build>
             <plugins>
-               <!-- Central Publishing Maven Plugin for releases -->
                <plugin>
-                  <groupId>io.github.gradle-nexus.publish-plugin</groupId>
-                  <artifactId>central-publishing-maven-plugin</artifactId>
-                  <version>1.3.0</version>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <version>3.3.0</version>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <version>3.6.2</version>
                   <configuration>
-                     <publishingType>RELEASE</publishingType>
-                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                     <serverId>central</serverId>
+                     <failOnError>false</failOnError>
+                     <doclint>none</doclint>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-gpg-plugin</artifactId>
+                  <version>3.2.4</version>
+                  <configuration>
+                     <keyname>${gpg.keyname}</keyname>
+                     <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                     </gpgArguments>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>sign</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.sonatype.central</groupId>
+                  <artifactId>central-publishing-maven-plugin</artifactId>
+                  <version>0.8.0</version>
+                  <extensions>true</extensions>
+                  <configuration>
+                     <publishingServerId>central</publishingServerId>
+                     <autoPublish>true</autoPublish>
+                     <waitUntil>uploaded</waitUntil>
                   </configuration>
                </plugin>
             </plugins>
@@ -229,45 +278,22 @@
             </executions>
          </plugin>
 
-
+         <!-- Sonatype Central publishing (replaces deploy to distributionManagement) -->
+         <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
+            <extensions>true</extensions>
+            <configuration>
+               <!-- Server credentials with this ID must be provided in settings.xml -->
+               <publishingServerId>central</publishingServerId>
+               <autoPublish>true</autoPublish>
+            </configuration>
+         </plugin>
 
       </plugins>
    </build>
 
-   <repositories>
-      <!-- Maven Central for stable releases -->
-      <repository>
-         <id>central</id>
-         <name>Maven Central</name>
-         <url>https://repo1.maven.org/maven2/</url>
-      </repository>
-      <!-- Sonatype Snapshots for development builds -->
-      <repository>
-         <id>sonatype-snapshots</id>
-         <name>Sonatype Snapshots</name>
-         <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <releases>
-            <enabled>false</enabled>
-         </releases>
-      </repository>
-   </repositories>
 
-   <distributionManagement>
-      <!-- Maven Central for releases -->
-      <repository>
-         <id>central</id>
-         <name>Maven Central</name>
-         <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-      </repository>
-      <!-- Sonatype Snapshots for development builds -->
-      <snapshotRepository>
-         <id>sonatype-snapshots</id>
-         <name>Sonatype Snapshots</name>
-         <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-      </snapshotRepository>
-   </distributionManagement>
 
 </project>
