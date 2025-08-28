@@ -20,12 +20,12 @@
  */
 
 
-import {ApiVersion} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
-import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {ApiVersion} from "@qrunio/qqq-frontend-core/lib/controllers/QControllerV1";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QCriteriaOperator} from "@qrunio/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@qrunio/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Collapse} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";

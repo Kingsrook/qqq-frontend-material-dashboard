@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {Capability} from "@qrunio/qqq-frontend-core/lib/model/metaData/Capability";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";

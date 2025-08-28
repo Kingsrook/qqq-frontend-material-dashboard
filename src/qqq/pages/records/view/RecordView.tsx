@@ -19,16 +19,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
-import {QTableVariant} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableVariant";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
+import {QException} from "@qrunio/qqq-frontend-core/lib/exceptions/QException";
+import {Capability} from "@qrunio/qqq-frontend-core/lib/model/metaData/Capability";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QTableVariant} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableVariant";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
+import {QueryJoin} from "@qrunio/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Typography} from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";

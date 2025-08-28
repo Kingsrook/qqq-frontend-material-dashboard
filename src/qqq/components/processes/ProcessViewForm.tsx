@@ -20,8 +20,8 @@
  */
 
 
-import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {AdornmentType} from "@qrunio/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import Grid from "@mui/material/Grid";
 import MDTypography from "qqq/components/legacy/MDTypography";
 import ValueUtils from "qqq/utils/qqq/ValueUtils";

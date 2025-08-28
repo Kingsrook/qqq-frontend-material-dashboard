@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
-import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QController} from "@qrunio/qqq-frontend-core/lib/controllers/QController";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
+import {QPossibleValue} from "@qrunio/qqq-frontend-core/lib/model/QPossibleValue";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {IconButton, SelectChangeEvent, ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";

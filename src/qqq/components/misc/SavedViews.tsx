@@ -19,12 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QController} from "@qrunio/qqq-frontend-core/lib/controllers/QController";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QJobComplete} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Button} from "@mui/material";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";

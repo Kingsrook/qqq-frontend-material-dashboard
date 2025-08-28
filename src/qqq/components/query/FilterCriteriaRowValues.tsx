@@ -20,10 +20,10 @@
  */
 
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {FilterVariableExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/FilterVariableExpression";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {FilterVariableExpression} from "@qrunio/qqq-frontend-core/lib/model/query/FilterVariableExpression";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";

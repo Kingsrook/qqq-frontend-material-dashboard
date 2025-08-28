@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
-import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
-import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {NowExpression} from "@qrunio/qqq-frontend-core/lib/model/query/NowExpression";
+import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@qrunio/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
+import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@qrunio/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import {FormControl, FormControlLabel, Radio, RadioGroup, Select} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";

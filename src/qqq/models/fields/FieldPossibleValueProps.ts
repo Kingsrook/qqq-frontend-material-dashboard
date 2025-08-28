@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QPossibleValue} from "@qrunio/qqq-frontend-core/lib/model/QPossibleValue";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 
 /*******************************************************************************
  ** Properties attached to a (formik?) form field, to denote how it behaves as

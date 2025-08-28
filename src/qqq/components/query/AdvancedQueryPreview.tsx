@@ -20,8 +20,8 @@
  */
 
 
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 import Box from "@mui/material/Box";
 import colors from "qqq/assets/theme/base/colors";
 import {validateCriteria} from "qqq/components/query/FilterCriteriaRow";

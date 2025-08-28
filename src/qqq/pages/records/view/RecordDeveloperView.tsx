@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QException} from "@qrunio/qqq-frontend-core/lib/exceptions/QException";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";

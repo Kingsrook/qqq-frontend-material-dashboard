@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {Skeleton} from "@mui/material";
 import Box from "@mui/material/Box";
 import Icon from "@mui/material/Icon";

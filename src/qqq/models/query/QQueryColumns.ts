@@ -20,8 +20,8 @@
  */
 
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {GridPinnedColumns} from "@mui/x-data-grid-pro";
 import DataGridUtils from "qqq/utils/DataGridUtils";
 import TableUtils from "qqq/utils/qqq/TableUtils";

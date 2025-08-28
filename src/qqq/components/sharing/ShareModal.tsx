@@ -20,10 +20,10 @@
  */
 
 
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QJobComplete} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {Alert, Box} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";

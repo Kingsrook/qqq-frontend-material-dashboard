@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import React from "react";
 import {GoogleDriveFolderPicker} from "qqq/components/processes/GoogleDriveFolderPicker";

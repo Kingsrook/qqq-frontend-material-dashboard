@@ -19,23 +19,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
-import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFrontendComponent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
-import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
-import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
-import {QJobRunning} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobRunning";
-import {QJobStarted} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobStarted";
-import {QPossibleValue} from "@kingsrook/qqq-frontend-core/lib/model/QPossibleValue";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QException} from "@qrunio/qqq-frontend-core/lib/exceptions/QException";
+import {QComponentType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QComponentType";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFrontendComponent} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFrontendComponent";
+import {QFrontendStepMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QJobComplete} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
+import {QJobRunning} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobRunning";
+import {QJobStarted} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobStarted";
+import {QPossibleValue} from "@qrunio/qqq-frontend-core/lib/model/QPossibleValue";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 import {Alert, Button, CircularProgress, Icon, TablePagination} from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";

@@ -19,15 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QTableSection} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableSection";
-import {QJobComplete} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobComplete";
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QController} from "@qrunio/qqq-frontend-core/lib/controllers/QController";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QTableSection} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableSection";
+import {QJobComplete} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobComplete";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";

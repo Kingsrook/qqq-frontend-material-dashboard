@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import {Auth0Provider, useAuth0} from "@auth0/auth0-react";
-import {QAuthenticationMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
+import {QAuthenticationMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QAuthenticationMetaData";
 import App, {SESSION_UUID_COOKIE_NAME} from "App";
 import HandleAuthorizationError from "HandleAuthorizationError";
 import jwt_decode from "jwt-decode";

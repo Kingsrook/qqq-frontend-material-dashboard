@@ -20,7 +20,7 @@
  */
 
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Box, Tooltip} from "@mui/material";
 import QContext from "QContext";
 import HelpContent, {hasHelpContent} from "qqq/components/misc/HelpContent";

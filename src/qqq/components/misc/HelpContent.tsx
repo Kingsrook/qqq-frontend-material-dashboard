@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QHelpContent} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QHelpContent";
+import {QHelpContent} from "@qrunio/qqq-frontend-core/lib/model/metaData/QHelpContent";
 import Box from "@mui/material/Box";
 import parse from "html-react-parser";
 import ErrorBoundary from "qqq/components/misc/ErrorBoundary";

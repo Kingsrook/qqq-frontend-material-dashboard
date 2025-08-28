@@ -20,12 +20,12 @@
  */
 
 
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
-import {QCriteriaOperator} from "@kingsrook/qqq-frontend-core/lib/model/query/QCriteriaOperator";
-import {QFilterCriteria} from "@kingsrook/qqq-frontend-core/lib/model/query/QFilterCriteria";
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
-import {QueryJoin} from "@kingsrook/qqq-frontend-core/lib/model/query/QueryJoin";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
+import {QCriteriaOperator} from "@qrunio/qqq-frontend-core/lib/model/query/QCriteriaOperator";
+import {QFilterCriteria} from "@qrunio/qqq-frontend-core/lib/model/query/QFilterCriteria";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QueryJoin} from "@qrunio/qqq-frontend-core/lib/model/query/QueryJoin";
 import {Alert, Box} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import BaseLayout from "qqq/layouts/BaseLayout";

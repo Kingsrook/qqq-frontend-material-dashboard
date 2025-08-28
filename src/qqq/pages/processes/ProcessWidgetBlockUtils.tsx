@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QComponentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QComponentType";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFrontendStepMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
+import {QComponentType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QComponentType";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFrontendStepMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFrontendStepMetaData";
 import {CompositeData} from "qqq/components/widgets/CompositeWidget";
 
 /*******************************************************************************

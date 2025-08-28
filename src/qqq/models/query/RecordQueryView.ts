@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QQueryFilter} from "@kingsrook/qqq-frontend-core/lib/model/query/QQueryFilter";
+import {QQueryFilter} from "@qrunio/qqq-frontend-core/lib/model/query/QQueryFilter";
 import QQueryColumns, {PreLoadQueryColumns} from "qqq/models/query/QQueryColumns";
 import FilterUtils from "qqq/utils/qqq/FilterUtils";
 

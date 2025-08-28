@@ -20,7 +20,7 @@
  */
 
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 // @ts-ignore
 import {htmlToText} from "html-to-text";
 import QContext from "QContext";

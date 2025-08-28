@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QController} from "@kingsrook/qqq-frontend-core/lib/controllers/QController";
-import {QControllerV1} from "@kingsrook/qqq-frontend-core/lib/controllers/QControllerV1";
-import {QException} from "@kingsrook/qqq-frontend-core/lib/exceptions/QException";
+import {QController} from "@qrunio/qqq-frontend-core/lib/controllers/QController";
+import {QControllerV1} from "@qrunio/qqq-frontend-core/lib/controllers/QControllerV1";
+import {QException} from "@qrunio/qqq-frontend-core/lib/exceptions/QException";
 
 /*******************************************************************************
  ** client wrapper of qqq backend

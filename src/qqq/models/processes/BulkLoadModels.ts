@@ -20,9 +20,9 @@
  */
 
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 
 export type ValueType = "defaultValue" | "column";
 

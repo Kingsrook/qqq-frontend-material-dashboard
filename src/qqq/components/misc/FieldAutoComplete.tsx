@@ -20,10 +20,10 @@
  */
 
 
-import {QExposedJoin} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QExposedJoin";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {QExposedJoin} from "@qrunio/qqq-frontend-core/lib/model/metaData/QExposedJoin";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import {Box} from "@mui/material";
 import Autocomplete, {AutocompleteRenderOptionState} from "@mui/material/Autocomplete";
 import Icon from "@mui/material/Icon";

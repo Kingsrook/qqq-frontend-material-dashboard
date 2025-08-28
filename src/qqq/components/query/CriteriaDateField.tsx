@@ -19,12 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {FilterVariableExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/FilterVariableExpression";
-import {NowExpression} from "@kingsrook/qqq-frontend-core/lib/model/query/NowExpression";
-import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
-import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@kingsrook/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {FilterVariableExpression} from "@qrunio/qqq-frontend-core/lib/model/query/FilterVariableExpression";
+import {NowExpression} from "@qrunio/qqq-frontend-core/lib/model/query/NowExpression";
+import {NowWithOffsetExpression, NowWithOffsetOperator, NowWithOffsetUnit} from "@qrunio/qqq-frontend-core/lib/model/query/NowWithOffsetExpression";
+import {ThisOrLastPeriodExpression, ThisOrLastPeriodOperator, ThisOrLastPeriodUnit} from "@qrunio/qqq-frontend-core/lib/model/query/ThisOrLastPeriodExpression";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";

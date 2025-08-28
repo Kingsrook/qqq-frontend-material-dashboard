@@ -20,10 +20,10 @@
  */
 
 
-import {Capability} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Capability";
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
-import {QProcessMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
-import {QTableMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QTableMetaData";
+import {Capability} from "@qrunio/qqq-frontend-core/lib/model/metaData/Capability";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QProcessMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QProcessMetaData";
+import {QTableMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QTableMetaData";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
 import ListItemIcon from "@mui/material/ListItemIcon";

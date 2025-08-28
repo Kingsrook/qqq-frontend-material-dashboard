@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Banner} from "@kingsrook/qqq-frontend-core/lib/model/metaData/Banner";
-import {QBrandingMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
+import {Banner} from "@qrunio/qqq-frontend-core/lib/model/metaData/Banner";
+import {QBrandingMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QBrandingMetaData";
 import parse from "html-react-parser";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

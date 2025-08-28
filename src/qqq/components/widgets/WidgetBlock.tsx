@@ -20,7 +20,7 @@
  */
 
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Alert, Skeleton} from "@mui/material";
 import ButtonBlock from "qqq/components/widgets/blocks/ButtonBlock";
 import AudioBlock from "qqq/components/widgets/blocks/AudioBlock";

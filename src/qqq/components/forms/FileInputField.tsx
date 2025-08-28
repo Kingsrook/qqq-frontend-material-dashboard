@@ -20,10 +20,10 @@
  */
 
 
-import {AdornmentType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/AdornmentType";
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
-import {QFieldType} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldType";
-import {QRecord} from "@kingsrook/qqq-frontend-core/lib/model/QRecord";
+import {AdornmentType} from "@qrunio/qqq-frontend-core/lib/model/metaData/AdornmentType";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldType} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldType";
+import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import {Button, colors, Icon} from "@mui/material";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";

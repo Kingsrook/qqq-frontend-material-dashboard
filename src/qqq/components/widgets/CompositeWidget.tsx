@@ -20,7 +20,7 @@
  */
 
 
-import {QWidgetMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
+import {QWidgetMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QWidgetMetaData";
 import {Box, Skeleton} from "@mui/material";
 import Card from "@mui/material/Card";
 import Modal from "@mui/material/Modal";

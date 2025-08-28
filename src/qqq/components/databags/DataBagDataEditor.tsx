@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QJobError} from "@kingsrook/qqq-frontend-core/lib/model/processes/QJobError";
+import {QJobError} from "@qrunio/qqq-frontend-core/lib/model/processes/QJobError";
 import {ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";

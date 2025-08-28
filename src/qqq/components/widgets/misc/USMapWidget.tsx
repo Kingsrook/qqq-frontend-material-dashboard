@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QInstance} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QInstance";
+import {QInstance} from "@qrunio/qqq-frontend-core/lib/model/metaData/QInstance";
 import {Box, Grid} from "@mui/material";
 import {VectorMap} from "@react-jvectormap/core";
 import {usAea} from "@react-jvectormap/unitedstates";

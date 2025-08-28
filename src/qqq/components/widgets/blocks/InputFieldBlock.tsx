@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {QFieldMetaData} from "@kingsrook/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
+import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFieldMetaData";
 import Box from "@mui/material/Box";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
 import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
