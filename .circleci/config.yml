@@ -8,7 +8,7 @@
 ##
 ## 🚀 WORKFLOWS OVERVIEW:
 ## ----------------------
-## 1. test_only          - Feature branches (build, test, integration test, coverage)
+## 1. test_only          - Feature branches (build, test, coverage)
 ## 2. deploy_snapshot    - develop branch (publishes -SNAPSHOT versions to Maven Central + Public NPM)
 ## 3. release_candidate  - release/* branches (publishes -RC.n versions to Maven Central + Public NPM)
 ## 4. production_release - main branch (publishes stable versions to Maven Central + Public NPM + GitHub releases)
@@ -137,40 +137,6 @@ commands:
             - node_modules
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
-  ###############################################################################
-  ## 🧪 FRONTEND TEST COMMAND
-  ## =========================
-  ## Runs comprehensive testing for both Maven (Java) and NPM (React) components
-  ## 
-  ## What it does:
-  ## - Runs Maven verify lifecycle (compile, test, package, verify)
-  ## - Executes NPM tests with coverage (--coverage --passWithNoTests)
-  ## - Collects and stores test artifacts for analysis
-  ## - Stores coverage reports for quality metrics
-  ##
-  ## Test Coverage:
-  ## - Maven: Java unit tests and integration tests
-  ## - NPM: React component tests and JavaScript unit tests
-  ## - Coverage reports stored as CircleCI artifacts
-  ###############################################################################
-  frontend_test:
-    steps:
-      - run:
-          name: Run Maven Verify
-          command: |
-            mvn -s .circleci/mvn-settings.xml -T4 --no-transfer-progress verify
-      - run:
-          name: Run NPM tests
-          command: |
-            npm test -- --watchAll=false --coverage --passWithNoTests
-      - store_artifacts:
-          path: coverage
-          destination: test-coverage
-          when: always
-      - store_artifacts:
-          path: target/surefire-reports
-          destination: surefire-reports
-          when: always
 
   ###############################################################################
   ## 🚀 FRONTEND INTEGRATION TEST COMMAND
@@ -190,32 +156,32 @@ commands:
   ## - Selenium tests run against running app
   ## - Screenshots captured for debugging
   ###############################################################################
-  frontend_integration_test:
-    steps:
+  frontend_test:
+   steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - run:
-          name: Install dockerize
-          command: |
-            wget https://github.com/jwilder/dockerize/releases/download/v0.3.0/dockerize-linux-amd64-v0.3.0.tar.gz
-            sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.3.0.tar.gz
-            rm dockerize-linux-amd64-v0.3.0.tar.gz
+          name: install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.3.0
       - run:
-          name: Install browser dependencies
+          name: Install Browser dependencies
           command: |
             sudo apt update
             sudo apt install -y libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
       - run:
-          name: Setup React app environment
+          name: Run react app and mvn verify
           command: |
             echo "HTTPS=true" >> ./.env
-            export REACT_APP_PROXY_LOCALHOST_PORT=8001
-            export PORT=3001
-            export QQQ_SELENIUM_HEADLESS=true
-      - run:
-          name: Start React app and run integration tests
-          command: |
-            npm run start &
+            npm run build
+            export REACT_APP_PROXY_LOCALHOST_PORT=8001; export PORT=3001; npm run start &
             dockerize -wait tcp://localhost:3001 -timeout 3m
-            mvn -s .circleci/mvn-settings.xml verify
+            export QQQ_SELENIUM_HEADLESS=true; mvn -s .circleci/mvn-settings.xml verify
       - run:
           name: Save test results
           command: |
@@ -224,9 +190,12 @@ commands:
           when: always
       - store_test_results:
           path: ~/test-results
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
       - store_artifacts:
           path: /tmp/QSeleniumScreenshots
-          when: always
 
   ###############################################################################
   ## 📦 MAVEN CENTRAL PUBLISHING COMMAND
@@ -455,26 +424,6 @@ jobs:
       - frontend_test
 
   ###############################################################################
-  ## 🚀 INTEGRATION TEST JOB
-  ## ========================
-  ## Runs integration tests with React app running
-  ## 
-  ## Purpose: Test frontend-backend integration
-  ## Used by: test_only workflow for feature branches
-  ## Dependencies: Requires build job to complete first
-  ## 
-  ## What it does:
-  ## - Starts React app in background
-  ## - Waits for app to be ready
-  ## - Runs Maven verify with app running
-  ## - Collects test results and screenshots
-  ###############################################################################
-  integration_test:
-    executor: localstack/default
-    steps:
-      - frontend_integration_test
-
-  ###############################################################################
   ## 📦 SNAPSHOT DEPLOYMENT JOB
   ## ===========================
   ## Deploys snapshot versions to Maven Central
@@ -614,7 +563,7 @@ workflows:
           context: [ qqq-maven-registry-credentials, build-qqq-sample-app ]
           filters:
             branches:
-              ignore: /(develop|main|release/.*|hotfix/.*|integration.*)/
+              ignore: /(develop|main|release/.*|hotfix/.*)/
             tags:
               ignore: /(version|snapshot)-.*/
       - test:
@@ -623,16 +572,7 @@ workflows:
             - build
           filters:
             branches:
-              ignore: /(develop|main|release/.*|hotfix/.*|integration.*)/
-            tags:
-              ignore: /(version|snapshot)-.*/
-      - integration_test:
-          context: [ qqq-maven-registry-credentials, build-qqq-sample-app ]
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /(develop|main|release/.*|hotfix/.*|integration.*)/
+              ignore: /(develop|main|release/.*|hotfix/.*)/
             tags:
               ignore: /(version|snapshot)-.*/
 
