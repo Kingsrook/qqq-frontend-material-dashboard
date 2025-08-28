@@ -59,10 +59,10 @@
 ## ------------------------------
 ## | Branch Type | Version Pattern | Example | Repository |
 ## |-------------|----------------|---------|------------|
-## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) + Public NPM |
-## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) + Public NPM |
-## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) + Public NPM |
-## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) + Public NPM |
+## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) + Public NPM (@qrunio) |
+## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) + Public NPM (@qrunio) |
+## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) + Public NPM (@qrunio) |
+## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) + Public NPM (@qrunio) |
 ## | feature/*   | Inherits from develop | 1.0.0-SNAPSHOT | No publishing |
 ##
 ###############################################################################
