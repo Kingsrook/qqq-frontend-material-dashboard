@@ -78,8 +78,18 @@ calculate_next_version() {
             ;;
             
         "main")
-            # Main should always have stable versions, no changes needed
-            NEW_VERSION="$CURRENT_VERSION"
+            # Main should always have stable versions
+            # Check if we just merged a release branch and need to convert RC to stable
+            RECENT_RELEASE_MERGES=$(git log --oneline -5 --grep="Merge.*release.*into.*main" --grep="Merge.*release.*back.*main" --grep="Merge.*R.*back.*main" || true)
+            
+            if [[ -n "$RECENT_RELEASE_MERGES" ]] && [[ "$CURRENT_VERSION" =~ -RC\.[0-9]+$ ]]; then
+                # We just merged a release and have an RC version, convert to stable
+                NEW_VERSION="${CURRENT_VERSION%-RC.*}"
+                echo "Release merge detected, converting RC version to stable: $NEW_VERSION"
+            else
+                # No recent release merge or already stable, keep current version
+                NEW_VERSION="$CURRENT_VERSION"
+            fi
             ;;
             
         release/*)
