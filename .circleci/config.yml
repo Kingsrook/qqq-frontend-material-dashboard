@@ -211,7 +211,8 @@ commands:
             env | grep -i -E 'chrome|driver|selenium' || true
 
       # Build the React app, start it, wait until it's live, then run Selenium tests via Maven.
-      # Note: Do NOT set webdriver.chrome.driver; Selenium 4+ will resolve the driver.
+      # Note: Using 'mvn test' to avoid GPG signing during testing phase.
+      # GPG signing will happen later in mvn_jar_deploy when deploying to Maven Central.
       - run:
           name: Build app, start server, run tests
           command: |
@@ -222,7 +223,7 @@ commands:
             npm run start &
             dockerize -wait tcp://localhost:3001 -timeout 3m
             export QQQ_SELENIUM_HEADLESS=true
-            mvn -s .circleci/mvn-settings.xml --no-transfer-progress -B verify
+            mvn -s .circleci/mvn-settings.xml --no-transfer-progress -B test
 
       # Always collect and publish test results & screenshots
       - run:
@@ -250,6 +251,7 @@ commands:
   ## 
   ## What it does:
   ## - Sets up GPG signing for artifact verification and security
+  ## - Runs verify phase with GPG signing to ensure artifacts are properly signed
   ## - Deploys signed artifacts to Maven Central using release profile
   ## - Handles authentication and repository configuration
   ## - Saves Maven cache for future builds
@@ -268,6 +270,10 @@ commands:
             echo 'pinentry-mode loopback' > ~/.gnupg/gpg.conf
             chmod 600 ~/.gnupg/gpg.conf
             echo $GPG_PRIVATE_KEY_B64| tr -d ' \r\n\t' | base64 -d | gpg --batch --import 
+      - run:
+          name: Verify build with GPG signing (skip tests)
+          command: |
+            mvn -s .circleci/mvn-settings.xml -P release -B -DskipTests -Dgpg.keyname=$GPG_KEYNAME -Dgpg.passphrase=$GPG_PASSPHRASE verify
       - run:
           name: Publish to Sonatype Central (releases and SNAPSHOTs)
           command: |
