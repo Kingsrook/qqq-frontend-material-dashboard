@@ -25,7 +25,6 @@
 ## 🔄 VERSION MANAGEMENT:
 ## ---------------------
 ## - Maven versions: Automatically calculated using .circleci/calculate-version.sh
-## - NPM sync: package.json version automatically synced with Maven pom.xml
 ## - GitFlow versioning: RC increments, hotfix patches, develop bumps
 ## - Automatic Git tags: vX.Y.Z format (e.g., v1.0.0)
 ## - GitHub releases: Created automatically for production and hotfix releases
@@ -59,10 +58,10 @@
 ## ------------------------------
 ## | Branch Type | Version Pattern | Example | Repository |
 ## |-------------|----------------|---------|------------|
-## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) + Public NPM (@qrunio) |
-## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) + Public NPM (@qrunio) |
-## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) + Public NPM (@qrunio) |
-## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) + Public NPM (@qrunio) |
+## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) |
+## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) |
+## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) |
+## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) |
 ## | feature/*   | Inherits from develop | 1.0.0-SNAPSHOT | No publishing |
 ##
 ###############################################################################
@@ -303,34 +302,7 @@ commands:
             mkdir -p src/main/resources/material-dashboard
             cp -r build/* src/main/resources/material-dashboard
 
-  ###############################################################################
-  ## 📦 NPM PUBLISHING COMMAND
-  ## ==========================
-  ## Publishes the frontend package to public NPM registry (npmjs.org)
-  ## 
-  ## What it does:
-  ## - Sets up NPM authentication for public registry
-  ## - Verifies authentication by checking current user
-  ## - Publishes package with public access
-  ## - Ensures maximum visibility and accessibility
-  ##
-  ## Publishing Features:
-  ## - Public access for all packages
-  ## - Direct publishing to npmjs.org
-  ## - Dual publishing strategy (Maven Central + Public NPM)
-  ###############################################################################
-  publish_npm:
-    steps:
-      - run:
-          name: "Setup NPM authentication"
-          command: |
-            # Configure NPM authentication for public registry
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-            # Verify authentication by checking current user
-            npm whoami
-      - run:
-          name: "Publish to NPM"
-          command: npm publish --access public
+
 
   ###############################################################################
   ## 🔄 VERSION MANAGEMENT COMMAND
@@ -364,16 +336,11 @@ commands:
             chmod +x .circleci/calculate-version.sh
             .circleci/calculate-version.sh
       - run:
-          name: Synchronize NPM version with Maven version
-          command: |
-            chmod +x sync-npm-version.sh
-            ./sync-npm-version.sh
-      - run:
           name: Commit version changes if modified
           command: |
-            if [[ -n "$(git status --porcelain pom.xml package.json)" ]]; then
+            if [[ -n "$(git status --porcelain pom.xml)" ]]; then
               NEW_VERSION=$(grep '<revision>' pom.xml | sed 's/.*<revision>//;s/<.*//')
-              git add pom.xml package.json
+              git add pom.xml
               git commit -m "Bump version to $NEW_VERSION [skip ci]"
               git push origin "HEAD:${CIRCLE_BRANCH}"
               echo "Version updated to: $NEW_VERSION and pushed"
@@ -494,7 +461,6 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
-      - publish_npm
 
   ###############################################################################
   ## 🧪 RELEASE CANDIDATE JOB
@@ -519,8 +485,7 @@ jobs:
       - frontend_test
       - manage_version
       - frontend_package
-      - mvn_jar_deploy
-      - publish_npm 
+      - mvn_jar_deploy 
 
   ###############################################################################
   ## 🚀 PRODUCTION RELEASE JOB
@@ -548,7 +513,6 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
-      - publish_npm
       - create_github_release
 
   ###############################################################################
@@ -578,7 +542,6 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
-      - publish_npm
       - create_github_release
 
 ###############################################################################
