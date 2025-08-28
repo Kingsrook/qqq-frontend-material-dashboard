@@ -9,17 +9,17 @@
 ## 🚀 WORKFLOWS OVERVIEW:
 ## ----------------------
 ## 1. test_only          - Feature branches (build, test, integration test, coverage)
-## 2. deploy_snapshot    - develop branch (publishes -SNAPSHOT versions)
-## 3. release_candidate  - release/* branches (publishes -RC.n versions)
-## 4. production_release - main branch (publishes stable versions + GitHub releases)
-## 5. hotfix_release     - hotfix/* branches (publishes patch versions + GitHub releases)
+## 2. deploy_snapshot    - develop branch (publishes -SNAPSHOT versions to Maven Central + Public NPM)
+## 3. release_candidate  - release/* branches (publishes -RC.n versions to Maven Central + Public NPM)
+## 4. production_release - main branch (publishes stable versions to Maven Central + Public NPM + GitHub releases)
+## 5. hotfix_release     - hotfix/* branches (publishes patch versions to Maven Central + Public NPM + GitHub releases)
 ##
 ## 🌿 GITFLOW BRANCHING STRATEGY:
 ## ------------------------------
-## - main: Production releases (X.Y.Z) → Maven Central releases repository
-## - develop: Development snapshots (X.Y.Z-SNAPSHOT) → Maven Central snapshots repository  
-## - release/*: Release candidates (X.Y.0-RC.n) → Maven Central releases repository
-## - hotfix/*: Hotfix releases (X.Y.(Z+1)) → Maven Central releases repository
+## - main: Production releases (X.Y.Z) → Maven Central releases + Public NPM + GitHub releases
+## - develop: Development snapshots (X.Y.Z-SNAPSHOT) → Maven Central snapshots + Public NPM  
+## - release/*: Release candidates (X.Y.0-RC.n) → Maven Central releases + Public NPM
+## - hotfix/*: Hotfix releases (X.Y.(Z+1)) → Maven Central releases + Public NPM + GitHub releases
 ## - feature/*: Feature development → Build and test only (no publishing)
 ##
 ## 🔄 VERSION MANAGEMENT:
@@ -36,7 +36,7 @@
 ## - Maven Central: CENTRAL_USERNAME, CENTRAL_PASSWORD
 ## - GPG Signing: GPG_PRIVATE_KEY_B64, GPG_KEYNAME, GPG_PASSPHRASE
 ## - GitHub Integration: GITHUB_TOKEN (for creating releases and tags)
-## - NPM Registry: NPM_TOKEN (for GitHub NPM package access)
+## - NPM Registry: NPM_TOKEN (for public NPM package access)
 ## - All artifacts are GPG signed for verification
 ## - Credentials stored securely as environment variables
 ##
@@ -59,10 +59,10 @@
 ## ------------------------------
 ## | Branch Type | Version Pattern | Example | Repository |
 ## |-------------|----------------|---------|------------|
-## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) |
-## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) |
-## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) |
-## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) |
+## | main        | X.Y.Z          | 1.0.0   | Maven Central (releases) + Public NPM |
+## | develop     | X.Y.Z-SNAPSHOT | 1.0.0-SNAPSHOT | Maven Central (snapshots) + Public NPM |
+## | release/*   | X.Y.0-RC.n     | 1.0.0-RC.1 | Maven Central (releases) + Public NPM |
+## | hotfix/*    | X.Y.(Z+1)      | 1.0.1   | Maven Central (releases) + Public NPM |
 ## | feature/*   | Inherits from develop | 1.0.0-SNAPSHOT | No publishing |
 ##
 ###############################################################################
@@ -118,8 +118,7 @@ commands:
       - run:
           name: Setup NPM authentication
           command: |
-            echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
-            echo "@kingsrook:registry=https://npm.pkg.github.com" >> ~/.npmrc
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
       - run:
           name: Install Node.js dependencies
           command: |
@@ -287,6 +286,35 @@ commands:
             rm -rf src/main/resources/material-dashboard
             mkdir -p src/main/resources/material-dashboard
             cp -r build/* src/main/resources/material-dashboard
+
+  ###############################################################################
+  ## 📦 NPM PUBLISHING COMMAND
+  ## ==========================
+  ## Publishes the frontend package to public NPM registry (npmjs.org)
+  ## 
+  ## What it does:
+  ## - Sets up NPM authentication for public registry
+  ## - Verifies authentication by checking current user
+  ## - Publishes package with public access
+  ## - Ensures maximum visibility and accessibility
+  ##
+  ## Publishing Features:
+  ## - Public access for all packages
+  ## - Direct publishing to npmjs.org
+  ## - Dual publishing strategy (Maven Central + Public NPM)
+  ###############################################################################
+  publish_npm:
+    steps:
+      - run:
+          name: "Setup NPM authentication"
+          command: |
+            # Configure NPM authentication for public registry
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            # Verify authentication by checking current user
+            npm whoami
+      - run:
+          name: "Publish to NPM"
+          command: npm publish --access public
 
   ###############################################################################
   ## 🔄 VERSION MANAGEMENT COMMAND
@@ -470,6 +498,7 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
+      - publish_npm
 
   ###############################################################################
   ## 🧪 RELEASE CANDIDATE JOB
@@ -494,7 +523,8 @@ jobs:
       - frontend_test
       - manage_version
       - frontend_package
-      - mvn_jar_deploy 
+      - mvn_jar_deploy
+      - publish_npm 
 
   ###############################################################################
   ## 🚀 PRODUCTION RELEASE JOB
@@ -522,6 +552,7 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
+      - publish_npm
       - create_github_release
 
   ###############################################################################
@@ -551,6 +582,7 @@ jobs:
       - frontend_test
       - frontend_package
       - mvn_jar_deploy
+      - publish_npm
       - create_github_release
 
 ###############################################################################

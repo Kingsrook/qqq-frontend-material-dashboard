@@ -87,6 +87,9 @@
          "last 1 safari version"
       ]
    },
+   "publishConfig": {
+      "registry": "https://registry.npmjs.org/"
+   },
    "devDependencies": {
       "@babel/plugin-proposal-private-property-in-object": "7.21.11",
       "@svgr/webpack": "6.5.1",
