@@ -42,7 +42,6 @@
 
    <properties>
       <revision>0.25.0-RC.2</revision>
-
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <maven.compiler.source>17</maven.compiler.source>
