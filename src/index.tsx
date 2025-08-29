@@ -26,6 +26,7 @@ import {createRoot} from "react-dom/client";
 import {BrowserRouter, useNavigate, useSearchParams} from "react-router-dom";
 import App from "App";
 import "qqq/styles/qqq-override-styles.css";
+import "qqq/styles/form-animation.css";
 import "qqq/styles/globals.scss";
 import "qqq/styles/raycast.scss";
 import useAnonymousAuthenticationModule from "qqq/authorization/anonymous/useAnonymousAuthenticationModule";
