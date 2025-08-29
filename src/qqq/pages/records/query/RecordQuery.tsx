@@ -261,9 +261,10 @@ const RecordQueryInner = forwardRef(({table, apiVersion, usage, isModal, isPrevi
       window.history.replaceState(state, "");
    }
 
-   ////////////////////////////////////////////
-   // look for defaults in the local storage //
-   ////////////////////////////////////////////
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   // look for defaults in the local storage                                                    //
+   // note a few of these keys are duplicated in the wrapper where we try to catch & fix errors //
+   ///////////////////////////////////////////////////////////////////////////////////////////////
    const currentSavedViewLocalStorageKey = `${CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const viewLocalStorageKey = `${VIEW_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
