@@ -52,6 +52,7 @@ import QContext from "QContext";
 import colors from "qqq/assets/theme/base/colors";
 import {QCancelButton, QCreateNewButton} from "qqq/components/buttons/DefaultButtons";
 import MenuButton from "qqq/components/buttons/MenuButton";
+import ErrorBoundary from "qqq/components/misc/ErrorBoundary";
 import {GotoRecordButton} from "qqq/components/misc/GotoRecordDialog";
 import SavedViews from "qqq/components/misc/SavedViews";
 import BasicAndAdvancedQueryControls from "qqq/components/query/BasicAndAdvancedQueryControls";
@@ -116,15 +117,65 @@ const qControllerV1 = Client.getInstanceV1();
  *******************************************************************************/
 const getLoadingScreen = (isModal: boolean) =>
 {
-   if (isModal)
+   return (<Box>&nbsp;</Box>);
+};
+
+
+/***************************************************************************
+ * The exported version of RecordQuery that pages & other components use here,
+ * is actually a wrapper around the true component (RecordQueryInner).
+ * The wrapper adds an ErrorBoundary, with an alert with a link that *tries* to fix
+ * issues that we've seen (e.g., when a bad filter gets put into local storage).
+ ***************************************************************************/
+const RecordQuery = forwardRef((props: Props, ref) =>
+{
+
+   /***************************************************************************
+    * try to fix issues by removing the current view from local storage
+    * and reloading the page.  It fixes some issues at least!
+    ***************************************************************************/
+   const fixIt = () =>
    {
-      return (<Box>&nbsp;</Box>);
+      //////////////////////////////////////////////////////////////////
+      // remove the current view and saved-view-id from local storage //
+      //////////////////////////////////////////////////////////////////
+      localStorage.removeItem(`${VIEW_LOCAL_STORAGE_KEY_ROOT}.${props.table?.name}`);
+      localStorage.removeItem(`${CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT}.${props.table?.name}`);
+
+      ////////////////////////////////////////////////////////////////////////////////////
+      // if the URL looks like we're using a saved view, try to navigate away from that //
+      ////////////////////////////////////////////////////////////////////////////////////
+      if(location.href.indexOf("/savedView/") > -1)
+      {
+         location.href = location.href.replace(/\/savedView\/.*/, "")
+      }
+      else
+      {
+         ///////////////////////////////
+         // else just reload the page //
+         ///////////////////////////////
+         location.reload();
+      }
+   };
+
+   const errorElement = <Box>
+      <h3>Error</h3>
+      <Alert severity="error">
+         An error occurred loading this page.  You may try to <a href="#" onClick={fixIt}>click here to fix it</a>.
+      </Alert>
+   </Box>
+
+   const body = <ErrorBoundary errorElement={errorElement}>
+      <RecordQueryInner {...props} ref={ref} />
+   </ErrorBoundary>
+
+   if (props.isModal)
+   {
+      return (body);
    }
 
-   return (<BaseLayout>
-      &nbsp;
-   </BaseLayout>);
-};
+   return (<BaseLayout>{body}</BaseLayout>);
+});
 
 
 /*******************************************************************************
@@ -132,7 +183,7 @@ const getLoadingScreen = (isModal: boolean) =>
  **
  ** Yuge component.  The best.  Lots of very smart people are saying so.
  *******************************************************************************/
-const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns, omitExposedJoins}: Props, ref) =>
+const RecordQueryInner = forwardRef(({table, apiVersion, usage, isModal, isPreview, allowVariables, initialQueryFilter, initialColumns, omitExposedJoins}: Props, ref) =>
 {
    const tableName = table.name;
    const [searchParams] = useSearchParams();
@@ -210,9 +261,10 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       window.history.replaceState(state, "");
    }
 
-   ////////////////////////////////////////////
-   // look for defaults in the local storage //
-   ////////////////////////////////////////////
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   // look for defaults in the local storage                                                    //
+   // note a few of these keys are duplicated in the wrapper where we try to catch & fix errors //
+   ///////////////////////////////////////////////////////////////////////////////////////////////
    const currentSavedViewLocalStorageKey = `${CURRENT_SAVED_VIEW_ID_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const tableVariantLocalStorageKey = `${TABLE_VARIANT_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
    const viewLocalStorageKey = `${VIEW_LOCAL_STORAGE_KEY_ROOT}.${tableName}`;
@@ -2584,11 +2636,9 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
    if (tableMetaData && !tableMetaData.readPermission)
    {
       return (
-         <BaseLayout>
-            <Alert severity="error">
-               You do not have permission to view {tableMetaData?.label} records
-            </Alert>
-         </BaseLayout>
+         <Alert severity="error">
+            You do not have permission to view {tableMetaData?.label} records
+         </Alert>
       );
    }
 
@@ -2902,13 +2952,11 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       if (tableMetaData?.usesVariants && (!tableVariant || tableVariantPromptOpen))
       {
          return (
-            <BaseLayout>
-               <TableVariantDialog table={tableMetaData} isOpen={true} closeHandler={(value: QTableVariant) =>
-               {
-                  setTableVariantPromptOpen(false);
-                  setTableVariant(value);
-               }} />
-            </BaseLayout>
+            <TableVariantDialog table={tableMetaData} isOpen={true} closeHandler={(value: QTableVariant) =>
+            {
+               setTableVariantPromptOpen(false);
+               setTableVariant(value);
+            }} />
          );
       }
 
@@ -2922,9 +2970,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       }
 
       return (
-         <BaseLayout>
-            <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={gotoVariantSubHeader} />
-         </BaseLayout>
+         <GotoRecordButton metaData={metaData} tableMetaData={tableMetaData} tableVariant={tableVariant} autoOpen={true} buttonVisible={false} mayClose={false} subHeader={gotoVariantSubHeader} />
       );
    }
 
@@ -2935,7 +2981,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
    {
       console.log(`page state is ${pageState}... rendering an alert...`);
       const errorBody = <Box py={3}><Alert severity="error">{alertContent}</Alert></Box>;
-      return isModal ? errorBody : <BaseLayout>{errorBody}</BaseLayout>;
+      return errorBody;
    }
 
    ///////////////////////////////////////////////////////////
@@ -3349,14 +3395,7 @@ const RecordQuery = forwardRef(({table, apiVersion, usage, isModal, isPreview, a
       </React.Fragment>
    );
 
-   if (isModal)
-   {
-      return body;
-   }
-
-   return (
-      <BaseLayout>{body}</BaseLayout>
-   );
+   return body;
 });
 
 
