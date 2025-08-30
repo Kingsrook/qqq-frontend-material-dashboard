@@ -28,8 +28,6 @@
    <version>${revision}</version>
    <packaging>jar</packaging>
 
-   <properties>
-      <revision>0.25.0</revision>
    <name>QQQ Frontend Material Dashboard</name>
    <description>Material Dashboard frontend for QQQ application - Low-code Application Framework for Engineers</description>
    <url>https://github.com/Kingsrook/qqq-frontend-material-dashboard</url>
