@@ -24,9 +24,9 @@ import {QFieldMetaData} from "@qrunio/qqq-frontend-core/lib/model/metaData/QFiel
 import {QRecord} from "@qrunio/qqq-frontend-core/lib/model/QRecord";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
-import {useFormikContext} from "formik";
+import {FormikErrors, FormikTouched, FormikValues, useFormikContext} from "formik";
 import QDynamicFormField from "qqq/components/forms/DynamicFormField";
-import DynamicFormUtils from "qqq/components/forms/DynamicFormUtils";
+import DynamicFormUtils, {DynamicFormFieldDefinition} from "qqq/components/forms/DynamicFormUtils";
 import DynamicSelect from "qqq/components/forms/DynamicSelect";
 import FileInputField from "qqq/components/forms/FileInputField";
 import MDTypography from "qqq/components/legacy/MDTypography";
@@ -38,27 +38,104 @@ const qController = Client.getInstance();
 
 interface Props
 {
+   ////////////////////////////////////////////////////////
+   // an optional h5 to be output at the top of the form //
+   ////////////////////////////////////////////////////////
    formLabel?: string;
-   formData: any;
+
+   /////////////////////////////////////////////////////////////////////////////////////////
+   // the fields (as QFMD dynamic-form objects) along with formik errors & touched states //
+   // by default, all fields given here will be rendered - but - if fieldNamesToInclude   //
+   // is given, then only that subset of fields are rendered.                             //
+   /////////////////////////////////////////////////////////////////////////////////////////
+   formData:
+      {
+         formFields: Record<string, DynamicFormFieldDefinition>;
+         errors: Record<string, string> | FormikErrors<FormikValues>;
+         touched: Record<string, boolean> | FormikTouched<FormikValues>;
+      };
+
+   ////////////////////////////////////////////////////
+   // optional array of which field names to include //
+   ////////////////////////////////////////////////////
+   fieldNamesToInclude?: string[];
+
+   /////////////////////////////////////////////////////////////////////////////
+   // indicator of whether or not the form is in bulkEditMode (default false) //
+   /////////////////////////////////////////////////////////////////////////////
    bulkEditMode?: boolean;
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // when in bulkEditMode, a 'switch change' callback, to tell parent that a bulk-edit switch has been flipped //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
    bulkEditSwitchChangeHandler?: any;
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // a QRecord with values for the form - although - those values (apparently?) are only used in file-type inputs. //
+   // todo - eliminate this usage if we can?                                                                        //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    record?: QRecord;
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // array of "roles" used by helpContent system, to decide which help content in the field to display on this screen. //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    helpRoles?: string[];
+
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // prefix put in front of field name for generating "helpHelp" (e.g., clue to user about what help content key to use) //
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    helpContentKeyPrefix?: string;
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // optional callback for changing the definitions of fields, e.g., if they're owned by the parent component //
+   // e.g., for use-case where a single page has multiple instances of this component, and where an on-change  //
+   // handler in one might impact another.  for simple use-case (single form on page), omit this.              //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   setFormFields?: (formFields: { [key: string]: DynamicFormFieldDefinition }) => void;
 }
 
-function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHandler, record, helpRoles, helpContentKeyPrefix}: Props): JSX.Element
+/***************************************************************************
+ * Standard form component used in QFMD.
+ ***************************************************************************/
+function QDynamicForm({formData, formLabel, fieldNamesToInclude, bulkEditMode, bulkEditSwitchChangeHandler, record, helpRoles, helpContentKeyPrefix, setFormFields}: Props): JSX.Element
 {
    const {formFields: origFormFields, errors, touched} = formData;
    const {setFieldValue, values} = useFormikContext<Record<string, any>>();
 
-   const [formAdjustmentCounter, setFormAdjustmentCounter] = useState(0)
+   const [formAdjustmentCounter, setFormAdjustmentCounter] = useState(0);
 
-   const [formFields, setFormFields] = useState(origFormFields as {[key: string]: any});
+   const [formFields, localSetFormFields] = useState(origFormFields as { [key: string]: DynamicFormFieldDefinition });
+   if (!setFormFields)
+   {
+      ///////////////////////////////////////////////////////////////////////////////////
+      // if caller did not supply a setFormFields callback, then use our own local one //
+      ///////////////////////////////////////////////////////////////////////////////////
+      setFormFields = localSetFormFields;
+   }
 
+   /***************************************************************************
+    * event handler for bulk-edit switch - passes through to prop callback
+    ***************************************************************************/
    const bulkEditSwitchChanged = (name: string, value: boolean) =>
    {
-      bulkEditSwitchChangeHandler(name, value);
+      if(bulkEditSwitchChangeHandler)
+      {
+         bulkEditSwitchChangeHandler(name, value);
+      }
+      else
+      {
+         console.log("No prop bulkEditSwitchChangeHandler was given.");
+      }
+   };
+
+
+   /***************************************************************************
+    * test if a field should be included on this form.  true if the prop
+    * fieldNamesToInclude is not given, or if it includes this name.
+    ***************************************************************************/
+   const includeField = (name: string): boolean =>
+   {
+      return (fieldNamesToInclude == undefined || fieldNamesToInclude.indexOf(name) > -1);
    };
 
 
@@ -69,10 +146,14 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
    {
       for (let fieldName in formFields)
       {
-         const field = formFields[fieldName];
+         if (!includeField(fieldName))
+         {
+            continue;
+         }
 
+         const field = formFields[fieldName];
          const materialDashboardFieldMetaData = field.fieldMetaData?.supplementalFieldMetaData?.get("materialDashboard");
-         if(materialDashboardFieldMetaData?.onLoadFormAdjuster)
+         if (materialDashboardFieldMetaData?.onLoadFormAdjuster)
          {
             //////////////////////////////////////////////////////////////////////////////////////////////////////////
             // todo consider cases with multiple - do they need to list a sequenceNo? do they need to run serially? //
@@ -118,7 +199,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       // run onChange adjuster if there is one //
       ///////////////////////////////////////////
       considerRunningFormAdjuster("onChange", fieldName, actualNewValue);
-   }
+   };
 
 
    /***************************************************************************
@@ -144,9 +225,9 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       //////////////////////////////////////////////////////////////////
       // disable fields temporarily while waiting on backend response //
       //////////////////////////////////////////////////////////////////
-      const fieldNamesToTempDisable: string[] = materialDashboardFieldMetaData?.fieldsToDisableWhileRunningAdjusters ?? []
-      const previousIsEditableValues: {[key: string]: boolean} = {};
-      if(fieldNamesToTempDisable.length > 0)
+      const fieldNamesToTempDisable: string[] = materialDashboardFieldMetaData?.fieldsToDisableWhileRunningAdjusters ?? [];
+      const previousIsEditableValues: { [key: string]: boolean } = {};
+      if (fieldNamesToTempDisable.length > 0)
       {
          for (let oldFieldName in formFields)
          {
@@ -176,12 +257,12 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
             data: postBody,
             headers: qController.defaultMultipartFormDataHeaders()
          });
-      console.log("Form adjuster response: " + JSON.stringify(response));
+      console.debug("Form adjuster response: " + JSON.stringify(response));
 
       ////////////////////////////////////////////////////
       // un-disable any temp disabled fields from above //
       ////////////////////////////////////////////////////
-      if(fieldNamesToTempDisable.length > 0)
+      if (fieldNamesToTempDisable.length > 0)
       {
          for (let oldFieldName in formFields)
          {
@@ -197,14 +278,14 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       // replace field definitions, if we have updates //
       ///////////////////////////////////////////////////
       const updatedFields: { [fieldName: string]: QFieldMetaData } = response.updatedFieldMetaData;
-      if(updatedFields)
+      if (updatedFields)
       {
          for (let updatedFieldName in updatedFields)
          {
             const updatedField = new QFieldMetaData(updatedFields[updatedFieldName]);
             const dynamicField = DynamicFormUtils.getDynamicField(updatedField); // todo dynamicallyDisabledFields? second param...
 
-            const dynamicFieldInObject: any = {};
+            const dynamicFieldInObject: Record<string, DynamicFormFieldDefinition> = {};
             dynamicFieldInObject[updatedFieldName] = dynamicField;
             let tableName = null;
             let processName = null;
@@ -227,7 +308,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       /////////////////////////
       // update field values //
       /////////////////////////
-      const updatedFieldValues: {[fieldName: string]: any} = response?.updatedFieldValues ?? {};
+      const updatedFieldValues: { [fieldName: string]: any } = response?.updatedFieldValues ?? {};
       for (let fieldNameToUpdate in updatedFieldValues)
       {
          setFieldValue(fieldNameToUpdate, updatedFieldValues[fieldNameToUpdate]);
@@ -239,11 +320,11 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
       /////////////////////////////////////////////////
       // set display values in PVS's if we have them //
       /////////////////////////////////////////////////
-      const updatedFieldDisplayValues: {[fieldName: string]: any} = response?.updatedFieldDisplayValues ?? {};
+      const updatedFieldDisplayValues: { [fieldName: string]: any } = response?.updatedFieldDisplayValues ?? {};
       for (let fieldNameToUpdate in updatedFieldDisplayValues)
       {
          const fieldToUpdate = formFields[fieldNameToUpdate];
-         if(fieldToUpdate?.possibleValueProps)
+         if (fieldToUpdate?.possibleValueProps)
          {
             fieldToUpdate.possibleValueProps.initialDisplayValue = updatedFieldDisplayValues[fieldNameToUpdate];
          }
@@ -271,13 +352,18 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                   && Object.keys(formFields).length > 0
                   && Object.keys(formFields).map((fieldName: any) =>
                   {
+                     if (!includeField(fieldName))
+                     {
+                        return null;
+                     }
+
                      const field = formFields[fieldName];
                      if (field.omitFromQDynamicForm)
                      {
                         return null;
                      }
 
-                     const display = field.fieldMetaData?.isHidden ? "none" : "initial";
+                     const visibilityClassName = "field-wrapper " + (field.fieldMetaData?.isHidden ? "is-hidden" : "is-visible");
 
                      if (values[fieldName] === undefined)
                      {
@@ -311,18 +397,18 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         }
 
                         return (
-                           <Grid item lg={itemLG} xs={itemXS} sm={itemSM} flexDirection="column" key={fieldName + "-" + formAdjustmentCounter}>
+                           <Grid item className={visibilityClassName}  lg={itemLG} xs={itemXS} sm={itemSM} flexDirection="column" key={fieldName + "-" + formAdjustmentCounter}>
                               {labelElement}
                               <FileInputField field={field} record={record} errorMessage={errors[fieldName]} />
                            </Grid>
                         );
                      }
 
-                     ///////////////////////
-                     // possible values!! //
-                     ///////////////////////
                      else if (field.possibleValueProps)
                      {
+                        ///////////////////////
+                        // possible values!! //
+                        ///////////////////////
                         const otherValuesMap = field.possibleValueProps.otherValues ?? new Map<string, any>();
                         Object.keys(values).forEach((key) =>
                         {
@@ -330,7 +416,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                         });
 
                         return (
-                           <Grid item display={display} lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName + "-" + formAdjustmentCounter}>
+                           <Grid item className={visibilityClassName} lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName + "-" + formAdjustmentCounter}>
                               {labelElement}
                               <DynamicSelect
                                  fieldPossibleValueProps={field.possibleValueProps}
@@ -352,7 +438,7 @@ function QDynamicForm({formData, formLabel, bulkEditMode, bulkEditSwitchChangeHa
                      // everything else!! //
                      ///////////////////////
                      return (
-                        <Grid item display={display} lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName + "-" + formAdjustmentCounter}>
+                        <Grid item className={visibilityClassName} lg={itemLG} xs={itemXS} sm={itemSM} key={fieldName + "-" + formAdjustmentCounter}>
                            {labelElement}
                            <QDynamicFormField
                               id={field.name}
