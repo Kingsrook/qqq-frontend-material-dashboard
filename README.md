@@ -2,10 +2,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+> ℹ️ **Future direction:** The qqq admin UI is being rewritten as [qqq-frontend-next](https://github.com/QRun-IO/qqq-frontend-next) (Next.js 15 + Tailwind 4 + shadcn/ui). `qqq-frontend-material-dashboard` remains the supported choice today and will continue to receive fixes until existing qqq apps complete migration to `qqq-frontend-next`. New qqq apps starting in 2026 should evaluate `qqq-frontend-next` first.
+
 React admin dashboard for QQQ applications.
 
 **For:** Teams using QQQ who want a ready-to-use admin UI without writing frontend code  
-**Status:** Stable
+**Status:** Stable (on long-term deprecation track — see banner above)
 
 ## Why This Exists
 
